@@ -8,7 +8,6 @@ private let log = Logger(
 
 @MainActor
 public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
-  let synthInstanceHandle: SynthInstanceHandle = createSynthesizerInstance()
   var audioUnit: AUAudioUnit?
   var hostingController: HostingController<MainView>?
   // private var observation: NSKeyValueObservation?
@@ -72,20 +71,8 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
         return audioUnit!
       }
 
-      audioUnit.setSynthInstanceHandle(synthInstanceHandle)
       audioUnitPresenter.setAudioUnit(audioUnit)
-
-      defer {
-        // Configure the SwiftUI view after creating the AU, instead of in viewDidLoad,
-        // so that the parameter tree is set up before we build our @AUParameterUI properties
-        DispatchQueue.main.async {
-          self.configureSwiftUIView(audioUnit: audioUnit)
-        }
-      }
-
-      let parameterSpecs = createProject1ExtensionParameterSpecs(synthInstanceHandle)
-      let parameterTree = parameterSpecs.createAUParameterTree()
-      audioUnit.setupParameterTree(parameterTree)
+      audioUnit.setupParameterTree()
 
       // self.observation = audioUnit.observe(\.allParameterValues, options: [.new]) {
       //   object, change in
@@ -95,9 +82,17 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
       //   for param in tree.allParameters { param.value = param.value }
       // }
 
-      guard audioUnit.parameterTree != nil else {
-        log.error("Unable to access AU ParameterTree")
-        return audioUnit
+      // guard audioUnit.parameterTree != nil else {
+      //   log.error("Unable to access AU ParameterTree")
+      //   return audioUnit
+      // }
+
+      defer {
+        // Configure the SwiftUI view after creating the AU, instead of in viewDidLoad,
+        // so that the parameter tree is set up before we build our @AUParameterUI properties
+        DispatchQueue.main.async {
+          self.configureSwiftUIView(audioUnit: audioUnit)
+        }
       }
 
       return audioUnit

@@ -4,6 +4,7 @@ import CoreAudioKit
 typealias SynthInstanceHandle = UnsafeMutablePointer<SynthesizerBase>
 
 public class AudioUnit: AUAudioUnit, @unchecked Sendable {
+  let pluginCore: AUv3PluginCore = AUv3PluginCore()
   // C++ Objects
   var kernel = DSPKernel()
   var processHelper: AUProcessHelper?
@@ -28,10 +29,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
     _outputBusses = AUAudioUnitBusArray(
       audioUnit: self, busType: AUAudioUnitBusType.output, busses: [outputBus!])
     processHelper = AUProcessHelper(&kernel)
-  }
-
-  func setSynthInstanceHandle(_ synthInstanceHandle: SynthInstanceHandle) {
-    kernel.setSynthesizerInstance(synthInstanceHandle)
+    kernel.setSynthesizerInstance(pluginCore.synthInstanceHandle)
   }
 
   public override func supportedViewConfigurations(
@@ -113,7 +111,10 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
     super.deallocateRenderResources()
   }
 
-  public func setupParameterTree(_ parameterTree: AUParameterTree) {
+  public func setupParameterTree() {
+    let parameterSpecs =
+      pluginCore.parameterSpecProvider.setupParameters(pluginCore.synthInstanceHandle)
+    let parameterTree = parameterSpecs.createAUParameterTree()
     self.parameterTree = parameterTree
 
     let maxAddress = parameterTree.allParameters.map { $0.address }.max() ?? 0
@@ -150,8 +151,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
   }
 
   func emitParametersState() -> (parametersVersion: Int, parameters: [String: Float]) {
-    // let parametersVersion = self.pluginCore?.parametersMigrator?.latestParametersVersion ?? 0
-    let parametersVersion = 0
+    let parametersVersion = pluginCore.parameterSpecProvider.latestParametersVersion
     var rawParameters: [String: Float] = [:]
     parameterTree?.allParameters.forEach { param in
       rawParameters[param.identifier] = param.value
@@ -162,9 +162,9 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
   func applyParametersState(
     _ parametersVersion: Int, _ parameters: [String: Float]
   ) {
-    // var modParameters = parameters
-    // self.pluginCore?.parametersMigrator?.migrateParametersIfNeeded(
-    //   paramVer: parametersVersion, rawParameters: &modParameters)
+    var modParameters = parameters
+    pluginCore.parameterSpecProvider.migrateParametersIfNeeded(
+      paramVer: parametersVersion, rawParameters: &modParameters)
     parameterTree?.allParameters.forEach { param in
       if let value = parameters[param.identifier] {
         param.value = value
