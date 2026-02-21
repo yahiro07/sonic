@@ -5,6 +5,8 @@ typedef struct _ParameterItem {
   std::string identifier;
   std::string label;
   float defaultValue;
+  float minValue;
+  float maxValue;
   std::vector<std::string> valueStrings; // For enum parameters
 } ParameterItem;
 
@@ -20,6 +22,8 @@ public:
       .identifier = std::string(identifier),
       .label = std::string(label),
       .defaultValue = defaultValue,
+      .minValue = 0.0f,
+      .maxValue = 1.0f,
       .valueStrings = {},
     });
   }
@@ -37,6 +41,8 @@ public:
               valueStrings.begin(),
               std::find(valueStrings.begin(), valueStrings.end(), defaultValueString)))
           : 0.0f,
+      .minValue = 0.0f,
+      .maxValue = (float)(valueStrings.size() - 1),
       .valueStrings = std::vector<std::string>(valueStrings.begin(), valueStrings.end()),
     });
   }
@@ -47,6 +53,8 @@ public:
       .identifier = std::string(identifier),
       .label = std::string(label),
       .defaultValue = defaultValue ? 1.0f : 0.0f,
+      .minValue = 0.0f,
+      .maxValue = 1.0f,
       .valueStrings = {},
     });
   }
