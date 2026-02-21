@@ -1,7 +1,8 @@
 .local/
 node_modules/
 
-project.xcworkspace
-xcuserdata
+project.xcworkspace/
+xcuserdata/
+xcshareddata/
 
 buildServer.json

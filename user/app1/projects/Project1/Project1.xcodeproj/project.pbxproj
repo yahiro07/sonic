@@ -43,22 +43,14 @@
 		3C8C7CE22F49541D00E0378A /* Exceptions for "Project1Extension" folder in "Project1Extension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				".clang-format",
+				compile_flags.txt,
 				Info.plist,
+				README.md,
 			);
 			target = 3C8C7CB72F49541D00E0378A /* Project1Extension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		3C8C7CE62F49541D00E0378A /* Exceptions for "Project1Extension" folder in "Copy Bundle Resources" phase from "Project1Extension" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 3C8C7CB62F49541D00E0378A /* Resources */;
-			membershipExceptions = (
-				Common/DSP/Project1ExtensionAUProcessHelper.hpp,
-				DSP/Project1ExtensionDSPKernel.hpp,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3C8C7C942F49541C00E0378A /* Project1 */ = {
@@ -70,7 +62,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				3C8C7CE22F49541D00E0378A /* Exceptions for "Project1Extension" folder in "Project1Extension" target */,
-				3C8C7CE62F49541D00E0378A /* Exceptions for "Project1Extension" folder in "Copy Bundle Resources" phase from "Project1Extension" target */,
 			);
 			path = Project1Extension;
 			sourceTree = "<group>";
