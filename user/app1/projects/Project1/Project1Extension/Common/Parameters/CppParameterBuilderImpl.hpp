@@ -1,12 +1,12 @@
 #include "SynthesizerBase.hpp"
 
-enum class ParameterType {
+enum class CppParameterType {
   Unary,
   Enum,
   Bool,
 };
 
-typedef struct _ParameterItem {
+typedef struct _CppParameterItem {
   uint64_t address;
   std::string identifier;
   std::string label;
@@ -14,14 +14,14 @@ typedef struct _ParameterItem {
   float minValue;
   float maxValue;
   std::vector<std::string> valueStrings; // For enum parameters
-  ParameterType type;
-} ParameterItem;
+  CppParameterType type;
+} CppParameterItem;
 
-class ParameterBuilderImpl : public ParameterBuilder {
-  std::vector<ParameterItem> parameters;
+class CppParameterBuilderImpl : public ParameterBuilder {
+  std::vector<CppParameterItem> parameters;
 
 public:
-  std::vector<ParameterItem> getItems() { return parameters; }
+  std::vector<CppParameterItem> getItems() { return parameters; }
 
   void callSetupParameters(SynthesizerBase *synthInstance) {
     synthInstance->setupParameters(*this);
@@ -36,7 +36,7 @@ public:
       .minValue = 0.0f,
       .maxValue = 1.0f,
       .valueStrings = {},
-      .type = ParameterType::Unary,
+      .type = CppParameterType::Unary,
     });
   }
 
@@ -56,7 +56,7 @@ public:
       .minValue = 0.0f,
       .maxValue = (float)(valueStrings.size() - 1),
       .valueStrings = std::vector<std::string>(valueStrings.begin(), valueStrings.end()),
-      .type = ParameterType::Enum,
+      .type = CppParameterType::Enum,
     });
   }
 
@@ -69,7 +69,7 @@ public:
       .minValue = 0.0f,
       .maxValue = 1.0f,
       .valueStrings = {},
-      .type = ParameterType::Bool,
+      .type = CppParameterType::Bool,
     });
   }
 };

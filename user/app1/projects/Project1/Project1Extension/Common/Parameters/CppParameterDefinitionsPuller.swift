@@ -4,7 +4,7 @@ import Foundation
 func pullParameterDefinitionsFromCppSide(_ synthInstanceHandle: SynthInstanceHandle)
   -> ParameterTreeSpec
 {
-  var parameterBuilder = ParameterBuilderImpl()
+  var parameterBuilder = CppParameterBuilderImpl()
   parameterBuilder.callSetupParameters(synthInstanceHandle)
 
   let parameterSpecs = ParameterTreeSpec {
