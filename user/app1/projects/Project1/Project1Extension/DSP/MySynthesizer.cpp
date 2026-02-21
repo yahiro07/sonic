@@ -4,16 +4,17 @@
 MySynthesizer::MySynthesizer() {}
 
 void MySynthesizer::setupParameters(ParameterBuilder &builder) {
-  builder.addUnary(0, "oscPitch", "OSC Pitch", 0.5f);
-  builder.addUnary(1, "oscVolume", "OSC Volume", 0.5f);
+  builder.addUnary(0, "gain", "gain", 0.5f);
+  builder.addUnary(1, "oscPitch", "OSC Pitch", 0.5f);
+  builder.addUnary(2, "oscVolume", "OSC Volume", 0.5f);
 }
 
 void MySynthesizer::setParameter(uint64_t address, float value) {
   switch (address) {
-  case 0:
+  case 1:
     oscPitch = value;
     break;
-  case 1:
+  case 2:
     oscVolume = value;
     break;
   }

@@ -7,8 +7,10 @@
 
 import AVFoundation
 
+typealias SynthInstanceHandle = UnsafeMutablePointer<SynthesizerBase>
+
 public class Project1ExtensionAudioUnit: AUAudioUnit, @unchecked Sendable {
-  let synthInstance: SynthesizerBase = createSynthesizerInstance().pointee
+  let synthInstance: SynthInstanceHandle = createSynthesizerInstance()
   // C++ Objects
   var kernel = Project1ExtensionDSPKernel()
   var processHelper: AUProcessHelper?

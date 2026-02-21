@@ -16,49 +16,67 @@ extension ParameterGroupSpec {
   }
 }
 
-func createProject1ExtensionParameterSpecs(_ synthInstance: SynthesizerBase)
+// let debugFallbackParameterSpecs = ParameterTreeSpec {
+//   ParameterGroupSpec(identifier: "global", name: "Global") {
+//     ParameterSpec(
+//       // address: .gain,
+//       address: 0,
+//       identifier: "gain",
+//       name: "Output Gain",
+//       units: .linearGain,
+//       valueRange: 0.0...1.0,
+//       defaultValue: 0.25
+//     )
+//   }
+// }
+
+func createProject1ExtensionParameterSpecs(_ synthInstanceHandle: SynthInstanceHandle)
   -> ParameterTreeSpec
 {
-  // let parameterSpecs = ParameterTreeSpec {
-  //   ParameterGroupSpec(identifier: "global", name: "Global") {
-  //     ParameterSpec(
-  //       address: .gain,
-  //       identifier: "gain",
-  //       name: "Output Gain",
-  //       units: .linearGain,
-  //       valueRange: 0.0...1.0,
-  //       defaultValue: 0.25
-  //     )
-  //   }
-  // }
-  var parameterBuilder = ParameterBuilderImpl()
-  var synthInstanceVar = synthInstance
-  parameterBuilder.callSetupParameters(&synthInstanceVar)
-
-  let parameterSpecs = ParameterTreeSpec {
-    ParameterGroupSpec(
-      identifier: "global",
-      name: "Global",
-      children: parameterBuilder.getItems().map { item in
+  if false {
+    return ParameterTreeSpec {
+      ParameterGroupSpec(identifier: "global", name: "Global") {
         ParameterSpec(
-          address: item.address,
-          identifier: String(item.identifier),
-          name: String(item.label),
-          units: item.type == .Enum ? .indexed : (item.type == .Bool ? .boolean : .generic),
-          valueRange: item.minValue...item.maxValue,
-          defaultValue: item.defaultValue,
-          unitName: nil,
-          flags: item.type == .Enum
-            ? [
-              .flag_IsWritable, .flag_IsReadable,
-              .flag_ValuesHaveStrings,
-            ] : [.flag_IsWritable, .flag_IsReadable],
-          valueStrings: item.valueStrings.empty()
-            ? nil : item.valueStrings.map { String($0) },
-          dependentParameters: nil
+          // address: .gain,
+          address: 0,
+          identifier: "gain",
+          name: "Output Gain",
+          units: .linearGain,
+          valueRange: 0.0...1.0,
+          defaultValue: 0.25
         )
-      })
+      }
+    }
+  } else {
+
+    var parameterBuilder = ParameterBuilderImpl()
+    parameterBuilder.callSetupParameters(synthInstanceHandle)
+
+    let parameterSpecs = ParameterTreeSpec {
+      ParameterGroupSpec(
+        identifier: "global",
+        name: "Global",
+        children: parameterBuilder.getItems().map { item in
+          ParameterSpec(
+            address: item.address,
+            identifier: String(item.identifier),
+            name: String(item.label),
+            units: item.type == .Enum ? .indexed : (item.type == .Bool ? .boolean : .generic),
+            valueRange: item.minValue...item.maxValue,
+            defaultValue: item.defaultValue,
+            unitName: nil,
+            flags: item.type == .Enum
+              ? [
+                .flag_IsWritable, .flag_IsReadable,
+                .flag_ValuesHaveStrings,
+              ] : [.flag_IsWritable, .flag_IsReadable],
+            valueStrings: item.valueStrings.empty()
+              ? nil : item.valueStrings.map { String($0) },
+            dependentParameters: nil
+          )
+        })
+    }
+    print(parameterSpecs)
+    return parameterSpecs
   }
-  print(parameterSpecs)
-  return parameterSpecs
 }
