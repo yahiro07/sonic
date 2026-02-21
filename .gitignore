@@ -3,3 +3,5 @@ node_modules/
 
 project.xcworkspace
 xcuserdata
+
+buildServer.json
