@@ -90,9 +90,6 @@ public:
     mMusicalContextBlock = contextBlock;
   }
 
-  // MARK: - MIDI Protocol
-  MIDIProtocolID AudioUnitMIDIProtocol() const { return kMIDIProtocol_2_0; }
-
   /**
    MARK: - Internal Process
 

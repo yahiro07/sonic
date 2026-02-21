@@ -52,7 +52,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
 
   // MARK: - MIDI
   public override var audioUnitMIDIProtocol: MIDIProtocolID {
-    return kernel.AudioUnitMIDIProtocol()
+    return processHelper!.AudioUnitMIDIProtocol()
   }
 
   // MARK: - Rendering
