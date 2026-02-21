@@ -8,8 +8,8 @@ private let log = Logger(
 
 @MainActor
 public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
-  var audioUnit: AUAudioUnit?
-  var hostingController: HostingController<MainView>?
+  var audioUnit: AudioUnit?
+  var hostingController: HostingController<AnyView>?
   // private var observation: NSKeyValueObservation?
 
   private let audioUnitPresenter: AudioUnitPresenterImpl = AudioUnitPresenterImpl()
@@ -66,7 +66,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
       audioUnit = try AudioUnit(
         componentDescription: componentDescription, options: [])
 
-      guard let audioUnit = self.audioUnit as? AudioUnit else {
+      guard let audioUnit = self.audioUnit else {
         log.error("Unable to create AudioUnit")
         return audioUnit!
       }
@@ -107,21 +107,18 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
       host.view.removeFromSuperview()
     }
     guard let audioUnit = self.audioUnit,
-      // let parameterTree = audioUnit.parameterTree,
-      let observableParameterTree = audioUnit.observableParameterTree
-      // let pluginCore = audioUnit.pluginCore
+      let parameterTree = audioUnit.parameterTree
     else {
       return
     }
 
-    // let parameterMigrator = pluginCore.parametersMigrator
-    // let viewAccessibleResources = ViewAccessibleResources(
-    //   parameterTree: parameterTree, audioUnitPortal: self.audioUnitPortal,
-    //   presetFilesIO: self.presetFilesIO, parametersMigrator: parameterMigrator,
-    //   stateKvs: audioUnit.stateKvs)
+    let pluginCore = audioUnit.pluginCore
+    let viewAccessibleResources = ViewAccessibleResources(
+      parameterTree: parameterTree, audioUnitPresenter: self.audioUnitPresenter,
+      storageFileIO: self.storageFileIO, parameterSpecProvider: pluginCore.parameterSpecProvider,
+      stateKvs: audioUnit.stateKvs)
 
-    // let content = pluginCore.createView(viewAccessibleResources)
-    let content = MainView(parameterTree: observableParameterTree)
+    let content = pluginCore.createView(viewAccessibleResources)
     let host = HostingController(rootView: content)
 
     self.addChild(host)
