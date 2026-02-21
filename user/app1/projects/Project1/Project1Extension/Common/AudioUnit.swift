@@ -4,7 +4,6 @@ import CoreAudioKit
 typealias SynthInstanceHandle = UnsafeMutablePointer<SynthesizerBase>
 
 public class AudioUnit: AUAudioUnit, @unchecked Sendable {
-  let synthInstance: SynthInstanceHandle = createSynthesizerInstance()
   // C++ Objects
   var kernel = DSPKernel()
   var processHelper: AUProcessHelper?
@@ -29,7 +28,10 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
     _outputBusses = AUAudioUnitBusArray(
       audioUnit: self, busType: AUAudioUnitBusType.output, busses: [outputBus!])
     processHelper = AUProcessHelper(&kernel)
-    kernel.setSynthesizerInstance(synthInstance)
+  }
+
+  func setSynthInstanceHandle(_ synthInstanceHandle: SynthInstanceHandle) {
+    kernel.setSynthesizerInstance(synthInstanceHandle)
   }
 
   public override func supportedViewConfigurations(
@@ -111,9 +113,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
     super.deallocateRenderResources()
   }
 
-  public func setupParameterTree() {
-    let parameterSpecs = createProject1ExtensionParameterSpecs(synthInstance)
-    let parameterTree = parameterSpecs.createAUParameterTree()
+  public func setupParameterTree(_ parameterTree: AUParameterTree) {
     self.parameterTree = parameterTree
 
     let maxAddress = parameterTree.allParameters.map { $0.address }.max() ?? 0

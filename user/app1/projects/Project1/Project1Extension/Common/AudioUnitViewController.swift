@@ -8,6 +8,8 @@ private let log = Logger(
 
 @MainActor
 public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
+  let synthInstanceHandle: SynthInstanceHandle = createSynthesizerInstance()
+
   var audioUnit: AUAudioUnit?
 
   var hostingController: HostingController<MainView>?
@@ -76,7 +78,9 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
         }
       }
 
-      audioUnit.setupParameterTree()
+      let parameterSpecs = createProject1ExtensionParameterSpecs(synthInstanceHandle)
+      let parameterTree = parameterSpecs.createAUParameterTree()
+      audioUnit.setupParameterTree(parameterTree)
 
       self.observation = audioUnit.observe(\.allParameterValues, options: [.new]) {
         object, change in
