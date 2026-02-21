@@ -83,8 +83,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
         }
       }
 
-      let parameterSpecs = createProject1ExtensionParameterSpecs()
-      audioUnit.setupParameterTree(parameterSpecs.createAUParameterTree())
+      audioUnit.setupParameterTree()
 
       self.observation = audioUnit.observe(\.allParameterValues, options: [.new]) {
         object, change in

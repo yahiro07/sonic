@@ -87,7 +87,9 @@ public class Project1ExtensionAudioUnit: AUAudioUnit, @unchecked Sendable {
     super.deallocateRenderResources()
   }
 
-  public func setupParameterTree(_ parameterTree: AUParameterTree) {
+  public func setupParameterTree() {
+    let parameterSpecs = createProject1ExtensionParameterSpecs()
+    let parameterTree = parameterSpecs.createAUParameterTree()
     self.parameterTree = parameterTree
 
     // Set the Parameter default values before setting up the parameter callbacks
