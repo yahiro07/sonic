@@ -6,15 +6,8 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		3C8C7C732F493AAB00E0378A /* MySynthesizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3C8C7C702F4939F600E0378A /* MySynthesizer.cpp */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		3C8C7C582F4934FF00E0378A /* MySynth2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MySynth2.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		3C8C7C6F2F4939F600E0378A /* MySynthesizer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MySynthesizer.hpp; sourceTree = "<group>"; };
-		3C8C7C702F4939F600E0378A /* MySynthesizer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MySynthesizer.cpp; sourceTree = "<group>"; };
-		3C8C7C712F4939F600E0378A /* SynthesizerBase.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SynthesizerBase.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -39,7 +32,6 @@
 		3C8C7C4F2F4934FF00E0378A = {
 			isa = PBXGroup;
 			children = (
-				3C8C7C722F4939F600E0378A /* dsp */,
 				3C8C7C5A2F4934FF00E0378A /* MySynth2 */,
 				3C8C7C592F4934FF00E0378A /* Products */,
 			);
@@ -51,17 +43,6 @@
 				3C8C7C582F4934FF00E0378A /* MySynth2.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		3C8C7C722F4939F600E0378A /* dsp */ = {
-			isa = PBXGroup;
-			children = (
-				3C8C7C6F2F4939F600E0378A /* MySynthesizer.hpp */,
-				3C8C7C702F4939F600E0378A /* MySynthesizer.cpp */,
-				3C8C7C712F4939F600E0378A /* SynthesizerBase.hpp */,
-			);
-			name = dsp;
-			path = ../../dsp;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -139,7 +120,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3C8C7C732F493AAB00E0378A /* MySynthesizer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

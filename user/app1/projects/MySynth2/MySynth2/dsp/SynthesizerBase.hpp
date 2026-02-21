@@ -3,17 +3,21 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <string_view>
+
+using Str = std::string_view;
+using StrVec = const std::vector<std::string>&; 
 
 class ParameterBuilder {
 public:
   virtual ~ParameterBuilder() = default;
-  virtual void addUnary(uint64_t address, const std::string &identifier,
-                        const std::string &label, float defaultValue) = 0;
-  virtual void addEnum(uint64_t address, const std::string &identifier,
-                       const std::string &label, float defaultValue,
-                       const std::vector<std::string> &valueStrings) = 0;
-  virtual void addBool(uint64_t address, const std::string &identifier,
-                       const std::string &label, bool defaultValue) = 0;
+  virtual void addUnary(uint64_t address, Str identifier,
+                        Str label, float defaultValue) = 0;
+  virtual void addEnum(uint64_t address, Str identifier,
+                       Str label, Str defaultValueString,
+                       StrVec valueStrings) = 0;
+  virtual void addBool(uint64_t address, Str identifier,
+                       Str label, bool defaultValue) = 0;
 };
 
 class SynthesizerBase {
