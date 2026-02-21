@@ -1,10 +1,3 @@
-//
-//  String+Utils.swift
-//  Project1Extension
-//
-//  Created by ore on 2026/02/21.
-//
-
 import Foundation
 
 extension String {

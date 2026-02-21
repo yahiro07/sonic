@@ -1,10 +1,3 @@
-//
-//  Project1ExtensionDSPKernel.hpp
-//  Project1Extension
-//
-//  Created by ore on 2026/02/21.
-//
-
 #pragma once
 
 #import <AudioToolbox/AudioToolbox.h>

@@ -1,10 +1,3 @@
-//
-//  SinOscillator.h
-//  Project1Extension
-//
-//  Created by ore on 2026/02/21.
-//
-
 #pragma once
 
 #include <cmath>
