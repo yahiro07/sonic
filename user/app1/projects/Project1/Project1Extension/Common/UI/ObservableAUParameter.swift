@@ -5,8 +5,8 @@
 //  Created by ore on 2026/02/21.
 //
 
-import SwiftUI
 import AudioToolbox
+import SwiftUI
 
 /// Base-class for SwiftUI-capable AUParameterNodes
 ///
@@ -20,73 +20,82 @@ import AudioToolbox
 @dynamicMemberLookup
 class ObservableAUParameterNode {
 
-    /// Create an ObservableAUParameterNode
-    ///
-    /// This creates the appropriate subclass, depending on the type of the passed in AUParameterNode
-    class func create(_ parameterNode: AUParameterNode) -> ObservableAUParameterNode {
-        switch parameterNode {
-        case let parameter as AUParameter:
-            return ObservableAUParameter(parameter)
-        case let group as AUParameterGroup:
-            return ObservableAUParameterGroup(group)
-        default:
-            fatalError("Unexpected AUParameterNode subclass")
-        }
+  /// Create an ObservableAUParameterNode
+  ///
+  /// This creates the appropriate subclass, depending on the type of the passed in AUParameterNode
+  class func create(_ parameterNode: AUParameterNode) -> ObservableAUParameterNode {
+    switch parameterNode {
+    case let parameter as AUParameter:
+      return ObservableAUParameter(parameter)
+    case let group as AUParameterGroup:
+      return ObservableAUParameterGroup(group)
+    default:
+      fatalError("Unexpected AUParameterNode subclass")
+    }
+  }
+
+  subscript<T>(dynamicMember identifier: String) -> T {
+    guard let groupSelf = self as? ObservableAUParameterGroup else {
+      fatalError(
+        "Calling subscript is only supported on ObservableAUParameterGroups, you called it on \(self)"
+      )
     }
 
-    subscript<T>(dynamicMember identifier: String) -> T {
-        guard let groupSelf = self as? ObservableAUParameterGroup else {
-            fatalError("Calling subscript is only supported on ObservableAUParameterGroups, you called it on \(self)")
-        }
+    guard let node = groupSelf.children[identifier] else {
+      if groupSelf.children.isEmpty {
+        fatalError("This group has no children")
+      }
 
-        guard let node = groupSelf.children[identifier] else {
-            if groupSelf.children.isEmpty {
-                fatalError("This group has no children")
-            }
+      let availableChildren = groupSelf.children.keys.joined(separator: "\n")
 
-            let availableChildren = groupSelf.children.keys.joined(separator: "\n")
-
-            print("Parameter Group \(groupSelf) doesn't have a child node named \(identifier), did you mean one of: \n \(availableChildren)")
-            fatalError()
-        }
-
-        guard let subNode = node as? T else {
-            fatalError("Parameter node named \(identifier) cannot be converted to the requested type")
-        }
-
-        return subNode
+      print(
+        "Parameter Group \(groupSelf) doesn't have a child node named \(identifier), did you mean one of: \n \(availableChildren)"
+      )
+      fatalError()
     }
 
-    subscript(dynamicMember identifier: String) -> ObservableAUParameterNode {
-        guard let groupSelf = self as? ObservableAUParameterGroup else {
-            fatalError("Calling subscript is only supported on ObservableAUParameterGroups, you called it on \(self)")
-        }
-
-        guard let parameter = groupSelf.children[identifier] else {
-            if groupSelf.children.isEmpty {
-                fatalError("This group has no children")
-            }
-
-            let availableChildren = groupSelf.children.keys.joined(separator: "\n")
-
-            print("Parameter Group \(groupSelf) doesn't have a child node named \(identifier), did you mean one of: \n \(availableChildren)")
-            fatalError()
-        }
-
-        return parameter
+    guard let subNode = node as? T else {
+      fatalError("Parameter node named \(identifier) cannot be converted to the requested type")
     }
 
-    private func asParameter() -> ObservableAUParameter {
-        guard let parameter = self as? ObservableAUParameter else {
-            fatalError("Node is not a parameter")
-        }
-        return parameter
+    return subNode
+  }
+
+  subscript(dynamicMember identifier: String) -> ObservableAUParameterNode {
+    guard let groupSelf = self as? ObservableAUParameterGroup else {
+      fatalError(
+        "Calling subscript is only supported on ObservableAUParameterGroups, you called it on \(self)"
+      )
     }
 
-    subscript(dynamicMember keyPath: ReferenceWritableKeyPath<ObservableAUParameter, Float>) -> Float {
-        get { self.asParameter()[keyPath: keyPath] }
-        set { self.asParameter()[keyPath: keyPath] = newValue }
+    guard let parameter = groupSelf.children[identifier] else {
+      if groupSelf.children.isEmpty {
+        fatalError("This group has no children")
+      }
+
+      let availableChildren = groupSelf.children.keys.joined(separator: "\n")
+
+      print(
+        "Parameter Group \(groupSelf) doesn't have a child node named \(identifier), did you mean one of: \n \(availableChildren)"
+      )
+      fatalError()
     }
+
+    return parameter
+  }
+
+  private func asParameter() -> ObservableAUParameter {
+    guard let parameter = self as? ObservableAUParameter else {
+      fatalError("Node is not a parameter")
+    }
+    return parameter
+  }
+
+  subscript(dynamicMember keyPath: ReferenceWritableKeyPath<ObservableAUParameter, Float>) -> Float
+  {
+    get { self.asParameter()[keyPath: keyPath] }
+    set { self.asParameter()[keyPath: keyPath] = newValue }
+  }
 }
 
 /// An Observable version of AUParameterGroup
@@ -95,16 +104,16 @@ class ObservableAUParameterNode {
 ///
 final class ObservableAUParameterGroup: ObservableAUParameterNode {
 
-    private(set) var children: [String: ObservableAUParameterNode]
+  private(set) var children: [String: ObservableAUParameterNode]
 
-    init(_ parameterGroup: AUParameterGroup) {
-        children = parameterGroup.children.reduce(
-            into: [String: ObservableAUParameterNode]()
-        ) { dict, node in
-            let observableNode = ObservableAUParameterNode.create(node)
-            dict[node.identifier] = observableNode
-        }
+  init(_ parameterGroup: AUParameterGroup) {
+    children = parameterGroup.children.reduce(
+      into: [String: ObservableAUParameterNode]()
+    ) { dict, node in
+      let observableNode = ObservableAUParameterNode.create(node)
+      dict[node.identifier] = observableNode
     }
+  }
 }
 
 /// An Observable version of AUParameter
@@ -118,118 +127,119 @@ final class ObservableAUParameterGroup: ObservableAUParameterNode {
 @Observable
 final class ObservableAUParameter: ObservableAUParameterNode {
 
-    private weak var parameter: AUParameter?
-    private var observerToken: AUParameterObserverToken!
-    private var editingState: EditingState = .inactive
+  private weak var parameter: AUParameter?
+  private var observerToken: AUParameterObserverToken!
+  private var editingState: EditingState = .inactive
 
-    let min: AUValue
-    let max: AUValue
-    let displayName: String
-    let defaultValue: AUValue = 0.0
-    let unit: AudioUnitParameterUnit
+  let min: AUValue
+  let max: AUValue
+  let displayName: String
+  let defaultValue: AUValue = 0.0
+  let unit: AudioUnitParameterUnit
 
-    init(_ parameter: AUParameter) {
-        self.parameter = parameter
-        self.value = parameter.value
-        self.min = parameter.minValue
-        self.max = parameter.maxValue
-        self.displayName = parameter.displayName
-        self.unit = parameter.unit
-        super.init()
+  init(_ parameter: AUParameter) {
+    self.parameter = parameter
+    self.value = parameter.value
+    self.min = parameter.minValue
+    self.max = parameter.maxValue
+    self.displayName = parameter.displayName
+    self.unit = parameter.unit
+    super.init()
 
-        /// Use the parameter.token(byAddingParameterObserver:) function to monitor for parameter
-        /// changes from the host. The only role of this callback is to update the UI if the value is changed by the host.
-        self.observerToken = parameter.token { @Sendable (_ address: AUParameterAddress, _ auValue: AUValue) in
+    /// Use the parameter.token(byAddingParameterObserver:) function to monitor for parameter
+    /// changes from the host. The only role of this callback is to update the UI if the value is changed by the host.
+    self.observerToken = parameter.token {
+      @Sendable (_ address: AUParameterAddress, _ auValue: AUValue) in
 
-            DispatchQueue.main.async {
-                guard address == self.parameter?.address else { return }
-                
-                // Don't update the UI if the user is currently interacting
-                guard self.editingState == .inactive else { return }
+      DispatchQueue.main.async {
+        guard address == self.parameter?.address else { return }
 
-                self.editingState = .hostUpdate
-                self.value = auValue
-                self.editingState = .inactive
-            }
-        }
+        // Don't update the UI if the user is currently interacting
+        guard self.editingState == .inactive else { return }
+
+        self.editingState = .hostUpdate
+        self.value = auValue
+        self.editingState = .inactive
+      }
     }
+  }
 
-    var value: AUValue {
-        didSet {
-            /// If the editing state is .hostUpdate, don't propagate this back to the host
-            guard editingState != .hostUpdate else { return }
+  var value: AUValue {
+    didSet {
+      /// If the editing state is .hostUpdate, don't propagate this back to the host
+      guard editingState != .hostUpdate else { return }
 
-            let automationEventType = resolveEventType()
-            parameter?.setValue(
-                value,
-                originator: observerToken,
-                atHostTime: 0,
-                eventType: automationEventType
-            )
-            print("Param was set \(value)")
-        }
+      let automationEventType = resolveEventType()
+      parameter?.setValue(
+        value,
+        originator: observerToken,
+        atHostTime: 0,
+        eventType: automationEventType
+      )
+      print("Param was set \(value)")
     }
+  }
 
-    var boolValue: Bool {
-       get {
-		   value >= 0.5
-        }
-        set {
-            value = newValue ? 1.0 : 0.0
-        }
+  var boolValue: Bool {
+    get {
+      value >= 0.5
     }
-
-    /// A callback for UI elements to notify the Parameter when UI editing state changes
-    ///
-    /// This is the core mechanism for ensuring correct automation behavior. With native SwiftUI elements like `Slider`,
-    /// this method should be passed directly into the `onEditingChanged:` argument.
-    ///
-    /// As long as the UI Element correctly sets the editing state, then the ObservableAUParameter's calls to
-    /// AUParameter.setValue will contain the correct automation event type.
-    ///
-    /// `onEditingChanged` should be called with `true` before the first value is sent, so that it can be sent with a
-    /// `.touch` event. It's expected that `onEditingChanged` is called with a value of `false` to mark the end
-    /// of interaction *after* the last value has been sent, since this is how SwiftUI's `Slider` and `Stepper` views behave.
-    func onEditingChanged(_ editing: Bool) {
-        if editing {
-            editingState = .began
-        } else {
-            editingState = .ended
-
-            // We set the value here again to prompt its `didSet` implementation, so that we can send the appropriate `.release` event.
-            value = value
-        }
+    set {
+      value = newValue ? 1.0 : 0.0
     }
+  }
 
-    private func resolveEventType() -> AUParameterAutomationEventType {
-        let eventType: AUParameterAutomationEventType
-        switch editingState {
-        case .began:
-            eventType = .touch
-            editingState = .active
-        case .ended:
-            eventType = .release
-            editingState = .inactive
-        default:
-            eventType = .value
-        }
-        return eventType
-    }
+  /// A callback for UI elements to notify the Parameter when UI editing state changes
+  ///
+  /// This is the core mechanism for ensuring correct automation behavior. With native SwiftUI elements like `Slider`,
+  /// this method should be passed directly into the `onEditingChanged:` argument.
+  ///
+  /// As long as the UI Element correctly sets the editing state, then the ObservableAUParameter's calls to
+  /// AUParameter.setValue will contain the correct automation event type.
+  ///
+  /// `onEditingChanged` should be called with `true` before the first value is sent, so that it can be sent with a
+  /// `.touch` event. It's expected that `onEditingChanged` is called with a value of `false` to mark the end
+  /// of interaction *after* the last value has been sent, since this is how SwiftUI's `Slider` and `Stepper` views behave.
+  func onEditingChanged(_ editing: Bool) {
+    if editing {
+      editingState = .began
+    } else {
+      editingState = .ended
 
-    private enum EditingState {
-        case inactive
-        case began
-        case active
-        case ended
-        case hostUpdate
+      // We set the value here again to prompt its `didSet` implementation, so that we can send the appropriate `.release` event.
+      value = value
     }
+  }
+
+  private func resolveEventType() -> AUParameterAutomationEventType {
+    let eventType: AUParameterAutomationEventType
+    switch editingState {
+    case .began:
+      eventType = .touch
+      editingState = .active
+    case .ended:
+      eventType = .release
+      editingState = .inactive
+    default:
+      eventType = .value
+    }
+    return eventType
+  }
+
+  private enum EditingState {
+    case inactive
+    case began
+    case active
+    case ended
+    case hostUpdate
+  }
 }
 
 extension AUAudioUnit {
-    // Can we subclass the Parameter tree to set that on the AUAudioUnit?
+  // Can we subclass the Parameter tree to set that on the AUAudioUnit?
 
-    @MainActor var observableParameterTree: ObservableAUParameterGroup? {
-        guard let paramTree = self.parameterTree else { return nil }
-        return ObservableAUParameterGroup(paramTree)
-    }
+  @MainActor var observableParameterTree: ObservableAUParameterGroup? {
+    guard let paramTree = self.parameterTree else { return nil }
+    return ObservableAUParameterGroup(paramTree)
+  }
 }
