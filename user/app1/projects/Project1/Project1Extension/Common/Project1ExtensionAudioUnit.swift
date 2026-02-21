@@ -88,7 +88,7 @@ public class Project1ExtensionAudioUnit: AUAudioUnit, @unchecked Sendable {
   }
 
   public func setupParameterTree() {
-    let parameterSpecs = createProject1ExtensionParameterSpecs()
+    let parameterSpecs = createProject1ExtensionParameterSpecs(synthInstance)
     let parameterTree = parameterSpecs.createAUParameterTree()
     self.parameterTree = parameterTree
 

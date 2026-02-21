@@ -6,5 +6,6 @@
 //
 
 #import "MySynthesizer.hpp"
+#import "ParameterBuilderImpl.hpp"
 #import "Project1ExtensionAUProcessHelper.hpp"
 #import "Project1ExtensionParameterAddresses.h"

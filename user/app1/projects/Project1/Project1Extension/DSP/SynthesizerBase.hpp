@@ -23,6 +23,8 @@ public:
 
 class SynthesizerBase {
 public:
+  // SynthesizerBase *asSynthesizerBase() { return this; }
+
   virtual ~SynthesizerBase() = default;
   virtual void setupParameters(ParameterBuilder &builder) = 0;
   virtual void setParameter(uint64_t address, float value) = 0;

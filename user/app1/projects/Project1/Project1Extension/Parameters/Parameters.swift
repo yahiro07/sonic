@@ -8,48 +8,57 @@
 import AudioToolbox
 import Foundation
 
-func createProject1ExtensionParameterSpecs() -> ParameterTreeSpec {
-  // return AUParameterTree.createTree(withChildren: Project1ExtensionParameterSpecs.parameters)
-  let parameterSpecs = ParameterTreeSpec {
-    ParameterGroupSpec(identifier: "global", name: "Global") {
-      ParameterSpec(
-        address: .gain,
-        identifier: "gain",
-        name: "Output Gain",
-        units: .linearGain,
-        valueRange: 0.0...1.0,
-        defaultValue: 0.25
-      )
+extension ParameterGroupSpec {
+  init(identifier: String, name: String, children: [NodeSpec]) {
+    self.init(identifier: identifier, name: name) {
+      return children
     }
   }
-  return parameterSpecs
 }
 
-extension ParameterSpec {
-  init(
-    address: Project1ExtensionParameterAddress,
-    identifier: String,
-    name: String,
-    units: AudioUnitParameterUnit,
-    valueRange: ClosedRange<AUValue>,
-    defaultValue: AUValue,
-    unitName: String? = nil,
-    flags: AudioUnitParameterOptions = [
-      AudioUnitParameterOptions.flag_IsWritable, AudioUnitParameterOptions.flag_IsReadable,
-    ],
-    valueStrings: [String]? = nil,
-    dependentParameters: [NSNumber]? = nil
-  ) {
-    self.init(
-      address: address.rawValue,
-      identifier: identifier,
-      name: name,
-      units: units,
-      valueRange: valueRange,
-      defaultValue: defaultValue,
-      unitName: unitName,
-      flags: flags,
-      valueStrings: valueStrings,
-      dependentParameters: dependentParameters)
+func createProject1ExtensionParameterSpecs(_ synthInstance: SynthesizerBase)
+  -> ParameterTreeSpec
+{
+  // let parameterSpecs = ParameterTreeSpec {
+  //   ParameterGroupSpec(identifier: "global", name: "Global") {
+  //     ParameterSpec(
+  //       address: .gain,
+  //       identifier: "gain",
+  //       name: "Output Gain",
+  //       units: .linearGain,
+  //       valueRange: 0.0...1.0,
+  //       defaultValue: 0.25
+  //     )
+  //   }
+  // }
+  var parameterBuilder = ParameterBuilderImpl()
+  var synthInstanceVar = synthInstance
+  parameterBuilder.callSetupParameters(&synthInstanceVar)
+
+  let parameterSpecs = ParameterTreeSpec {
+    ParameterGroupSpec(
+      identifier: "global",
+      name: "Global",
+      children: parameterBuilder.getItems().map { item in
+        ParameterSpec(
+          address: item.address,
+          identifier: String(item.identifier),
+          name: String(item.label),
+          units: item.type == .Enum ? .indexed : (item.type == .Bool ? .boolean : .generic),
+          valueRange: item.minValue...item.maxValue,
+          defaultValue: item.defaultValue,
+          unitName: nil,
+          flags: item.type == .Enum
+            ? [
+              .flag_IsWritable, .flag_IsReadable,
+              .flag_ValuesHaveStrings,
+            ] : [.flag_IsWritable, .flag_IsReadable],
+          valueStrings: item.valueStrings.empty()
+            ? nil : item.valueStrings.map { String($0) },
+          dependentParameters: nil
+        )
+      })
   }
+  print(parameterSpecs)
+  return parameterSpecs
 }
