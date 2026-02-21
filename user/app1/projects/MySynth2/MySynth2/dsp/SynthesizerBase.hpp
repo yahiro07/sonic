@@ -10,6 +10,8 @@ using StrVec = const std::vector<std::string> &;
 
 class ParameterBuilder {
 public:
+  ParameterBuilder *asParameterBuilder() { return this; }
+
   virtual ~ParameterBuilder() = default;
   virtual void addUnary(uint64_t address, Str identifier, Str label,
                         float defaultValue) = 0;
