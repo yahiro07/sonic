@@ -1,10 +1,8 @@
 import AVFoundation
 import CoreAudioKit
 
-typealias SynthInstanceHandle = UnsafeMutablePointer<SynthesizerBase>
-
 public class AudioUnit: AUAudioUnit, @unchecked Sendable {
-  let pluginCore: AUv3PluginCore = AUv3PluginCore()
+  let pluginCore: AUv3PluginCore = AUv3PluginCoreImpl()
   // C++ Objects
   var kernel = DSPKernel()
   var processHelper: AUProcessHelper?

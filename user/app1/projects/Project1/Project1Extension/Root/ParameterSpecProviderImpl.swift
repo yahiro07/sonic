@@ -1,7 +1,7 @@
 import AudioToolbox
 import Foundation
 
-class ParameterSpecProvider {
+class ParameterSpecProviderImpl: ParameterSpecProvider {
   let latestParametersVersion: Int = 1
 
   func migrateParametersIfNeeded(paramVer: Int, rawParameters: inout [String: Float]) {
