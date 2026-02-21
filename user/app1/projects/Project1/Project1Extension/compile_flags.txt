@@ -11,7 +11,9 @@ objective-c++
 -F
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/PrivateFrameworks
 -I./Common
--I./Common/DSP
+-I./Common/Parameters
+-I./Common/Events
 -I./DSP
 -I./Parameters
+
 

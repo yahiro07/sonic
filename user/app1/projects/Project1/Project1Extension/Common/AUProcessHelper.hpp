@@ -5,13 +5,13 @@
 #import <AudioToolbox/AudioToolbox.h>
 
 #include "DSPKernel.hpp"
-// #include "LowLevelPortalEventQueue.hpp"
+#include "RealtimeHostEventQueue.hpp"
 #include <vector>
 
 // MARK:- AUProcessHelper Utility Class
 class AUProcessHelper {
 private:
-  // LowLevelPortalEventQueue lowLevelPortalEventQueue;
+  RealtimeHostEventQueue realtimeHostEventQueue;
   DSPKernel &mKernel;
   std::vector<float *> mOutputBuffers;
 
@@ -22,9 +22,9 @@ public:
     mOutputBuffers.resize(outputChannelCount);
   }
 
-  // bool popLowLevelPortalEvent(LowLevelPortalEvent &outEvent) {
-  //   return lowLevelPortalEventQueue.pop(outEvent);
-  // }
+  bool popRealtimeHostEvent(RealtimeHostEvent &outEvent) {
+    return realtimeHostEventQueue.pop(outEvent);
+  }
 
   // MARK: - MIDI Protocol
   MIDIProtocolID AudioUnitMIDIProtocol() const { return kMIDIProtocol_2_0; }
@@ -187,11 +187,11 @@ private:
         (double)note.velocity / (double)std::numeric_limits<std::uint16_t>::max();
       mKernel.noteOn(note.number, velocity);
 
-      // lowLevelPortalEventQueue.push(
-      //   {LowLevelPortalEventType::NoteOn, note.number, static_cast<float>(velocity)});
+      realtimeHostEventQueue.push(
+        {RealtimeHostEventType::NoteOn, note.number, static_cast<float>(velocity)});
     } else if (status == kMIDICVStatusNoteOff) {
       mKernel.noteOff(note.number);
-      // lowLevelPortalEventQueue.push({LowLevelPortalEventType::NoteOff, note.number, 0.f});
+      realtimeHostEventQueue.push({RealtimeHostEventType::NoteOff, note.number, 0.f});
     }
   }
 };
