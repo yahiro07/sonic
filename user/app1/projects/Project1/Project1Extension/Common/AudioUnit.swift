@@ -23,6 +23,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
     _outputBusses = AUAudioUnitBusArray(
       audioUnit: self, busType: AUAudioUnitBusType.output, busses: [outputBus!])
     processHelper = AUProcessHelper(&kernel)
+    kernel.setSynthesizerInstance(synthInstance)
   }
 
   public override var outputBusses: AUAudioUnitBusArray {

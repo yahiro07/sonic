@@ -31,5 +31,5 @@ public:
   virtual void prepare(float sampleRate, int32_t maxFrameCount) = 0;
   virtual void noteOn(int32_t noteNumber, float velocity) = 0;
   virtual void noteOff(int32_t noteNumber) = 0;
-  virtual void process(float *buffer, int32_t frames) = 0;
+  virtual void process(float *bufferL, float* bufferR, int32_t frames) = 0;
 };

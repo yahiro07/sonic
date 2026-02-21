@@ -1,13 +1,20 @@
+
 #pragma once
 
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 
 #include "DSPKernel.hpp"
+// #include "LowLevelPortalEventQueue.hpp"
 #include <vector>
 
 // MARK:- AUProcessHelper Utility Class
 class AUProcessHelper {
+private:
+  // LowLevelPortalEventQueue lowLevelPortalEventQueue;
+  DSPKernel &mKernel;
+  std::vector<float *> mOutputBuffers;
+
 public:
   AUProcessHelper(DSPKernel &kernel) : mKernel{kernel} {}
 
@@ -15,6 +22,53 @@ public:
     mOutputBuffers.resize(outputChannelCount);
   }
 
+  // bool popLowLevelPortalEvent(LowLevelPortalEvent &outEvent) {
+  //   return lowLevelPortalEventQueue.pop(outEvent);
+  // }
+
+  // MARK: - MIDI Protocol
+  MIDIProtocolID AudioUnitMIDIProtocol() const { return kMIDIProtocol_2_0; }
+
+  // Block which subclassers must provide to implement rendering.
+  AUInternalRenderBlock internalRenderBlock() {
+    /*
+     Capture in locals to avoid ObjC member lookups. If "self" is captured in
+     render, we're doing it wrong.
+     */
+    return ^AUAudioUnitStatus(AudioUnitRenderActionFlags *actionFlags,
+                              const AudioTimeStamp *timestamp,
+                              AUAudioFrameCount frameCount,
+                              NSInteger outputBusNumber,
+                              AudioBufferList *outputData,
+                              const AURenderEvent *realtimeEventListHead,
+                              AURenderPullInputBlock __unsafe_unretained pullInputBlock) {
+      if (frameCount > mKernel.maximumFramesToRender()) {
+        return kAudioUnitErr_TooManyFramesToProcess;
+      }
+
+      /*
+       Important:
+       If the caller passed non-null output pointers
+       (outputData->mBuffers[x].mData), use those.
+
+       If the caller passed null output buffer pointers, process in memory owned
+       by the Audio Unit and modify the (outputData->mBuffers[x].mData) pointers
+       to point to this owned memory. The Audio Unit is responsible for
+       preserving the validity of this memory until the next call to render, or
+       deallocateRenderResources is called.
+
+       If your algorithm cannot process in-place, you will need to preallocate
+       an output buffer and use it here.
+
+       See the description of the canProcessInPlace property.
+       */
+      processWithEvents(outputData, timestamp, frameCount, realtimeEventListHead);
+
+      return noErr;
+    };
+  }
+
+private:
   /**
    This function handles the event list processing and rendering loop for you.
    Call it inside your internalRenderBlock.
@@ -73,7 +127,7 @@ public:
   AURenderEvent const *performAllSimultaneousEvents(AUEventSampleTime now,
                                                     AURenderEvent const *event) {
     do {
-      mKernel.handleOneEvent(now, event);
+      handleOneEvent(now, event);
 
       // Go to next event.
       event = event->head.next;
@@ -83,46 +137,61 @@ public:
     return event;
   }
 
-  // Block which subclassers must provide to implement rendering.
-  AUInternalRenderBlock internalRenderBlock() {
-    /*
-     Capture in locals to avoid ObjC member lookups. If "self" is captured in
-     render, we're doing it wrong.
-     */
-    return ^AUAudioUnitStatus(AudioUnitRenderActionFlags *actionFlags,
-                              const AudioTimeStamp *timestamp,
-                              AUAudioFrameCount frameCount,
-                              NSInteger outputBusNumber,
-                              AudioBufferList *outputData,
-                              const AURenderEvent *realtimeEventListHead,
-                              AURenderPullInputBlock __unsafe_unretained pullInputBlock) {
-      if (frameCount > mKernel.maximumFramesToRender()) {
-        return kAudioUnitErr_TooManyFramesToProcess;
-      }
+  void handleOneEvent(AUEventSampleTime now, AURenderEvent const *event) {
+    switch (event->head.eventType) {
+    case AURenderEventParameter: {
+      handleParameterEvent(now, event->parameter);
+      break;
+    }
 
-      /*
-       Important:
-       If the caller passed non-null output pointers
-       (outputData->mBuffers[x].mData), use those.
+    case AURenderEventMIDIEventList: {
+      handleMIDIEventList(now, &event->MIDIEventsList);
+      break;
+    }
 
-       If the caller passed null output buffer pointers, process in memory owned
-       by the Audio Unit and modify the (outputData->mBuffers[x].mData) pointers
-       to point to this owned memory. The Audio Unit is responsible for
-       preserving the validity of this memory until the next call to render, or
-       deallocateRenderResources is called.
-
-       If your algorithm cannot process in-place, you will need to preallocate
-       an output buffer and use it here.
-
-       See the description of the canProcessInPlace property.
-       */
-      processWithEvents(outputData, timestamp, frameCount, realtimeEventListHead);
-
-      return noErr;
-    };
+    default:
+      break;
+    }
   }
 
-private:
-  DSPKernel &mKernel;
-  std::vector<float *> mOutputBuffers;
+  void handleParameterEvent(AUEventSampleTime now,
+                            AUParameterEvent const &parameterEvent) {
+    mKernel.setParameter(parameterEvent.parameterAddress, parameterEvent.value);
+  }
+
+  void handleMIDIEventList(AUEventSampleTime now, AUMIDIEventList const *midiEvent) {
+    auto visitor =
+      [](void *context, MIDITimeStamp timeStamp, MIDIUniversalMessage message) {
+        auto thisObject = static_cast<AUProcessHelper *>(context);
+
+        switch (message.type) {
+        case kMIDIMessageTypeChannelVoice2: {
+          thisObject->handleMIDI2VoiceMessage(message);
+        } break;
+
+        default:
+          break;
+        }
+      };
+
+    MIDIEventListForEachEvent(&midiEvent->eventList, visitor, this);
+  }
+
+  void handleMIDI2VoiceMessage(const struct MIDIUniversalMessage &message) {
+    const auto &note = message.channelVoice2.note;
+
+    const auto &status = message.channelVoice2.status;
+
+    if (status == kMIDICVStatusNoteOn) {
+      auto velocity =
+        (double)note.velocity / (double)std::numeric_limits<std::uint16_t>::max();
+      mKernel.noteOn(note.number, velocity);
+
+      // lowLevelPortalEventQueue.push(
+      //   {LowLevelPortalEventType::NoteOn, note.number, static_cast<float>(velocity)});
+    } else if (status == kMIDICVStatusNoteOff) {
+      mKernel.noteOff(note.number);
+      // lowLevelPortalEventQueue.push({LowLevelPortalEventType::NoteOff, note.number, 0.f});
+    }
+  }
 };

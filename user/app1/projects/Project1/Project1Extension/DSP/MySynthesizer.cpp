@@ -31,7 +31,7 @@ void MySynthesizer::noteOn(int32_t noteNumber, float _velocity) {
 
 void MySynthesizer::noteOff(int32_t _noteNumber) { this->gateOn = false; }
 
-void MySynthesizer::process(float *buffer, int32_t frames) {
+void MySynthesizer::process(float *bufferL, float* bufferR,int32_t frames) {
   if (sampleRate <= 0.0f)
     return;
 
@@ -49,8 +49,9 @@ void MySynthesizer::process(float *buffer, int32_t frames) {
     if (gateOn) {
       y = std::sin(phase * 2.0f * (float)M_PI) * oscVolume;
     }
-    buffer[i] = y;
+    bufferL[i] = y;
   }
+  memcpy(bufferR, bufferL, sizeof(float) * frames);
 }
 
 SynthesizerBase *createSynthesizerInstance() { return new MySynthesizer(); }

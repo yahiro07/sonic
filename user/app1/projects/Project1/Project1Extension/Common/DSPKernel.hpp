@@ -1,3 +1,4 @@
+
 #pragma once
 
 #import <AudioToolbox/AudioToolbox.h>
@@ -6,47 +7,73 @@
 #import <span>
 #import <vector>
 
-#import "ParameterAddresses.h"
-#import "SinOscillator.h"
+#include "SynthesizerBase.hpp"
 
 /*
  DSPKernel
  As a non-ObjC class, this is safe to use from render thread.
  */
 class DSPKernel {
+
+private:
+  AUHostMusicalContextBlock mMusicalContextBlock;
+
+  double mSampleRate = 44100.0;
+  bool mBypassed = false;
+  AUAudioFrameCount mMaxFramesToRender = 1024;
+
+  SynthesizerBase *mSynthInstance = nullptr;
+  std::vector<AUValue> mParameterValues;
+  std::vector<float> mLeftBuffer;
+  std::vector<float> mRightBuffer;
+
 public:
-  void initialize(int channelCount, double inSampleRate) {
-    mSampleRate = inSampleRate;
-    mSinOsc = SinOscillator(inSampleRate);
-  }
+  void initialize(int channelCount, double inSampleRate) { mSampleRate = inSampleRate; }
 
   void deInitialize() {}
+
+  void setSynthesizerInstance(SynthesizerBase* synthInstance) {
+    mSynthInstance = synthInstance;
+  }
+
+  void setParametersVersion(int version) {
+    if (mSynthInstance) {
+      // mSynthInstance->setParametersVersion(version);
+    }
+  }
 
   // MARK: - Bypass
   bool isBypassed() { return mBypassed; }
 
   void setBypass(bool shouldBypass) { mBypassed = shouldBypass; }
 
+  void setParameterCapacity(uint32_t capacity) {
+    if (capacity > 4096) {
+      capacity = 4096; // Arbitrary limit to prevent excessive memory usage
+    }
+    mParameterValues.assign(static_cast<size_t>(capacity), 0.f);
+  }
+
   // MARK: - Parameter Getter / Setter
-  // Add a case for each parameter in Project1ExtensionParameterAddresses.h
+  // Add a case for each parameter
   void setParameter(AUParameterAddress address, AUValue value) {
-    switch (address) {
-    case ParameterAddress::gain:
-      mGain = value;
-      break;
+    auto index = static_cast<size_t>(address);
+    if (index < mParameterValues.size()) {
+      std::atomic_ref<AUValue>(mParameterValues[index])
+        .store(value, std::memory_order_relaxed);
+    }
+    if (mSynthInstance) {
+      mSynthInstance->setParameter(address, value);
     }
   }
 
   AUValue getParameter(AUParameterAddress address) {
-    // Return the goal. It is not thread safe to return the ramping value.
-
-    switch (address) {
-    case ParameterAddress::gain:
-      return (AUValue)mGain;
-
-    default:
-      return 0.f;
+    auto index = static_cast<size_t>(address);
+    if (index < mParameterValues.size()) {
+      return std::atomic_ref<AUValue>(mParameterValues[index])
+        .load(std::memory_order_relaxed);
     }
+    return 0.f;
   }
 
   // MARK: - Max Frames
@@ -54,6 +81,8 @@ public:
 
   void setMaximumFramesToRender(const AUAudioFrameCount &maxFrames) {
     mMaxFramesToRender = maxFrames;
+    mLeftBuffer.resize(maxFrames);
+    mRightBuffer.resize(maxFrames);
   }
 
   // MARK: - Musical Context
@@ -64,11 +93,6 @@ public:
   // MARK: - MIDI Protocol
   MIDIProtocolID AudioUnitMIDIProtocol() const { return kMIDIProtocol_2_0; }
 
-  inline double MIDINoteToFrequency(int note) {
-    constexpr auto kMiddleA = 440.0;
-    return (kMiddleA / 32.0) * pow(2, ((note - 9) / 12.0));
-  }
-
   /**
    MARK: - Internal Process
 
@@ -77,17 +101,22 @@ public:
    */
   void process(std::span<float *> outputBuffers, AUEventSampleTime bufferStartTime,
                AUAudioFrameCount frameCount) {
-    if (mBypassed) {
-      // Fill the 'outputBuffers' with silence
-      for (UInt32 channel = 0; channel < outputBuffers.size(); ++channel) {
-        std::fill_n(outputBuffers[channel], frameCount, 0.f);
-      }
+    // Fill the 'outputBuffers' with silence
+    for (UInt32 channel = 0; channel < outputBuffers.size(); ++channel) {
+      std::fill_n(outputBuffers[channel], frameCount, 0.f);
+    }
+    if (mBypassed)
+      return;
+    if (!mSynthInstance)
+      return;
+
+    if (mLeftBuffer.size() == 0 || mRightBuffer.size() == 0) {
       return;
     }
 
     // Use this to get Musical context info from the Plugin Host,
-    // Replace nullptr with &memberVariable according to the AUHostMusicalContextBlock
-    // function signature
+    // Replace nullptr with &memberVariable according to the
+    // AUHostMusicalContextBlock function signature
     if (mMusicalContextBlock) {
       mMusicalContextBlock(nullptr /* currentTempo */,
                            nullptr /* timeSignatureNumerator */,
@@ -97,93 +126,32 @@ public:
                            nullptr /* currentMeasureDownbeatPosition */);
     }
 
-    // Generate per sample dsp before assigning it to out
-    for (UInt32 frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
-      // Do your frame by frame dsp here...
-      const auto sample = mSinOsc.process() * mNoteEnvelope * mGain;
+    memset(mLeftBuffer.data(), 0, sizeof(float) * frameCount);
+    memset(mRightBuffer.data(), 0, sizeof(float) * frameCount);
 
-      for (UInt32 channel = 0; channel < outputBuffers.size(); ++channel) {
-        outputBuffers[channel][frameIndex] = sample;
+    mSynthInstance->process(mLeftBuffer.data(), mRightBuffer.data(), frameCount);
+
+    auto numChannels = outputBuffers.size();
+    if (numChannels == 2) {
+      auto byteLength = sizeof(float) * frameCount;
+      std::memcpy(outputBuffers[0], mLeftBuffer.data(), byteLength);
+      std::memcpy(outputBuffers[1], mRightBuffer.data(), byteLength);
+    } else if (numChannels == 1) {
+      for (UInt32 i = 0; i < frameCount; ++i) {
+        auto y = outputBuffers[0][i] = 0.5f * (mLeftBuffer[i] + mRightBuffer[i]);
       }
     }
   }
 
-  void handleOneEvent(AUEventSampleTime now, AURenderEvent const *event) {
-    switch (event->head.eventType) {
-    case AURenderEventParameter: {
-      handleParameterEvent(now, event->parameter);
-      break;
-    }
-
-    case AURenderEventMIDIEventList: {
-      handleMIDIEventList(now, &event->MIDIEventsList);
-      break;
-    }
-
-    default:
-      break;
+  void noteOn(int noteNumber, double velocity) {
+    if (mSynthInstance) {
+      mSynthInstance->noteOn(noteNumber, static_cast<float>(velocity));
     }
   }
 
-  void handleParameterEvent(AUEventSampleTime now,
-                            AUParameterEvent const &parameterEvent) {
-    setParameter(parameterEvent.parameterAddress, parameterEvent.value);
-  }
-
-  void handleMIDIEventList(AUEventSampleTime now, AUMIDIEventList const *midiEvent) {
-    auto visitor =
-      [](void *context, MIDITimeStamp timeStamp, MIDIUniversalMessage message) {
-        auto thisObject = static_cast<DSPKernel *>(context);
-
-        switch (message.type) {
-        case kMIDIMessageTypeChannelVoice2: {
-          thisObject->handleMIDI2VoiceMessage(message);
-        } break;
-
-        default:
-          break;
-        }
-      };
-
-    MIDIEventListForEachEvent(&midiEvent->eventList, visitor, this);
-  }
-
-  void handleMIDI2VoiceMessage(const struct MIDIUniversalMessage &message) {
-    const auto &note = message.channelVoice2.note;
-
-    switch (message.channelVoice2.status) {
-    case kMIDICVStatusNoteOff: {
-      mNoteEnvelope = 0.0;
-    } break;
-
-    case kMIDICVStatusNoteOn: {
-      const auto velocity = message.channelVoice2.note.velocity;
-      const auto freqHertz = MIDINoteToFrequency(note.number);
-
-      mSinOsc = SinOscillator(mSampleRate);
-
-      // Set frequency on per channel oscillator
-      mSinOsc.setFrequency(freqHertz);
-
-      // Use velocity to set amp envelope level
-      mNoteEnvelope =
-        (double)velocity / (double)std::numeric_limits<std::uint16_t>::max();
-    } break;
-
-    default:
-      break;
+  void noteOff(int noteNumber) {
+    if (mSynthInstance) {
+      mSynthInstance->noteOff(noteNumber);
     }
   }
-
-  // MARK: - Member Variables
-  AUHostMusicalContextBlock mMusicalContextBlock;
-
-  double mSampleRate = 44100.0;
-  double mGain = 1.0;
-  double mNoteEnvelope = 0.0;
-
-  bool mBypassed = false;
-  AUAudioFrameCount mMaxFramesToRender = 1024;
-
-  SinOscillator mSinOsc;
 };
