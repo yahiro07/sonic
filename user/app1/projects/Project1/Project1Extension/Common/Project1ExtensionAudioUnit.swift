@@ -8,6 +8,7 @@
 import AVFoundation
 
 public class Project1ExtensionAudioUnit: AUAudioUnit, @unchecked Sendable {
+  let synthInstance: SynthesizerBase = createSynthesizerInstance().pointee
   // C++ Objects
   var kernel = Project1ExtensionDSPKernel()
   var processHelper: AUProcessHelper?

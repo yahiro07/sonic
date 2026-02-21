@@ -51,3 +51,5 @@ void MySynthesizer::process(float *buffer, int32_t frames) {
     buffer[i] = y;
   }
 }
+
+SynthesizerBase *createSynthesizerInstance() { return new MySynthesizer(); }

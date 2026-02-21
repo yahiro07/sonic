@@ -22,3 +22,5 @@ private:
   float sampleRate = 0.0f;
   float phase = 0.0f;
 };
+
+SynthesizerBase *createSynthesizerInstance();
