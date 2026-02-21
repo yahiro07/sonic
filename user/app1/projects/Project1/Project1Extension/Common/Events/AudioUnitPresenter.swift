@@ -4,7 +4,7 @@ import Combine
 //・UI上の鍵盤からのノートオン/ノートオフ
 //・ホストから送られたイベントの購読
 //の機能を提供する
-public protocol AudioUnitPresenter {
+protocol AudioUnitPresenter {
   var isHostedInStandaloneApp: Bool { get }
   func noteOnFromUI(_ noteNumber: Int, velocity: Float)
   func noteOffFromUI(_ noteNumber: Int)

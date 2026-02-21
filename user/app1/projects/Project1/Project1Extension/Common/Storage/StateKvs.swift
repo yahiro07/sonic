@@ -1,4 +1,4 @@
-public class StateKvs {
+class StateKvs {
   private(set) var items: [String: String] = [:]
 
   func setItems(_ items: [String: String]) {

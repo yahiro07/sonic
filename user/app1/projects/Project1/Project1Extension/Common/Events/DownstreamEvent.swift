@@ -1,4 +1,4 @@
-public enum DownstreamEvent {
+enum DownstreamEvent {
   case hostNoteOn(Int, Float)
   case hostNoteOff(Int)
   case hostTempo(Int)

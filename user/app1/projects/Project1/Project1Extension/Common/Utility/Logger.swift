@@ -8,7 +8,7 @@
 // }
 import Foundation
 
-public struct LogItem {
+struct LogItem {
   let timestamp: Double  //ms from epoch
   let subSystem: String
   let kind: String
@@ -38,10 +38,10 @@ let logKindIcons: [String: String] = [
 ]
 
 #if DEBUG
-  public class LoggerCore {
+  class LoggerCore {
     let udpLogger = UDPLogger()
 
-    public func pushLogItem(_ item: LogItem) {
+    func pushLogItem(_ item: LogItem) {
 
       let ts = formatTimestamp(item.timestamp)
       let ssIcon = subSystemIcons[item.subSystem] ?? ""
@@ -56,13 +56,13 @@ let logKindIcons: [String: String] = [
       }
     }
   }
-  public let loggerCore = LoggerCore()
+  let loggerCore = LoggerCore()
 
-  public class LoggerEntry {
+  class LoggerEntry {
 
     private let subSystem: String
 
-    public init(subSystem: String) {
+    init(subSystem: String) {
       self.subSystem = subSystem
     }
 
@@ -74,44 +74,44 @@ let logKindIcons: [String: String] = [
         ))
     }
 
-    public func log(_ message: String) {
+    func log(_ message: String) {
       pushLog("log", message)
     }
 
-    public func mark(_ message: String) {
+    func mark(_ message: String) {
       pushLog("mark", message)
     }
 
-    public func warn(_ message: String) {
+    func warn(_ message: String) {
       pushLog("warn", message)
     }
 
-    public func error(_ message: String) {
+    func error(_ message: String) {
       pushLog("error", message)
     }
   }
 
-  public let logger = LoggerEntry(subSystem: "ext")
+  let logger = LoggerEntry(subSystem: "ext")
 
 #else
 
-  public class LoggerCore {
-    public init() {}
-    public func pushLogItem(_ item: LogItem) {
+  class LoggerCore {
+    init() {}
+    func pushLogItem(_ item: LogItem) {
     }
   }
-  public let loggerCore = LoggerCore()
+  let loggerCore = LoggerCore()
 
-  public class LoggerEntry {
-    public init() {}
-    public func log(_ message: String) {
+  class LoggerEntry {
+    init() {}
+    func log(_ message: String) {
     }
-    public func mark(_ message: String) {
+    func mark(_ message: String) {
     }
-    public func warn(_ message: String) {
+    func warn(_ message: String) {
     }
-    public func error(_ message: String) {
+    func error(_ message: String) {
     }
   }
-  public let logger = LoggerEntry()
+  let logger = LoggerEntry()
 #endif

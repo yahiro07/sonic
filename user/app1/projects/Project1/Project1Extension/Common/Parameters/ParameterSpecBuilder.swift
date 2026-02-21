@@ -1,9 +1,9 @@
 import AudioToolbox
 
-public class ParameterSpecBuilder<Address: RawRepresentable>
+class ParameterSpecBuilder<Address: RawRepresentable>
 where Address.RawValue == AUParameterAddress {
-  public init() {}
-  public func Raw(
+  init() {}
+  func Raw(
     address: Address,
     identifier: String,
     name: String,
@@ -30,7 +30,7 @@ where Address.RawValue == AUParameterAddress {
       dependentParameters: dependentParameters
     )
   }
-  public func Linear(
+  func Linear(
     _ address: Address, _ identifier: String, _ name: String, _ defaultValue: AUValue,
     _ minValue: AUValue, _ maxValue: AUValue
   ) -> ParameterSpec {
@@ -43,7 +43,7 @@ where Address.RawValue == AUParameterAddress {
       defaultValue: defaultValue,
     )
   }
-  public func Unary(
+  func Unary(
     _ address: Address, _ identifier: String, _ name: String, _ defaultValue: AUValue
   ) -> ParameterSpec {
     return ParameterSpec(
@@ -55,7 +55,7 @@ where Address.RawValue == AUParameterAddress {
       defaultValue: defaultValue,
     )
   }
-  public func Bool(
+  func Bool(
     _ address: Address, _ identifier: String, _ name: String, _ defaultValue: Bool
   ) -> ParameterSpec {
     return ParameterSpec(
@@ -67,7 +67,7 @@ where Address.RawValue == AUParameterAddress {
       defaultValue: defaultValue ? 1.0 : 0.0,
     )
   }
-  public func Enum(
+  func Enum(
     _ address: Address, _ identifier: String, _ name: String, _ defaultString: String,
     _ valueStrings: [String]
   ) -> ParameterSpec {

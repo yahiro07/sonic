@@ -1,7 +1,7 @@
 import AudioToolbox
 import Foundation
 
-public protocol NodeSpec: Sendable {}
+protocol NodeSpec: Sendable {}
 
 extension NodeSpec {
   static func validateID(_ name: String) -> String {
@@ -18,7 +18,7 @@ extension NodeSpec {
 }
 
 /// Specification for a group of parameters.
-public struct ParameterGroupSpec: NodeSpec {
+struct ParameterGroupSpec: NodeSpec {
   let identifier: String
   let name: String
   let children: [NodeSpec]
@@ -30,14 +30,14 @@ public struct ParameterGroupSpec: NodeSpec {
   }
 }
 
-public struct ParameterTreeSpec: NodeSpec {
+struct ParameterTreeSpec: NodeSpec {
   let children: [NodeSpec]
   init(@ParameterGroupBuilder _ children: () -> [NodeSpec]) { self.children = children() }
 }
 
 /// ParameterSpec mirrors what gets passed to
 /// AUParameterTree.createParameter, but also provides a default value
-public struct ParameterSpec: NodeSpec {
+struct ParameterSpec: NodeSpec {
   let identifier: String
   let name: String
   let address: AUParameterAddress
