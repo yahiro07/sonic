@@ -34,10 +34,8 @@ void MySynthesizer::process(float *buffer, int32_t frames) {
   if (sampleRate <= 0.0f)
     return;
 
-  float effectiveNoteNumber =
-      (float)noteNumber + (oscPitch * 2.0f - 1.0f) * 12.0f;
-  float frequency =
-      440.0f * std::pow(2.0f, (effectiveNoteNumber - 69.0f) / 12.0f);
+  float effectiveNoteNumber = (float)noteNumber + (oscPitch * 2.0f - 1.0f) * 12.0f;
+  float frequency = 440.0f * std::pow(2.0f, (effectiveNoteNumber - 69.0f) / 12.0f);
   float phaseDelta = frequency / sampleRate;
 
   for (int32_t i = 0; i < frames; ++i) {
