@@ -12,17 +12,5 @@ class ParameterSpecProvider {
     return pullParameterDefinitionsFromCppSide(synthInstanceHandle)
     //if you want to make more flexible parameter tree than C++ side definition,
     //write parameters directly here instead of calling pullParameterDefinitionsFromCppSide().
-    // return ParameterTreeSpec {
-    // ParameterGroupSpec(identifier: "global", name: "Global") {
-    //   ParameterSpec(
-    //     address: .gain,
-    //     identifier: "gain",
-    //     name: "Output Gain",
-    //     units: .linearGain,
-    //     valueRange: 0.0...1.0,
-    //     defaultValue: 0.25
-    //   )
-    // }
-    // }
   }
 }
