@@ -10,13 +10,13 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 
-#include "Project1ExtensionDSPKernel.hpp"
+#include "DSPKernel.hpp"
 #include <vector>
 
 // MARK:- AUProcessHelper Utility Class
 class AUProcessHelper {
 public:
-  AUProcessHelper(Project1ExtensionDSPKernel &kernel) : mKernel{kernel} {}
+  AUProcessHelper(DSPKernel &kernel) : mKernel{kernel} {}
 
   void setChannelCount(UInt32 inputChannelCount, UInt32 outputChannelCount) {
     mOutputBuffers.resize(outputChannelCount);
@@ -130,6 +130,6 @@ public:
   }
 
 private:
-  Project1ExtensionDSPKernel &mKernel;
+  DSPKernel &mKernel;
   std::vector<float *> mOutputBuffers;
 };

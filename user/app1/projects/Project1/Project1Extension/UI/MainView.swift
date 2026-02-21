@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct Project1ExtensionMainView: View {
+struct MainView: View {
   var parameterTree: ObservableAUParameterGroup
 
   var body: some View {

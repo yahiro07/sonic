@@ -17,7 +17,7 @@ private let log = Logger(
 public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   var audioUnit: AUAudioUnit?
 
-  var hostingController: HostingController<Project1ExtensionMainView>?
+  var hostingController: HostingController<MainView>?
 
   private var observation: NSKeyValueObservation?
 
@@ -67,11 +67,11 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   {
     return try DispatchQueue.main.sync {
 
-      audioUnit = try Project1ExtensionAudioUnit(
+      audioUnit = try AudioUnit(
         componentDescription: componentDescription, options: [])
 
-      guard let audioUnit = self.audioUnit as? Project1ExtensionAudioUnit else {
-        log.error("Unable to create Project1ExtensionAudioUnit")
+      guard let audioUnit = self.audioUnit as? AudioUnit else {
+        log.error("Unable to create AudioUnit")
         return audioUnit!
       }
 
@@ -111,7 +111,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
     guard let observableParameterTree = audioUnit.observableParameterTree else {
       return
     }
-    let content = Project1ExtensionMainView(parameterTree: observableParameterTree)
+    let content = MainView(parameterTree: observableParameterTree)
     let host = HostingController(rootView: content)
     self.addChild(host)
     host.view.frame = self.view.bounds

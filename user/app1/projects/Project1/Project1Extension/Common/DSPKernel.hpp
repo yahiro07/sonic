@@ -13,14 +13,14 @@
 #import <span>
 #import <vector>
 
-#import "Project1ExtensionParameterAddresses.h"
+#import "ParameterAddresses.h"
 #import "SinOscillator.h"
 
 /*
- Project1ExtensionDSPKernel
+ DSPKernel
  As a non-ObjC class, this is safe to use from render thread.
  */
-class Project1ExtensionDSPKernel {
+class DSPKernel {
 public:
   void initialize(int channelCount, double inSampleRate) {
     mSampleRate = inSampleRate;
@@ -38,7 +38,7 @@ public:
   // Add a case for each parameter in Project1ExtensionParameterAddresses.h
   void setParameter(AUParameterAddress address, AUValue value) {
     switch (address) {
-    case Project1ExtensionParameterAddress::gain:
+    case ParameterAddress::gain:
       mGain = value;
       break;
     }
@@ -48,7 +48,7 @@ public:
     // Return the goal. It is not thread safe to return the ramping value.
 
     switch (address) {
-    case Project1ExtensionParameterAddress::gain:
+    case ParameterAddress::gain:
       return (AUValue)mGain;
 
     default:
@@ -140,7 +140,7 @@ public:
   void handleMIDIEventList(AUEventSampleTime now, AUMIDIEventList const *midiEvent) {
     auto visitor =
       [](void *context, MIDITimeStamp timeStamp, MIDIUniversalMessage message) {
-        auto thisObject = static_cast<Project1ExtensionDSPKernel *>(context);
+        auto thisObject = static_cast<DSPKernel *>(context);
 
         switch (message.type) {
         case kMIDIMessageTypeChannelVoice2: {

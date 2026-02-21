@@ -5,7 +5,7 @@
 //  Created by ore on 2026/02/21.
 //
 
+#import "AUProcessHelper.hpp"
 #import "MySynthesizer.hpp"
+#import "ParameterAddresses.h"
 #import "ParameterBuilderImpl.hpp"
-#import "Project1ExtensionAUProcessHelper.hpp"
-#import "Project1ExtensionParameterAddresses.h"
