@@ -2,10 +2,10 @@
 // Copyright(c) 2022 Steinberg Media Technologies GmbH.
 //------------------------------------------------------------------------
 
-#include "helloworldcontroller.h"
+#include "project1_controller.h"
 #include "base/source/fstreamer.h"
-#include "helloworldcids.h"
 #include "pluginterfaces/base/ibstream.h"
+#include "project1_cids.h"
 #include "stdio.h"
 
 // #include "vstgui/plugin-bindings/vst3editor.h"
@@ -19,9 +19,9 @@ namespace Steinberg {
 //------------------------------------------------------------------------
 // HelloWorldController Implementation
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldController::initialize(FUnknown *context) {
+tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
   // Here the Plug-in will be instantiated
-  printf("HelloWorldController::initialize\n");
+  printf("Project1Controller::initialize\n");
 
   //---do not forget to call parent ------
   tresult result = EditControllerEx1::initialize(context);
@@ -35,22 +35,22 @@ tresult PLUGIN_API HelloWorldController::initialize(FUnknown *context) {
     parameters.addParameter(STR16("Bypass"), nullptr, 1, 0,
                             Vst::ParameterInfo::kCanAutomate |
                                 Vst::ParameterInfo::kIsBypass,
-                            HelloWorldParams::kBypassId);
+                            Project1Params::kBypassId);
 
     parameters.addParameter(STR16("Parameter 1"), STR16("dB"), 0, .5,
                             Vst::ParameterInfo::kCanAutomate,
-                            HelloWorldParams::kParamVolId, 0, STR16("Param1"));
+                            Project1Params::kParamVolId, 0, STR16("Param1"));
 
     parameters.addParameter(STR16("Parameter 2"), STR16("On/Off"), 1, 1.,
                             Vst::ParameterInfo::kCanAutomate,
-                            HelloWorldParams::kParamOnId, 0, STR16("Param2"));
+                            Project1Params::kParamOnId, 0, STR16("Param2"));
   }
 
   return result;
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldController::terminate() {
+tresult PLUGIN_API Project1Controller::terminate() {
   // Here the Plug-in will be de-instantiated, last possibility to remove some
   // memory!
 
@@ -59,7 +59,7 @@ tresult PLUGIN_API HelloWorldController::terminate() {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldController::setComponentState(IBStream *state) {
+tresult PLUGIN_API Project1Controller::setComponentState(IBStream *state) {
   // Here you get the state of the component (Processor part)
   if (!state)
     return kResultFalse;
@@ -69,12 +69,12 @@ tresult PLUGIN_API HelloWorldController::setComponentState(IBStream *state) {
   float savedParam1 = 0.f;
   if (streamer.readFloat(savedParam1) == false)
     return kResultFalse;
-  setParamNormalized(HelloWorldParams::kParamVolId, savedParam1);
+  setParamNormalized(Project1Params::kParamVolId, savedParam1);
 
   int8 savedParam2 = 0;
   if (streamer.readInt8(savedParam2) == false)
     return kResultFalse;
-  setParamNormalized(HelloWorldParams::kParamOnId, savedParam2);
+  setParamNormalized(Project1Params::kParamOnId, savedParam2);
 
   // read the bypass
   int32 bypassState;
@@ -88,14 +88,14 @@ tresult PLUGIN_API HelloWorldController::setComponentState(IBStream *state) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldController::setState(IBStream *state) {
+tresult PLUGIN_API Project1Controller::setState(IBStream *state) {
   // Here you get the state of the controller
 
   return kResultTrue;
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldController::getState(IBStream *state) {
+tresult PLUGIN_API Project1Controller::getState(IBStream *state) {
   // Here you are asked to deliver the state of the controller (if needed)
   // Note: the real state of your plug-in is saved in the processor
 
@@ -103,7 +103,7 @@ tresult PLUGIN_API HelloWorldController::getState(IBStream *state) {
 }
 
 //------------------------------------------------------------------------
-IPlugView *PLUGIN_API HelloWorldController::createView(FIDString name) {
+IPlugView *PLUGIN_API Project1Controller::createView(FIDString name) {
   // Here the Host wants to open your editor (if you have one)
   if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
     // create your editor here and return a IPlugView ptr of it
@@ -114,7 +114,7 @@ IPlugView *PLUGIN_API HelloWorldController::createView(FIDString name) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldController::setParamNormalized(
+tresult PLUGIN_API Project1Controller::setParamNormalized(
     Vst::ParamID tag, Vst::ParamValue value) {
   // called by host to update your parameters
   tresult result = EditControllerEx1::setParamNormalized(tag, value);
@@ -122,7 +122,7 @@ tresult PLUGIN_API HelloWorldController::setParamNormalized(
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldController::getParamStringByValue(
+tresult PLUGIN_API Project1Controller::getParamStringByValue(
     Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string) {
   // called by host to get a string for given normalized value of a specific
   // parameter (without having to set the value!)
@@ -130,7 +130,7 @@ tresult PLUGIN_API HelloWorldController::getParamStringByValue(
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldController::getParamValueByString(
+tresult PLUGIN_API Project1Controller::getParamValueByString(
     Vst::ParamID tag, Vst::TChar *string, Vst::ParamValue &valueNormalized) {
   // called by host to get a normalized value from a string representation of a
   // specific parameter (without having to set the value!)

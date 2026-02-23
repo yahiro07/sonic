@@ -9,16 +9,16 @@
 namespace Steinberg {
 
 //------------------------------------------------------------------------
-//  HelloWorldProcessor
+//  Project1Processor
 //------------------------------------------------------------------------
-class HelloWorldProcessor : public Steinberg::Vst::AudioEffect {
+class Project1Processor : public Steinberg::Vst::AudioEffect {
 public:
-  HelloWorldProcessor();
-  ~HelloWorldProcessor() SMTG_OVERRIDE;
+  Project1Processor();
+  ~Project1Processor() SMTG_OVERRIDE;
 
   // Create function
   static Steinberg::FUnknown *createInstance(void * /*context*/) {
-    return (Steinberg::Vst::IAudioProcessor *)new HelloWorldProcessor;
+    return (Steinberg::Vst::IAudioProcessor *)new Project1Processor;
   }
 
   //--- ---------------------------------------------------------------------

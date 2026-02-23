@@ -8,7 +8,7 @@
 
 using namespace Steinberg;
 
-#include "../helloworldcids.h"
+#include "../project1_cids.h"
 
 class WebViewEditorView : public Vst::EditorView {
 private:
@@ -29,15 +29,15 @@ public:
     webView.setMessageReceiver([this](const std::string &message) {
       // printf("WebViewEditorView::messageReceiver: %s\n", message.c_str());
       auto value = message == "ON" ? 1.0 : 0.0;
-      this->controller->setParamNormalized(HelloWorldParams::kParamOnId, value);
-      this->controller->beginEdit(HelloWorldParams::kParamOnId);
-      this->controller->performEdit(HelloWorldParams::kParamOnId, value);
-      this->controller->endEdit(HelloWorldParams::kParamOnId);
+      this->controller->setParamNormalized(Project1Params::kParamOnId, value);
+      this->controller->beginEdit(Project1Params::kParamOnId);
+      this->controller->performEdit(Project1Params::kParamOnId, value);
+      this->controller->endEdit(Project1Params::kParamOnId);
     });
     paramChangeNotifier.setup(controller, [this](int paramId, double value) {
       printf("WebViewEditorView::paramChangeNotifier: %d, %f\n", paramId,
              value);
-      if (paramId == HelloWorldParams::kParamOnId) {
+      if (paramId == Project1Params::kParamOnId) {
         this->webView.sendMessage(value == 1.0 ? "'ON'" : "'OFF'");
       }
     });

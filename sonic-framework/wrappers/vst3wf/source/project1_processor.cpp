@@ -2,11 +2,10 @@
 // Copyright(c) 2022 Steinberg Media Technologies GmbH.
 //------------------------------------------------------------------------
 
-#include "helloworldprocessor.h"
-#include "helloworldcids.h"
-
+#include "project1_processor.h"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
+#include "project1_cids.h"
 
 #include <cstring>
 
@@ -14,20 +13,20 @@ using namespace Steinberg;
 
 namespace Steinberg {
 //------------------------------------------------------------------------
-// HelloWorldProcessor
+// Project1Processor
 //------------------------------------------------------------------------
-HelloWorldProcessor::HelloWorldProcessor() {
+Project1Processor::Project1Processor() {
   //--- set the wanted controller for our processor
-  setControllerClass(kHelloWorldControllerUID);
+  setControllerClass(kProject1ControllerUID);
 }
 
 //------------------------------------------------------------------------
-HelloWorldProcessor::~HelloWorldProcessor() {}
+Project1Processor::~Project1Processor() {}
 
 float randF() { return (float)rand() / (float)RAND_MAX; }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldProcessor::initialize(FUnknown *context) {
+tresult PLUGIN_API Project1Processor::initialize(FUnknown *context) {
   // Here the Plug-in will be instantiated
   printf("HelloWorldProcessor::initialize\n");
 
@@ -51,7 +50,7 @@ tresult PLUGIN_API HelloWorldProcessor::initialize(FUnknown *context) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldProcessor::terminate() {
+tresult PLUGIN_API Project1Processor::terminate() {
   // Here the Plug-in will be de-instantiated, last possibility to remove some
   // memory!
 
@@ -60,14 +59,14 @@ tresult PLUGIN_API HelloWorldProcessor::terminate() {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldProcessor::setActive(TBool state) {
-  printf("HelloWorldProcessor::setActive %d\n", state);
+tresult PLUGIN_API Project1Processor::setActive(TBool state) {
+  printf("Project1Processor::setActive %d\n", state);
   //--- called when the Plug-in is enable/disable (On/Off) -----
   return AudioEffect::setActive(state);
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldProcessor::process(Vst::ProcessData &data) {
+tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
   //--- Read inputs parameter changes-----------
   if (data.inputParameterChanges) {
     int32 numParamsChanged = data.inputParameterChanges->getParameterCount();
@@ -79,17 +78,17 @@ tresult PLUGIN_API HelloWorldProcessor::process(Vst::ProcessData &data) {
         int32 sampleOffset;
         int32 numPoints = paramQueue->getPointCount();
         switch (paramQueue->getParameterId()) {
-        case HelloWorldParams::kParamVolId:
+        case Project1Params::kParamVolId:
           if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) ==
               kResultTrue)
             mParam1 = value;
           break;
-        case HelloWorldParams::kParamOnId:
+        case Project1Params::kParamOnId:
           if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) ==
               kResultTrue)
             mParam2 = value > 0 ? 1 : 0;
           break;
-        case HelloWorldParams::kBypassId:
+        case Project1Params::kBypassId:
           if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) ==
               kResultTrue)
             mBypass = (value > 0.5f);
@@ -149,14 +148,14 @@ tresult PLUGIN_API HelloWorldProcessor::process(Vst::ProcessData &data) {
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API
-HelloWorldProcessor::setupProcessing(Vst::ProcessSetup &newSetup) {
+Project1Processor::setupProcessing(Vst::ProcessSetup &newSetup) {
   //--- called before any processing ----
   return AudioEffect::setupProcessing(newSetup);
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API
-HelloWorldProcessor::canProcessSampleSize(int32 symbolicSampleSize) {
+Project1Processor::canProcessSampleSize(int32 symbolicSampleSize) {
   // by default kSample32 is supported
   if (symbolicSampleSize == Vst::kSample32)
     return kResultTrue;
@@ -169,7 +168,7 @@ HelloWorldProcessor::canProcessSampleSize(int32 symbolicSampleSize) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldProcessor::setState(IBStream *state) {
+tresult PLUGIN_API Project1Processor::setState(IBStream *state) {
   if (!state)
     return kResultFalse;
 
@@ -197,7 +196,7 @@ tresult PLUGIN_API HelloWorldProcessor::setState(IBStream *state) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API HelloWorldProcessor::getState(IBStream *state) {
+tresult PLUGIN_API Project1Processor::getState(IBStream *state) {
   // here we need to save the model (preset or project)
 
   float toSaveParam1 = mParam1;

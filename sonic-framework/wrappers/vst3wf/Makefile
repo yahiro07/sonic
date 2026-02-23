@@ -1,7 +1,7 @@
 CLI_HOST = /Users/ore/Documents/projects/yahiro/synth2511/vstdev/VstDevHost/build/bin/Debug/VstDevHost.app/Contents/MacOS/VstDevHost
 GUI_HOST = ~/Documents/projects/pre/vst/work1-juce/lib/JUCE/extras/AudioPluginHost/Builds/MacOSX/build/Debug/AudioPluginHost.app
 
-VST3_OUT = build/VST3/Debug/HelloWorld.vst3
+VST3_OUT = build/VST3/Debug/Project1.vst3
 
 .PHONY: build
 

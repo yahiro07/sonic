@@ -9,17 +9,17 @@
 namespace Steinberg {
 
 //------------------------------------------------------------------------
-//  HelloWorldController
+//  Project1Controller
 //------------------------------------------------------------------------
-class HelloWorldController : public Steinberg::Vst::EditControllerEx1 {
+class Project1Controller : public Steinberg::Vst::EditControllerEx1 {
 public:
   //------------------------------------------------------------------------
-  HelloWorldController() = default;
-  ~HelloWorldController() SMTG_OVERRIDE = default;
+  Project1Controller() = default;
+  ~Project1Controller() SMTG_OVERRIDE = default;
 
   // Create function
   static Steinberg::FUnknown *createInstance(void * /*context*/) {
-    return (Steinberg::Vst::IEditController *)new HelloWorldController;
+    return (Steinberg::Vst::IEditController *)new Project1Controller;
   }
 
   // IPluginBase
