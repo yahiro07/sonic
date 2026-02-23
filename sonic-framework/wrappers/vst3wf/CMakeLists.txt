@@ -23,7 +23,6 @@ smtg_add_vst3plugin(HelloWorld
 target_link_libraries(HelloWorld
     PRIVATE
         sdk
-        vstgui_support
 )
 
 smtg_target_add_plugin_resources(HelloWorld
