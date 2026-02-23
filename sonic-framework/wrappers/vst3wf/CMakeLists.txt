@@ -18,6 +18,7 @@ smtg_add_vst3plugin(Project1
     source/project1_controller.h
     source/project1_controller.cpp
     source/project1_entry.cpp
+    source/dsp/MySynthesizer.cpp
 )
 
 target_link_libraries(Project1

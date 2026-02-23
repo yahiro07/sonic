@@ -4,6 +4,8 @@
 
 #include "project1_processor.h"
 #include "base/source/fstreamer.h"
+#include "dsp/MySynthesizer.hpp"
+#include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "project1_cids.h"
 
@@ -18,10 +20,11 @@ namespace Steinberg {
 Project1Processor::Project1Processor() {
   //--- set the wanted controller for our processor
   setControllerClass(kProject1ControllerUID);
+  synthInstance = createSynthesizerInstance();
 }
 
 //------------------------------------------------------------------------
-Project1Processor::~Project1Processor() {}
+Project1Processor::~Project1Processor() { delete synthInstance; }
 
 float randF() { return (float)rand() / (float)RAND_MAX; }
 
@@ -77,22 +80,26 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
         Vst::ParamValue value;
         int32 sampleOffset;
         int32 numPoints = paramQueue->getPointCount();
-        switch (paramQueue->getParameterId()) {
-        case Project1Params::kParamVolId:
-          if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) ==
-              kResultTrue)
-            mParam1 = value;
-          break;
-        case Project1Params::kParamOnId:
-          if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) ==
-              kResultTrue)
-            mParam2 = value > 0 ? 1 : 0;
-          break;
-        case Project1Params::kBypassId:
-          if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) ==
-              kResultTrue)
-            mBypass = (value > 0.5f);
-          break;
+
+        auto paramId = paramQueue->getParameterId();
+        if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) ==
+            kResultTrue) {
+          synthInstance->setParameter(paramId, value);
+        }
+      }
+    }
+  }
+
+  //---Read input events-------------
+  if (Vst::IEventList *eventList = data.inputEvents) {
+    int32 numEvent = eventList->getEventCount();
+    for (int32 i = 0; i < numEvent; i++) {
+      Vst::Event event{};
+      if (eventList->getEvent(i, event) == kResultOk) {
+        if (event.type == Vst::Event::kNoteOnEvent) {
+          synthInstance->noteOn(event.noteOn.pitch, event.noteOn.velocity);
+        } else if (event.type == Vst::Event::kNoteOffEvent) {
+          synthInstance->noteOff(event.noteOff.pitch);
         }
       }
     }
@@ -116,31 +123,13 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
                    ? data.outputs[0].channelBuffers32[1]
                    : nullptr;
 
-  const bool generate = (mParam2 != 0) && (mBypass == false);
   if (data.numSamples > 0 && outL) {
-    if (generate) {
-      data.outputs[0].silenceFlags = 0;
+    // data.outputs[0].silenceFlags = 0;
 
-      const float volume = static_cast<float>(mParam1);
-      for (int32 i = 0; i < data.numSamples; i++) {
-        const float y = ((randF() * 2.f) - 1.f) * volume;
-        outL[i] = y;
-        if (outR)
-          outR[i] = y;
-      }
-    } else {
-      // clear output (and tell the host it's silent)
-      std::memset(outL, 0,
-                  static_cast<size_t>(data.numSamples) * sizeof(float));
-      if (outR)
-        std::memset(outR, 0,
-                    static_cast<size_t>(data.numSamples) * sizeof(float));
-
-      const uint64 silenceMask =
-          (data.outputs[0].numChannels >= 64)
-              ? ~uint64(0)
-              : ((uint64(1) << data.outputs[0].numChannels) - uint64(1));
-      data.outputs[0].silenceFlags = silenceMask;
+    if (outL && outR) {
+      synthInstance->process(outL, outR, data.numSamples);
+    } else if (outL) {
+      synthInstance->process(outL, outL, data.numSamples);
     }
   }
   return kResultOk;
@@ -149,6 +138,10 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
 //------------------------------------------------------------------------
 tresult PLUGIN_API
 Project1Processor::setupProcessing(Vst::ProcessSetup &newSetup) {
+  printf("setupProcessing sampleRate: %f, maxSamplesPerBlock: %d\n",
+         newSetup.sampleRate, newSetup.maxSamplesPerBlock);
+  synthInstance->prepare(newSetup.sampleRate, newSetup.maxSamplesPerBlock);
+
   //--- called before any processing ----
   return AudioEffect::setupProcessing(newSetup);
 }
@@ -174,23 +167,23 @@ tresult PLUGIN_API Project1Processor::setState(IBStream *state) {
 
   // called when we load a preset or project, the model has to be reloaded
 
-  IBStreamer streamer(state, kLittleEndian);
+  // IBStreamer streamer(state, kLittleEndian);
 
-  float savedParam1 = 0.f;
-  if (streamer.readFloat(savedParam1) == false)
-    return kResultFalse;
+  // float savedParam1 = 0.f;
+  // if (streamer.readFloat(savedParam1) == false)
+  //   return kResultFalse;
 
-  int32 savedParam2 = 0;
-  if (streamer.readInt32(savedParam2) == false)
-    return kResultFalse;
+  // int32 savedParam2 = 0;
+  // if (streamer.readInt32(savedParam2) == false)
+  //   return kResultFalse;
 
-  int32 savedBypass = 0;
-  if (streamer.readInt32(savedBypass) == false)
-    return kResultFalse;
+  // int32 savedBypass = 0;
+  // if (streamer.readInt32(savedBypass) == false)
+  //   return kResultFalse;
 
-  mParam1 = savedParam1;
-  mParam2 = savedParam2 > 0 ? 1 : 0;
-  mBypass = savedBypass > 0;
+  // mParam1 = savedParam1;
+  // mParam2 = savedParam2 > 0 ? 1 : 0;
+  // mBypass = savedBypass > 0;
 
   return kResultOk;
 }
@@ -199,14 +192,14 @@ tresult PLUGIN_API Project1Processor::setState(IBStream *state) {
 tresult PLUGIN_API Project1Processor::getState(IBStream *state) {
   // here we need to save the model (preset or project)
 
-  float toSaveParam1 = mParam1;
-  int32 toSaveParam2 = mParam2;
-  int32 toSaveBypass = mBypass ? 1 : 0;
+  // float toSaveParam1 = mParam1;
+  // int32 toSaveParam2 = mParam2;
+  // int32 toSaveBypass = mBypass ? 1 : 0;
 
-  IBStreamer streamer(state, kLittleEndian);
-  streamer.writeFloat(toSaveParam1);
-  streamer.writeInt32(toSaveParam2);
-  streamer.writeInt32(toSaveBypass);
+  // IBStreamer streamer(state, kLittleEndian);
+  // streamer.writeFloat(toSaveParam1);
+  // streamer.writeInt32(toSaveParam2);
+  // streamer.writeInt32(toSaveBypass);
 
   return kResultOk;
 }

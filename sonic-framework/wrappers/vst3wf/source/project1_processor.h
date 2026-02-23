@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "dsp/SynthesizerBase.hpp"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 
 namespace Steinberg {
@@ -12,6 +13,9 @@ namespace Steinberg {
 //  Project1Processor
 //------------------------------------------------------------------------
 class Project1Processor : public Steinberg::Vst::AudioEffect {
+private:
+  SynthesizerBase *synthInstance;
+
 public:
   Project1Processor();
   ~Project1Processor() SMTG_OVERRIDE;
@@ -51,14 +55,6 @@ public:
       SMTG_OVERRIDE;
   Steinberg::tresult PLUGIN_API getState(Steinberg::IBStream *state)
       SMTG_OVERRIDE;
-
-  //------------------------------------------------------------------------
-protected:
-  // Defaults chosen so minimal hosts (that don't push initial parameter values)
-  // still produce audible output.
-  Vst::ParamValue mParam1 = 0.5;
-  int16 mParam2 = 1;
-  bool mBypass = false;
 };
 
 //------------------------------------------------------------------------

@@ -83,8 +83,6 @@ tresult PLUGIN_API Project1Controller::setComponentState(IBStream *state) {
   setParamNormalized(kBypassId, bypassState ? 1 : 0);
 
   return kResultOk;
-
-  return kResultOk;
 }
 
 //------------------------------------------------------------------------

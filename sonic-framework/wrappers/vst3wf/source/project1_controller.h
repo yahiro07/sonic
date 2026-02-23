@@ -4,7 +4,10 @@
 
 #pragma once
 
+#include "dsp/SynthesizerBase.hpp"
 #include "public.sdk/source/vst/vsteditcontroller.h"
+
+#include "dsp/MySynthesizer.hpp"
 
 namespace Steinberg {
 
@@ -12,10 +15,13 @@ namespace Steinberg {
 //  Project1Controller
 //------------------------------------------------------------------------
 class Project1Controller : public Steinberg::Vst::EditControllerEx1 {
+private:
+  SynthesizerBase *synth;
+
 public:
   //------------------------------------------------------------------------
-  Project1Controller() = default;
-  ~Project1Controller() SMTG_OVERRIDE = default;
+  Project1Controller() { synth = createSynthesizerInstance(); }
+  ~Project1Controller() SMTG_OVERRIDE { delete synth; }
 
   // Create function
   static Steinberg::FUnknown *createInstance(void * /*context*/) {
