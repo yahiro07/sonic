@@ -18,7 +18,6 @@ smtg_add_vst3plugin(HelloWorld
     source/helloworldcontroller.h
     source/helloworldcontroller.cpp
     source/helloworldentry.cpp
-    resource/helloworldeditor.uidesc
 )
 
 target_link_libraries(HelloWorld
@@ -29,23 +28,7 @@ target_link_libraries(HelloWorld
 
 smtg_target_add_plugin_resources(HelloWorld
     RESOURCES
-        resource/helloworldeditor.uidesc
-        resource/background.png
-        resource/animation_knob.png
-        resource/onoff_button.png
-        resource/background_2x.png
-        resource/animation_knob_2x.png
-        resource/onoff_button_2x.png
-        resource/background_3x.png
-        resource/animation_knob_3x.png
-        resource/onoff_button_3x.png
         resource/www
-)
-
-smtg_target_add_plugin_snapshots (HelloWorld
-    RESOURCES
-        resource/32C50013FF5F5CB4871C312DB4F42368_snapshot.png
-        resource/32C50013FF5F5CB4871C312DB4F42368_snapshot_2.0x.png
 )
 
 smtg_target_configure_version_file(HelloWorld)
