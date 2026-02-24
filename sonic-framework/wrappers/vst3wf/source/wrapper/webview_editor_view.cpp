@@ -2,13 +2,13 @@
 #include "pluginterfaces/gui/iplugview.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-#include "../parameters/parameters_manager.h"
-#include "mac_web_view.h"
+#include "../general/mac_web_view.h"
+#include "./parameters_manager.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include <glaze/glaze.hpp>
 
 using namespace Steinberg;
-#include "../utils/logger.h"
+#include "../general/logger.h"
 
 struct MsgSetParameter {
   std::string type = "setParameter";

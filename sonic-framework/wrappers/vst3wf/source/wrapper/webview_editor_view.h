@@ -1,5 +1,5 @@
 #pragma once
-#include "../parameters/parameters_manager.h"
+#include "./parameters_manager.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
 Steinberg::IPlugView *

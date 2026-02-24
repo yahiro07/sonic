@@ -2,14 +2,14 @@
 // Copyright(c) 2022 Steinberg Media Technologies GmbH.
 //------------------------------------------------------------------------
 
-#include "project1_controller.h"
+#include "./project1_controller.h"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/base/ibstream.h"
 #include "project1_cids.h"
 #include "stdio.h"
 
-#include "parameters/parameter_builder_impl.h"
-#include "webview/webview_editor_view.h"
+#include "./logic/parameter_builder_impl.h"
+#include "./wrapper/webview_editor_view.h"
 
 namespace Project1 {
 using namespace Steinberg;

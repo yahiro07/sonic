@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../logic/parameter_builder_impl.h"
+#include "./edit_controller_parameter_change_notifier.h"
 #include "base/source/fstring.h"
-#include "edit_controller_parameter_change_notifier.h"
-#include "parameter_builder_impl.h"
 #include <algorithm>
 #include <cmath>
 #include <functional>

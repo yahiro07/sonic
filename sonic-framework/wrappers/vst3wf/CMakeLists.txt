@@ -19,8 +19,8 @@ smtg_add_vst3plugin(Project1
     source/project1_controller.cpp
     source/project1_entry.cpp
     source/dsp/MySynthesizer.cpp
-    source/utils/logger.cpp
-    source/webview/webview_editor_view.cpp
+    source/general/logger.cpp
+    source/wrapper/webview_editor_view.cpp
 )
 
 target_link_libraries(Project1
@@ -76,7 +76,7 @@ if(SMTG_MAC)
     )
 
     target_sources(Project1 PRIVATE
-        source/webview/mac_web_view.mm
+        source/general/mac_web_view.mm
     )
 
     target_link_libraries(Project1 PRIVATE

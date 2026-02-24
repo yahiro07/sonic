@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "dsp/SynthesizerBase.h"
+#include "./dsp/SynthesizerBase.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 
-#include "dsp/MySynthesizer.h"
-#include "utils/logger.h"
+#include "./dsp/MySynthesizer.h"
+#include "./general/logger.h"
 
-#include "parameters/parameters_manager.h"
+#include "./wrapper/parameters_manager.h"
 
 namespace Project1 {
 

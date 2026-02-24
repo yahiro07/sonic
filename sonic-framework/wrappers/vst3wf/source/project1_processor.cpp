@@ -2,14 +2,14 @@
 // Copyright(c) 2022 Steinberg Media Technologies GmbH.
 //------------------------------------------------------------------------
 
-#include "project1_processor.h"
+#include "./project1_processor.h"
+#include "./dsp/MySynthesizer.h"
+#include "./project1_cids.h"
 #include "base/source/fstreamer.h"
-#include "dsp/MySynthesizer.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
-#include "project1_cids.h"
 
-#include "utils/logger.h"
+#include "./general/logger.h"
 #include <cstring>
 
 namespace Project1 {
