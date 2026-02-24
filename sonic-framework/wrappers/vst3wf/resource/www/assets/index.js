@@ -1,5 +1,19 @@
+function sendMessage(msg){
+  window.webkit.messageHandlers.native.postMessage(
+    JSON.stringify(msg)
+  );
+}
 
-const pushLine = (line) => {
+function sendParameter(id, value){
+  sendMessage({
+    type: "setParameter",
+    id: id,
+    value: value
+  })
+}
+
+
+function pushLine (line)  {
   const div = document.createElement("div");
   div.innerText = line;
   document.body.appendChild(div);
@@ -15,39 +29,27 @@ window.addEventListener("native-message", (event) => {
   pushLine(JSON.stringify(event.detail));
 });
 
+sendMessage({type: "uiLoaded"});
 
-window.webkit.messageHandlers.native.postMessage(
-  JSON.stringify({ data: "A" })
-);
+// window.webkit.messageHandlers.native.postMessage(
+//   JSON.stringify({ data: "A" })
+// );
 
 
-setTimeout(() => {
-  window.webkit.messageHandlers.native.postMessage(
-    JSON.stringify({ data: "B" })
-  );
-  pushLine("B")
-}, 2000)
+// setTimeout(() => {
+//   window.webkit.messageHandlers.native.postMessage(
+//     JSON.stringify({ data: "B" })
+//   );
+//   pushLine("B")
+// }, 2000)
 
-setTimeout(() => {
-  window.webkit.messageHandlers.native.postMessage(
-    "ON"
-  );
-  pushLine("C ON")
-}, 3000)
+// setTimeout(() => {
+//   window.webkit.messageHandlers.native.postMessage(
+//     "ON"
+//   );
+//   pushLine("C ON")
+// }, 3000)
 
-function sendMessage(msg){
-  window.webkit.messageHandlers.native.postMessage(
-    JSON.stringify({ detail: msg })
-  );
-}
-
-function sendParameter(id, value){
-  sendMessage({
-    type: "setParameter",
-    id: id,
-    value: value
-  }) 
-}
 
 
 function addSlider(name, id, defaultValue){
@@ -55,10 +57,11 @@ function addSlider(name, id, defaultValue){
   slider.type = "range";
   slider.min = 0;
   slider.max = 1;
+  slider.step = 0.01;
   slider.value = defaultValue;
   slider.id = id;
   slider.oninput = () => {
-    sendParameter(id, slider.value);
+    sendParameter(id, parseFloat(slider.value));
   };
   // document.body.appendChild(slider);
 

@@ -4,11 +4,35 @@
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
 #include "mac_web_view.h"
+#include <glaze/glaze.hpp>
 
 using namespace Steinberg;
 
 #include "../project1_cids.h"
 #include "../utils/logger.h"
+
+struct MsgSetParameter {
+  std::string type = "setParameter";
+  int id;
+  float value;
+};
+struct MsgUiLoaded {
+  std::string type = "uiLoaded";
+};
+
+using MessageFromUI = std::variant<MsgSetParameter, MsgUiLoaded>;
+
+std::optional<MessageFromUI>
+mapMessageFromUI_fromString(const std::string &jsonStr) {
+  MessageFromUI msg;
+  if (glz::read_json(msg, jsonStr)) {
+    logger.log(
+        "messageFromUI_fromJson: %s",
+        glz::format_error(glz::read_json(msg, jsonStr), jsonStr).c_str());
+    return std::nullopt;
+  }
+  return msg;
+};
 
 class WebViewMessagingHub {
 private:
@@ -20,13 +44,22 @@ public:
   void start(Vst::EditController *controller, IWebViewIo *webViewIo) {
     this->controller = controller;
     this->webView = webViewIo;
-    webView->setMessageReceiver([this](const std::string &message) {
-      logger.log("message received: %s", message.c_str());
-      auto value = message == "ON" ? 1.0 : 0.0;
-      this->controller->setParamNormalized(Project1Params::kParamOnId, value);
-      this->controller->beginEdit(Project1Params::kParamOnId);
-      this->controller->performEdit(Project1Params::kParamOnId, value);
-      this->controller->endEdit(Project1Params::kParamOnId);
+    webView->setMessageReceiver([this](const std::string &jsonStr) {
+      logger.log("message received: %s", jsonStr.c_str());
+
+      auto msg = mapMessageFromUI_fromString(jsonStr);
+      if (!msg)
+        return;
+      if (auto *p = std::get_if<MsgSetParameter>(&*msg)) {
+        auto id = p->id;
+        auto value = p->value;
+        logger.log("set parameter: %d, %f", id, value);
+        this->controller->beginEdit(id);
+        this->controller->performEdit(id, value);
+        this->controller->endEdit(id);
+      } else if (auto *p = std::get_if<MsgUiLoaded>(&*msg)) {
+        logger.log("ui loaded");
+      }
     });
     paramChangeNotifier.start(controller, [this](int paramId, double value) {
       printf("WebViewEditorView::paramChangeNotifier: %d, %f\n", paramId,
