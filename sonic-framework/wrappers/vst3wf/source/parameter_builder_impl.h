@@ -41,13 +41,20 @@ public:
     });
   }
 
-  void addEnum(uint64_t address, Str identifier, Str label, int defaultIndex,
-               StrVec valueStrings) {
+  void addEnum(uint64_t address, Str identifier, Str label,
+               Str defaultValueString, StrVec valueStrings) {
     parameters.push_back({
         .address = address,
         .identifier = std::string(identifier),
         .label = std::string(label),
-        .defaultValue = static_cast<double>(defaultIndex),
+        .defaultValue =
+            find(valueStrings.begin(), valueStrings.end(),
+                 defaultValueString) != valueStrings.end()
+                ? (float)(std::distance(valueStrings.begin(),
+                                        std::find(valueStrings.begin(),
+                                                  valueStrings.end(),
+                                                  defaultValueString)))
+                : 0.0f,
         .minValue = 0.0,
         .maxValue = static_cast<double>(valueStrings.size() - 1),
         .valueStrings =
