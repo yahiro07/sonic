@@ -62,8 +62,18 @@ public:
         [this](std::string identifier, double value) {
           printf("WebViewEditorView::subscribeFromEditor: %s, %f\n",
                  identifier.c_str(), value);
-          // this->webView->sendMessage(
-          //     std::format("{} {}", identifier, value).c_str());
+          MsgSetParameter msg;
+          msg.identifier = identifier;
+          msg.value = value;
+          std::string buffer{};
+          auto ec = glz::write_json(msg, buffer);
+          if (ec) {
+            logger.log("glz::write_json error: %s",
+                       glz::format_error(ec, buffer).c_str());
+            return;
+          }
+          logger.log("send message: %s", buffer.c_str());
+          webView->sendMessage(buffer);
         });
   }
   void stop() {

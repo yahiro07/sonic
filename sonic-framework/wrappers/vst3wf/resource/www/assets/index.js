@@ -1,5 +1,5 @@
 function sendMessage(msg) {
-  window.webkit.messageHandlers.native.postMessage(
+  window.webkit.messageHandlers.pluginEditor.postMessage(
     JSON.stringify(msg)
   );
 }
@@ -23,11 +23,7 @@ pushLine("hello from js 1235");
 
 pushLine("href:" + location.href)
 
-window.addEventListener("native-message", (event) => {
-  pushLine("rcv");
-  console.log("native-message_received_in_js", event.detail);
-  pushLine(JSON.stringify(event.detail));
-});
+
 
 sendMessage({ type: "uiLoaded" });
 
@@ -59,6 +55,7 @@ function addSlider(name, identifier, defaultValue) {
   slider.max = 1;
   slider.step = 0.01;
   slider.value = defaultValue;
+  slider.id = identifier
   slider.oninput = () => {
     sendParameter(identifier, parseFloat(slider.value));
   };
@@ -78,3 +75,35 @@ addSlider("Gain", "gain", 0.5);
 addSlider("Pitch", "oscPitch", 0.5);
 addSlider("Volume", "oscVolume", 0.5);
 
+
+function handleMessage(msg){
+  const data = msg;
+  if (data.type === "setParameter") {
+    const slider = document.getElementById(data.identifier);
+    if (slider) {
+      slider.value = data.value;
+    }
+  }
+}
+
+window.addEventListener("native-message", (event) => {
+  pushLine("rcv");
+  console.log("native-message_received_in_js", event.detail);
+  pushLine(JSON.stringify(event));
+  pushLine(JSON.stringify(event.detail));
+  handleMessage(event.detail);
+});
+
+window.pluginEditorCallback = (msg) => {
+  pushLine("pluginEditorCallback")
+  pushLine(msg);
+  pushLine(JSON.stringify(msg))
+  handleMessage(msg);
+  window.dispatchEvent(new CustomEvent("plugin-editor-message", { detail: msg }));
+}
+
+window.addEventListener("plugin-editor-message", (event) => {
+  pushLine("plugin-editor-message");
+  pushLine(JSON.stringify(event));
+  pushLine(JSON.stringify(event.detail));
+});

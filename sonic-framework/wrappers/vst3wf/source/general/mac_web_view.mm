@@ -1,4 +1,4 @@
-#import "mac_web_view.h"
+#import "./mac_web_view.h"
 #include <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
 #include <Foundation/Foundation.h>
@@ -130,7 +130,8 @@ MacWebView::MacWebView() : impl(new Impl()) {
     impl->messageReceiver(messageCppStr);
   };
   impl->scriptHandler = scriptHandler;
-  [userContentController addScriptMessageHandler:scriptHandler name:@"native"];
+  [userContentController addScriptMessageHandler:scriptHandler
+                                            name:@"pluginEditor"];
   config.userContentController = userContentController;
 
   WKWebView *webView = [[WKWebView alloc] initWithFrame:CGRectZero
@@ -150,7 +151,7 @@ MacWebView::~MacWebView() {
   if (impl->webView) {
     WKUserContentController *uc =
         impl->webView.configuration.userContentController;
-    [uc removeScriptMessageHandlerForName:@"native"];
+    [uc removeScriptMessageHandlerForName:@"pluginEditor"];
   }
   if (impl->scriptHandler) {
     ((ScriptMessageHandler *)impl->scriptHandler).onMessage = nil;
@@ -206,7 +207,8 @@ void MacWebView::sendMessage(const std::string &message) {
   NSString *nsMessage = [NSString stringWithUTF8String:message.c_str()];
   // clang-format off
   NSString *jsCode = [NSString
-      stringWithFormat:@"window.dispatchEvent(new CustomEvent('native-message', {detail: %@}))",
+      // stringWithFormat:@"window.dispatchEvent(new CustomEvent('native-message', {detail: %@}))",
+      stringWithFormat:@"window.pluginEditorCallback && window.pluginEditorCallback(%@)",
                        nsMessage];
   printf("MacWebView::sendMessage: %s\n", jsCode.UTF8String);
   // clang-format on

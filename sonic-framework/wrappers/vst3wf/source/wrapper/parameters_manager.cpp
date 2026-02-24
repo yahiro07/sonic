@@ -1,4 +1,5 @@
 #include "./parameters_manager.h"
+#include "../general/logger.h"
 #include "./edit_controller_parameter_change_notifier.h"
 #include "./parameter_item_helper.h"
 #include <base/source/fstring.h>
@@ -109,6 +110,8 @@ void ParametersManager::addParameters(
 void ParametersManager::startObserve() {
   editControllerParameterChangeNotifier.start(
       &this->editController, [&](Vst::ParamID address, double normValue) {
+        // logger.log("ParametersManager::notified: %d, %f", address,
+        // normValue);
         if (editingParamAddress == address) {
           return;
         }

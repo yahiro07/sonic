@@ -33,6 +33,7 @@ tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
     synthInstance->setupParameters(parameterBuilder);
     auto parameterItems = parameterBuilder.getItems();
     parametersManager.addParameters(parameterItems);
+    parametersManager.startObserve();
   }
 
   return result;
@@ -42,6 +43,7 @@ tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
 tresult PLUGIN_API Project1Controller::terminate() {
   // Here the Plug-in will be de-instantiated, last possibility to remove some
   // memory!
+  parametersManager.stopObserve();
 
   //---do not forget to call parent ------
   return EditControllerEx1::terminate();
@@ -103,6 +105,7 @@ IPlugView *PLUGIN_API Project1Controller::createView(FIDString name) {
 //------------------------------------------------------------------------
 tresult PLUGIN_API Project1Controller::setParamNormalized(
     Vst::ParamID tag, Vst::ParamValue value) {
+  // logger.log("Project1Controller::setParamNormalized: %d, %f", tag, value);
   // called by host to update your parameters
   tresult result = EditControllerEx1::setParamNormalized(tag, value);
   return result;
