@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "pluginterfaces/base/funknown.h"
-#include "pluginterfaces/vst/vsttypes.h"
+#include <pluginterfaces/base/funknown.h>
+#include <pluginterfaces/vst/vsttypes.h>
 
 namespace Project1 {
 
