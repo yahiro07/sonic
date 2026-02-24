@@ -19,6 +19,7 @@ typedef struct _ParameterItem {
   ParameterType type;
   std::string group;
   ParameterFlags flags;
+  bool isInternal;
 } ParameterItem;
 
 class ParameterBuilderImpl : public ParameterBuilder {
@@ -44,6 +45,7 @@ public:
         .type = ParameterType::Unary,
         .group = std::string(group),
         .flags = flags,
+        .isInternal = (flags & ParameterFlags::IsInternal) > 0,
     });
   }
 
@@ -69,6 +71,7 @@ public:
         .type = ParameterType::Enum,
         .group = std::string(group),
         .flags = flags,
+        .isInternal = (flags & ParameterFlags::IsInternal) > 0,
     });
   }
 
@@ -85,6 +88,7 @@ public:
         .type = ParameterType::Bool,
         .group = std::string(group),
         .flags = flags,
+        .isInternal = (flags & ParameterFlags::IsInternal) > 0,
     });
   }
 };

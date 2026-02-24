@@ -1,20 +1,18 @@
-#include "../parameters/edit_controller_parameter_change_notifier.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/gui/iplugview.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
+#include "../parameters/parameters_manager.h"
 #include "mac_web_view.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include <glaze/glaze.hpp>
 
 using namespace Steinberg;
-
-#include "../project1_cids.h"
 #include "../utils/logger.h"
 
 struct MsgSetParameter {
   std::string type = "setParameter";
-  int id;
+  std::string identifier;
   float value;
 };
 struct MsgUiLoaded {
@@ -37,13 +35,13 @@ mapMessageFromUI_fromString(const std::string &jsonStr) {
 
 class WebViewMessagingHub {
 private:
-  EditControllerParameterChangeNotifier paramChangeNotifier;
   IWebViewIo *webView;
-  Vst::EditController *controller;
+  ParametersManager *parametersManager;
+  int parametersManagerSubscriptionId = 0;
 
 public:
-  void start(Vst::EditController *controller, IWebViewIo *webViewIo) {
-    this->controller = controller;
+  void start(ParametersManager *parametersManager, IWebViewIo *webViewIo) {
+    this->parametersManager = parametersManager;
     this->webView = webViewIo;
     webView->setMessageReceiver([this](const std::string &jsonStr) {
       logger.log("message received: %s", jsonStr.c_str());
@@ -52,36 +50,27 @@ public:
       if (!msg)
         return;
       if (auto *p = std::get_if<MsgSetParameter>(&*msg)) {
-        auto id = p->id;
+        auto identifier = p->identifier;
         auto value = p->value;
-        logger.log("set parameter: %d, %f", id, value);
-        Vst::ParameterInfo paramInfo;
-        this->controller->getParameterInfoByTag(id, paramInfo);
-        auto step = paramInfo.stepCount;
-        if (step > 0) {
-          int idx = static_cast<int>(std::lround(value));
-          idx = std::max(0, std::min(idx, step));
-          value = static_cast<float>(idx) / static_cast<float>(step);
-        } else {
-          value = std::max(0.0f, std::min(value, 1.0f));
-        }
-        this->controller->beginEdit(id);
-        this->controller->performEdit(id, value);
-        this->controller->endEdit(id);
+        logger.log("set parameter: %s, %f", identifier.c_str(), value);
+        this->parametersManager->applyParameterEdit(
+            identifier, value, ParameterEditingState::InstantChange);
       } else if (auto *p = std::get_if<MsgUiLoaded>(&*msg)) {
         logger.log("ui loaded");
       }
     });
-    paramChangeNotifier.start(controller, [this](int paramId, double value) {
-      printf("WebViewEditorView::paramChangeNotifier: %d, %f\n", paramId,
-             value);
-      if (paramId == Project1Params::kParamOnId) {
-        this->webView->sendMessage(value == 1.0 ? "'ON'" : "'OFF'");
-      }
-    });
+    parametersManagerSubscriptionId = parametersManager->subscribeFromEditor(
+        [this](std::string identifier, double value) {
+          printf("WebViewEditorView::subscribeFromEditor: %s, %f\n",
+                 identifier.c_str(), value);
+          // this->webView->sendMessage(
+          //     std::format("{} {}", identifier, value).c_str());
+        });
   }
   void stop() {
-    paramChangeNotifier.stop();
+    if (parametersManagerSubscriptionId > 0) {
+      parametersManager->unsubscribeFromEditor(parametersManagerSubscriptionId);
+    }
     webView->setMessageReceiver(nullptr);
   }
 };
@@ -95,13 +84,14 @@ private:
 public:
   IWebViewIo *getWebViewIO() { return &webView; }
 
-  WebViewEditorView(Vst::EditController *controller)
+  WebViewEditorView(Vst::EditController *controller,
+                    ParametersManager *parametersManager)
       : Vst::EditorView(controller) {
     printf("WebViewEditorView::WebViewEditorView\n");
 
     // webView.loadUrl("https://localhost:3002");
     webView.loadUrl("app://local/index.html");
-    webViewMessagingHub.start(controller, &webView);
+    webViewMessagingHub.start(parametersManager, &webView);
   }
 
   ~WebViewEditorView() override {
@@ -160,6 +150,7 @@ public:
 };
 
 Steinberg::IPlugView *
-createWebViewEditorView(Steinberg::Vst::EditController *controller) {
-  return new WebViewEditorView(controller);
+createWebViewEditorView(Steinberg::Vst::EditController *controller,
+                        ParametersManager *parametersManager) {
+  return new WebViewEditorView(controller, parametersManager);
 }

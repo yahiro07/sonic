@@ -24,11 +24,13 @@ private:
 
 public:
   //------------------------------------------------------------------------
-  Project1Controller() : parametersManager(this->parameters) {
+  Project1Controller() : parametersManager(*this, this->parameters) {
     logger.start();
     synthInstance = createSynthesizerInstance();
+    parametersManager.startObserve();
   }
   ~Project1Controller() SMTG_OVERRIDE {
+    parametersManager.stopObserve();
     delete synthInstance;
     logger.stop();
   }

@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-enum class ParameterFlags {
+enum ParameterFlags : int {
   None = 0,
   IsReadOnly = 1,
   IsHidden = 2,
