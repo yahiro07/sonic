@@ -16,6 +16,7 @@ typedef struct _ParameterItem {
   std::vector<std::string> valueStrings; // For enum parameters
   ParameterType type;
   std::string group;
+  ParameterFlags flags;
 } ParameterItem;
 
 class ParameterBuilderImpl : public ParameterBuilder {
@@ -29,7 +30,7 @@ public:
   }
 
   void addUnary(uint64_t address, Str identifier, Str label,
-                double defaultValue, Str group) {
+                double defaultValue, Str group, ParameterFlags flags) {
     parameters.push_back({
         .address = address,
         .identifier = std::string(identifier),
@@ -40,11 +41,13 @@ public:
         .valueStrings = {},
         .type = ParameterType::Unary,
         .group = std::string(group),
+        .flags = flags,
     });
   }
 
   void addEnum(uint64_t address, Str identifier, Str label,
-               Str defaultValueString, StrVec valueStrings, Str group) {
+               Str defaultValueString, StrVec valueStrings, Str group,
+               ParameterFlags flags) {
     parameters.push_back({
         .address = address,
         .identifier = std::string(identifier),
@@ -63,11 +66,12 @@ public:
             std::vector<std::string>(valueStrings.begin(), valueStrings.end()),
         .type = ParameterType::Enum,
         .group = std::string(group),
+        .flags = flags,
     });
   }
 
   void addBool(uint64_t address, Str identifier, Str label, bool defaultValue,
-               Str group) {
+               Str group, ParameterFlags flags) {
     parameters.push_back({
         .address = address,
         .identifier = std::string(identifier),
@@ -78,6 +82,7 @@ public:
         .valueStrings = {},
         .type = ParameterType::Bool,
         .group = std::string(group),
+        .flags = flags,
     });
   }
 };
