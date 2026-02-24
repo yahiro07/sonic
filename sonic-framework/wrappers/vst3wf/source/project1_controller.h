@@ -8,6 +8,7 @@
 #include "public.sdk/source/vst/vsteditcontroller.h"
 
 #include "dsp/MySynthesizer.hpp"
+#include "logger.h"
 
 namespace Steinberg {
 
@@ -16,12 +17,18 @@ namespace Steinberg {
 //------------------------------------------------------------------------
 class Project1Controller : public Steinberg::Vst::EditControllerEx1 {
 private:
-  SynthesizerBase *synth;
+  SynthesizerBase *synthInstance;
 
 public:
   //------------------------------------------------------------------------
-  Project1Controller() { synth = createSynthesizerInstance(); }
-  ~Project1Controller() SMTG_OVERRIDE { delete synth; }
+  Project1Controller() {
+    logger.start();
+    synthInstance = createSynthesizerInstance();
+  }
+  ~Project1Controller() SMTG_OVERRIDE {
+    delete synthInstance;
+    logger.stop();
+  }
 
   // Create function
   static Steinberg::FUnknown *createInstance(void * /*context*/) {

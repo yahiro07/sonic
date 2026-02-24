@@ -9,6 +9,7 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "project1_cids.h"
 
+#include "logger.h"
 #include <cstring>
 
 using namespace Steinberg;
@@ -98,8 +99,10 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
       if (eventList->getEvent(i, event) == kResultOk) {
         if (event.type == Vst::Event::kNoteOnEvent) {
           synthInstance->noteOn(event.noteOn.pitch, event.noteOn.velocity);
+          logger.log("note on %d", event.noteOn.pitch);
         } else if (event.type == Vst::Event::kNoteOffEvent) {
           synthInstance->noteOff(event.noteOff.pitch);
+          logger.log("note off %d", event.noteOff.pitch);
         }
       }
     }

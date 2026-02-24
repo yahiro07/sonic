@@ -21,7 +21,7 @@ namespace Steinberg {
 //------------------------------------------------------------------------
 tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
   // Here the Plug-in will be instantiated
-  printf("Project1Controller::initialize\n");
+  logger.log("Project1Controller::initialize");
 
   //---do not forget to call parent ------
   tresult result = EditControllerEx1::initialize(context);

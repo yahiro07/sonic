@@ -15,8 +15,8 @@ build:
 	cmake --build build
 
 run: build
-# 	$(CLI_HOST) $(VST3_OUT)
-	open $(GUI_HOST)
+	$(CLI_HOST) $(VST3_OUT)
+# 	open $(GUI_HOST)
 
 clean:
 	# Keep build/_deps to avoid re-downloading dependencies (vst3sdk, saucer, etc.)
