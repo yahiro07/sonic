@@ -8,7 +8,7 @@ using namespace Steinberg;
 class EditControllerParameterChangeNotifier : public IDependent {
 public:
   void start(Vst::EditController *controller,
-             std::function<void(int32 paramId, double value)> receiver) {
+             std::function<void(Vst::ParamID paramId, double value)> receiver) {
     this->controller = controller;
     this->receiver = receiver;
     if (controller) {
@@ -60,5 +60,5 @@ public:
 
 private:
   Vst::EditController *controller = nullptr;
-  std::function<void(int32 paramId, double value)> receiver;
+  std::function<void(Vst::ParamID paramId, double value)> receiver;
 };

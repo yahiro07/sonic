@@ -1,16 +1,13 @@
 #pragma once
 
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <functional>
-#include <optional>
-#include <string>
-
 #include "base/source/fstring.h"
 #include "edit_controller_parameter_change_notifier.h"
 #include "parameter_builder_impl.h"
-#include <public.sdk/source/vst/vsteditcontroller.h>
+#include <algorithm>
+#include <cmath>
+#include <functional>
+#include <optional>
+#include <string>
 #include <unordered_map>
 
 using namespace Steinberg;
@@ -75,7 +72,7 @@ public:
 };
 
 class ParametersManager {
-  typedef uint32_t ParamAddress;
+  using ParamAddress = Vst::ParamID;
 
 private:
   Vst::EditController &editController;
@@ -83,14 +80,13 @@ private:
   EditControllerParameterChangeNotifier editControllerParameterChangeNotifier;
   std::unordered_map<ParamAddress, ParameterItem> parameterItems;
   std::unordered_map<std::string, ParamAddress> identifierToAddressMap;
-  std::unordered_map<ParamAddress, double> parametersCache; // not normalized
+  // Cache is stored in normalized (0..1) space.
+  std::unordered_map<ParamAddress, double> parametersCache;
 
   int subscriptionIdCounter = 0;
   std::unordered_map<int, std::function<void(std::string, double)>>
       uiSideReceivers;
-
-  bool isEditing = false;
-  ParamAddress editingParamAddress = 0;
+  ParamAddress editingParamAddress = Vst::kNoParamId;
 
   void addVstParameter(const ParameterItem &item) {
     auto step = ParameterItemHelper::getStepCount(&item);
@@ -144,14 +140,17 @@ private:
     return getParameterItemByAddress(val->second);
   }
 
-  void setEditing(ParamAddress address, bool isEditing) {
-    this->isEditing = isEditing;
-    this->editingParamAddress = address;
-  }
+  void setEditing(ParamAddress address) { this->editingParamAddress = address; }
 
-  void clearEditing() {
-    this->isEditing = false;
-    this->editingParamAddress = 0;
+  void clearEditing() { this->editingParamAddress = Vst::kNoParamId; }
+
+  bool checkParameterChanging(ParamAddress address, double newNormValue) {
+    auto cached = parametersCache.find(address);
+    if (cached == parametersCache.end()) {
+      return true;
+    }
+    const auto oldNormValue = cached->second;
+    return std::abs(oldNormValue - newNormValue) > 1e-6;
   }
 
 public:
@@ -163,10 +162,19 @@ public:
 
   void addParameters(std::vector<ParameterItem> &parameterItems) {
     for (const auto &item : parameterItems) {
+      auto validInRange = item.address <= Vst::kMaxParamId; // 0x7FFFFFFF
+      if (!validInRange) {
+        printf("ParametersManager: address out of range for VST ParamID: %llu "
+               "(%s)\n",
+               static_cast<unsigned long long>(item.address),
+               item.identifier.c_str());
+        continue;
+      }
       auto address = item.address;
       this->parameterItems[address] = item;
       this->identifierToAddressMap[item.identifier] = address;
-      this->parametersCache[address] = item.defaultValue;
+      this->parametersCache[address] =
+          ParameterItemHelper::getNormalized(&item, item.defaultValue);
       if (!item.isInternal) {
         addVstParameter(item);
       }
@@ -176,13 +184,19 @@ public:
   // Host --> EditController --> UI
   void startObserve() {
     editControllerParameterChangeNotifier.start(
-        &this->editController, [&](ParamAddress address, double normValue) {
-          if (isEditing && editingParamAddress == address) {
+        &this->editController, [&](Vst::ParamID address, double normValue) {
+          if (editingParamAddress == address) {
             return;
           }
           auto paramItem = getParameterItemByAddress(address);
           if (!paramItem)
             return;
+
+          if (!checkParameterChanging(address, normValue)) {
+            return;
+          }
+          parametersCache[address] = normValue;
+
           auto value =
               ParameterItemHelper::getUnnormalized(paramItem, normValue);
           for (auto &receiver : uiSideReceivers) {
@@ -207,8 +221,17 @@ public:
     }
     auto normValue = ParameterItemHelper::getNormalized(paramItem, value);
 
+    if (editingState == ParameterEditingState::Perform ||
+        editingState == ParameterEditingState::InstantChange) {
+
+      if (!checkParameterChanging(address, normValue)) {
+        return;
+      }
+      parametersCache[address] = normValue;
+    }
+
     if (editingState == ParameterEditingState::Begin) {
-      setEditing(address, true);
+      setEditing(address);
       editController.beginEdit(address);
     } else if (editingState == ParameterEditingState::Perform) {
       editController.performEdit(address, normValue);
@@ -216,7 +239,7 @@ public:
       editController.endEdit(address);
       clearEditing();
     } else if (editingState == ParameterEditingState::InstantChange) {
-      setEditing(address, true);
+      setEditing(address);
       editController.beginEdit(address);
       editController.performEdit(address, normValue);
       editController.endEdit(address);
