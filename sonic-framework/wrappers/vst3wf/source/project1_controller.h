@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "dsp/SynthesizerBase.hpp"
+#include "dsp/SynthesizerBase.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 
-#include "dsp/MySynthesizer.hpp"
+#include "dsp/MySynthesizer.h"
 #include "logger.h"
 
 namespace Steinberg {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SynthesizerBase.hpp"
+#include "SynthesizerBase.h"
 
 class MySynthesizer : public SynthesizerBase {
 public:

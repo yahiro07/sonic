@@ -1,4 +1,4 @@
-#include "MySynthesizer.hpp"
+#include "MySynthesizer.h"
 #include <cmath>
 
 MySynthesizer::MySynthesizer() {}

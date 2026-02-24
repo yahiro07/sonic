@@ -4,7 +4,7 @@
 
 #include "project1_processor.h"
 #include "base/source/fstreamer.h"
-#include "dsp/MySynthesizer.hpp"
+#include "dsp/MySynthesizer.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "project1_cids.h"
