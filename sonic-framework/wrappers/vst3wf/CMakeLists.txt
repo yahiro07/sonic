@@ -27,12 +27,32 @@ target_link_libraries(Project1
         sdk
 )
 
-smtg_target_add_plugin_resources(Project1
-    RESOURCES
-        resource/www
-)
-
 smtg_target_configure_version_file(Project1)
+
+
+
+# Keep web resources in sync with the built plug-in bundle.
+# This registers every file under resource/www (recursively) as a plug-in resource
+# and preserves the folder layout under <Bundle>/Contents/Resources/www/...
+set(PROJECT1_WWW_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/resource/www")
+file(GLOB_RECURSE PROJECT1_WWW_FILES CONFIGURE_DEPENDS "${PROJECT1_WWW_ROOT}/*")
+foreach(_www_file IN LISTS PROJECT1_WWW_FILES)
+    if(IS_DIRECTORY "${_www_file}")
+        continue()
+    endif()
+
+    file(RELATIVE_PATH _www_relpath "${PROJECT1_WWW_ROOT}" "${_www_file}")
+    get_filename_component(_www_reldir "${_www_relpath}" DIRECTORY)
+
+    if(_www_reldir STREQUAL "")
+        set(_www_outsubdir "www")
+    else()
+        set(_www_outsubdir "www/${_www_reldir}")
+    endif()
+
+    smtg_target_add_plugin_resource(Project1 "${_www_file}" "${_www_outsubdir}")
+endforeach()
+
 
 if(SMTG_MAC)
     smtg_target_set_bundle(Project1
@@ -44,26 +64,24 @@ if(SMTG_MAC)
         "--pluginfolder;$(BUILT_PRODUCTS_DIR)"
     )
 
-
     target_sources(Project1 PRIVATE
-      source/webview/mac_web_view.mm
+        source/webview/mac_web_view.mm
     )
 
     target_link_libraries(Project1 PRIVATE
-      "-framework Cocoa"
-      "-framework Webkit"
+        "-framework Cocoa"
+        "-framework Webkit"
     )
 
 elseif(SMTG_WIN)
-    target_sources(Project1 PRIVATE 
+    target_sources(Project1 PRIVATE
         resource/win32resource.rc
     )
     if(MSVC)
         set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Project1)
-
         smtg_target_set_debug_executable(Project1
             "$(ProgramW6432)/Steinberg/VST3PluginTestHost/VST3PluginTestHost.exe"
             "--pluginfolder \"$(OutDir)/\""
         )
     endif()
-endif(SMTG_MAC)
+endif()
