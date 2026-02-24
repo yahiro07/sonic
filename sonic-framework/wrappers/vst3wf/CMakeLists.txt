@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14.0)
-set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13 CACHE STRING "")
+set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "")
 
 project(Project1
     VERSION 1.0.0.0
@@ -20,6 +20,7 @@ smtg_add_vst3plugin(Project1
     source/project1_entry.cpp
     source/dsp/MySynthesizer.cpp
     source/utils/logger.cpp
+    source/webview/webview_editor_view.cpp
 )
 
 target_link_libraries(Project1
@@ -52,6 +53,16 @@ foreach(_www_file IN LISTS PROJECT1_WWW_FILES)
 
     smtg_target_add_plugin_resource(Project1 "${_www_file}" "${_www_outsubdir}")
 endforeach()
+
+FetchContent_Declare(
+  glaze
+  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
+  GIT_TAG main
+  GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(glaze)
+target_link_libraries(Project1 PRIVATE glaze::glaze)
+
 
 
 if(SMTG_MAC)
