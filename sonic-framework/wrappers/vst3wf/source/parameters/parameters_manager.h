@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstdint>
 #include <functional>
-#include <limits>
 #include <optional>
 #include <string>
 
@@ -93,14 +92,6 @@ private:
   bool isEditing = false;
   ParamAddress editingParamAddress = 0;
 
-  static std::optional<ParamAddress> toParamId(uint64_t address) {
-    if (address >
-        static_cast<uint64_t>(std::numeric_limits<ParamAddress>::max())) {
-      return std::nullopt;
-    }
-    return static_cast<ParamAddress>(address);
-  }
-
   void addVstParameter(const ParameterItem &item) {
     auto step = ParameterItemHelper::getStepCount(&item);
     auto normDefaultValue =
@@ -172,18 +163,10 @@ public:
 
   void addParameters(std::vector<ParameterItem> &parameterItems) {
     for (const auto &item : parameterItems) {
-      auto _paramId = toParamId(item.address);
-      if (!_paramId) {
-        printf(
-            "ParametersManager: address too large for VST ParamID: %llu (%s)\n",
-            static_cast<unsigned long long>(item.address),
-            item.identifier.c_str());
-        continue;
-      }
-      auto paramId = *_paramId;
-      this->parameterItems[paramId] = item;
-      this->identifierToAddressMap[item.identifier] = paramId;
-      this->parametersCache[paramId] = item.defaultValue;
+      auto address = item.address;
+      this->parameterItems[address] = item;
+      this->identifierToAddressMap[item.identifier] = address;
+      this->parametersCache[address] = item.defaultValue;
       if (!item.isInternal) {
         addVstParameter(item);
       }

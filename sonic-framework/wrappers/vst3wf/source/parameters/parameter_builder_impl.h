@@ -9,7 +9,7 @@ enum class ParameterType {
 };
 
 typedef struct _ParameterItem {
-  uint64_t address;
+  uint32_t address;
   std::string identifier;
   std::string label;
   double defaultValue;
@@ -32,7 +32,7 @@ public:
     synthInstance->setupParameters(*this);
   }
 
-  void addUnary(uint64_t address, Str identifier, Str label,
+  void addUnary(uint32_t address, Str identifier, Str label,
                 double defaultValue, Str group, ParameterFlags flags) {
     parameters.push_back({
         .address = address,
@@ -49,7 +49,7 @@ public:
     });
   }
 
-  void addEnum(uint64_t address, Str identifier, Str label,
+  void addEnum(uint32_t address, Str identifier, Str label,
                Str defaultValueString, StrVec valueStrings, Str group,
                ParameterFlags flags) {
     const double maxValue = valueStrings.empty()
@@ -78,7 +78,7 @@ public:
     });
   }
 
-  void addBool(uint64_t address, Str identifier, Str label, bool defaultValue,
+  void addBool(uint32_t address, Str identifier, Str label, bool defaultValue,
                Str group, ParameterFlags flags) {
     parameters.push_back({
         .address = address,

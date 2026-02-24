@@ -9,7 +9,7 @@ void MySynthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addUnary(2, "oscVolume", "OSC Volume", 0.5);
 }
 
-void MySynthesizer::setParameter(uint64_t address, double value) {
+void MySynthesizer::setParameter(uint32_t address, double value) {
   switch (address) {
   case 1:
     oscPitch = value;

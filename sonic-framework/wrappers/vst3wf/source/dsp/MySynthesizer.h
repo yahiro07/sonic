@@ -8,7 +8,7 @@ public:
   ~MySynthesizer() override = default;
 
   void setupParameters(ParameterBuilder &builder) override;
-  void setParameter(uint64_t address, double value) override;
+  void setParameter(uint32_t address, double value) override;
   void prepare(double sampleRate, int32_t maxFrameCount) override;
   void noteOn(int32_t noteNumber, double velocity) override;
   void noteOff(int32_t noteNumber) override;
