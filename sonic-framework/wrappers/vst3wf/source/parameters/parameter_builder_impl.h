@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../dsp/SynthesizerBase.h"
 
 enum class ParameterType {

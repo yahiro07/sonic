@@ -10,7 +10,7 @@ enum class ParameterFlags {
   None = 0,
   IsReadOnly = 1,
   IsHidden = 2,
-  IsInternal = 3
+  IsInternal = 4
 };
 
 class ParameterBuilder {

@@ -10,6 +10,8 @@
 #include "dsp/MySynthesizer.h"
 #include "utils/logger.h"
 
+#include "parameters/parameters_manager.h"
+
 namespace Steinberg {
 
 //------------------------------------------------------------------------
@@ -18,10 +20,11 @@ namespace Steinberg {
 class Project1Controller : public Steinberg::Vst::EditControllerEx1 {
 private:
   SynthesizerBase *synthInstance;
+  ParametersManager parametersManager;
 
 public:
   //------------------------------------------------------------------------
-  Project1Controller() {
+  Project1Controller() : parametersManager(this->parameters) {
     logger.start();
     synthInstance = createSynthesizerInstance();
   }

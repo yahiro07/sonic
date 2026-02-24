@@ -4,7 +4,6 @@
 
 #include "project1_controller.h"
 #include "base/source/fstreamer.h"
-#include "base/source/fstring.h"
 #include "pluginterfaces/base/ibstream.h"
 #include "project1_cids.h"
 #include "stdio.h"
@@ -34,37 +33,8 @@ tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
     //---Create Parameters------------
     auto parameterBuilder = ParameterBuilderImpl();
     synthInstance->setupParameters(parameterBuilder);
-    for (const auto &spec : parameterBuilder.getItems()) {
-
-      int32 step = 0;
-      Vst::ParamValue normalizedDefaultValue = 0.;
-      int32 flags = 0;
-      if (spec.type == ParameterType::Unary) {
-        step = 0;
-        normalizedDefaultValue = spec.defaultValue;
-        flags = Vst::ParameterInfo::kCanAutomate;
-      } else if (spec.type == ParameterType::Enum) {
-        step = spec.valueStrings.size() - 1;
-        normalizedDefaultValue = spec.defaultValue / step;
-        flags = Vst::ParameterInfo::kCanAutomate;
-      } else if (spec.type == ParameterType::Bool) {
-        step = 1;
-        normalizedDefaultValue = spec.defaultValue > 0.5f ? 1 : 0;
-      }
-
-      Steinberg::String paramName;
-      paramName.fromUTF8(
-          reinterpret_cast<const Steinberg::char8 *>(spec.label.c_str()));
-
-      parameters.addParameter(
-          paramName.text16(),     // name
-          nullptr,                // units
-          step,                   // step count (0 for continuous)
-          normalizedDefaultValue, // default value (normalized)
-          flags,                  // flags
-          spec.address            // tag (ID)
-      );
-    }
+    auto parameterItems = parameterBuilder.getItems();
+    parametersManager.addParameters(parameterItems);
   }
 
   return result;
