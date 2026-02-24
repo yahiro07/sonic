@@ -4,7 +4,7 @@ using namespace Steinberg;
 
 class EditControllerParameterChangeNotifier : public IDependent {
 public:
-  void setup(Vst::EditController *controller,
+  void start(Vst::EditController *controller,
              std::function<void(int32 paramId, double value)> receiver) {
     this->controller = controller;
     this->receiver = receiver;
@@ -21,7 +21,7 @@ public:
     }
   }
 
-  void terminate() {
+  void stop() {
     if (controller) {
       int32 count = controller->getParameterCount();
       for (int32 i = 0; i < count; i++) {
