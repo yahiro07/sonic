@@ -7,10 +7,10 @@
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/vst/vsttypes.h"
 
-namespace Steinberg {
+namespace Project1 {
 
 //------------------------------------------------------------------------
-enum Project1Params : Vst::ParamID {
+enum Project1Params : Steinberg::Vst::ParamID {
   kBypassId = 100,
 
   kParamVolId = 102,
@@ -26,4 +26,4 @@ static const Steinberg::FUID kProject1ControllerUID(0xAE34DD83, 0x308259DF,
 #define Project1VST3Category "Fx"
 
 //------------------------------------------------------------------------
-} // namespace Steinberg
+} // namespace Project1

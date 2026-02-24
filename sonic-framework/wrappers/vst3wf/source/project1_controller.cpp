@@ -11,9 +11,8 @@
 #include "parameters/parameter_builder_impl.h"
 #include "webview/webview_editor_view.h"
 
+namespace Project1 {
 using namespace Steinberg;
-
-namespace Steinberg {
 
 //------------------------------------------------------------------------
 // HelloWorldController Implementation
@@ -127,4 +126,4 @@ tresult PLUGIN_API Project1Controller::getParamValueByString(
 }
 
 //------------------------------------------------------------------------
-} // namespace Steinberg
+} // namespace Project1

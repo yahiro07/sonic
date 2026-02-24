@@ -12,9 +12,9 @@
 #include "utils/logger.h"
 #include <cstring>
 
+namespace Project1 {
 using namespace Steinberg;
 
-namespace Steinberg {
 //------------------------------------------------------------------------
 // Project1Processor
 //------------------------------------------------------------------------
@@ -208,4 +208,4 @@ tresult PLUGIN_API Project1Processor::getState(IBStream *state) {
 }
 
 //------------------------------------------------------------------------
-} // namespace Steinberg
+} // namespace Project1

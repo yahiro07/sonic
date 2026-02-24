@@ -13,6 +13,7 @@
 
 using namespace Steinberg::Vst;
 using namespace Steinberg;
+using namespace Project1;
 
 //------------------------------------------------------------------------
 //  VST Plug-in Entry

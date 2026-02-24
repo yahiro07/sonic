@@ -12,7 +12,7 @@
 
 #include "parameters/parameters_manager.h"
 
-namespace Steinberg {
+namespace Project1 {
 
 //------------------------------------------------------------------------
 //  Project1Controller
@@ -76,4 +76,4 @@ protected:
 };
 
 //------------------------------------------------------------------------
-} // namespace Steinberg
+} // namespace Project1

@@ -7,7 +7,7 @@
 #include "dsp/SynthesizerBase.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 
-namespace Steinberg {
+namespace Project1 {
 
 //------------------------------------------------------------------------
 //  Project1Processor
@@ -58,4 +58,4 @@ public:
 };
 
 //------------------------------------------------------------------------
-} // namespace Steinberg
+} // namespace Project1
