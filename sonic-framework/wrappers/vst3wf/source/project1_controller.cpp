@@ -4,12 +4,12 @@
 
 #include "project1_controller.h"
 #include "base/source/fstreamer.h"
+#include "base/source/fstring.h"
 #include "pluginterfaces/base/ibstream.h"
 #include "project1_cids.h"
 #include "stdio.h"
 
-// #include "vstgui/plugin-bindings/vst3editor.h"
-
+#include "parameter_builder_impl.h"
 #include "webview/webview_editor_view.h"
 
 using namespace Steinberg;
@@ -32,18 +32,39 @@ tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
   // Here you could register some parameters
   if (result == kResultTrue) {
     //---Create Parameters------------
-    parameters.addParameter(STR16("Bypass"), nullptr, 1, 0,
-                            Vst::ParameterInfo::kCanAutomate |
-                                Vst::ParameterInfo::kIsBypass,
-                            Project1Params::kBypassId);
+    auto parameterBuilder = ParameterBuilderImpl();
+    synthInstance->setupParameters(parameterBuilder);
+    for (const auto &spec : parameterBuilder.getItems()) {
 
-    parameters.addParameter(STR16("Parameter 1"), STR16("dB"), 0, .5,
-                            Vst::ParameterInfo::kCanAutomate,
-                            Project1Params::kParamVolId, 0, STR16("Param1"));
+      int32 step = 0;
+      Vst::ParamValue normalizedDefaultValue = 0.;
+      int32 flags = 0;
+      if (spec.type == ParameterType::Unary) {
+        step = 0;
+        normalizedDefaultValue = spec.defaultValue;
+        flags = Vst::ParameterInfo::kCanAutomate;
+      } else if (spec.type == ParameterType::Enum) {
+        step = spec.valueStrings.size() - 1;
+        normalizedDefaultValue = spec.defaultValue / step;
+        flags = Vst::ParameterInfo::kCanAutomate;
+      } else if (spec.type == ParameterType::Bool) {
+        step = 1;
+        normalizedDefaultValue = spec.defaultValue > 0.5f ? 1 : 0;
+      }
 
-    parameters.addParameter(STR16("Parameter 2"), STR16("On/Off"), 1, 1.,
-                            Vst::ParameterInfo::kCanAutomate,
-                            Project1Params::kParamOnId, 0, STR16("Param2"));
+      Steinberg::String paramName;
+      paramName.fromUTF8(
+          reinterpret_cast<const Steinberg::char8 *>(spec.label.c_str()));
+
+      parameters.addParameter(
+          paramName.text16(),     // name
+          nullptr,                // units
+          step,                   // step count (0 for continuous)
+          normalizedDefaultValue, // default value (normalized)
+          flags,                  // flags
+          spec.address            // tag (ID)
+      );
+    }
   }
 
   return result;
