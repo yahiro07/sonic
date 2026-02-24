@@ -4,6 +4,7 @@
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
 #include "mac_web_view.h"
+#include "pluginterfaces/vst/ivsteditcontroller.h"
 #include <glaze/glaze.hpp>
 
 using namespace Steinberg;
@@ -54,6 +55,16 @@ public:
         auto id = p->id;
         auto value = p->value;
         logger.log("set parameter: %d, %f", id, value);
+        Vst::ParameterInfo paramInfo;
+        this->controller->getParameterInfoByTag(id, paramInfo);
+        auto step = paramInfo.stepCount;
+        if (step > 0) {
+          int idx = static_cast<int>(std::lround(value));
+          idx = std::max(0, std::min(idx, step));
+          value = static_cast<float>(idx) / static_cast<float>(step);
+        } else {
+          value = std::max(0.0f, std::min(value, 1.0f));
+        }
         this->controller->beginEdit(id);
         this->controller->performEdit(id, value);
         this->controller->endEdit(id);
