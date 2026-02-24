@@ -15,7 +15,9 @@ build:
 	cmake --build build
 
 run: build
-# 	$(CLI_HOST) $(VST3_OUT)
+	$(CLI_HOST) $(VST3_OUT)
+
+run_gui: build
 	open $(GUI_HOST)
 
 clean:
