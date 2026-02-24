@@ -4,12 +4,12 @@
 MySynthesizer::MySynthesizer() {}
 
 void MySynthesizer::setupParameters(ParameterBuilder &builder) {
-  builder.addUnary(0, "gain", "gain", 0.5f);
-  builder.addUnary(1, "oscPitch", "OSC Pitch", 0.5f);
-  builder.addUnary(2, "oscVolume", "OSC Volume", 0.5f);
+  builder.addUnary(0, "gain", "gain", 0.5);
+  builder.addUnary(1, "oscPitch", "OSC Pitch", 0.5);
+  builder.addUnary(2, "oscVolume", "OSC Volume", 0.5);
 }
 
-void MySynthesizer::setParameter(uint64_t address, float value) {
+void MySynthesizer::setParameter(uint64_t address, double value) {
   switch (address) {
   case 1:
     oscPitch = value;
@@ -20,11 +20,11 @@ void MySynthesizer::setParameter(uint64_t address, float value) {
   }
 }
 
-void MySynthesizer::prepare(float sampleRate, int32_t _maxFrameCount) {
+void MySynthesizer::prepare(double sampleRate, int32_t _maxFrameCount) {
   this->sampleRate = sampleRate;
 }
 
-void MySynthesizer::noteOn(int32_t noteNumber, float _velocity) {
+void MySynthesizer::noteOn(int32_t noteNumber, double _velocity) {
   this->noteNumber = noteNumber;
   this->gateOn = true;
 }
