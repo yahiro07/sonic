@@ -1,19 +1,19 @@
-function sendMessage(msg){
+function sendMessage(msg) {
   window.webkit.messageHandlers.native.postMessage(
     JSON.stringify(msg)
   );
 }
 
-function sendParameter(id, value){
+function sendParameter(identifier, value) {
   sendMessage({
     type: "setParameter",
-    id: id,
-    value: value
+    identifier,
+    value
   })
 }
 
 
-function pushLine (line)  {
+function pushLine(line) {
   const div = document.createElement("div");
   div.innerText = line;
   document.body.appendChild(div);
@@ -29,7 +29,7 @@ window.addEventListener("native-message", (event) => {
   pushLine(JSON.stringify(event.detail));
 });
 
-sendMessage({type: "uiLoaded"});
+sendMessage({ type: "uiLoaded" });
 
 // window.webkit.messageHandlers.native.postMessage(
 //   JSON.stringify({ data: "A" })
@@ -52,16 +52,15 @@ sendMessage({type: "uiLoaded"});
 
 
 
-function addSlider(name, id, defaultValue){
+function addSlider(name, identifier, defaultValue) {
   const slider = document.createElement("input");
   slider.type = "range";
   slider.min = 0;
   slider.max = 1;
   slider.step = 0.01;
   slider.value = defaultValue;
-  slider.id = id;
   slider.oninput = () => {
-    sendParameter(id, parseFloat(slider.value));
+    sendParameter(identifier, parseFloat(slider.value));
   };
   // document.body.appendChild(slider);
 
@@ -75,7 +74,7 @@ function addSlider(name, id, defaultValue){
   document.body.appendChild(div);
 }
 
-addSlider("Gain", 0, 0.5);
-addSlider("Pitch", 1, 0.5);
-addSlider("Volume", 2, 0.5);
+addSlider("Gain", "gain", 0.5);
+addSlider("Pitch", "oscPitch", 0.5);
+addSlider("Volume", "oscVolume", 0.5);
 
