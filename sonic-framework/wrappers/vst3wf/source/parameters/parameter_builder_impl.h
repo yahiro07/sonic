@@ -1,4 +1,4 @@
-#include "dsp/SynthesizerBase.h"
+#include "../dsp/SynthesizerBase.h"
 
 enum class ParameterType {
   Unary,

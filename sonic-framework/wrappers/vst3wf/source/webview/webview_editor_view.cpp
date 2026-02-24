@@ -1,4 +1,4 @@
-#include "edit_controller_parameter_change_notifier.h"
+#include "../parameters/edit_controller_parameter_change_notifier.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/gui/iplugview.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>

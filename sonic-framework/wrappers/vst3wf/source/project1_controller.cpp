@@ -9,7 +9,7 @@
 #include "project1_cids.h"
 #include "stdio.h"
 
-#include "parameter_builder_impl.h"
+#include "parameters/parameter_builder_impl.h"
 #include "webview/webview_editor_view.h"
 
 using namespace Steinberg;
