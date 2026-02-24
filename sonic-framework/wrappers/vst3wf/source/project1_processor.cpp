@@ -9,7 +9,7 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "project1_cids.h"
 
-#include "logger.h"
+#include "utils/logger.h"
 #include <cstring>
 
 using namespace Steinberg;

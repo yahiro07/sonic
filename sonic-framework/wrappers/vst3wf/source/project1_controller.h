@@ -8,7 +8,7 @@
 #include "public.sdk/source/vst/vsteditcontroller.h"
 
 #include "dsp/MySynthesizer.h"
-#include "logger.h"
+#include "utils/logger.h"
 
 namespace Steinberg {
 
