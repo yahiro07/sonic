@@ -2,10 +2,10 @@
 // Copyright(c) 2022 Steinberg Media Technologies GmbH.
 //------------------------------------------------------------------------
 
-#include "project1_cids.h"
-#include "project1_controller.h"
-#include "project1_processor.h"
-#include "version.h"
+#include "./project1_cids.h"
+#include "./project1_controller.h"
+#include "./project1_processor.h"
+#include "./version.h"
 
 #include "public.sdk/source/main/pluginfactory.h"
 

@@ -4,13 +4,12 @@
 
 #include "./project1_processor.h"
 #include "./dsp/MySynthesizer.h"
-#include "./project1_cids.h"
-#include "base/source/fstreamer.h"
-#include "pluginterfaces/vst/ivstevents.h"
-#include "pluginterfaces/vst/ivstparameterchanges.h"
-
 #include "./general/logger.h"
+#include "./project1_cids.h"
+#include <base/source/fstreamer.h>
 #include <cstring>
+#include <pluginterfaces/vst/ivstevents.h>
+#include <pluginterfaces/vst/ivstparameterchanges.h>
 
 namespace Project1 {
 using namespace Steinberg;

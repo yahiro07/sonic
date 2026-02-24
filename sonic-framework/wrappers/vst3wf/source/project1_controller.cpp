@@ -3,13 +3,12 @@
 //------------------------------------------------------------------------
 
 #include "./project1_controller.h"
-#include "base/source/fstreamer.h"
-#include "pluginterfaces/base/ibstream.h"
-#include "project1_cids.h"
-#include "stdio.h"
-
 #include "./logic/parameter_builder_impl.h"
+#include "./project1_cids.h"
 #include "./wrapper/webview_editor_view.h"
+#include <base/source/fstreamer.h>
+#include <pluginterfaces/base/ibstream.h>
+#include <stdio.h>
 
 namespace Project1 {
 using namespace Steinberg;
