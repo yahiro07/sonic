@@ -1,8 +1,11 @@
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <functional>
+#include <limits>
+#include <optional>
 #include <string>
 
 #include "base/source/fstring.h"
@@ -19,10 +22,14 @@ class ParameterItemHelper {
 public:
   static double getNormalized(const ParameterItem *item, double value) {
     if (item->type == ParameterType::Enum) {
-      auto step = item->valueStrings.size() - 1;
-      if (step == 0)
+      auto count = item->valueStrings.size();
+      if (count < 2) {
         return 0.0;
-      return value / static_cast<double>(step);
+      }
+      int stepCount = count - 1;
+      int idx = std::lround(value);
+      int clampedIdx = std::clamp(idx, 0, stepCount);
+      return static_cast<double>(clampedIdx) / static_cast<double>(stepCount);
     } else if (item->type == ParameterType::Bool) {
       return value > 0.5 ? 1.0 : 0.0;
     } else {
@@ -31,10 +38,13 @@ public:
   }
   static double getUnnormalized(const ParameterItem *item, double normValue) {
     if (item->type == ParameterType::Enum) {
-      auto step = item->valueStrings.size() - 1;
-      if (step == 0)
+      auto count = item->valueStrings.size();
+      if (count < 2) {
         return 0.0;
-      return std::lround(normValue * static_cast<double>(step));
+      }
+      auto stepCount = count - 1;
+      auto clampedNorm = std::clamp(normValue, 0.0, 1.0);
+      return std::lround(clampedNorm * stepCount);
     } else if (item->type == ParameterType::Bool) {
       return normValue > 0.5 ? 1.0 : 0.0;
     }
@@ -42,7 +52,11 @@ public:
   }
   static int getStepCount(const ParameterItem *item) {
     if (item->type == ParameterType::Enum) {
-      return item->valueStrings.size() - 1;
+      auto count = item->valueStrings.size();
+      if (count < 2) {
+        return 0;
+      }
+      return count - 1;
     } else if (item->type == ParameterType::Bool) {
       return 1;
     }
@@ -62,20 +76,30 @@ public:
 };
 
 class ParametersManager {
+  typedef uint32_t ParamAddress;
+
 private:
   Vst::EditController &editController;
   Vst::ParameterContainer &vstParameters;
   EditControllerParameterChangeNotifier editControllerParameterChangeNotifier;
-  std::unordered_map<uint64_t, ParameterItem> parameterItems;
-  std::unordered_map<std::string, uint64_t> identifierToAddressMap;
-  std::unordered_map<uint64_t, double> parametersCache; // not normalized
+  std::unordered_map<ParamAddress, ParameterItem> parameterItems;
+  std::unordered_map<std::string, ParamAddress> identifierToAddressMap;
+  std::unordered_map<ParamAddress, double> parametersCache; // not normalized
 
   int subscriptionIdCounter = 0;
   std::unordered_map<int, std::function<void(std::string, double)>>
       uiSideReceivers;
 
   bool isEditing = false;
-  uint64_t editingParamAddress = 0;
+  ParamAddress editingParamAddress = 0;
+
+  static std::optional<ParamAddress> toParamId(uint64_t address) {
+    if (address >
+        static_cast<uint64_t>(std::numeric_limits<ParamAddress>::max())) {
+      return std::nullopt;
+    }
+    return static_cast<ParamAddress>(address);
+  }
 
   void addVstParameter(const ParameterItem &item) {
     auto step = ParameterItemHelper::getStepCount(&item);
@@ -96,15 +120,16 @@ private:
     );
   }
 
-  int getAddressByIdentifier(std::string identifier) {
+  std::optional<ParamAddress>
+  getAddressByIdentifier(const std::string &identifier) {
     auto val = identifierToAddressMap.find(identifier);
     if (val == identifierToAddressMap.end()) {
-      return -1;
+      return std::nullopt;
     }
     return val->second;
   }
 
-  std::string getIdentifierByAddress(int address) {
+  std::string getIdentifierByAddress(ParamAddress address) {
     auto val = parameterItems.find(address);
     if (val == parameterItems.end()) {
       return "";
@@ -112,7 +137,7 @@ private:
     return val->second.identifier;
   }
 
-  ParameterItem *getParameterItemByAddress(int address) {
+  ParameterItem *getParameterItemByAddress(ParamAddress address) {
     auto val = parameterItems.find(address);
     if (val == parameterItems.end()) {
       return nullptr;
@@ -128,7 +153,7 @@ private:
     return getParameterItemByAddress(val->second);
   }
 
-  void setEditing(uint64_t address, bool isEditing) {
+  void setEditing(ParamAddress address, bool isEditing) {
     this->isEditing = isEditing;
     this->editingParamAddress = address;
   }
@@ -147,9 +172,18 @@ public:
 
   void addParameters(std::vector<ParameterItem> &parameterItems) {
     for (const auto &item : parameterItems) {
-      this->parameterItems[item.address] = item;
-      this->identifierToAddressMap[item.identifier] = item.address;
-      this->parametersCache[item.address] = item.defaultValue;
+      auto _paramId = toParamId(item.address);
+      if (!_paramId) {
+        printf(
+            "ParametersManager: address too large for VST ParamID: %llu (%s)\n",
+            static_cast<unsigned long long>(item.address),
+            item.identifier.c_str());
+        continue;
+      }
+      auto paramId = *_paramId;
+      this->parameterItems[paramId] = item;
+      this->identifierToAddressMap[item.identifier] = paramId;
+      this->parametersCache[paramId] = item.defaultValue;
       if (!item.isInternal) {
         addVstParameter(item);
       }
@@ -159,11 +193,11 @@ public:
   // Host --> EditController --> UI
   void startObserve() {
     editControllerParameterChangeNotifier.start(
-        &this->editController, [&](int32_t paramId, double normValue) {
-          if (isEditing && editingParamAddress == paramId) {
+        &this->editController, [&](ParamAddress address, double normValue) {
+          if (isEditing && editingParamAddress == address) {
             return;
           }
-          auto paramItem = getParameterItemByAddress(paramId);
+          auto paramItem = getParameterItemByAddress(address);
           if (!paramItem)
             return;
           auto value =
@@ -179,10 +213,11 @@ public:
   // UI --> EditController --> DSP, Host
   void applyParameterEdit(std::string identifier, double value,
                           ParameterEditingState editingState) {
-    auto address = getAddressByIdentifier(identifier);
-    if (address == -1) {
+    auto _address = getAddressByIdentifier(identifier);
+    if (!_address) {
       return;
     }
+    auto address = *_address;
     auto paramItem = getParameterItemByAddress(address);
     if (!paramItem || paramItem->isInternal) {
       return;
@@ -198,9 +233,11 @@ public:
       editController.endEdit(address);
       clearEditing();
     } else if (editingState == ParameterEditingState::InstantChange) {
+      setEditing(address, true);
       editController.beginEdit(address);
       editController.performEdit(address, normValue);
       editController.endEdit(address);
+      clearEditing();
     }
   }
 

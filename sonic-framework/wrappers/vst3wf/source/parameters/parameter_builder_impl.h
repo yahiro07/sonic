@@ -52,6 +52,9 @@ public:
   void addEnum(uint64_t address, Str identifier, Str label,
                Str defaultValueString, StrVec valueStrings, Str group,
                ParameterFlags flags) {
+    const double maxValue = valueStrings.empty()
+                                ? 0.0
+                                : static_cast<double>(valueStrings.size() - 1);
     parameters.push_back({
         .address = address,
         .identifier = std::string(identifier),
@@ -65,7 +68,7 @@ public:
                                                   defaultValueString)))
                 : 0.0f,
         .minValue = 0.0,
-        .maxValue = static_cast<double>(valueStrings.size() - 1),
+        .maxValue = maxValue,
         .valueStrings =
             std::vector<std::string>(valueStrings.begin(), valueStrings.end()),
         .type = ParameterType::Enum,
