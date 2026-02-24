@@ -64,4 +64,6 @@ public:
   int subscribeFromEditor(std::function<void(std::string, double)> receiver);
 
   void unsubscribeFromEditor(int subscriptionId);
+
+  void getAllParameterValues(std::map<std::string, double> &parameters);
 };

@@ -184,3 +184,14 @@ int ParametersManager::subscribeFromEditor(
 void ParametersManager::unsubscribeFromEditor(int subscriptionId) {
   uiSideReceivers.erase(subscriptionId);
 }
+
+void ParametersManager::getAllParameterValues(
+    std::map<std::string, double> &parameters) {
+  for (auto &kv : parameterItems) {
+    auto &item = kv.second;
+    auto address = item.address;
+    auto value = parametersCache[address];
+    parameters[item.identifier] =
+        ParameterItemHelper::getUnnormalized(&item, value);
+  }
+}

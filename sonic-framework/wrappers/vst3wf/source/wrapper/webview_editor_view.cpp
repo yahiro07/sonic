@@ -32,6 +32,11 @@ mapMessageFromUI_fromString(const std::string &jsonStr) {
   return msg;
 };
 
+struct MsgBulkSendParameters {
+  std::string type = "bulkSendParameters";
+  std::map<std::string, double> parameters;
+};
+
 class WebViewMessagingHub {
 private:
   IWebViewIo *webView;
@@ -56,6 +61,18 @@ public:
             identifier, value, ParameterEditingState::InstantChange);
       } else if (auto *p = std::get_if<MsgUiLoaded>(&*msg)) {
         logger.log("ui loaded");
+        auto parameters = std::map<std::string, double>();
+        this->parametersManager->getAllParameterValues(parameters);
+        std::string buffer{};
+        auto ec = glz::write_json(
+            MsgBulkSendParameters{.parameters = parameters}, buffer);
+        if (ec) {
+          logger.log("glz::write_json error: %s",
+                     glz::format_error(ec, buffer).c_str());
+          return;
+        }
+        logger.log("send message: %s", buffer.c_str());
+        this->webView->sendMessage(buffer);
       }
     });
     parametersManagerSubscriptionId = parametersManager->subscribeFromEditor(

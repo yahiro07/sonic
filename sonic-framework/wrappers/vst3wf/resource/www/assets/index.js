@@ -77,33 +77,35 @@ addSlider("Volume", "oscVolume", 0.5);
 
 
 function handleMessage(msg){
-  const data = msg;
-  if (data.type === "setParameter") {
-    const slider = document.getElementById(data.identifier);
+  if (msg.type === "setParameter") {
+    const slider = document.getElementById(msg.identifier);
     if (slider) {
-      slider.value = data.value;
+      slider.value = msg.value;
+    }
+  }else if (msg.type === "bulkSendParameters") {
+    for (const [identifier, value] of Object.entries(msg.parameters)) {
+      const slider = document.getElementById(identifier);
+      if (slider) {
+        slider.value = value;
+      }
     }
   }
 }
 
-window.addEventListener("native-message", (event) => {
-  pushLine("rcv");
-  console.log("native-message_received_in_js", event.detail);
-  pushLine(JSON.stringify(event));
-  pushLine(JSON.stringify(event.detail));
-  handleMessage(event.detail);
-});
+// window.addEventListener("native-message", (event) => {
+//   pushLine("rcv");
+//   console.log("native-message_received_in_js", event.detail);
+//   pushLine(JSON.stringify(event));
+//   pushLine(JSON.stringify(event.detail));
+//   handleMessage(event.detail);
+// });
 
 window.pluginEditorCallback = (msg) => {
-  pushLine("pluginEditorCallback")
-  pushLine(msg);
-  pushLine(JSON.stringify(msg))
+  // window.dispatchEvent(new CustomEvent("plugin-editor-message", { detail: msg }));
+  pushLine(JSON.stringify(msg));
   handleMessage(msg);
-  window.dispatchEvent(new CustomEvent("plugin-editor-message", { detail: msg }));
 }
 
-window.addEventListener("plugin-editor-message", (event) => {
-  pushLine("plugin-editor-message");
-  pushLine(JSON.stringify(event));
-  pushLine(JSON.stringify(event.detail));
-});
+// window.addEventListener("plugin-editor-message", (event) => {
+//   pushLine("plugin-editor-message");
+// });
