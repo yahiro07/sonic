@@ -14,13 +14,14 @@ protected:
 public:
   virtual ~ParameterBuilder() = default;
   virtual void addUnary(uint64_t address, Str identifier, Str label,
-                        double defaultValue) = 0;
+                        double defaultValue, Str group = "") = 0;
   virtual void addEnum(uint64_t address, Str identifier, Str label,
-                       Str defaultValueString, StrVec valueStrings) = 0;
+                       Str defaultValueString, StrVec valueStrings,
+                       Str group = "") = 0;
   // virtual void addEnum(uint64_t address, Str identifier, Str label,
   //                      int defaultKey, std::map<int, Str> valueOptions) = 0;
   virtual void addBool(uint64_t address, Str identifier, Str label,
-                       bool defaultValue) = 0;
+                       bool defaultValue, Str group = "") = 0;
 };
 
 class SynthesizerBase {
