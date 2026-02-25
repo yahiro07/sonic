@@ -10,6 +10,8 @@
 #include <pluginterfaces/base/ibstream.h>
 #include <stdio.h>
 
+#include "greet.h"
+
 namespace Project1 {
 using namespace Steinberg;
 
@@ -19,6 +21,8 @@ using namespace Steinberg;
 tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
   // Here the Plug-in will be instantiated
   logger.log("Project1Controller::initialize");
+
+  vst3wf::greet();
 
   //---do not forget to call parent ------
   tresult result = EditControllerEx1::initialize(context);

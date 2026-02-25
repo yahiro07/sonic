@@ -36,6 +36,21 @@ smtg_target_configure_version_file(Project1)
 
 
 
+
+add_subdirectory(libs/vst3wf)
+
+target_link_libraries(Project1
+    PRIVATE
+        vst3wf
+)
+target_include_directories(Project1
+    PRIVATE
+        libs/vst3wf
+)
+
+
+
+
 # Keep web resources in sync with the built plug-in bundle.
 # This registers every file under resource/www (recursively) as a plug-in resource
 # and preserves the folder layout under <Bundle>/Contents/Resources/www/...
