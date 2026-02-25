@@ -1,5 +1,5 @@
 add_library(vst3wf STATIC
-  logger.cpp 
+  general/logger.cpp 
   logic/parameter_builder_impl.cpp
   modules/edit_controller_parameter_change_notifier.cpp
   modules/parameters_manager.cpp

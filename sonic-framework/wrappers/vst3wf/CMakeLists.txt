@@ -11,12 +11,12 @@ add_subdirectory(external)
 smtg_enable_vst3_sdk()
 
 smtg_add_vst3plugin(Project1
-    source/version.h
-    source/project1_processor.h
-    source/project1_processor.cpp
-    source/project1_controller.h
-    source/project1_controller.cpp
-    source/plugin_factory.cpp
+    source/vst/version.h
+    source/vst/project1_processor.h
+    source/vst/project1_processor.cpp
+    source/vst/project1_controller.h
+    source/vst/project1_controller.cpp
+    source/vst/plugin_factory.cpp
     source/MySynthesizer.cpp
 )
 

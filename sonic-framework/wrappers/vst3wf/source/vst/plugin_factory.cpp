@@ -1,6 +1,6 @@
+#include "../MySynthesizer.h"
 #include "./project1_controller.h"
 #include "./project1_processor.h"
-#include "MySynthesizer.h"
 #include "projectversion.h"
 #include "vst3wf/root_wrapper/vst_entry_wrapper.h"
 

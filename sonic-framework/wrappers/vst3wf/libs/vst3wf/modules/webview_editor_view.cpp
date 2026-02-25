@@ -1,5 +1,5 @@
+#include "../general/logger.h"
 #include "../general/mac_web_view.h"
-#include "../logger.h"
 #include "./parameters_manager.h"
 #include <glaze/glaze.hpp>
 #include <pluginterfaces/base/funknown.h>

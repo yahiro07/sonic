@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "./MySynthesizer.h"
+#include "../MySynthesizer.h"
 #include "vst3wf/SynthesizerBase.h"
-#include "vst3wf/logger.h"
+#include "vst3wf/general/logger.h"
 #include "vst3wf/modules/parameters_manager.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 

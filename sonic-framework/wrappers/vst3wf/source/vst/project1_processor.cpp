@@ -3,8 +3,8 @@
 //------------------------------------------------------------------------
 
 #include "./project1_processor.h"
-#include "./MySynthesizer.h"
-#include "vst3wf/logger.h"
+#include "../MySynthesizer.h"
+#include "vst3wf/general/logger.h"
 #include "vst3wf/root_wrapper/vst_entry_wrapper.h"
 #include <base/source/fstreamer.h>
 #include <cstring>
