@@ -22,41 +22,55 @@ using namespace Project1;
 // GetPluginFactory function!
 //------------------------------------------------------------------------
 
-BEGIN_FACTORY_DEF("MyCompany", "www.mycompany.com", "mailto:info@mycompany.com")
+SMTG_EXPORT_SYMBOL IPluginFactory *PLUGIN_API GetPluginFactory() {
+  if (!gPluginFactory) {
+    static PFactoryInfo factoryInfo("MyCompany", "www.mycompany.com",
+                                    "mailto:info@mycompany.com",
+                                    Vst::kDefaultFactoryFlags);
+    gPluginFactory = new CPluginFactory(factoryInfo);
 
-//---First Plug-in included in this factory-------
-// its kVstAudioEffectClass component
-DEF_CLASS2(
-    INLINE_UID_FROM_FUID(kProject1ProcessorUID),
-    PClassInfo::kManyInstances, // cardinality
-    kVstAudioEffectClass,       // the component category (do not changed this)
-    stringPluginName,           // here the Plug-in name (to be changed)
-    Vst::kDistributable,        // means that component and controller could be
-                                // distributed on different computers
-    Project1VST3Category,       // Subcategory for this Plug-in (to be changed)
-    FULL_VERSION_STR,           // Plug-in version (to be changed)
-    kVstVersionString, // the VST 3 SDK version (do not changed this, use always
-                       // this define)
-    Project1Processor::createInstance) // function pointer called when this
-                                       // component should be instantiated
+    //---First Plug-in included in this factory-------
+    // its kVstAudioEffectClass component
+    {
+      const TUID lcid = INLINE_UID(
+          kProject1ProcessorUID.getLong1(), kProject1ProcessorUID.getLong2(),
+          kProject1ProcessorUID.getLong3(), kProject1ProcessorUID.getLong4());
+      static PClassInfo2 componentClass(
+          lcid,
+          PClassInfo::kManyInstances, // cardinality
+          kVstAudioEffectClass,       // the component category
+          stringPluginName,           // here the Plug-in name
+          Vst::kDistributable,        // class flags
+          Project1VST3Category,       // Subcategory for this Plug-in
+          nullptr,                    // vendor (use factory default)
+          FULL_VERSION_STR,           // Plug-in version
+          kVstVersionString           // the VST 3 SDK version
+      );
+      gPluginFactory->registerClass(&componentClass,
+                                    Project1Processor::createInstance);
+    }
 
-// its kVstComponentControllerClass component
-DEF_CLASS2(
-    INLINE_UID_FROM_FUID(kProject1ControllerUID),
-    PClassInfo::kManyInstances,   // cardinality
-    kVstComponentControllerClass, // the Controller category (do not changed
-                                  // this)
-    stringPluginName
-    "Controller",     // controller name (could be the same than component name)
-    0,                // not used here
-    "",               // not used here
-    FULL_VERSION_STR, // Plug-in version (to be changed)
-    kVstVersionString, // the VST 3 SDK version (do not changed this, use always
-                       // this define)
-    Project1Controller::createInstance) // function pointer called when this
-                                        // component should be instantiated
-
-//----for others Plug-ins contained in this factory, put like for the first
-// Plug-in different DEF_CLASS2---
-
-END_FACTORY
+    // its kVstComponentControllerClass component
+    {
+      const TUID lcid = INLINE_UID(
+          kProject1ControllerUID.getLong1(), kProject1ControllerUID.getLong2(),
+          kProject1ControllerUID.getLong3(), kProject1ControllerUID.getLong4());
+      static PClassInfo2 componentClass(
+          lcid,
+          PClassInfo::kManyInstances,    // cardinality
+          kVstComponentControllerClass,  // the Controller category
+          stringPluginName "Controller", // controller name
+          0,                             // class flags
+          "",                            // Subcategory
+          nullptr,                       // vendor (use factory default)
+          FULL_VERSION_STR,              // Plug-in version
+          kVstVersionString              // the VST 3 SDK version
+      );
+      gPluginFactory->registerClass(&componentClass,
+                                    Project1Controller::createInstance);
+    }
+  } else {
+    gPluginFactory->addRef();
+  }
+  return gPluginFactory;
+}
