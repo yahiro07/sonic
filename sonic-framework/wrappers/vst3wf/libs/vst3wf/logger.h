@@ -1,10 +1,11 @@
 #pragma once
 #include <memory>
 
-class LoggerImpl;
+namespace vst3wf {
 
 class Logger {
 private:
+  class LoggerImpl;
   std::unique_ptr<LoggerImpl> impl;
 
 public:
@@ -19,3 +20,5 @@ public:
 };
 
 extern Logger logger;
+
+} // namespace vst3wf

@@ -1,6 +1,6 @@
-#include "../general/logger.h"
 #include "../general/mac_web_view.h"
 #include "./parameters_manager.h"
+#include "logger.h"
 #include <glaze/glaze.hpp>
 #include <pluginterfaces/base/funknown.h>
 #include <pluginterfaces/gui/iplugview.h>
@@ -8,6 +8,8 @@
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
 using namespace Steinberg;
+
+using namespace vst3wf;
 
 struct MsgSetParameter {
   std::string type = "setParameter";

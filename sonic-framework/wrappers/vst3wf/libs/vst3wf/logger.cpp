@@ -9,6 +9,8 @@
 #include <thread>
 #include <unistd.h>
 
+namespace vst3wf {
+
 template <typename T, size_t Capacity>
 
 class SPSCQueue {
@@ -50,7 +52,7 @@ public:
   }
 };
 
-class LoggerImpl {
+class Logger::LoggerImpl {
 private:
   std::thread worker;
   std::atomic<bool> running{false};
@@ -137,3 +139,5 @@ void Logger::directLogNonRT(const char *message) {}
 #endif
 
 Logger logger;
+
+} // namespace vst3wf

@@ -1,5 +1,4 @@
 #include "./parameters_manager.h"
-#include "../general/logger.h"
 #include "./edit_controller_parameter_change_notifier.h"
 #include "./parameter_item_helper.h"
 #include <base/source/fstring.h>

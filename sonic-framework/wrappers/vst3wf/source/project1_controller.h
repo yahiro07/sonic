@@ -6,8 +6,8 @@
 
 #include "./dsp/MySynthesizer.h"
 #include "./dsp/SynthesizerBase.h"
-#include "./general/logger.h"
 #include "./wrapper/parameters_manager.h"
+#include "logger.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
 namespace Project1 {
@@ -23,12 +23,12 @@ private:
 public:
   //------------------------------------------------------------------------
   Project1Controller() : parametersManager(*this, this->parameters) {
-    logger.start();
+    vst3wf::logger.start();
     synthInstance = createSynthesizerInstance();
   }
   ~Project1Controller() SMTG_OVERRIDE {
     delete synthInstance;
-    logger.stop();
+    vst3wf::logger.stop();
   }
 
   // Create function

@@ -20,7 +20,7 @@ using namespace Steinberg;
 //------------------------------------------------------------------------
 tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
   // Here the Plug-in will be instantiated
-  logger.log("Project1Controller::initialize");
+  vst3wf::logger.log("Project1Controller::initialize");
 
   vst3wf::greet();
 

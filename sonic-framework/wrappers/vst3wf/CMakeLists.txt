@@ -19,7 +19,6 @@ smtg_add_vst3plugin(Project1
     source/project1_controller.cpp
     source/project1_entry.cpp
     source/dsp/MySynthesizer.cpp
-    source/general/logger.cpp
     source/logic/parameter_builder_impl.cpp
     source/wrapper/edit_controller_parameter_change_notifier.cpp
     source/wrapper/parameters_manager.cpp

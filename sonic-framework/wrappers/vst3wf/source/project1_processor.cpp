@@ -4,8 +4,8 @@
 
 #include "./project1_processor.h"
 #include "./dsp/MySynthesizer.h"
-#include "./general/logger.h"
 #include "./project1_cids.h"
+#include "logger.h"
 #include <base/source/fstreamer.h>
 #include <cstring>
 #include <pluginterfaces/vst/ivstevents.h>
@@ -98,10 +98,10 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
       if (eventList->getEvent(i, event) == kResultOk) {
         if (event.type == Vst::Event::kNoteOnEvent) {
           synthInstance->noteOn(event.noteOn.pitch, event.noteOn.velocity);
-          logger.log("note on %d", event.noteOn.pitch);
+          vst3wf::logger.log("note on %d", event.noteOn.pitch);
         } else if (event.type == Vst::Event::kNoteOffEvent) {
           synthInstance->noteOff(event.noteOff.pitch);
-          logger.log("note off %d", event.noteOff.pitch);
+          vst3wf::logger.log("note off %d", event.noteOff.pitch);
         }
       }
     }
