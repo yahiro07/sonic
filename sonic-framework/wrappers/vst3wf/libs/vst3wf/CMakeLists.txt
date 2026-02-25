@@ -4,6 +4,7 @@ add_library(vst3wf STATIC
   modules/edit_controller_parameter_change_notifier.cpp
   modules/parameters_manager.cpp
   modules/webview_editor_view.cpp
+  root_wrapper/vst_entry_wrapper.cpp
 )
 
 target_link_libraries(vst3wf PUBLIC sdk)

@@ -1,13 +1,14 @@
 #include "./vst_entry_wrapper.h"
-#include "./project1_controller.h"
-#include "./project1_processor.h"
-#include "projectversion.h"
+#include "./tuid_helper.h"
+#include "pluginterfaces/vst/ivstaudioprocessor.h"
+#include "pluginterfaces/vst/ivstcomponent.h"
+#include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "public.sdk/source/main/pluginfactory.h"
-#include "tuid_helper.h"
 
 using namespace Steinberg::Vst;
 using namespace Steinberg;
-using namespace Project1;
+
+namespace vst3wf {
 
 PluginFactoryGlobalHolder gPluginFactoryGlobalHolder = {
     .gSynthInstantiateFn = nullptr,
@@ -16,7 +17,9 @@ PluginFactoryGlobalHolder gPluginFactoryGlobalHolder = {
 };
 
 IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
-    SynthInstantiateFn synthInstantiateFn, PluginMeta &meta) {
+    SynthInstantiateFn synthInstantiateFn,
+    FUnknown *(*processorCreateInstanceFn)(void *),
+    FUnknown *(*controllerCreateInstanceFn)(void *), PluginMeta &meta) {
 
   gPluginFactoryGlobalHolder.gSynthInstantiateFn = synthInstantiateFn;
   loadTUIDFromGUIDString(gPluginFactoryGlobalHolder.processorCID,
@@ -37,17 +40,16 @@ IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
       loadTUIDFromGUIDString(lcid, meta.processorCID);
       static PClassInfo2 componentClass(
           lcid,
-          PClassInfo::kManyInstances, // cardinality
-          kVstAudioEffectClass,       // the component category
-          meta.name.c_str(),          // here the Plug-in name
-          Vst::kDistributable,        // class flags
-          meta.category.c_str(),      // Subcategory for this Plug-in
-          nullptr,                    // vendor (use factory default)
-          FULL_VERSION_STR,           // Plug-in version
-          kVstVersionString           // the VST 3 SDK version
+          PClassInfo::kManyInstances,  // cardinality
+          kVstAudioEffectClass,        // the component category
+          meta.name.c_str(),           // here the Plug-in name
+          Vst::kDistributable,         // class flags
+          meta.category.c_str(),       // Subcategory for this Plug-in
+          nullptr,                     // vendor (use factory default)
+          meta.fullVersionStr.c_str(), // Plug-in version
+          kVstVersionString            // the VST 3 SDK version
       );
-      gPluginFactory->registerClass(&componentClass,
-                                    Project1Processor::createInstance);
+      gPluginFactory->registerClass(&componentClass, processorCreateInstanceFn);
     }
 
     // its kVstComponentControllerClass component
@@ -62,14 +64,16 @@ IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
           0,                                  // class flags
           "",                                 // Subcategory
           nullptr,                            // vendor (use factory default)
-          FULL_VERSION_STR,                   // Plug-in version
+          meta.fullVersionStr.c_str(),        // Plug-in version
           kVstVersionString                   // the VST 3 SDK version
       );
       gPluginFactory->registerClass(&componentClass,
-                                    Project1Controller::createInstance);
+                                    controllerCreateInstanceFn);
     }
   } else {
     gPluginFactory->addRef();
   }
   return gPluginFactory;
 }
+
+} // namespace vst3wf

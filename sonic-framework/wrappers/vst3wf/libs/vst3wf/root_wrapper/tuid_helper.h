@@ -4,6 +4,8 @@
 #include <pluginterfaces/vst/vsttypes.h>
 #include <string>
 
+namespace vst3wf {
+
 static bool isHexChar(char c) {
   const auto uc = static_cast<unsigned char>(c);
   return std::isxdigit(uc) != 0;
@@ -69,3 +71,5 @@ static void loadTUIDFromGUIDString(Steinberg::TUID tuid,
 
   uid.toTUID(tuid);
 }
+
+} // namespace vst3wf
