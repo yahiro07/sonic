@@ -1,6 +1,6 @@
 #include "../general/mac_web_view.h"
 #include "./parameters_manager.h"
-#include "logger.h"
+#include "vst3wf/logger.h"
 #include <glaze/glaze.hpp>
 #include <pluginterfaces/base/funknown.h>
 #include <pluginterfaces/gui/iplugview.h>

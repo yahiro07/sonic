@@ -10,7 +10,7 @@
 #include <pluginterfaces/base/ibstream.h>
 #include <stdio.h>
 
-#include "greet.h"
+#include "vst3wf/greet.h"
 
 namespace Project1 {
 using namespace Steinberg;

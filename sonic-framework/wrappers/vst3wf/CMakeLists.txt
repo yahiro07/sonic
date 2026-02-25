@@ -44,7 +44,7 @@ target_link_libraries(Project1
 )
 target_include_directories(Project1
     PRIVATE
-        libs/vst3wf
+        libs
 )
 
 
