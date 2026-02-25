@@ -8,7 +8,7 @@ VST3_OUT = build/VST3/Debug/Project1.vst3
 default: build
 
 prepare:
-	cmake -B build -G Ninja -DSMTG_RUN_VST_VALIDATOR=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON  -DCMAKE_BUILD_TYPE=Debug .
+	cmake -B build -G Ninja -DSMTG_RUN_VST_VALIDATOR=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON  -DCMAKE_BUILD_TYPE=Debug -DFETCHCONTENT_BASE_DIR=~/tools/cmake_fetch_content/cache .
 	ln -sf build/compile_commands.json .
 
 build:
