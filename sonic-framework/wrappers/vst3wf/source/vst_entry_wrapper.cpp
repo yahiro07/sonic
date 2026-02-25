@@ -5,8 +5,6 @@
 #include "public.sdk/source/main/pluginfactory.h"
 #include "tuid_helper.h"
 
-#define stringPluginName "Project1"
-
 using namespace Steinberg::Vst;
 using namespace Steinberg;
 using namespace Project1;
@@ -26,10 +24,9 @@ IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
   loadTUIDFromGUIDString(gPluginFactoryGlobalHolder.controllerCID,
                          meta.controllerCID);
 
-  // TODO: affect meta to definitions below
   if (!gPluginFactory) {
-    static PFactoryInfo factoryInfo("MyCompany", "www.mycompany.com",
-                                    "mailto:info@mycompany.com",
+    static PFactoryInfo factoryInfo(meta.vendor.c_str(), meta.url.c_str(),
+                                    meta.email.c_str(),
                                     Vst::kDefaultFactoryFlags);
     gPluginFactory = new CPluginFactory(factoryInfo);
 
@@ -42,9 +39,9 @@ IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
           lcid,
           PClassInfo::kManyInstances, // cardinality
           kVstAudioEffectClass,       // the component category
-          stringPluginName,           // here the Plug-in name
+          meta.name.c_str(),          // here the Plug-in name
           Vst::kDistributable,        // class flags
-          "Fx",                       // Subcategory for this Plug-in
+          meta.category.c_str(),      // Subcategory for this Plug-in
           nullptr,                    // vendor (use factory default)
           FULL_VERSION_STR,           // Plug-in version
           kVstVersionString           // the VST 3 SDK version
@@ -59,14 +56,14 @@ IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
       loadTUIDFromGUIDString(lcid, meta.controllerCID);
       static PClassInfo2 componentClass(
           lcid,
-          PClassInfo::kManyInstances,    // cardinality
-          kVstComponentControllerClass,  // the Controller category
-          stringPluginName "Controller", // controller name
-          0,                             // class flags
-          "",                            // Subcategory
-          nullptr,                       // vendor (use factory default)
-          FULL_VERSION_STR,              // Plug-in version
-          kVstVersionString              // the VST 3 SDK version
+          PClassInfo::kManyInstances,         // cardinality
+          kVstComponentControllerClass,       // the Controller category
+          (meta.name + "Controller").c_str(), // controller name
+          0,                                  // class flags
+          "",                                 // Subcategory
+          nullptr,                            // vendor (use factory default)
+          FULL_VERSION_STR,                   // Plug-in version
+          kVstVersionString                   // the VST 3 SDK version
       );
       gPluginFactory->registerClass(&componentClass,
                                     Project1Controller::createInstance);

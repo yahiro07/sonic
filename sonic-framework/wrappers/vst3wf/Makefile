@@ -27,7 +27,7 @@ clean:
 	fi
 	rm -rf .cache
 
-install:
+install: build
 	cp -r build/VST3/Debug/Project1.vst3 ~/Library/Audio/Plug-Ins/VST3/
 
 

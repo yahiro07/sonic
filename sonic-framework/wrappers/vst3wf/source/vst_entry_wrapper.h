@@ -7,9 +7,10 @@ typedef SynthesizerBase *(*SynthInstantiateFn)();
 
 typedef struct _PluginMeta {
   std::string name;
-  std::string vendor;
-  std::string versin;
   std::string category;
+  std::string vendor;
+  std::string url;
+  std::string email;
   std::string processorCID;
   std::string controllerCID;
 } PluginMeta;
