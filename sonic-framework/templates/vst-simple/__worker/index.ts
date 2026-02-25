@@ -2,7 +2,7 @@ import path from "path";
 import {
 	casingToCapital,
 	casingToSnake,
-	workerHelper_copyProjectContent,
+	workerHelper_copyProjectContent_excludingWorkerFolder,
 	workerHelper_replaceStrings,
 	workerHelper_updateFileNamesWithPrefix,
 } from "../../../common/worker-helper";
@@ -10,7 +10,10 @@ import type { WorkerInterface } from "../../../common/worker-types";
 
 export const template_vstSimple_worker: WorkerInterface = {
 	async createProject(projectName, templateName) {
-		workerHelper_copyProjectContent(projectName, templateName);
+		workerHelper_copyProjectContent_excludingWorkerFolder(
+			projectName,
+			templateName,
+		);
 
 		const newFolderPath = path.join(process.cwd(), projectName);
 

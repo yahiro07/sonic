@@ -24,6 +24,35 @@ export function workerHelper_copyProjectContent(
 	});
 }
 
+export function workerHelper_copyProjectContent_excludingWorkerFolder(
+	projectName: string,
+	templateName: string,
+) {
+	const binFolderPath = dirname(fileURLToPath(import.meta.url));
+	const templateFolderPath = path.join(
+		binFolderPath,
+		"../",
+		"templates",
+		templateName,
+	);
+
+	//copy other entities than __worker folder
+	const templateEntities = fs.readdirSync(templateFolderPath);
+	templateEntities.forEach((file) => {
+		if (file !== "__worker") {
+			const srcPath = path.join(templateFolderPath, file);
+			const destPath = path.join(process.cwd(), projectName, file);
+			if (fs.statSync(srcPath).isDirectory()) {
+				fs.cpSync(srcPath, destPath, {
+					recursive: true,
+				});
+			} else {
+				fs.copyFileSync(srcPath, destPath);
+			}
+		}
+	});
+}
+
 export function workerHelper_updateFileNamesWithPrefix(
 	folderPath: string,
 	spec: {
