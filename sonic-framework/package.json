@@ -3,5 +3,8 @@
   "type": "module",
   "bin": {
     "sonic": "./bin/sonic.js"
+  },
+  "dependencies": {
+    "@types/node": "^25.3.0"
   }
 }
