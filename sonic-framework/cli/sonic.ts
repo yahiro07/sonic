@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-import fs from "fs";
-import path, { dirname } from "path";
-import { fileURLToPath } from "url";
+import type { WorkerInterface } from "../common/worker-types";
+import { template_vstSimple_worker } from "../templates/vst-simple/worker";
 
 type InputCommand =
 	| { type: "create"; projectName: string; templateName: string }
@@ -53,32 +52,23 @@ function handleInputCommand(inputCommand: InputCommand | undefined) {
 	}
 }
 
-const supportedTemplateNames = ["vst-simple"];
+const templateWorkers: Record<string, WorkerInterface> = {
+	"vst-simple": template_vstSimple_worker,
+};
 
-function createProject(projectName: string, templateName: string) {
+async function createProject(projectName: string, templateName: string) {
 	console.log(`creating project ${projectName} with template ${templateName}`);
-	if (!supportedTemplateNames.includes(templateName)) {
+	const worker = templateWorkers[templateName];
+	if (!worker) {
 		console.log(`incompatible template name: ${templateName}`);
-		console.log("supported template names:", supportedTemplateNames);
+		console.log("supported template names:", Object.keys(templateWorkers));
 		return;
 	}
-	const __filename = fileURLToPath(import.meta.url);
-	const __dirname = dirname(__filename);
-	// console.log("__dirname: ", __dirname);
-	// console.log("cwd: ", process.cwd());
-
-	const templateFolderPath = path.join(__dirname, "../templates", templateName);
-	// console.log("templateFolderPath: ", templateFolderPath);
-
-	const templateContentsFolderPath = path.join(templateFolderPath, "contents");
-
-	const newProjectFolderPath = path.join(process.cwd(), projectName);
-	// console.log("templateContentsFolderPath: ", templateContentsFolderPath);
-	// console.log("targetFolderPath: ", newProjectFolderPath);
-
-	fs.cpSync(templateContentsFolderPath, newProjectFolderPath, {
-		recursive: true,
-	});
+	const ok = await worker.createProject(projectName, templateName);
+	if (!ok) {
+		console.log(`failed to create project ${projectName}`);
+		return;
+	}
 	console.log(`project ${projectName} created`);
 }
 
