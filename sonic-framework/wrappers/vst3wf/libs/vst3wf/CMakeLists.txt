@@ -5,9 +5,9 @@ project(vst3wf)
 add_library(vst3wf STATIC
   logger.cpp 
   logic/parameter_builder_impl.cpp
-  wrapper/edit_controller_parameter_change_notifier.cpp
-  wrapper/parameters_manager.cpp
-  wrapper/webview_editor_view.cpp
+  modules/edit_controller_parameter_change_notifier.cpp
+  modules/parameters_manager.cpp
+  modules/webview_editor_view.cpp
 )
 
 target_link_libraries(vst3wf PRIVATE sdk)

@@ -5,7 +5,7 @@
 #include "./project1_controller.h"
 #include "./project1_cids.h"
 #include "vst3wf/logic/parameter_builder_impl.h"
-#include "vst3wf/wrapper/webview_editor_view.h"
+#include "vst3wf/modules/webview_editor_view.h"
 #include <base/source/fstreamer.h>
 #include <pluginterfaces/base/ibstream.h>
 #include <stdio.h>

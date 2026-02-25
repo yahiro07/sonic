@@ -5,9 +5,9 @@
 #pragma once
 
 #include "./dsp/MySynthesizer.h"
-#include "./wrapper/parameters_manager.h"
 #include "vst3wf/SynthesizerBase.h"
 #include "vst3wf/logger.h"
+#include "vst3wf/modules/parameters_manager.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
 namespace Project1 {
