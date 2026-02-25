@@ -1,6 +1,4 @@
-#pragma once
-
-#include "edit_controller_parameter_change_notifier.h"
+#include "./edit_controller_parameter_change_notifier.h"
 #include <functional>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 

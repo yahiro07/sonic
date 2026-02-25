@@ -19,9 +19,6 @@ smtg_add_vst3plugin(Project1
     source/project1_controller.cpp
     source/project1_entry.cpp
     source/dsp/MySynthesizer.cpp
-    source/wrapper/edit_controller_parameter_change_notifier.cpp
-    source/wrapper/parameters_manager.cpp
-    source/wrapper/webview_editor_view.cpp
 
 )
 
@@ -31,8 +28,6 @@ target_link_libraries(Project1
 )
 
 smtg_target_configure_version_file(Project1)
-
-
 
 
 add_subdirectory(libs/vst3wf)
@@ -70,16 +65,6 @@ foreach(_www_file IN LISTS PROJECT1_WWW_FILES)
 
     smtg_target_add_plugin_resource(Project1 "${_www_file}" "${_www_outsubdir}")
 endforeach()
-
-FetchContent_Declare(
-  glaze
-  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-  GIT_TAG main
-  GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(glaze)
-target_link_libraries(Project1 PRIVATE glaze::glaze)
-
 
 
 if(SMTG_MAC)
