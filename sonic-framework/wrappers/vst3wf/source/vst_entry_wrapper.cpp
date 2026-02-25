@@ -1,12 +1,8 @@
-//------------------------------------------------------------------------
-// Copyright(c) 2022 Steinberg Media Technologies GmbH.
-//------------------------------------------------------------------------
-
+#include "./vst_entry_wrapper.h"
 #include "./project1_cids.h"
 #include "./project1_controller.h"
 #include "./project1_processor.h"
 #include "./version.h"
-
 #include "public.sdk/source/main/pluginfactory.h"
 
 #define stringPluginName "Project1"
@@ -15,14 +11,14 @@ using namespace Steinberg::Vst;
 using namespace Steinberg;
 using namespace Project1;
 
-//------------------------------------------------------------------------
-//  VST Plug-in Entry
-//------------------------------------------------------------------------
-// Windows: do not forget to include a .def file in your project to export
-// GetPluginFactory function!
-//------------------------------------------------------------------------
+SynthInstantiateFn gSynthInstantiateFn = nullptr;
 
-SMTG_EXPORT_SYMBOL IPluginFactory *PLUGIN_API GetPluginFactory() {
+IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
+    SynthInstantiateFn synthInstantiateFn, PluginMeta &meta) {
+
+  gSynthInstantiateFn = synthInstantiateFn;
+
+  // TODO: affect meta to definitions below
   if (!gPluginFactory) {
     static PFactoryInfo factoryInfo("MyCompany", "www.mycompany.com",
                                     "mailto:info@mycompany.com",
