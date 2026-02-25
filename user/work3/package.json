@@ -1,0 +1,10 @@
+{
+  "name": "work3",
+  "type": "module",
+  "scripts": {
+    "dev": "sonic dev"
+  },
+  "dependencies": {
+    "sonic-framework": "file:../sonic-framework"
+  }
+}
