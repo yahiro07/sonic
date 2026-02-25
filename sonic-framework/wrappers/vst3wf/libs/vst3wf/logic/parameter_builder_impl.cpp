@@ -1,7 +1,5 @@
-#pragma once
-
 #include "./parameter_builder_impl.h"
-#include "../dsp/SynthesizerBase.h"
+#include "../SynthesizerBase.h"
 
 void ParameterBuilderImpl::addUnary(uint32_t address, Str identifier, Str label,
                                     double defaultValue, Str group,

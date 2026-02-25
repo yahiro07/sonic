@@ -1,5 +1,5 @@
 #pragma once
-#include "../dsp/SynthesizerBase.h"
+#include "../SynthesizerBase.h"
 #include <string>
 #include <vector>
 

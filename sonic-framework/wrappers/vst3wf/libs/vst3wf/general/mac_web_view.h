@@ -2,6 +2,8 @@
 #include <functional>
 #include <memory>
 
+namespace vst3wf {
+
 class IWebViewIo {
 public:
   virtual ~IWebViewIo() = default;
@@ -25,3 +27,5 @@ public:
   void sendMessage(const std::string &message);
   void setMessageReceiver(std::function<void(const std::string &)> receiver);
 };
+
+} // namespace vst3wf

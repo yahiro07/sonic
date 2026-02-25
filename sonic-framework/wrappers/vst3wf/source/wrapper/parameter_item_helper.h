@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../logic/parameter_item.h"
+#include "vst3wf/logic/parameter_item.h"
 #include <algorithm>
 #include <cmath>
 #include <public.sdk/source/vst/vsteditcontroller.h>

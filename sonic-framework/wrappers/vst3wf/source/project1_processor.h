@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "./dsp/SynthesizerBase.h"
+#include "vst3wf/SynthesizerBase.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
 
 namespace Project1 {

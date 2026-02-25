@@ -6,8 +6,9 @@
 #include <dlfcn.h>
 #include <functional>
 #include <mach-o/dyld.h>
-
 #include <string>
+
+using namespace vst3wf;
 
 @interface AppSchemeHandler : NSObject <WKURLSchemeHandler>
 @property(nonatomic, strong) NSString *rootPath;

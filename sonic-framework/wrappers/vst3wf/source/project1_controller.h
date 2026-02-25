@@ -5,8 +5,8 @@
 #pragma once
 
 #include "./dsp/MySynthesizer.h"
-#include "./dsp/SynthesizerBase.h"
 #include "./wrapper/parameters_manager.h"
+#include "vst3wf/SynthesizerBase.h"
 #include "vst3wf/logger.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 

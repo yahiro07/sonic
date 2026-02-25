@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../dsp/SynthesizerBase.h"
+#include "../SynthesizerBase.h"
 #include "./parameter_item.h"
 
 class ParameterBuilderImpl : public ParameterBuilder {

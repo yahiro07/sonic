@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SynthesizerBase.h"
+#include "vst3wf/SynthesizerBase.h"
 
 class MySynthesizer : public SynthesizerBase {
 public:

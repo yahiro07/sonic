@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../logic/parameter_item.h"
 #include "./edit_controller_parameter_change_notifier.h"
+#include "vst3wf/logic/parameter_item.h"
 #include <base/source/fstring.h>
 #include <functional>
 #include <optional>

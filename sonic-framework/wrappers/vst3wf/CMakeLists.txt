@@ -19,7 +19,6 @@ smtg_add_vst3plugin(Project1
     source/project1_controller.cpp
     source/project1_entry.cpp
     source/dsp/MySynthesizer.cpp
-    source/logic/parameter_builder_impl.cpp
     source/wrapper/edit_controller_parameter_change_notifier.cpp
     source/wrapper/parameters_manager.cpp
     source/wrapper/webview_editor_view.cpp
@@ -91,15 +90,6 @@ if(SMTG_MAC)
     smtg_target_set_debug_executable(Project1
         "/Applications/VST3PluginTestHost.app"
         "--pluginfolder;$(BUILT_PRODUCTS_DIR)"
-    )
-
-    target_sources(Project1 PRIVATE
-        source/general/mac_web_view.mm
-    )
-
-    target_link_libraries(Project1 PRIVATE
-        "-framework Cocoa"
-        "-framework Webkit"
     )
 
 elseif(SMTG_WIN)
