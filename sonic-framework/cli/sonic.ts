@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { dirname } from "path";
+import fs from "fs";
+import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
 type InputCommand =
@@ -52,19 +53,39 @@ function handleInputCommand(inputCommand: InputCommand | undefined) {
 	}
 }
 
+const supportedTemplateNames = ["vst-simple"];
+
 function createProject(projectName: string, templateName: string) {
 	console.log(`creating project ${projectName} with template ${templateName}`);
+	if (!supportedTemplateNames.includes(templateName)) {
+		console.log(`incompatible template name: ${templateName}`);
+		console.log("supported template names:", supportedTemplateNames);
+		return;
+	}
 	const __filename = fileURLToPath(import.meta.url);
 	const __dirname = dirname(__filename);
-	console.log("__dirname: ", __dirname);
-	console.log("cwd: ", process.cwd());
+	// console.log("__dirname: ", __dirname);
+	// console.log("cwd: ", process.cwd());
+
+	const templateFolderPath = path.join(__dirname, "../templates", templateName);
+	// console.log("templateFolderPath: ", templateFolderPath);
+
+	const templateContentsFolderPath = path.join(templateFolderPath, "contents");
+
+	const newProjectFolderPath = path.join(process.cwd(), projectName);
+	// console.log("templateContentsFolderPath: ", templateContentsFolderPath);
+	// console.log("targetFolderPath: ", newProjectFolderPath);
+
+	fs.cpSync(templateContentsFolderPath, newProjectFolderPath, {
+		recursive: true,
+	});
+	console.log(`project ${projectName} created`);
 }
 
 function run() {
 	console.log("Sonic Framework CLI");
 	const args = process.argv.slice(2);
-	console.log("Running with arguments:", args);
-
+	// console.log("Running with arguments:", args);
 	const inputCommand = parseArgs(args);
 	handleInputCommand(inputCommand);
 }
