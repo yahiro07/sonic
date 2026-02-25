@@ -24,29 +24,31 @@ export function workerHelper_copyProjectContent(
 	});
 }
 
-export function workerHelper_updateFileNamesRecursive(
+export function workerHelper_updateFileNamesWithPrefix(
 	folderPath: string,
 	spec: {
-		// extensions?: string[];
-		filesMatcher?: string;
-		replacements: {
-			// forwardChars?: string[];
-			originalPrefix: string;
-			newPrefix: string;
-		}[];
+		filePaths: string[];
+		originalPrefix: string;
+		newPrefix: string;
 	},
 ) {}
 
-export function workerHelper_replaceInFileSignaturesRecursive(
+// export function workerHelper_replaceInFileSignaturesWithPrefix(
+// 	folderPath: string,
+// 	spec: {
+// 		filePaths: string[];
+// 		replacements: {
+// 			originalPrefix: string;
+// 			newPrefix: string;
+// 		}[];
+// 	},
+// ) {}
+
+export function workerHelper_replaceStrings(
 	folderPath: string,
 	spec: {
-		// extensions?: string[];
-		filesMatcher?: string;
-		replacements: {
-			// forwardChars?: string[];
-			originalPrefix: string;
-			newPrefix: string;
-		}[];
+		filePaths: string[];
+		replacements: { from: string; to: string }[];
 	},
 ) {}
 
@@ -55,5 +57,5 @@ export function casingToSnake(str: string) {
 }
 
 export function casingToCapital(str: string) {
-	return str.replace(/([a-z])/g, "_$1").toLowerCase();
+	return str.charAt(0).toUpperCase() + str.slice(1);
 }
