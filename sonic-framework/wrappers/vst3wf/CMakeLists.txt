@@ -18,13 +18,8 @@ smtg_add_vst3plugin(Project1
     source/project1_controller.h
     source/project1_controller.cpp
     source/project1_entry.cpp
-    source/dsp/MySynthesizer.cpp
+    source/MySynthesizer.cpp
 
-)
-
-target_link_libraries(Project1
-    PRIVATE
-        sdk
 )
 
 smtg_target_configure_version_file(Project1)
@@ -35,10 +30,6 @@ add_subdirectory(libs/vst3wf)
 target_link_libraries(Project1
     PRIVATE
         vst3wf
-)
-target_include_directories(Project1
-    PRIVATE
-        libs
 )
 
 

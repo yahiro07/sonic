@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.14)
-project(vst3wf)
-
-
 add_library(vst3wf STATIC
   logger.cpp 
   logic/parameter_builder_impl.cpp
@@ -10,31 +6,41 @@ add_library(vst3wf STATIC
   modules/webview_editor_view.cpp
 )
 
-target_link_libraries(vst3wf PRIVATE sdk)
-target_include_directories(vst3wf PUBLIC .)
+target_link_libraries(vst3wf PUBLIC sdk)
+
+# Allow consumers to include headers as: #include "vst3wf/..."
+target_include_directories(vst3wf
+  PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 set_target_properties(vst3wf PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )
 
-FetchContent_Declare(
-  glaze
-  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-  GIT_TAG main
-  GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(glaze)
+include(FetchContent)
+if (NOT TARGET glaze::glaze)
+  FetchContent_Declare(
+    glaze
+    GIT_REPOSITORY https://github.com/stephenberry/glaze.git
+    GIT_TAG main
+    GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(glaze)
+endif()
 target_link_libraries(vst3wf PRIVATE glaze::glaze)
 
 
 if(SMTG_MAC)
-    target_sources(vst3wf PRIVATE
-        general/mac_web_view.mm
-    )
+  set_source_files_properties(general/mac_web_view.mm PROPERTIES LANGUAGE CXX)
+
+  target_sources(vst3wf PRIVATE general/mac_web_view.mm)
 
     target_link_libraries(vst3wf PRIVATE
         "-framework Cocoa"
-        "-framework Webkit"
+    "-framework WebKit"
     )
 endif()

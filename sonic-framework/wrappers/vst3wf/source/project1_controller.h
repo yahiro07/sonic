@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "./dsp/MySynthesizer.h"
+#include "./MySynthesizer.h"
 #include "vst3wf/SynthesizerBase.h"
 #include "vst3wf/logger.h"
 #include "vst3wf/modules/parameters_manager.h"
