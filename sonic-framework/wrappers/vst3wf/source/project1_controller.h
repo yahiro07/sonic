@@ -18,7 +18,7 @@ namespace Project1 {
 class Project1Controller : public Steinberg::Vst::EditControllerEx1 {
 private:
   SynthesizerBase *synthInstance;
-  ParametersManager parametersManager;
+  vst3wf::ParametersManager parametersManager;
 
 public:
   //------------------------------------------------------------------------

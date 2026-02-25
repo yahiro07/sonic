@@ -2,6 +2,8 @@
 #include <functional>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
+namespace vst3wf {
+
 using namespace Steinberg;
 
 void EditControllerParameterChangeNotifier::start(
@@ -47,3 +49,5 @@ void PLUGIN_API EditControllerParameterChangeNotifier::update(
     }
   }
 }
+
+} // namespace vst3wf

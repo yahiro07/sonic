@@ -3,6 +3,8 @@
 #include <functional>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
+namespace vst3wf {
+
 class EditControllerParameterChangeNotifier : public Steinberg::IDependent {
 private:
   Steinberg::Vst::EditController *controller = nullptr;
@@ -26,3 +28,5 @@ public:
   uint32_t PLUGIN_API addRef() override { return 1; }
   uint32_t PLUGIN_API release() override { return 1; }
 };
+
+} // namespace vst3wf

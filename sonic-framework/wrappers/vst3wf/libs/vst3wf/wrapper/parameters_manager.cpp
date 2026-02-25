@@ -7,6 +7,8 @@
 #include <string>
 #include <unordered_map>
 
+namespace vst3wf {
+
 using namespace Steinberg;
 using ParamAddress = Steinberg::Vst::ParamID;
 
@@ -193,3 +195,5 @@ void ParametersManager::getAllParameterValues(
         ParameterItemHelper::getUnnormalized(&item, value);
   }
 }
+
+} // namespace vst3wf

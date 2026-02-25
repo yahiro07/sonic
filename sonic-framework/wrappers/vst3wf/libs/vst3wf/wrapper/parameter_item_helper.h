@@ -5,6 +5,8 @@
 #include <cmath>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
+namespace vst3wf {
+
 class ParameterItemHelper {
 public:
   static double getNormalized(const ParameterItem *item, double value) {
@@ -61,3 +63,5 @@ public:
     return flags;
   }
 };
+
+} // namespace vst3wf

@@ -9,6 +9,8 @@
 #include <string>
 #include <unordered_map>
 
+namespace vst3wf {
+
 enum class ParameterEditingState { Begin, Perform, End, InstantChange };
 
 class ParametersManager {
@@ -67,3 +69,5 @@ public:
 
   void getAllParameterValues(std::map<std::string, double> &parameters);
 };
+
+} // namespace vst3wf

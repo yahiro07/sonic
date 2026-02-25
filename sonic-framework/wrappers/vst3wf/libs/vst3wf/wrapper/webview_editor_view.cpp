@@ -7,9 +7,9 @@
 #include <pluginterfaces/vst/ivsteditcontroller.h>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-using namespace Steinberg;
+namespace vst3wf {
 
-using namespace vst3wf;
+using namespace Steinberg;
 
 struct MsgSetParameter {
   std::string type = "setParameter";
@@ -182,3 +182,5 @@ createWebViewEditorView(Steinberg::Vst::EditController *controller,
                         ParametersManager *parametersManager) {
   return new WebViewEditorView(controller, parametersManager);
 }
+
+} // namespace vst3wf
