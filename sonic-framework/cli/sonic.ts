@@ -2,17 +2,71 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+type InputCommand =
+	| { type: "create"; projectName: string; templateName: string }
+	| { type: "createIncompatibleArgs" }
+	| { type: "help" }
+	| { type: "version" };
 
-console.log("Sonic Framework CLI");
-const args = process.argv.slice(2);
-console.log("Running with arguments:", args);
-
-if (args[0] === "--version") {
-	console.log("sonic cli version 0.0.0-in-development");
-} else if (args[0] === "--help") {
-	console.log("Available commands: dev");
-} else {
-	console.log("Available commands: dev");
+function parseArgs(args: string[]): InputCommand | undefined {
+	if (args[0] === "create") {
+		const projectName = args[1];
+		if (args[2] === "-t" || args[2] === "--template") {
+			const templateName = args[3];
+			if (templateName) {
+				return {
+					type: "create",
+					projectName,
+					templateName,
+				};
+			}
+		}
+		return { type: "createIncompatibleArgs" };
+	} else if (args[0] === "--version") {
+		return { type: "version" };
+	} else if (args[0] === "--help") {
+		return { type: "help" };
+	}
+	return undefined;
 }
+
+function handleInputCommand(inputCommand: InputCommand | undefined) {
+	if (!inputCommand) {
+		console.log("incompatible command.");
+		console.log("command should be one of:");
+		console.log("sonic create <project-name> -t <template-name>");
+		console.log("sonic --version");
+		console.log("sonic --help");
+	} else if (inputCommand.type === "version") {
+		console.log("sonic cli version 0.0.0-in-development");
+	} else if (inputCommand.type === "help") {
+		console.log("supported commands:");
+		console.log("sonic create <project-name> -t <template-name>");
+		console.log("sonic --version");
+		console.log("sonic --help");
+	} else if (inputCommand.type === "createIncompatibleArgs") {
+		console.log("incompatible arguments");
+		console.log("please use: sonic create <project-name> -t <template-name>");
+	} else if (inputCommand.type === "create") {
+		createProject(inputCommand.projectName, inputCommand.templateName);
+	}
+}
+
+function createProject(projectName: string, templateName: string) {
+	console.log(`creating project ${projectName} with template ${templateName}`);
+	const __filename = fileURLToPath(import.meta.url);
+	const __dirname = dirname(__filename);
+	console.log("__dirname: ", __dirname);
+	console.log("cwd: ", process.cwd());
+}
+
+function run() {
+	console.log("Sonic Framework CLI");
+	const args = process.argv.slice(2);
+	console.log("Running with arguments:", args);
+
+	const inputCommand = parseArgs(args);
+	handleInputCommand(inputCommand);
+}
+
+run();
