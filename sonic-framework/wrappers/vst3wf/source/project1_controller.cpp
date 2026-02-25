@@ -3,7 +3,6 @@
 //------------------------------------------------------------------------
 
 #include "./project1_controller.h"
-#include "./project1_cids.h"
 #include "vst3wf/logic/parameter_builder_impl.h"
 #include "vst3wf/modules/webview_editor_view.h"
 #include <base/source/fstreamer.h>
@@ -57,21 +56,21 @@ tresult PLUGIN_API Project1Controller::setComponentState(IBStream *state) {
 
   IBStreamer streamer(state, kLittleEndian);
 
-  float savedParam1 = 0.f;
-  if (streamer.readFloat(savedParam1) == false)
-    return kResultFalse;
-  setParamNormalized(Project1Params::kParamVolId, savedParam1);
+  // float savedParam1 = 0.f;
+  // if (streamer.readFloat(savedParam1) == false)
+  //   return kResultFalse;
+  // setParamNormalized(Project1Params::kParamVolId, savedParam1);
 
-  int8 savedParam2 = 0;
-  if (streamer.readInt8(savedParam2) == false)
-    return kResultFalse;
-  setParamNormalized(Project1Params::kParamOnId, savedParam2);
+  // int8 savedParam2 = 0;
+  // if (streamer.readInt8(savedParam2) == false)
+  //   return kResultFalse;
+  // setParamNormalized(Project1Params::kParamOnId, savedParam2);
 
-  // read the bypass
-  int32 bypassState;
-  if (streamer.readInt32(bypassState) == false)
-    return kResultFalse;
-  setParamNormalized(kBypassId, bypassState ? 1 : 0);
+  // // read the bypass
+  // int32 bypassState;
+  // if (streamer.readInt32(bypassState) == false)
+  //   return kResultFalse;
+  // setParamNormalized(kBypassId, bypassState ? 1 : 0);
 
   return kResultOk;
 }

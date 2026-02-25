@@ -14,7 +14,13 @@ typedef struct _PluginMeta {
   std::string controllerCID;
 } PluginMeta;
 
-extern SynthInstantiateFn gSynthInstantiateFn;
+typedef struct _PluginFactoryGlobalHolder {
+  SynthInstantiateFn gSynthInstantiateFn;
+  Steinberg::TUID processorCID;
+  Steinberg::TUID controllerCID;
+} PluginFactoryGlobalHolder;
+
+extern PluginFactoryGlobalHolder gPluginFactoryGlobalHolder;
 
 Steinberg::IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
     SynthInstantiateFn synthInstantiateFn, PluginMeta &meta);

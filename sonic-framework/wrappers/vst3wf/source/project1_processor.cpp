@@ -4,8 +4,8 @@
 
 #include "./project1_processor.h"
 #include "./MySynthesizer.h"
-#include "./project1_cids.h"
 #include "vst3wf/logger.h"
+#include "vst_entry_wrapper.h"
 #include <base/source/fstreamer.h>
 #include <cstring>
 #include <pluginterfaces/vst/ivstevents.h>
@@ -19,7 +19,7 @@ using namespace Steinberg;
 //------------------------------------------------------------------------
 Project1Processor::Project1Processor() {
   //--- set the wanted controller for our processor
-  setControllerClass(kProject1ControllerUID);
+  setControllerClass(gPluginFactoryGlobalHolder.controllerCID);
   synthInstance = createSynthesizerInstance();
 }
 
