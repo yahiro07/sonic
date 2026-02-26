@@ -46,6 +46,14 @@ const worker: WorkerInterface = {
 			],
 		});
 
+		workerHelper_replaceStrings(newFolderPath, {
+			filePaths: ["project.toml"],
+			replacements: [
+				{ from: "__TEMPLATE_AU_SUBTYPE__", to: auSubtype },
+				{ from: "__TEMPLATE_AU_MANUFACTURER__", to: auManufacture },
+			],
+		});
+
 		workerHelper_updateFileNamesWithPrefix(newFolderPath, {
 			filePaths: [
 				"Project1/Project1App.swift",
