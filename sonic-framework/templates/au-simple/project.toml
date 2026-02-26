@@ -1,7 +1,0 @@
-[info]
-based_on = "au-simple"
-
-[au]
-# run `sonic patch-au ids` to apply the change to code
-manufacture = "__TEMPLATE_AU_MANUFACTURER__"
-subtype = "__TEMPLATE_AU_SUBTYPE__"
