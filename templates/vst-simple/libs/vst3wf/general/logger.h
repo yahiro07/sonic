@@ -15,7 +15,11 @@ public:
   Logger &operator=(const Logger &) = delete;
   void start();
   void stop();
+  void mark(const char *fmt, ...);
+  void info(const char *fmt, ...);
   void log(const char *fmt, ...);
+  void warn(const char *fmt, ...);
+  void error(const char *fmt, ...);
   void directLogNonRT(const char *message);
 };
 

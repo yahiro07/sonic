@@ -113,7 +113,34 @@ void Logger::start() { impl->start(); }
 
 void Logger::stop() { impl->stop(); }
 
+void Logger::mark(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  impl->logVA(fmt, args);
+  va_end(args);
+}
+
+void Logger::info(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  impl->logVA(fmt, args);
+  va_end(args);
+}
 void Logger::log(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  impl->logVA(fmt, args);
+  va_end(args);
+}
+
+void Logger::warn(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  impl->logVA(fmt, args);
+  va_end(args);
+}
+
+void Logger::error(const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
   impl->logVA(fmt, args);
