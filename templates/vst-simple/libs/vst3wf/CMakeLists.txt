@@ -5,6 +5,7 @@ add_library(vst3wf STATIC
   modules/parameter_change_notifier.cpp
   modules/parameters_manager.cpp
   modules/webview_editor_view.cpp
+  modules/processor_state_helper.cpp
   vst/project1_processor.h
   vst/project1_processor.cpp
   vst/project1_controller.h

@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------
 
 #include "./project1_processor.h"
-#include "./state_format.h"
+#include "../modules/processor_state_helper.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/base/ibstream.h"
 #include "vst3wf/general/logger.h"
@@ -192,15 +192,10 @@ tresult PLUGIN_API Project1Processor::getState(IBStream *state) {
   if (!state)
     return kResultFalse;
 
-  constexpr int32 kStateMagic = 0x534F4E43; // 'S''O''N''C'
-  constexpr int32 kStateVersion = 1;
-
   // Version for *parameter schema* (migration target).
   constexpr int kParametersVersion = 1;
-
-  ProcessorState processorState{};
+  vst3wf::ProcessorState processorState{};
   processorState.parametersVersion = kParametersVersion;
-
   for (auto &kv : parametersCache) {
     auto paramItem =
         parameterDefinitionsProvider.getParameterItemByAddress(kv.first);
@@ -209,102 +204,27 @@ tresult PLUGIN_API Project1Processor::getState(IBStream *state) {
     processorState.parameters[paramItem->identifier] = kv.second;
   }
 
-  std::string jsonStr{};
-  auto ec = glz::write_jsonc(processorState, jsonStr);
-  if (ec) {
-    vst3wf::logger.log("error writing json: %s",
-                       glz::format_error(ec, jsonStr).c_str());
-    return kResultFalse;
-  }
-  vst3wf::logger.log("jsonStr: %s", jsonStr.c_str());
-
-  IBStreamer streamer(state, kLittleEndian);
-  streamer.writeInt32(kStateMagic);
-  streamer.writeInt32(kStateVersion);
-  streamer.writeInt32(static_cast<int32>(jsonStr.size()));
-  if (!jsonStr.empty()) {
-    const auto bytesWritten =
-        streamer.writeRaw(jsonStr.data(), static_cast<int32>(jsonStr.size()));
-    if (bytesWritten != static_cast<int32>(jsonStr.size())) {
-      vst3wf::logger.log("failed writing state bytes: %d/%d",
-                         static_cast<int32>(bytesWritten),
-                         static_cast<int32>(jsonStr.size()));
-      return kResultFalse;
-    }
-  }
-
+  processorStateHelper_writeState(state, processorState);
   return kResultOk;
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API Project1Processor::setState(IBStream *state) {
   // called when we load a preset or project, the model has to be reloaded
-
   vst3wf::logger.log("Project1Processor::setState");
   if (!state)
     return kResultFalse;
 
-  constexpr int32 kStateMagic = 0x534F4E43; // 'S''O''N''C'
-  constexpr int32 kMaxStateBytes = 1024 * 1024;
-
-  IBStreamer streamer(state, kLittleEndian);
-  int32 firstWord = 0;
-  if (!streamer.readInt32(firstWord))
-    return kResultFalse;
-  if (firstWord != kStateMagic)
-    return kResultFalse;
-  int32 stateVersion = 0;
-  int32 size = 0;
-  if (!streamer.readInt32(stateVersion))
-    return kResultFalse;
-  if (!streamer.readInt32(size))
-    return kResultFalse;
-
-  if (size < 0 || size > kMaxStateBytes) {
-    vst3wf::logger.log("invalid state size: %d", size);
+  vst3wf::ProcessorState processorState;
+  auto ok = processorStateHelper_readState(state, processorState);
+  if (!ok) {
     return kResultFalse;
   }
-
-  std::string jsonStr;
-  jsonStr.resize(static_cast<size_t>(size));
-  if (size > 0) {
-    const auto bytesRead = streamer.readRaw(jsonStr.data(), size);
-    if (bytesRead != size) {
-      vst3wf::logger.log("failed reading state bytes: %d/%d",
-                         static_cast<int32>(bytesRead), size);
-      return kResultFalse;
-    }
-  } else {
-    // Accept empty state (keep defaults)
-    vst3wf::logger.log("empty state (size=0)");
-    return kResultOk;
-  }
-  ProcessorState processorState{};
-  processorState.parametersVersion = 0;
-
-  // format: {"parametersVersion": N, "parameters": {"id": v, ...}}
-  auto ec = glz::read_jsonc(processorState, jsonStr);
-  if (ec) {
-    vst3wf::logger.log("error reading json: %s",
-                       glz::format_error(ec, jsonStr).c_str());
-    return kResultFalse;
-  }
-  vst3wf::logger.log("jsonStr: %s", jsonStr.c_str());
-
-  if (stateVersion != 0) {
-    vst3wf::logger.log("state version: %d", stateVersion);
-  }
-
-  vst3wf::logger.log("parametersVersion: %d", processorState.parametersVersion);
-
   for (auto &kv : processorState.parameters) {
     auto paramItem =
         parameterDefinitionsProvider.getParameterItemByIdentifier(kv.first);
-    if (!paramItem) {
-      vst3wf::logger.log("unknown parameter identifier in state: %s",
-                         kv.first.c_str());
+    if (!paramItem)
       continue;
-    }
     parametersCache[paramItem->address] = kv.second;
     synthInstance->setParameter(paramItem->address, kv.second);
   }
