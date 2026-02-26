@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "logic/parameter_item.h"
 #include "vst3wf/SynthesizerBase.h"
 #include "vst3wf/logic/parameter_definitions_provider.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
@@ -17,6 +18,7 @@ class Project1Processor : public Steinberg::Vst::AudioEffect {
 private:
   SynthesizerBase *synthInstance;
   Amx::ParameterDefinitionsProvider parameterDefinitionsProvider;
+  std::unordered_map<Amx::ParamAddress, double> parametersCache;
 
 public:
   Project1Processor();

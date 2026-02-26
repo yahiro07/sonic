@@ -54,6 +54,9 @@ tresult PLUGIN_API Project1Processor::initialize(FUnknown *context) {
   synthInstance->setupParameters(parameterBuilder);
   auto parameterItems = parameterBuilder.getItems();
   parameterDefinitionsProvider.addParameters(parameterItems);
+  for (auto &item : parameterItems) {
+    parametersCache[item.address] = item.defaultValue;
+  }
 
   return kResultOk;
 }
@@ -96,6 +99,7 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
               Amx::ParameterItemHelper::getUnnormalized(paramItem, value);
           // vst3wf::logger.log("parameter %d received in audio thread %f %f",
           //                    paramId, value, unnormalizedValue);
+          parametersCache[paramId] = unnormalizedValue;
           synthInstance->setParameter(paramId, unnormalizedValue);
         }
       }
