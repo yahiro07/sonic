@@ -55,9 +55,9 @@ public:
       SMTG_OVERRIDE;
 
   /** For persistence */
-  Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream *state)
-      SMTG_OVERRIDE;
   Steinberg::tresult PLUGIN_API getState(Steinberg::IBStream *state)
+      SMTG_OVERRIDE;
+  Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream *state)
       SMTG_OVERRIDE;
 };
 

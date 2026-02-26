@@ -3,9 +3,13 @@
 //------------------------------------------------------------------------
 
 #include "./project1_controller.h"
+#include "./state_format.h"
+#include "pluginterfaces/base/funknown.h"
 #include "vst3wf/logic/parameter_builder_impl.h"
+#include "vst3wf/logic/parameter_item_helper.h"
 #include "vst3wf/modules/webview_editor_view.h"
 #include <base/source/fstreamer.h>
+#include <glaze/glaze.hpp>
 #include <pluginterfaces/base/ibstream.h>
 #include <stdio.h>
 
@@ -52,26 +56,86 @@ tresult PLUGIN_API Project1Controller::terminate() {
 //------------------------------------------------------------------------
 tresult PLUGIN_API Project1Controller::setComponentState(IBStream *state) {
   // Here you get the state of the component (Processor part)
+  vst3wf::logger.log("Project1Controller::setComponentState");
+
   if (!state)
     return kResultFalse;
 
+  constexpr int32 kStateMagic = 0x534F4E43; // 'S''O''N''C'
+  constexpr int32 kMaxStateBytes = 1024 * 1024;
+
   IBStreamer streamer(state, kLittleEndian);
+  int32 firstWord = 0;
+  if (!streamer.readInt32(firstWord))
+    return kResultFalse;
 
-  // float savedParam1 = 0.f;
-  // if (streamer.readFloat(savedParam1) == false)
-  //   return kResultFalse;
-  // setParamNormalized(Project1Params::kParamVolId, savedParam1);
+  int32 stateVersion = 0;
+  int32 size = 0;
+  if (firstWord == kStateMagic) {
+    if (!streamer.readInt32(stateVersion))
+      return kResultFalse;
+    if (!streamer.readInt32(size))
+      return kResultFalse;
+  } else {
+    return kResultFalse;
+  }
 
-  // int8 savedParam2 = 0;
-  // if (streamer.readInt8(savedParam2) == false)
-  //   return kResultFalse;
-  // setParamNormalized(Project1Params::kParamOnId, savedParam2);
+  if (size < 0 || size > kMaxStateBytes) {
+    vst3wf::logger.log("invalid state size: %d", size);
+    return kResultFalse;
+  }
 
-  // // read the bypass
-  // int32 bypassState;
-  // if (streamer.readInt32(bypassState) == false)
-  //   return kResultFalse;
-  // setParamNormalized(kBypassId, bypassState ? 1 : 0);
+  std::string jsonStr;
+  jsonStr.resize(static_cast<size_t>(size));
+  if (size > 0) {
+    const auto bytesRead = streamer.readRaw(jsonStr.data(), size);
+    if (bytesRead != size) {
+      vst3wf::logger.log("failed reading state bytes: %d/%d",
+                         static_cast<int32>(bytesRead), size);
+      return kResultFalse;
+    }
+  } else {
+    // Accept empty state (keep defaults)
+    vst3wf::logger.log("empty state (size=0)");
+    return kResultOk;
+  }
+  ProcessorState processorState{};
+  processorState.parametersVersion = 0;
+
+  // Preferred format: {"parametersVersion": N, "parameters": {"id": v, ...}}
+  auto ec = glz::read_jsonc(processorState, jsonStr);
+  if (ec) {
+    // Backward-compat: legacy format is just {"id": v, ...}
+    std::unordered_map<std::string, double> legacyParameters;
+    auto legacyEc = glz::read_jsonc(legacyParameters, jsonStr);
+    if (legacyEc) {
+      vst3wf::logger.log("error reading json: %s",
+                         glz::format_error(ec, jsonStr).c_str());
+      return kResultFalse;
+    }
+    processorState.parameters = std::move(legacyParameters);
+  }
+  vst3wf::logger.log("jsonStr: %s", jsonStr.c_str());
+
+  if (stateVersion != 0) {
+    vst3wf::logger.log("state version: %d", stateVersion);
+  }
+
+  vst3wf::logger.log("parametersVersion: %d", processorState.parametersVersion);
+
+  for (auto &kv : processorState.parameters) {
+    auto paramItem =
+        parameterDefinitionsProvider.getParameterItemByIdentifier(kv.first);
+    if (!paramItem) {
+      vst3wf::logger.log("unknown parameter identifier in state: %s",
+                         kv.first.c_str());
+      continue;
+    }
+    auto value = kv.second;
+    auto normalizedValue =
+        Amx::ParameterItemHelper::getNormalized(paramItem, value);
+    setParamNormalized(paramItem->address, normalizedValue);
+  }
 
   return kResultOk;
 }
