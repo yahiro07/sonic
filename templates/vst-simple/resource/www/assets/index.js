@@ -48,12 +48,12 @@ sendMessage({ type: "uiLoaded" });
 
 
 
-function addSlider(name, identifier, defaultValue) {
+function addSlider(name, identifier, defaultValue, min=0, max=1, step=0.01) {
   const slider = document.createElement("input");
   slider.type = "range";
-  slider.min = 0;
-  slider.max = 1;
-  slider.step = 0.01;
+  slider.min = min;
+  slider.max = max;
+  slider.step = step;
   slider.value = defaultValue;
   slider.id = identifier
   slider.oninput = () => {
@@ -72,6 +72,7 @@ function addSlider(name, identifier, defaultValue) {
 }
 
 addSlider("Gain", "gain", 0.5);
+addSlider("Wave", "waveType", 0, 0, 3, 1);
 addSlider("Pitch", "oscPitch", 0.5);
 addSlider("Volume", "oscVolume", 0.5);
 

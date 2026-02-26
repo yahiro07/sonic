@@ -7,6 +7,8 @@ void MySynthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addUnary(0, "gain", "gain", 0.3);
   builder.addUnary(1, "oscPitch", "OSC Pitch", 0.5);
   builder.addUnary(2, "oscVolume", "OSC Volume", 0.8);
+  builder.addEnum(3, "waveType", "Wave Type", "sine",
+                  {"sine", "square", "saw", "triangle"});
 }
 
 void MySynthesizer::setParameter(uint32_t address, double value) {

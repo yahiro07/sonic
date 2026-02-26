@@ -84,6 +84,8 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
         auto paramId = paramQueue->getParameterId();
         if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) ==
             kResultTrue) {
+          vst3wf::logger.log("parameter %d received in audio thread %f",
+                             paramId, value);
           synthInstance->setParameter(paramId, value);
         }
       }
