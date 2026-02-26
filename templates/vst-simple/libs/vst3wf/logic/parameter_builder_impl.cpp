@@ -15,7 +15,6 @@ void ParameterBuilderImpl::addUnary(uint32_t address, Str identifier, Str label,
       .type = ParameterType::Unary,
       .group = std::string(group),
       .flags = flags,
-      .isInternal = (flags & ParameterFlags::IsInternal) > 0,
   });
 }
 
@@ -43,7 +42,6 @@ void ParameterBuilderImpl::addEnum(uint32_t address, Str identifier, Str label,
       .type = ParameterType::Enum,
       .group = std::string(group),
       .flags = flags,
-      .isInternal = (flags & ParameterFlags::IsInternal) > 0,
   });
 }
 
@@ -61,6 +59,5 @@ void ParameterBuilderImpl::addBool(uint32_t address, Str identifier, Str label,
       .type = ParameterType::Bool,
       .group = std::string(group),
       .flags = flags,
-      .isInternal = (flags & ParameterFlags::IsInternal) > 0,
   });
 }

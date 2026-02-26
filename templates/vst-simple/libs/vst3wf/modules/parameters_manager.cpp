@@ -1,22 +1,32 @@
 #include "./parameters_manager.h"
-#include "./parameter_item_helper.h"
+#include "../logic/parameter_item_helper.h"
 #include <base/source/fstring.h>
 #include <cmath>
 #include <functional>
-#include <optional>
 #include <string>
 #include <unordered_map>
 
 namespace vst3wf {
 
+static int getParameterVstFlags(const ParameterItem *item) {
+  auto flags = 0;
+  flags |= Steinberg::Vst::ParameterInfo::kCanAutomate;
+  if (item->flags & ParameterFlags::IsReadOnly) {
+    flags |= Steinberg::Vst::ParameterInfo::kIsReadOnly;
+  }
+  if (item->flags & ParameterFlags::IsHidden) {
+    flags |= Steinberg::Vst::ParameterInfo::kIsHidden;
+  }
+  return flags;
+}
+
 using namespace Steinberg;
-using ParamAddress = Steinberg::Vst::ParamID;
 
 void ParametersManager::addVstParameter(const ParameterItem &item) {
   auto step = ParameterItemHelper::getStepCount(&item);
   auto normDefaultValue =
       ParameterItemHelper::getNormalized(&item, item.defaultValue);
-  auto flags = ParameterItemHelper::getVstFlags(&item);
+  auto flags = getParameterVstFlags(&item);
 
   Steinberg::String paramName;
   paramName.fromUTF8(
@@ -29,41 +39,6 @@ void ParametersManager::addVstParameter(const ParameterItem &item) {
                              flags,            // flags
                              item.address      // tag (ID)
   );
-}
-
-std::optional<ParamAddress>
-ParametersManager::getAddressByIdentifier(const std::string &identifier) {
-  auto val = identifierToAddressMap.find(identifier);
-  if (val == identifierToAddressMap.end()) {
-    return std::nullopt;
-  }
-  return val->second;
-}
-
-std::string ParametersManager::getIdentifierByAddress(ParamAddress address) {
-  auto val = parameterItems.find(address);
-  if (val == parameterItems.end()) {
-    return "";
-  }
-  return val->second.identifier;
-}
-
-ParameterItem *
-ParametersManager::getParameterItemByAddress(ParamAddress address) {
-  auto val = parameterItems.find(address);
-  if (val == parameterItems.end()) {
-    return nullptr;
-  }
-  return &val->second;
-}
-
-ParameterItem *
-ParametersManager::getParameterItemByIdentifier(std::string identifier) {
-  auto val = identifierToAddressMap.find(identifier);
-  if (val == identifierToAddressMap.end()) {
-    return nullptr;
-  }
-  return getParameterItemByAddress(val->second);
 }
 
 void ParametersManager::setEditing(ParamAddress address) {
@@ -86,23 +61,11 @@ bool ParametersManager::checkParameterChanging(ParamAddress address,
 
 void ParametersManager::addParameters(
     std::vector<ParameterItem> &parameterItems) {
+  parameterDefinitionsProvider.addParameters(parameterItems);
   for (const auto &item : parameterItems) {
-    auto validInRange = item.address <= Vst::kMaxParamId; // 0x7FFFFFFF
-    if (!validInRange) {
-      printf("ParametersManager: address out of range for VST ParamID: %llu "
-             "(%s)\n",
-             static_cast<unsigned long long>(item.address),
-             item.identifier.c_str());
-      continue;
-    }
-    auto address = item.address;
-    this->parameterItems[address] = item;
-    this->identifierToAddressMap[item.identifier] = address;
-    this->parametersCache[address] =
+    addVstParameter(item);
+    this->parametersCache[item.address] =
         ParameterItemHelper::getNormalized(&item, item.defaultValue);
-    if (!item.isInternal) {
-      addVstParameter(item);
-    }
   }
 }
 
@@ -115,7 +78,8 @@ void ParametersManager::startObserve() {
         if (editingParamAddress == address) {
           return;
         }
-        auto paramItem = getParameterItemByAddress(address);
+        auto paramItem =
+            parameterDefinitionsProvider.getParameterItemByAddress(address);
         if (!paramItem)
           return;
 
@@ -138,13 +102,15 @@ void ParametersManager::stopObserve() {
 // UI --> EditController --> DSP, Host
 void ParametersManager::applyParameterEdit(std::string identifier, double value,
                                            ParameterEditingState editingState) {
-  auto _address = getAddressByIdentifier(identifier);
+  auto _address =
+      parameterDefinitionsProvider.getAddressByIdentifier(identifier);
   if (!_address) {
     return;
   }
   auto address = *_address;
-  auto paramItem = getParameterItemByAddress(address);
-  if (!paramItem || paramItem->isInternal) {
+  auto paramItem =
+      parameterDefinitionsProvider.getParameterItemByAddress(address);
+  if (!paramItem) {
     return;
   }
   auto normValue = ParameterItemHelper::getNormalized(paramItem, value);
@@ -187,6 +153,7 @@ void ParametersManager::unsubscribeFromEditor(int subscriptionId) {
 
 void ParametersManager::getAllParameterValues(
     std::map<std::string, double> &parameters) {
+  const auto &parameterItems = parameterDefinitionsProvider.getParameterItems();
   for (auto &kv : parameterItems) {
     auto &item = kv.second;
     auto address = item.address;

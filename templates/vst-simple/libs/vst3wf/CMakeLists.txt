@@ -1,6 +1,7 @@
 add_library(vst3wf STATIC
   general/logger.cpp 
   logic/parameter_builder_impl.cpp
+  logic/parameter_definitions_provider.cpp
   modules/edit_controller_parameter_change_notifier.cpp
   modules/parameters_manager.cpp
   modules/webview_editor_view.cpp

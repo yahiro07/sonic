@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+typedef uint32_t ParamAddress;
+
 enum class ParameterType {
   Unary,
   Enum,
@@ -10,7 +12,7 @@ enum class ParameterType {
 };
 
 typedef struct _ParameterItem {
-  uint32_t address;
+  ParamAddress address;
   std::string identifier;
   std::string label;
   double defaultValue;
@@ -20,5 +22,5 @@ typedef struct _ParameterItem {
   ParameterType type;
   std::string group;
   ParameterFlags flags;
-  bool isInternal;
+  // bool isInternal;
 } ParameterItem;

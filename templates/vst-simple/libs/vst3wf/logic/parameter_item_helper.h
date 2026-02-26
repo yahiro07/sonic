@@ -5,8 +5,6 @@
 #include <cmath>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-namespace vst3wf {
-
 class ParameterItemHelper {
 public:
   static double getNormalized(const ParameterItem *item, double value) {
@@ -51,17 +49,4 @@ public:
     }
     return 0;
   }
-  static int getVstFlags(const ParameterItem *item) {
-    auto flags = 0;
-    flags |= Steinberg::Vst::ParameterInfo::kCanAutomate;
-    if (item->flags & ParameterFlags::IsReadOnly) {
-      flags |= Steinberg::Vst::ParameterInfo::kIsReadOnly;
-    }
-    if (item->flags & ParameterFlags::IsHidden) {
-      flags |= Steinberg::Vst::ParameterInfo::kIsHidden;
-    }
-    return flags;
-  }
 };
-
-} // namespace vst3wf
