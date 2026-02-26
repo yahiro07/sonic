@@ -1,12 +1,12 @@
-import path from "path";
-import type { TemplateWorker } from "../../../common";
+import type { TemplateWorker } from "../../../packages/cli/common";
 import {
-	casingToCapital,
-	casingToSnake,
-	workerHelper_copyProjectContents_withWhiteList,
-	workerHelper_replaceStrings,
-	workerHelper_updateFileNamesWithPrefix,
-} from "../../../common";
+  casingToCapital,
+  casingToSnake,
+  workerHelper_copyProjectContents_withWhiteList,
+  workerHelper_getNewProjectFolderPath,
+  workerHelper_replaceStrings,
+  workerHelper_updateFileNamesWithPrefix,
+} from "../../../packages/cli/common";
 import fileEntries from "./file-entries.json";
 
 function createTemplateWorker(): TemplateWorker {
@@ -18,7 +18,7 @@ function createTemplateWorker(): TemplateWorker {
 				fileEntries,
 			);
 
-			const newFolderPath = path.join(process.cwd(), projectName);
+			const newFolderPath = workerHelper_getNewProjectFolderPath(projectName);
 
 			const projectNameSnake = casingToSnake(projectName);
 			const projectNameCapital = casingToCapital(projectName);

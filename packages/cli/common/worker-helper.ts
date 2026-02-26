@@ -2,6 +2,10 @@ import fs from "fs";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
+export function workerHelper_getNewProjectFolderPath(projectName: string) {
+  return path.join(process.cwd(), projectName);
+}
+
 export function workerHelper_copyProjectContent(
 	projectName: string,
 	templateName: string,

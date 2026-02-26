@@ -1,0 +1,24 @@
+{
+  "name": "cli",
+  "type": "module",
+  "bin": {
+    "sonic": "./bin/sonic.js"
+  },
+  "scripts": {
+    "build-bin": "tsup entry/sonic.ts --format esm --clean --out-dir bin",
+    "copy-templates": "cp -r ../../templates .",
+    "build": "npm run build-bin && npm run copy-templates"
+  },
+  "files": [
+    "bin",
+    "templates"
+  ],
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.0.1"
+  }
+}

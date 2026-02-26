@@ -1,0 +1,10 @@
+{
+  "name": "work3",
+  "type": "module",
+  "scripts": {
+    "dev": "sonic create"
+  },
+  "dependencies": {
+    "cli": "file:../../packages/cli"
+  }
+}

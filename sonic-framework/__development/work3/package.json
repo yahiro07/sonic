@@ -1,7 +1,0 @@
-{
-  "name": "work3",
-  "type": "module",
-  "dependencies": {
-    "sonic-framework": "file:../../"
-  }
-}
