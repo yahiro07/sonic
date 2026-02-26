@@ -5,6 +5,7 @@
 #pragma once
 
 #include "vst3wf/SynthesizerBase.h"
+#include "vst3wf/logic/parameter_definitions_provider.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
 
 namespace Project1 {
@@ -15,6 +16,7 @@ namespace Project1 {
 class Project1Processor : public Steinberg::Vst::AudioEffect {
 private:
   SynthesizerBase *synthInstance;
+  Amx::ParameterDefinitionsProvider parameterDefinitionsProvider;
 
 public:
   Project1Processor();

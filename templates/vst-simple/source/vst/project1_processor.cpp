@@ -5,6 +5,8 @@
 #include "./project1_processor.h"
 #include "../MySynthesizer.h"
 #include "vst3wf/general/logger.h"
+#include "vst3wf/logic/parameter_builder_impl.h"
+#include "vst3wf/logic/parameter_item_helper.h"
 #include "vst3wf/root_wrapper/vst_entry_wrapper.h"
 #include <base/source/fstreamer.h>
 #include <cstring>
@@ -49,6 +51,11 @@ tresult PLUGIN_API Project1Processor::initialize(FUnknown *context) {
 
   getAudioOutput(0)->setFlags(Vst::BusInfo::kDefaultActive);
 
+  auto parameterBuilder = Amx::ParameterBuilderImpl();
+  synthInstance->setupParameters(parameterBuilder);
+  auto parameterItems = parameterBuilder.getItems();
+  parameterDefinitionsProvider.addParameters(parameterItems);
+
   return kResultOk;
 }
 
@@ -84,9 +91,13 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
         auto paramId = paramQueue->getParameterId();
         if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) ==
             kResultTrue) {
-          vst3wf::logger.log("parameter %d received in audio thread %f",
-                             paramId, value);
-          synthInstance->setParameter(paramId, value);
+          auto paramItem =
+              parameterDefinitionsProvider.getParameterItemByAddress(paramId);
+          const auto unnormalizedValue =
+              Amx::ParameterItemHelper::getUnnormalized(paramItem, value);
+          // vst3wf::logger.log("parameter %d received in audio thread %f %f",
+          //                    paramId, value, unnormalizedValue);
+          synthInstance->setParameter(paramId, unnormalizedValue);
         }
       }
     }
