@@ -4,14 +4,15 @@
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "public.sdk/source/main/pluginfactory.h"
+#include "vst/project1_controller.h"
+#include "vst/project1_processor.h"
 
+namespace vst3wf {
 using namespace Steinberg::Vst;
 using namespace Steinberg;
 
-namespace vst3wf {
-
 PluginFactoryGlobalHolder gPluginFactoryGlobalHolder = {
-    .gSynthInstantiateFn = nullptr,
+    .synthInstantiateFn = nullptr,
     .processorCID = {},
     .controllerCID = {},
 };
@@ -21,7 +22,7 @@ IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
     FUnknown *(*processorCreateInstanceFn)(void *),
     FUnknown *(*controllerCreateInstanceFn)(void *), PluginMeta &meta) {
 
-  gPluginFactoryGlobalHolder.gSynthInstantiateFn = synthInstantiateFn;
+  gPluginFactoryGlobalHolder.synthInstantiateFn = synthInstantiateFn;
   loadTUIDFromGUIDString(gPluginFactoryGlobalHolder.processorCID,
                          meta.processorCID);
   loadTUIDFromGUIDString(gPluginFactoryGlobalHolder.controllerCID,
@@ -74,6 +75,13 @@ IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
     gPluginFactory->addRef();
   }
   return gPluginFactory;
+}
+
+IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
+    SynthInstantiateFn synthInstantiateFn, PluginMeta &meta) {
+  return GetPluginFactoryInternal(
+      synthInstantiateFn, Project1::Project1Processor::createInstance,
+      Project1::Project1Controller::createInstance, meta);
 }
 
 } // namespace vst3wf

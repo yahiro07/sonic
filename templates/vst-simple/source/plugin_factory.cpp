@@ -1,10 +1,6 @@
-#include "../MySynthesizer.h"
-#include "./project1_controller.h"
-#include "./project1_processor.h"
+#include "./MySynthesizer.h"
 #include "projectversion.h"
-#include "vst3wf/root_wrapper/vst_entry_wrapper.h"
-
-using namespace Project1;
+#include "vst3wf/vst_entry/vst_entry_wrapper.h"
 
 static vst3wf::PluginMeta pluginMeta{
     .name = "MyPlugin",
@@ -18,7 +14,6 @@ static vst3wf::PluginMeta pluginMeta{
 };
 
 VstFactoryResult GetPluginFactory() {
-  return vst3wf::GetPluginFactoryInternal(
-      createSynthesizerInstance, Project1Processor::createInstance,
-      Project1Controller::createInstance, pluginMeta);
+  return vst3wf::GetPluginFactoryInternal(createSynthesizerInstance,
+                                          pluginMeta);
 }

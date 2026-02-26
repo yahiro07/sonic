@@ -5,7 +5,11 @@ add_library(vst3wf STATIC
   modules/parameter_change_notifier.cpp
   modules/parameters_manager.cpp
   modules/webview_editor_view.cpp
-  root_wrapper/vst_entry_wrapper.cpp
+  vst/project1_processor.h
+  vst/project1_processor.cpp
+  vst/project1_controller.h
+  vst/project1_controller.cpp
+  vst_entry/vst_entry_wrapper.cpp
 )
 
 target_link_libraries(vst3wf PUBLIC sdk)

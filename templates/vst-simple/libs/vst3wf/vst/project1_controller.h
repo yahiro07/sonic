@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "../MySynthesizer.h"
 #include "vst3wf/SynthesizerBase.h"
 #include "vst3wf/general/logger.h"
 #include "vst3wf/modules/parameters_manager.h"
+#include "vst3wf/vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
 namespace Project1 {
@@ -24,7 +24,7 @@ public:
   //------------------------------------------------------------------------
   Project1Controller() : parametersManager(*this, this->parameters) {
     vst3wf::logger.start();
-    synthInstance = createSynthesizerInstance();
+    synthInstance = vst3wf::gPluginFactoryGlobalHolder.synthInstantiateFn();
   }
   ~Project1Controller() SMTG_OVERRIDE {
     delete synthInstance;
