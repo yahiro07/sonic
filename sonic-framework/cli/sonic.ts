@@ -75,6 +75,20 @@ async function createProject() {
 		if (projectName === "") {
 			projectName = defaultProjectName;
 		}
+
+		const newProjectFolderPath = path.join(process.cwd(), projectName);
+		if (fs.existsSync(newProjectFolderPath)) {
+			const ok = await clackPrompts.confirm({
+				message: `Project ${projectName} already exists. Do you want to overwrite it?`,
+				initialValue: false,
+			});
+			if (!ok) {
+				console.log("operation cancelled.");
+				return;
+			}
+			fs.rmSync(newProjectFolderPath, { recursive: true });
+		}
+
 		const templateEntry = templateEntries.find(
 			(entry) => entry.name === templateName,
 		);
