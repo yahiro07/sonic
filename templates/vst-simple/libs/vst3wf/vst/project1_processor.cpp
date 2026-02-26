@@ -6,6 +6,7 @@
 #include "../modules/processor_state_helper.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/base/ibstream.h"
+#include "pluginterfaces/vst/ivstevents.h"
 #include "vst3wf/general/logger.h"
 #include "vst3wf/logic/parameter_builder_impl.h"
 #include "vst3wf/logic/parameter_item_helper.h"
@@ -121,6 +122,13 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
         if (event.type == Vst::Event::kNoteOnEvent) {
           synthInstance->noteOn(event.noteOn.pitch, event.noteOn.velocity);
           vst3wf::logger.log("note on %d", event.noteOn.pitch);
+
+          Steinberg::Vst::IMessage *msg = allocateMessage();
+          msg->setMessageID("note");
+          msg->getAttributes()->setInt("noteNumber", event.noteOn.pitch);
+          msg->getAttributes()->setFloat("velocity", event.noteOn.velocity);
+          sendMessage(msg);
+
         } else if (event.type == Vst::Event::kNoteOffEvent) {
           synthInstance->noteOff(event.noteOff.pitch);
           vst3wf::logger.log("note off %d", event.noteOff.pitch);
@@ -229,6 +237,16 @@ tresult PLUGIN_API Project1Processor::setState(IBStream *state) {
     synthInstance->setParameter(paramItem->address, kv.second);
   }
 
+  return kResultOk;
+}
+
+tresult PLUGIN_API Project1Processor::notify(Vst::IMessage *message) {
+  vst3wf::logger.log("Project1Processor::notify");
+  if (strcmp(message->getMessageID(), "aaa") == 0) {
+    int64 value;
+    message->getAttributes()->getInt("param0c", value);
+    vst3wf::logger.log("Project1Processor::notify aaa %d", value);
+  }
   return kResultOk;
 }
 

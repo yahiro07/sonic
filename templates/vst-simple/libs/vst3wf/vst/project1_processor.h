@@ -59,6 +59,9 @@ public:
       SMTG_OVERRIDE;
   Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream *state)
       SMTG_OVERRIDE;
+
+  Steinberg::tresult PLUGIN_API notify(Steinberg::Vst::IMessage *message)
+      SMTG_OVERRIDE;
 };
 
 //------------------------------------------------------------------------

@@ -63,6 +63,9 @@ public:
       Steinberg::Vst::ParamID tag, Steinberg::Vst::TChar *string,
       Steinberg::Vst::ParamValue &valueNormalized) SMTG_OVERRIDE;
 
+  Steinberg::tresult PLUGIN_API notify(Steinberg::Vst::IMessage *message)
+      SMTG_OVERRIDE;
+
   //---Interface---------
   DEFINE_INTERFACES
   // Here you can add more supported VST3 interfaces
