@@ -75,7 +75,6 @@ async function createProject() {
 		if (projectName === "") {
 			projectName = defaultProjectName;
 		}
-
 		const newProjectFolderPath = path.join(process.cwd(), projectName);
 		if (fs.existsSync(newProjectFolderPath)) {
 			const ok = await clackPrompts.confirm({
@@ -95,15 +94,21 @@ async function createProject() {
 		if (!templateEntry) {
 			throw new Error(`incompatible template name: ${templateName}`);
 		}
-		const ok = await templateEntry.worker.createProject(
-			projectName,
-			templateName,
-		);
-		if (!ok) {
-			console.log(`failed to create project ${projectName}`);
-			return;
+
+		try {
+			const ok = await templateEntry.worker.createProject(
+				projectName,
+				templateName,
+			);
+			if (!ok) {
+				console.log(`failed to create project ${projectName}`);
+				return;
+			}
+			console.log(`project ${projectName} created.`);
+		} catch (error) {
+			fs.rmSync(newProjectFolderPath, { recursive: true });
+			throw error;
 		}
-		console.log(`project ${projectName} created.`);
 	} catch (error) {
 		console.error(error);
 	}
