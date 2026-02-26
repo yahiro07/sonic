@@ -2,7 +2,7 @@
 
 #include "../logic/parameter_definitions_provider.h"
 #include "../logic/parameter_item.h"
-#include "./edit_controller_parameter_change_notifier.h"
+#include "./parameter_change_notifier.h"
 #include <base/source/fstring.h>
 #include <functional>
 #include <public.sdk/source/vst/vsteditcontroller.h>
@@ -20,7 +20,7 @@ private:
   Steinberg::Vst::ParameterContainer &vstParameters;
   ParameterDefinitionsProvider parameterDefinitionsProvider;
 
-  EditControllerParameterChangeNotifier editControllerParameterChangeNotifier;
+  ParameterChangeNotifier parameterChangeNotifier;
   // Cache is stored in normalized (0..1) space.
   std::unordered_map<ParamAddress, double> parametersCache;
 

@@ -8,6 +8,8 @@
 
 namespace vst3wf {
 
+using namespace Steinberg;
+
 static int getParameterVstFlags(const ParameterItem *item) {
   auto flags = 0;
   flags |= Steinberg::Vst::ParameterInfo::kCanAutomate;
@@ -19,8 +21,6 @@ static int getParameterVstFlags(const ParameterItem *item) {
   }
   return flags;
 }
-
-using namespace Steinberg;
 
 void ParametersManager::addVstParameter(const ParameterItem &item) {
   auto step = ParameterItemHelper::getStepCount(&item);
@@ -71,7 +71,7 @@ void ParametersManager::addParameters(
 
 // Host --> EditController --> UI
 void ParametersManager::startObserve() {
-  editControllerParameterChangeNotifier.start(
+  parameterChangeNotifier.start(
       &this->editController, [&](Vst::ParamID address, double normValue) {
         // logger.log("ParametersManager::notified: %d, %f", address,
         // normValue);
@@ -95,9 +95,7 @@ void ParametersManager::startObserve() {
       });
 }
 
-void ParametersManager::stopObserve() {
-  editControllerParameterChangeNotifier.stop();
-}
+void ParametersManager::stopObserve() { parameterChangeNotifier.stop(); }
 
 // UI --> EditController --> DSP, Host
 void ParametersManager::applyParameterEdit(std::string identifier, double value,

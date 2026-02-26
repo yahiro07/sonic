@@ -5,7 +5,7 @@
 
 namespace vst3wf {
 
-class EditControllerParameterChangeNotifier : public Steinberg::IDependent {
+class ParameterChangeNotifier : public Steinberg::IDependent {
 private:
   Steinberg::Vst::EditController *controller = nullptr;
   std::function<void(Steinberg::Vst::ParamID paramId, double value)> receiver;
