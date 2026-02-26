@@ -8,7 +8,7 @@ import {
 } from "../../../common/worker-helper";
 import type { WorkerInterface } from "../../../common/worker-types";
 
-export const template_vstSimple_worker: WorkerInterface = {
+const worker: WorkerInterface = {
 	async createProject(projectName, templateName) {
 		workerHelper_copyProjectContent_excludingWorkerFolder(
 			projectName,
@@ -70,3 +70,4 @@ export const template_vstSimple_worker: WorkerInterface = {
 		return true;
 	},
 };
+export default worker;

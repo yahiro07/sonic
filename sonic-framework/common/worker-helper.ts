@@ -35,6 +35,7 @@ export function workerHelper_copyProjectContent_excludingWorkerFolder(
 		"templates",
 		templateName,
 	);
+	fs.mkdirSync(path.join(process.cwd(), projectName), { recursive: true });
 
 	//copy other entities than __worker folder
 	const templateEntities = fs.readdirSync(templateFolderPath);

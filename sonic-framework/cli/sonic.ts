@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-import type { WorkerInterface } from "../common/worker-types";
-import { template_vstSimple_worker } from "../templates/vst-simple/worker";
+import { templateWorkers } from "./template-workers";
 
 type InputCommand =
 	| { type: "create"; projectName: string; templateName: string }
@@ -51,10 +50,6 @@ function handleInputCommand(inputCommand: InputCommand | undefined) {
 		createProject(inputCommand.projectName, inputCommand.templateName);
 	}
 }
-
-const templateWorkers: Record<string, WorkerInterface> = {
-	"vst-simple": template_vstSimple_worker,
-};
 
 async function createProject(projectName: string, templateName: string) {
 	console.log(`creating project ${projectName} with template ${templateName}`);
