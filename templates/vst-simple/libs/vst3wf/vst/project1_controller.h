@@ -19,10 +19,13 @@ class Project1Controller : public Steinberg::Vst::EditControllerEx1 {
 private:
   SynthesizerBase *synthInstance;
   vst3wf::ParametersManager parametersManager;
+  Amx::ParameterDefinitionsProvider parameterDefinitionsProvider;
 
 public:
   //------------------------------------------------------------------------
-  Project1Controller() : parametersManager(*this, this->parameters) {
+  Project1Controller()
+      : parametersManager(*this, this->parameters,
+                          this->parameterDefinitionsProvider) {
     vst3wf::logger.start();
     synthInstance = vst3wf::gPluginFactoryGlobalHolder.synthInstantiateFn();
   }

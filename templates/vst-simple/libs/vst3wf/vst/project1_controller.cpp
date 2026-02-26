@@ -31,6 +31,7 @@ tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
     auto parameterBuilder = Amx::ParameterBuilderImpl();
     synthInstance->setupParameters(parameterBuilder);
     auto parameterItems = parameterBuilder.getItems();
+    parameterDefinitionsProvider.addParameters(parameterItems);
     parametersManager.addParameters(parameterItems);
     parametersManager.startObserve();
   }

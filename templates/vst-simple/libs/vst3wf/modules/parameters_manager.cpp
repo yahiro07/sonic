@@ -62,7 +62,6 @@ bool ParametersManager::checkParameterChanging(ParamAddress address,
 
 void ParametersManager::addParameters(
     std::vector<ParameterItem> &parameterItems) {
-  parameterDefinitionsProvider.addParameters(parameterItems);
   for (const auto &item : parameterItems) {
     addVstParameter(item);
     this->parametersCache[item.address] =

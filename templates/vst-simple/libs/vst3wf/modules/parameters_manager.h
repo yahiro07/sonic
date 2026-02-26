@@ -20,7 +20,7 @@ class ParametersManager {
 private:
   Steinberg::Vst::EditController &editController;
   Steinberg::Vst::ParameterContainer &vstParameters;
-  Amx::ParameterDefinitionsProvider parameterDefinitionsProvider;
+  Amx::ParameterDefinitionsProvider &parameterDefinitionsProvider;
 
   ParameterChangeNotifier parameterChangeNotifier;
   // Cache is stored in normalized (0..1) space.
@@ -40,9 +40,12 @@ private:
   bool checkParameterChanging(ParamAddress address, double newNormValue);
 
 public:
-  ParametersManager(Steinberg::Vst::EditController &editController,
-                    Steinberg::Vst::ParameterContainer &vstParameters)
-      : editController(editController), vstParameters(vstParameters) {}
+  ParametersManager(
+      Steinberg::Vst::EditController &editController,
+      Steinberg::Vst::ParameterContainer &vstParameters,
+      Amx::ParameterDefinitionsProvider &parameterDefinitionsProvider)
+      : editController(editController), vstParameters(vstParameters),
+        parameterDefinitionsProvider(parameterDefinitionsProvider) {}
 
   ~ParametersManager() {}
 
