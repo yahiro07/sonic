@@ -69,8 +69,8 @@ function createTemplateWorker(): TemplateWorker {
 				filePaths: ["source/vst/plugin_factory.cpp"],
 				replacements: [
 					{ from: "MyPlugin", to: projectNameCapital },
-					{ from: "__TEMPLATE_VST3_PROCESSOR_CID__", to: processorCID },
-					{ from: "__TEMPLATE_VST3_CONTROLLER_CID__", to: controllerCID },
+					{ from: "E458F80E-DEED-40DB-AD59-2C739A7DA7A0", to: processorCID },
+					{ from: "6BAD2674-0204-4522-8971-58C6296A4552", to: controllerCID },
 				],
 			});
 			return true;
