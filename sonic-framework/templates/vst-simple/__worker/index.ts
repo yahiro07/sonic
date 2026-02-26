@@ -20,17 +20,6 @@ const worker: WorkerInterface = {
 		const projectNameSnake = casingToSnake(projectName);
 		const projectNameCapital = casingToCapital(projectName);
 
-		workerHelper_updateFileNamesWithPrefix(newFolderPath, {
-			filePaths: [
-				"source/vst/project1_controller.cpp",
-				"source/vst/project1_controller.h",
-				"source/vst/project1_processor.cpp",
-				"source/vst/project1_processor.h",
-			],
-			originalPrefix: "project1",
-			newPrefix: projectNameSnake,
-		});
-
 		workerHelper_replaceStrings(newFolderPath, {
 			filePaths: [
 				"source/vst/plugin_factory.cpp",
@@ -51,13 +40,24 @@ const worker: WorkerInterface = {
 			],
 		});
 
+		workerHelper_updateFileNamesWithPrefix(newFolderPath, {
+			filePaths: [
+				"source/vst/project1_controller.cpp",
+				"source/vst/project1_controller.h",
+				"source/vst/project1_processor.cpp",
+				"source/vst/project1_processor.h",
+			],
+			originalPrefix: "project1",
+			newPrefix: projectNameSnake,
+		});
+
 		workerHelper_replaceStrings(newFolderPath, {
 			filePaths: ["source/vst/version.h"],
 			replacements: [{ from: "Project1", to: projectNameCapital }],
 		});
 
-		const processorCID = crypto.randomUUID();
-		const controllerCID = crypto.randomUUID();
+		const processorCID = crypto.randomUUID().toUpperCase();
+		const controllerCID = crypto.randomUUID().toUpperCase();
 
 		workerHelper_replaceStrings(newFolderPath, {
 			filePaths: ["source/vst/plugin_factory.cpp"],

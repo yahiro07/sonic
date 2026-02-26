@@ -1,6 +1,7 @@
 import path from "path";
 import {
 	casingToCapital,
+	generateRandomString,
 	workerHelper_copyProjectContent_excludingWorkerFolder,
 	workerHelper_replaceStrings,
 	workerHelper_updateFileNamesWithPrefix,
@@ -20,26 +21,12 @@ const worker: WorkerInterface = {
 
 		const extensionNameCapital = `${projectNameCapital}Extension`;
 
-		workerHelper_updateFileNamesWithPrefix(newFolderPath, {
-			filePaths: [
-				"Project1",
-				"Project1.xcodeproj",
-				"Project1/Project1App.swift",
-				"Project1/Project1.entitlements",
-				"Project1Extension",
-				"Project1Extension/Project1Extension-Bridging-Header.h",
-			],
-			originalPrefix: "Project1",
-			newPrefix: projectNameCapital,
-		});
-
 		workerHelper_replaceStrings(newFolderPath, {
 			filePaths: ["Project1/Project1App.swift"],
 			replacements: [{ from: "Project1App", to: `${projectNameCapital}App` }],
 		});
 
-		//todo: generate random subtype
-		const auSubtype = "aaaa";
+		const auSubtype = generateRandomString("alphaNumeric", 4);
 		const auManufacture = "Myco";
 
 		workerHelper_replaceStrings(newFolderPath, {
@@ -57,6 +44,19 @@ const worker: WorkerInterface = {
 				{ from: "__TEMPLATE_AU_MANUFACTURER__", to: auManufacture },
 				{ from: "__TEMPLATE_AU_EXTENSION_NAME__", to: extensionNameCapital },
 			],
+		});
+
+		workerHelper_updateFileNamesWithPrefix(newFolderPath, {
+			filePaths: [
+				"Project1/Project1App.swift",
+				"Project1/Project1.entitlements",
+				"Project1",
+				"Project1.xcodeproj",
+				"Project1Extension/Common/Project1Extension-Bridging-Header.h",
+				"Project1Extension",
+			],
+			originalPrefix: "Project1",
+			newPrefix: projectNameCapital,
 		});
 
 		return true;
