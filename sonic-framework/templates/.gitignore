@@ -1,3 +1,14 @@
+project.xcworkspace/
+xcuserdata/
+xcshareddata/
+buildServer.json
+
+cspell.json
+compile_flags.txt
+compile_commands.json
+
 /vst-simple/Makefile
-/vst-simple/cspell.json
-/vst-simple/compile_commands.json
+
+
+
+

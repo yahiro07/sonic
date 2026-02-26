@@ -10,17 +10,17 @@
 			<array>
 				<dict>
 					<key>description</key>
-					<string>__TEMPLATE_AU_EXTENSION_NAME__</string>
+					<string>Project1Extension</string>
 					<key>factoryFunction</key>
 					<string>$(PRODUCT_MODULE_NAME).AudioUnitViewController</string>
 					<key>manufacturer</key>
-					<string>__TEMPLATE_AU_MANUFACTURER__</string>
+					<string>Myco</string>
 					<key>name</key>
-					<string>__TEMPLATE_AU_MANUFACTURER__: __TEMPLATE_AU_EXTENSION_NAME__</string>
+					<string>Project1Extension</string>
 					<key>sandboxSafe</key>
 					<true/>
 					<key>subtype</key>
-					<string>__TEMPLATE_AU_SUBTYPE__</string>
+					<string>prj1</string>
 					<key>tags</key>
 					<array>
 						<string>Synthesizer</string>

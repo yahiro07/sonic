@@ -3,17 +3,19 @@ import type { TemplateWorker } from "../../../common";
 import {
 	casingToCapital,
 	generateRandomString,
-	workerHelper_copyProjectContents_excludingWorkerFolder,
+	workerHelper_copyProjectContents_withWhiteList,
 	workerHelper_replaceStrings,
 	workerHelper_updateFileNamesWithPrefix,
 } from "../../../common";
+import fileEntries from "./file-entries.json";
 
 function createTemplateWorker(): TemplateWorker {
 	return {
 		async createProject(projectName, templateName) {
-			workerHelper_copyProjectContents_excludingWorkerFolder(
+			workerHelper_copyProjectContents_withWhiteList(
 				projectName,
 				templateName,
+				fileEntries,
 			);
 
 			const newFolderPath = path.join(process.cwd(), projectName);
@@ -33,27 +35,36 @@ function createTemplateWorker(): TemplateWorker {
 			workerHelper_replaceStrings(newFolderPath, {
 				filePaths: ["Project1/Model/AudioUnitHostModel.swift"],
 				replacements: [
-					{ from: "__TEMPLATE_AU_SUBTYPE__", to: auSubtype },
-					{ from: "__TEMPLATE_AU_MANUFACTURER__", to: auManufacture },
+					{ from: `"prj1"`, to: `"${auSubtype}"` },
+					{ from: `"Myco"`, to: `"${auManufacture}"` },
 				],
 			});
 
 			workerHelper_replaceStrings(newFolderPath, {
 				filePaths: ["Project1Extension/info.plist"],
 				replacements: [
-					{ from: "__TEMPLATE_AU_SUBTYPE__", to: auSubtype },
-					{ from: "__TEMPLATE_AU_MANUFACTURER__", to: auManufacture },
-					{ from: "__TEMPLATE_AU_EXTENSION_NAME__", to: extensionNameCapital },
+					{
+						from: "<string>prj1</string>",
+						to: `<string>${auSubtype}</string>`,
+					},
+					{
+						from: "<string>Myco</string>",
+						to: `<string>${auManufacture}</string>`,
+					},
+					{
+						from: "<string>Project1Extension</string>",
+						to: `<string>${extensionNameCapital}</string>`,
+					},
 				],
 			});
 
-			workerHelper_replaceStrings(newFolderPath, {
-				filePaths: ["project.toml"],
-				replacements: [
-					{ from: "__TEMPLATE_AU_SUBTYPE__", to: auSubtype },
-					{ from: "__TEMPLATE_AU_MANUFACTURER__", to: auManufacture },
-				],
-			});
+			// workerHelper_replaceStrings(newFolderPath, {
+			// 	filePaths: ["project.toml"],
+			// 	replacements: [
+			// 		{ from: "__TEMPLATE_AU_SUBTYPE__", to: auSubtype },
+			// 		{ from: "__TEMPLATE_AU_MANUFACTURER__", to: auManufacture },
+			// 	],
+			// });
 
 			workerHelper_updateFileNamesWithPrefix(newFolderPath, {
 				filePaths: [
