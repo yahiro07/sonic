@@ -9,6 +9,7 @@
 namespace vst3wf {
 
 using namespace Steinberg;
+using namespace Amx;
 
 static int getParameterVstFlags(const ParameterItem *item) {
   auto flags = 0;

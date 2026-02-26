@@ -5,6 +5,8 @@
 #include <cmath>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
+namespace Amx {
+
 class ParameterItemHelper {
 public:
   static double getNormalized(const ParameterItem *item, double value) {
@@ -50,3 +52,5 @@ public:
     return 0;
   }
 };
+
+} // namespace Amx

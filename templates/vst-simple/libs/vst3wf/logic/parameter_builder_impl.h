@@ -3,6 +3,8 @@
 #include "../SynthesizerBase.h"
 #include "./parameter_item.h"
 
+namespace Amx {
+
 class ParameterBuilderImpl : public ParameterBuilder {
 private:
   std::vector<ParameterItem> parameters;
@@ -20,3 +22,5 @@ public:
   void addBool(uint32_t address, Str identifier, Str label, bool defaultValue,
                Str group, ParameterFlags flags);
 };
+
+} // namespace Amx

@@ -28,7 +28,7 @@ tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
   // Here you could register some parameters
   if (result == kResultTrue) {
     //---Create Parameters------------
-    auto parameterBuilder = ParameterBuilderImpl();
+    auto parameterBuilder = Amx::ParameterBuilderImpl();
     synthInstance->setupParameters(parameterBuilder);
     auto parameterItems = parameterBuilder.getItems();
     parametersManager.addParameters(parameterItems);

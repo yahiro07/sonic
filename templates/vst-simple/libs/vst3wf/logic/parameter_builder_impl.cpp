@@ -1,6 +1,8 @@
 #include "./parameter_builder_impl.h"
 #include "../SynthesizerBase.h"
 
+namespace Amx {
+
 void ParameterBuilderImpl::addUnary(uint32_t address, Str identifier, Str label,
                                     double defaultValue, Str group,
                                     ParameterFlags flags) {
@@ -61,3 +63,5 @@ void ParameterBuilderImpl::addBool(uint32_t address, Str identifier, Str label,
       .flags = flags,
   });
 }
+
+} // namespace Amx

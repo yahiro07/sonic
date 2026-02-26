@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+namespace Amx {
+
 typedef uint32_t ParamAddress;
 
 enum class ParameterType {
@@ -24,3 +26,5 @@ typedef struct _ParameterItem {
   ParameterFlags flags;
   // bool isInternal;
 } ParameterItem;
+
+} // namespace Amx

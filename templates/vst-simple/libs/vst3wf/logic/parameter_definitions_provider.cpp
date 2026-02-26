@@ -3,6 +3,8 @@
 #include <string>
 #include <unordered_map>
 
+namespace Amx {
+
 void ParameterDefinitionsProvider::addParameters(
     std::vector<ParameterItem> &parameterItems) {
   for (const auto &item : parameterItems) {
@@ -56,3 +58,5 @@ ParameterItem *ParameterDefinitionsProvider::getParameterItemByIdentifier(
   }
   return getParameterItemByAddress(val->second);
 }
+
+} // namespace Amx

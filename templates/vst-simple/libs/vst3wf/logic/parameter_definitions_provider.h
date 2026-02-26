@@ -6,6 +6,8 @@
 #include <string>
 #include <unordered_map>
 
+namespace Amx {
+
 class ParameterDefinitionsProvider {
 private:
   std::unordered_map<ParamAddress, ParameterItem> parameterItems;
@@ -24,3 +26,5 @@ public:
   ParameterItem *getParameterItemByAddress(ParamAddress address);
   ParameterItem *getParameterItemByIdentifier(std::string identifier);
 };
+
+} // namespace Amx
