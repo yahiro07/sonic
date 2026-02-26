@@ -1,1 +1,1 @@
-sonic templated project (au-simple) 
+sonic template project (au-simple) 

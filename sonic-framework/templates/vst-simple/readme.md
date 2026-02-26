@@ -1,1 +1,1 @@
-sonic templated project (vst-simple) 
+sonic template project (vst-simple) 
