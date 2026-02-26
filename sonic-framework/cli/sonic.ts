@@ -1,26 +1,19 @@
 #!/usr/bin/env node
-import { templateWorkers } from "./template-workers";
+import * as clackPrompts from "@clack/prompts";
+import fs from "fs";
+import path from "path";
+import { casingToCapital, incrementSuffix } from "../common";
+import { templateEntries } from "./template-entries";
 
 type InputCommand =
-	| { type: "create"; projectName: string; templateName: string }
+	| { type: "create" }
 	| { type: "createIncompatibleArgs" }
 	| { type: "help" }
 	| { type: "version" };
 
 function parseArgs(args: string[]): InputCommand | undefined {
 	if (args[0] === "create") {
-		const projectName = args[1];
-		if (args[2] === "-t" || args[2] === "--template") {
-			const templateName = args[3];
-			if (templateName) {
-				return {
-					type: "create",
-					projectName,
-					templateName,
-				};
-			}
-		}
-		return { type: "createIncompatibleArgs" };
+		return { type: "create" };
 	} else if (args[0] === "--version") {
 		return { type: "version" };
 	} else if (args[0] === "--help") {
@@ -33,44 +26,78 @@ function handleInputCommand(inputCommand: InputCommand | undefined) {
 	if (!inputCommand) {
 		console.log("incompatible command.");
 		console.log("command should be one of:");
-		console.log("sonic create <project-name> -t <template-name>");
+		console.log("sonic create");
 		console.log("sonic --version");
 		console.log("sonic --help");
 	} else if (inputCommand.type === "version") {
 		console.log("sonic cli version 0.0.0-in-development");
 	} else if (inputCommand.type === "help") {
 		console.log("supported commands:");
-		console.log("sonic create <project-name> -t <template-name>");
+		console.log("sonic create");
 		console.log("sonic --version");
 		console.log("sonic --help");
 	} else if (inputCommand.type === "createIncompatibleArgs") {
 		console.log("incompatible arguments");
-		console.log("please use: sonic create <project-name> -t <template-name>");
+		console.log("please use: sonic create");
 	} else if (inputCommand.type === "create") {
-		createProject(inputCommand.projectName, inputCommand.templateName);
+		createProject();
 	}
 }
 
-async function createProject(projectName: string, templateName: string) {
-	console.log(`creating project ${projectName} with template ${templateName}`);
-	const worker = templateWorkers[templateName];
-	if (!worker) {
-		console.log(`incompatible template name: ${templateName}`);
-		console.log("supported template names:", Object.keys(templateWorkers));
-		return;
+async function createProject() {
+	try {
+		const templateName = await clackPrompts.select({
+			message: "Select a template",
+			options: templateEntries.map((entry) => ({
+				value: entry.name,
+				hint: entry.description,
+			})),
+		});
+		if (clackPrompts.isCancel(templateName)) return;
+
+		let defaultProjectName = `${casingToCapital(templateName)}1`;
+
+		let retryCount = 0;
+		while (fs.existsSync(path.join(process.cwd(), defaultProjectName))) {
+			defaultProjectName = incrementSuffix(defaultProjectName);
+			retryCount++;
+			if (retryCount > 100) {
+				throw new Error("too many default project name retries");
+			}
+		}
+
+		let projectName = await clackPrompts.text({
+			message: "Enter project name",
+			placeholder: defaultProjectName,
+		});
+		if (clackPrompts.isCancel(projectName)) return;
+
+		if (projectName === "") {
+			projectName = defaultProjectName;
+		}
+		const templateEntry = templateEntries.find(
+			(entry) => entry.name === templateName,
+		);
+		if (!templateEntry) {
+			throw new Error(`incompatible template name: ${templateName}`);
+		}
+		const ok = await templateEntry.worker.createProject(
+			projectName,
+			templateName,
+		);
+		if (!ok) {
+			console.log(`failed to create project ${projectName}`);
+			return;
+		}
+		console.log(`project ${projectName} created.`);
+	} catch (error) {
+		console.error(error);
 	}
-	const ok = await worker.createProject(projectName, templateName);
-	if (!ok) {
-		console.log(`failed to create project ${projectName}`);
-		return;
-	}
-	console.log(`project ${projectName} created`);
 }
 
 function run() {
 	console.log("Sonic Framework CLI");
 	const args = process.argv.slice(2);
-	// console.log("Running with arguments:", args);
 	const inputCommand = parseArgs(args);
 	handleInputCommand(inputCommand);
 }
