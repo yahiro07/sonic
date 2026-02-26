@@ -24,7 +24,7 @@ export function workerHelper_copyProjectContent(
 	});
 }
 
-export function workerHelper_copyProjectContent_excludingWorkerFolder(
+export function workerHelper_copyProjectContents_excludingWorkerFolder(
 	projectName: string,
 	templateName: string,
 ) {
@@ -51,6 +51,39 @@ export function workerHelper_copyProjectContent_excludingWorkerFolder(
 			} else {
 				fs.copyFileSync(srcPath, destPath);
 			}
+		}
+	}
+}
+
+export function workerHelper_copyProjectContents_withWhiteList(
+	projectName: string,
+	templateName: string,
+	entries: string[],
+) {
+	const binFolderPath = dirname(fileURLToPath(import.meta.url));
+	const templateFolderPath = path.join(
+		binFolderPath,
+		"../",
+		"templates",
+		templateName,
+	);
+	const newProjectFolderPath = path.join(process.cwd(), projectName);
+	fs.mkdirSync(newProjectFolderPath, { recursive: true });
+
+	for (const entry of entries) {
+		const srcPath = path.join(templateFolderPath, entry);
+		const destPath = path.join(newProjectFolderPath, entry);
+		if (!fs.existsSync(srcPath)) {
+			throw new Error(
+				`source entry ${entry} does not exist in template ${templateName}`,
+			);
+		}
+		if (fs.statSync(srcPath).isDirectory()) {
+			fs.cpSync(srcPath, destPath, {
+				recursive: true,
+			});
+		} else {
+			fs.copyFileSync(srcPath, destPath);
 		}
 	}
 }

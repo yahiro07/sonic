@@ -3,17 +3,19 @@ import type { TemplateWorker } from "../../../common";
 import {
 	casingToCapital,
 	casingToSnake,
-	workerHelper_copyProjectContent_excludingWorkerFolder,
+	workerHelper_copyProjectContents_withWhiteList,
 	workerHelper_replaceStrings,
 	workerHelper_updateFileNamesWithPrefix,
 } from "../../../common";
+import fileEntries from "./file-entries.json";
 
 function createTemplateWorker(): TemplateWorker {
 	return {
 		async createProject(projectName, templateName) {
-			workerHelper_copyProjectContent_excludingWorkerFolder(
+			workerHelper_copyProjectContents_withWhiteList(
 				projectName,
 				templateName,
+				fileEntries,
 			);
 
 			const newFolderPath = path.join(process.cwd(), projectName);

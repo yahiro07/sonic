@@ -3,7 +3,7 @@ import type { TemplateWorker } from "../../../common";
 import {
 	casingToCapital,
 	generateRandomString,
-	workerHelper_copyProjectContent_excludingWorkerFolder,
+	workerHelper_copyProjectContents_excludingWorkerFolder,
 	workerHelper_replaceStrings,
 	workerHelper_updateFileNamesWithPrefix,
 } from "../../../common";
@@ -11,7 +11,7 @@ import {
 function createTemplateWorker(): TemplateWorker {
 	return {
 		async createProject(projectName, templateName) {
-			workerHelper_copyProjectContent_excludingWorkerFolder(
+			workerHelper_copyProjectContents_excludingWorkerFolder(
 				projectName,
 				templateName,
 			);
