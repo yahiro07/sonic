@@ -121,7 +121,7 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
       if (eventList->getEvent(i, event) == kResultOk) {
         if (event.type == Vst::Event::kNoteOnEvent) {
           synthInstance->noteOn(event.noteOn.pitch, event.noteOn.velocity);
-          vst3wf::logger.log("note on %d", event.noteOn.pitch);
+          // vst3wf::logger.log("note on %d", event.noteOn.pitch);
           realtimeHostEventQueue.push({
               .type = Amx::RealtimeHostEventType::NoteOn,
               .data1 = event.noteOn.pitch,
@@ -129,7 +129,7 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
           });
         } else if (event.type == Vst::Event::kNoteOffEvent) {
           synthInstance->noteOff(event.noteOff.pitch);
-          vst3wf::logger.log("note off %d", event.noteOff.pitch);
+          // vst3wf::logger.log("note off %d", event.noteOff.pitch);
           realtimeHostEventQueue.push({
               .type = Amx::RealtimeHostEventType::NoteOff,
               .data1 = event.noteOff.pitch,
