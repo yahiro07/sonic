@@ -43,7 +43,7 @@ const styles = {
     width: "80px",
     height: "80px",
     border: "solid 2px #fff",
-    borderRadius: "8px",
+    borderRadius: "10px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",

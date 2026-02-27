@@ -1,5 +1,6 @@
 import { Knob } from "@/components/Knob";
 import { SelectorPad } from "@/components/SelectorPad";
+import { TogglePad } from "@/components/TogglePad";
 import { ToneButton } from "@/components/ToneButton";
 import { waveTypeOptions } from "@/presenter/parameters";
 import { useUiPresenter } from "@/presenter/ui-preseter-context";
@@ -22,6 +23,11 @@ const ControlsContent = () => {
         onPress={() => requestNoteOn(60)}
         onRelease={() => requestNoteOff(60)}
       />
+      <TogglePad
+        label="Enabled"
+        value={parameters.enabled}
+        onChange={(value) => instantEdit("enabled", value)}
+      />
       <SelectorPad
         label="Wave"
         options={waveTypeOptions}
@@ -41,12 +47,6 @@ const ControlsContent = () => {
         onStartEdit={() => beginEdit("volume")}
         onChange={(value) => performEdit("volume", value)}
         onEndEdit={() => endEdit("volume")}
-      />
-      <Knob
-        label="On"
-        value={parameters.isOn ? 1 : 0}
-        step={1}
-        onChange={(value) => instantEdit("isOn", value ? true : false)}
       />
     </>
   );
@@ -68,10 +68,10 @@ const DebugPart = () => {
         <div>
           {JSON.stringify({
             notes: hostNoteNumbers,
+            enabled: parameters.enabled,
             wave: parameters.wave,
             pitch: parameters.pitch.toFixed(2),
             volume: parameters.volume.toFixed(2),
-            isOn: parameters.isOn,
           })}
         </div>
       )}
