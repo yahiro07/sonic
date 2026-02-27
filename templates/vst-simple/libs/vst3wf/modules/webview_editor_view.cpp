@@ -69,16 +69,82 @@ struct MsgHostNoteOff {
   int noteNumber;
 };
 
+// Used only for discriminating MessageFromUI by `type`.
+struct MsgTypeHeader {
+  std::string type;
+};
+
 static std::optional<MessageFromUI>
 mapMessageFromUI_fromString(const std::string &jsonStr) {
-  MessageFromUI msg;
-  if (glz::read_json(msg, jsonStr)) {
-    logger.log(
-        "messageFromUI_fromJson: %s",
-        glz::format_error(glz::read_json(msg, jsonStr), jsonStr).c_str());
-    return std::nullopt;
+  // NOTE: glz deserializing directly into a std::variant chooses the first
+  // alternative that matches the JSON shape. MsgNoteOnRequest and
+  // MsgNoteOffRequest have identical fields, so we must discriminate by `type`.
+  MsgTypeHeader header;
+  // Header decode must allow unknown keys because real messages include more
+  // fields than just `type`.
+  {
+    glz::context ctx{};
+    if (auto ec = glz::read<glz::opts{.error_on_unknown_keys = false}>(
+            header, jsonStr, ctx);
+        ec) {
+      return std::nullopt;
+    }
   }
-  return msg;
+
+  auto decode = [&](auto &out) -> bool {
+    if (auto ec = glz::read_json(out, jsonStr); ec) {
+      logger.log("messageFromUI_fromJson(%s): %s", header.type.c_str(),
+                 glz::format_error(ec, jsonStr).c_str());
+      return false;
+    }
+    return true;
+  };
+
+  if (header.type == "uiLoaded") {
+    MsgUiLoaded msg;
+    if (!decode(msg))
+      return std::nullopt;
+    return msg;
+  }
+  if (header.type == "beginEdit") {
+    MsgBeginEdit msg;
+    if (!decode(msg))
+      return std::nullopt;
+    return msg;
+  }
+  if (header.type == "performEdit") {
+    MsgPerformEdit msg;
+    if (!decode(msg))
+      return std::nullopt;
+    return msg;
+  }
+  if (header.type == "endEdit") {
+    MsgEndEdit msg;
+    if (!decode(msg))
+      return std::nullopt;
+    return msg;
+  }
+  if (header.type == "instantEdit") {
+    MsgInstantEdit msg;
+    if (!decode(msg))
+      return std::nullopt;
+    return msg;
+  }
+  if (header.type == "noteOnRequest") {
+    MsgNoteOnRequest msg;
+    if (!decode(msg))
+      return std::nullopt;
+    return msg;
+  }
+  if (header.type == "noteOffRequest") {
+    MsgNoteOffRequest msg;
+    if (!decode(msg))
+      return std::nullopt;
+    return msg;
+  }
+
+  logger.log("messageFromUI_fromJson: unknown type '%s'", header.type.c_str());
+  return std::nullopt;
 };
 
 template <typename T>
@@ -111,30 +177,46 @@ public:
       auto msg = mapMessageFromUI_fromString(jsonStr);
       if (!msg)
         return;
-      if (auto *p = std::get_if<MsgSetParameter>(&*msg)) {
-        auto identifier = p->identifier;
-        auto value = p->value;
-        logger.log("set parameter: %s, %f", identifier.c_str(), value);
-        this->parametersManager->applyParameterEdit(
-            identifier, value, ParameterEditingState::InstantChange);
-      } else if (auto *p = std::get_if<MsgUiLoaded>(&*msg)) {
+      if (auto *p = std::get_if<MsgUiLoaded>(&*msg)) {
         logger.log("ui loaded");
         auto parameters = std::map<std::string, double>();
         this->parametersManager->getAllParameterValues(parameters);
         MsgBulkSendParameters msg{.parameters = parameters};
         sendWebViewJsonMessage(webView, msg);
+      } else if (auto *p = std::get_if<MsgBeginEdit>(&*msg)) {
+        logger.log("begin edit: %s", p->paramKey.c_str());
+        auto paramKey = p->paramKey;
+        this->parametersManager->applyParameterEdit(
+            paramKey, 0, ParameterEditingState::Begin);
+      } else if (auto *p = std::get_if<MsgPerformEdit>(&*msg)) {
+        logger.log("perform edit: %s, %f", p->paramKey.c_str(), p->value);
+        auto paramKey = p->paramKey;
+        auto value = p->value;
+        this->parametersManager->applyParameterEdit(
+            paramKey, value, ParameterEditingState::Perform);
+      } else if (auto *p = std::get_if<MsgEndEdit>(&*msg)) {
+        logger.log("end edit: %s", p->paramKey.c_str());
+        auto paramKey = p->paramKey;
+        this->parametersManager->applyParameterEdit(paramKey, 0,
+                                                    ParameterEditingState::End);
+      } else if (auto *p = std::get_if<MsgInstantEdit>(&*msg)) {
+        logger.log("instant edit: %s, %f", p->paramKey.c_str(), p->value);
+        auto paramKey = p->paramKey;
+        auto value = p->value;
+        this->parametersManager->applyParameterEdit(
+            paramKey, value, ParameterEditingState::InstantChange);
       } else if (auto *p = std::get_if<MsgNoteOnRequest>(&*msg)) {
-        logger.log("note on request: %d, %f", p->noteNumber, p->velocity);
-        this->eventHub->noteOnFromEditor(p->noteNumber, p->velocity);
+        logger.log("note on request: %d %s", p->noteNumber, p->type.c_str());
+        this->eventHub->noteOnFromEditor(p->noteNumber, 1.0);
       } else if (auto *p = std::get_if<MsgNoteOffRequest>(&*msg)) {
-        logger.log("note off request: %d", p->noteNumber);
+        logger.log("note off request: %d %s", p->noteNumber, p->type.c_str());
         this->eventHub->noteOffFromEditor(p->noteNumber);
       }
     });
     parametersManagerSubscriptionId = parametersManager->subscribeFromEditor(
         [this](std::string identifier, double value) {
           MsgSetParameter msg;
-          msg.identifier = identifier;
+          msg.paramKey = identifier;
           msg.value = value;
           sendWebViewJsonMessage(webView, msg);
         });
@@ -182,8 +264,8 @@ public:
       : Vst::EditorView(controller) {
     printf("WebViewEditorView::WebViewEditorView\n");
 
-    // webView.loadUrl("https://localhost:3002");
-    webView.loadUrl("app://local/index.html");
+    webView.loadUrl("http://localhost:3000?debug=1&dlog=1");
+    // webView.loadUrl("app://local/index.html");
     webViewMessagingHub.start(&webView, parametersManager, eventHub);
   }
 
