@@ -1,6 +1,7 @@
 import { Knob } from "@/components/Knob";
 import { ToneButton } from "@/components/ToneButton";
 import { useUiPresenter } from "@/presenter/ui-preseter-context";
+import { useState } from "react";
 
 const ControlsContent = () => {
   const {
@@ -51,15 +52,39 @@ const ControlsContent = () => {
   );
 };
 
-const MainPanel = () => {
+const DebugPart = () => {
   const { parameters } = useUiPresenter();
+  const [visible, setVisible] = useState(false);
   return (
-    <div className="flex flex-col gap-4 w-[700px] border border-white p-2">
-      <h1 className="text-xl px-1">MySynth</h1>
-      <div className="grow flex justify-between items-center px-10 py-8 mt-[-10px]">
+    <div className="flex gap-4 px-2 items-center">
+      {visible && (
+        <div>
+          {JSON.stringify({
+            wave: parameters.wave,
+            pitch: parameters.pitch.toFixed(2),
+            volume: parameters.volume.toFixed(2),
+            isOn: parameters.isOn,
+          })}
+        </div>
+      )}
+      <button onClick={() => setVisible(!visible)} className="cursor-pointer">
+        debug
+      </button>
+    </div>
+  );
+};
+
+const MainPanel = () => {
+  return (
+    <div className="flex flex-col gap-2 w-[700px] border border-white p-2">
+      <div className="flex items-center">
+        <h1 className="text-xl px-1">MySynth</h1>
+        <div className="grow" />
+        <DebugPart />
+      </div>
+      <div className="grow flex justify-between items-center px-10 py-8">
         <ControlsContent />
       </div>
-      <div>{JSON.stringify(parameters)}</div>
     </div>
   );
 };
