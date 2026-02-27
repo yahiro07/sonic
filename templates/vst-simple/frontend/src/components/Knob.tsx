@@ -1,16 +1,38 @@
+import { useKnobModel } from "@/hooks/knob-model";
 import { css } from "@emotion/react";
 import type { FC } from "react";
 
 type Props = {
   label: string;
   value: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  onStartEdit?: () => void;
+  onEndEdit?: () => void;
 };
 
-export const Knob: FC<Props> = ({ label, value }) => {
-  const tickAngle = (value * 2 - 1) * 135;
+export const Knob: FC<Props> = ({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onStartEdit,
+  onEndEdit,
+}) => {
+  const { normValue, handlePointerDown } = useKnobModel({
+    value,
+    min,
+    max,
+    step,
+    onStartEdit,
+    onEndEdit,
+  });
+  const tickAngle = (normValue * 2 - 1) * 135;
   return (
     <div css={styles.frame}>
-      <div css={styles.knobBase}>
+      <div css={styles.knobBase} onPointerDown={handlePointerDown}>
         <div css={styles.knobBody} />
         <div
           css={styles.tickPlane}
