@@ -1,7 +1,5 @@
 function sendMessage(msg) {
-  window.webkit.messageHandlers.pluginEditor.postMessage(
-    JSON.stringify(msg)
-  );
+  window.webkit.messageHandlers.pluginEditor.postMessage(msg);
 }
 
 function sendParameter(identifier, value) {
@@ -48,7 +46,7 @@ sendMessage({ type: "uiLoaded" });
 
 
 
-function addSlider(name, identifier, defaultValue, min=0, max=1, step=0.01) {
+function addSlider(name, identifier, defaultValue, min = 0, max = 1, step = 0.01) {
   const slider = document.createElement("input");
   slider.type = "range";
   slider.min = min;
@@ -99,22 +97,22 @@ addSlider("Volume", "oscVolume", 0.5);
 addNoteButton("Note(60)", 60);
 
 
-function handleMessage(msg){
+function handleMessage(msg) {
   if (msg.type === "setParameter") {
     const slider = document.getElementById(msg.identifier);
     if (slider) {
       slider.value = msg.value;
     }
-  }else if (msg.type === "bulkSendParameters") {
+  } else if (msg.type === "bulkSendParameters") {
     for (const [identifier, value] of Object.entries(msg.parameters)) {
       const slider = document.getElementById(identifier);
       if (slider) {
         slider.value = value;
       }
     }
-  }else if (msg.type === "hostNoteOn") {
+  } else if (msg.type === "hostNoteOn") {
     pushLine(`host note on: ${msg.noteNumber}, ${msg.velocity}`);
-  }else if (msg.type === "hostNoteOff") {
+  } else if (msg.type === "hostNoteOff") {
     pushLine(`host note off: ${msg.noteNumber}`);
   }
 }

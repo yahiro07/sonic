@@ -122,8 +122,18 @@ MacWebView::MacWebView() : impl(new Impl()) {
     if ([body isKindOfClass:[NSString class]]) {
       nsMessage = (NSString *)body;
     } else if (body) {
-      nsMessage = [body description];
-    } else {
+      if ([NSJSONSerialization isValidJSONObject:body]) {
+        NSData *data = [NSJSONSerialization dataWithJSONObject:body
+                                                       options:0
+                                                         error:nil];
+        if (data) {
+          nsMessage = [[[NSString alloc] initWithData:data
+                                             encoding:NSUTF8StringEncoding]
+              autorelease];
+        }
+      }
+    }
+    if (nsMessage == nil) {
       return;
     }
     printf("MacWebView::messageReceiver: %s\n", nsMessage.UTF8String);
@@ -139,8 +149,10 @@ MacWebView::MacWebView() : impl(new Impl()) {
                                           configuration:config];
   impl->webView = webView;
 
-  if ([webView respondsToSelector:@selector(setInspectable:)]) {
-    [webView setInspectable:true];
+  if (@available(macOS 13.3, *)) {
+    if ([webView respondsToSelector:@selector(setInspectable:)]) {
+      [webView setInspectable:true];
+    }
   }
 
   [config release];
