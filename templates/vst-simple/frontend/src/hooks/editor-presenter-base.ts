@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 type ParametersRecord = Record<string, number | boolean>;
 
 export type EditorPresenterBase<T extends ParametersRecord> = {
-  beginEdit(paramKey: string): void;
-  performEdit(paramKey: string, value: number): void;
-  endEdit(paramKey: string): void;
-  performInstantEdit(paramKey: string, value: number): void;
+  beginEdit(paramKey: keyof T): void;
+  performEdit(paramKey: keyof T, value: number): void;
+  endEdit(paramKey: keyof T): void;
+  instantEdit(paramKey: keyof T, value: number): void;
   requestNoteOn(noteNumber: number): void;
   requestNoteOff(noteNumber: number): void;
   parameters: T;
@@ -87,7 +87,7 @@ export function useEditorPresenterBase<T extends ParametersRecord>(
     endEdit(paramKey: string) {
       coreBridge.sendMessage({ type: "endParameterEdit", paramKey });
     },
-    performInstantEdit(paramKey: string, value: number | boolean) {
+    instantEdit(paramKey: string, value: number | boolean) {
       actionsInternal.performEdit(paramKey, value, true);
     },
     requestNoteOn(noteNumber: number) {

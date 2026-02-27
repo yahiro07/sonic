@@ -1,11 +1,20 @@
+export enum WaveType {
+  Saw = 0,
+  Rect,
+  Tri,
+  Sine,
+}
+
 export type Parameters = {
-  oscWaveType: number;
-  oscPitch: number;
-  oscVolume: number;
+  wave: WaveType;
+  pitch: number;
+  volume: number;
+  isOn: boolean;
 };
 
 export const defaultParameters: Parameters = {
-  oscWaveType: 0.5,
-  oscPitch: 0.5,
-  oscVolume: 0.5,
+  wave: WaveType.Saw,
+  pitch: 0.5,
+  volume: 0.5,
+  isOn: true,
 };

@@ -10,6 +10,7 @@ const ControlsContent = () => {
     beginEdit,
     performEdit,
     endEdit,
+    instantEdit,
   } = useUiPresenter();
   return (
     <>
@@ -19,30 +20,46 @@ const ControlsContent = () => {
         onRelease={() => requestNoteOff(60)}
       />
       <Knob
+        label="Wave"
+        value={parameters.wave}
+        min={0}
+        max={3}
+        step={1}
+        onChange={(value) => instantEdit("wave", value)}
+      />
+      <Knob
         label="Pitch"
-        value={parameters.oscPitch}
-        onStartEdit={() => beginEdit("oscPitch")}
-        onChange={(value) => performEdit("oscPitch", value)}
-        onEndEdit={() => endEdit("oscPitch")}
+        value={parameters.pitch}
+        onStartEdit={() => beginEdit("pitch")}
+        onChange={(value) => performEdit("pitch", value)}
+        onEndEdit={() => endEdit("pitch")}
       />
       <Knob
         label="Volume"
-        value={parameters.oscVolume}
-        onStartEdit={() => beginEdit("oscVolume")}
-        onChange={(value) => performEdit("oscVolume", value)}
-        onEndEdit={() => endEdit("oscVolume")}
+        value={parameters.volume}
+        onStartEdit={() => beginEdit("volume")}
+        onChange={(value) => performEdit("volume", value)}
+        onEndEdit={() => endEdit("volume")}
+      />
+      <Knob
+        label="isOn"
+        value={parameters.isOn ? 1 : 0}
+        step={1}
+        onChange={(value) => instantEdit("isOn", value)}
       />
     </>
   );
 };
 
 const MainPanel = () => {
+  const { parameters } = useUiPresenter();
   return (
-    <div className="flex flex-col gap-4 w-[500px] h-[200px] border border-white p-2">
+    <div className="flex flex-col gap-4 w-[700px] border border-white p-2">
       <h1 className="text-xl px-1">MySynth</h1>
-      <div className="grow flex justify-between items-center px-10 mt-[-10px]">
+      <div className="grow flex justify-between items-center px-10 py-8 mt-[-10px]">
         <ControlsContent />
       </div>
+      <div>{JSON.stringify(parameters)}</div>
     </div>
   );
 };
