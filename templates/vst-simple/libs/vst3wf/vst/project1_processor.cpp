@@ -241,11 +241,24 @@ tresult PLUGIN_API Project1Processor::setState(IBStream *state) {
 }
 
 tresult PLUGIN_API Project1Processor::notify(Vst::IMessage *message) {
-  vst3wf::logger.log("Project1Processor::notify");
-  if (strcmp(message->getMessageID(), "aaa") == 0) {
-    int64 value;
-    message->getAttributes()->getInt("param0c", value);
-    vst3wf::logger.log("Project1Processor::notify aaa %d", value);
+  auto messageId = message->getMessageID();
+  if (strcmp(messageId, "noteOnRequestFromEditor") == 0) {
+    int64 noteNumber;
+    double velocity;
+    message->getAttributes()->getInt("noteNumber", noteNumber);
+    message->getAttributes()->getFloat("velocity", velocity);
+    vst3wf::logger.log("Project1Processor::notify noteOn %d %f", noteNumber,
+                       velocity);
+    synthInstance->noteOn(noteNumber, velocity);
+  }
+  if (strcmp(messageId, "noteOffRequestFromEditor") == 0) {
+    int64 noteNumber;
+    message->getAttributes()->getInt("noteNumber", noteNumber);
+    vst3wf::logger.log("Project1Processor::notify noteOff %d", noteNumber);
+    synthInstance->noteOff(noteNumber);
+  }
+  if (strcmp(messageId, "pullProcessorSideEvents") == 0) {
+    // return realtime events
   }
   return kResultOk;
 }

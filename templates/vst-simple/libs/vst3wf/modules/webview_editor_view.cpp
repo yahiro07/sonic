@@ -1,5 +1,6 @@
 #include "../general/logger.h"
 #include "../general/mac_web_view.h"
+#include "./event_hub.h"
 #include "./parameters_manager.h"
 #include <glaze/glaze.hpp>
 #include <pluginterfaces/base/funknown.h>
@@ -14,13 +15,23 @@ using namespace Steinberg;
 struct MsgSetParameter {
   std::string type = "setParameter";
   std::string identifier;
-  float value;
+  double value;
 };
 struct MsgUiLoaded {
   std::string type = "uiLoaded";
 };
+struct MsgNoteOnRequest {
+  std::string type = "noteOnRequest";
+  int noteNumber;
+  double velocity;
+};
+struct MsgNoteOffRequest {
+  std::string type = "noteOffRequest";
+  int noteNumber;
+};
 
-using MessageFromUI = std::variant<MsgSetParameter, MsgUiLoaded>;
+using MessageFromUI = std::variant<MsgSetParameter, MsgUiLoaded,
+                                   MsgNoteOnRequest, MsgNoteOffRequest>;
 
 std::optional<MessageFromUI>
 mapMessageFromUI_fromString(const std::string &jsonStr) {
@@ -43,12 +54,16 @@ class WebViewMessagingHub {
 private:
   IWebViewIo *webView;
   ParametersManager *parametersManager;
+  EventHub *eventHub;
   int parametersManagerSubscriptionId = 0;
+  int eventHubSubscriptionId = 0;
 
 public:
-  void start(ParametersManager *parametersManager, IWebViewIo *webViewIo) {
+  void start(IWebViewIo *webViewIo, ParametersManager *parametersManager,
+             EventHub *eventHub) {
     this->parametersManager = parametersManager;
     this->webView = webViewIo;
+    this->eventHub = eventHub;
     webView->setMessageReceiver([this](const std::string &jsonStr) {
       logger.log("message received: %s", jsonStr.c_str());
 
@@ -75,6 +90,12 @@ public:
         }
         logger.log("send message: %s", buffer.c_str());
         this->webView->sendMessage(buffer);
+      } else if (auto *p = std::get_if<MsgNoteOnRequest>(&*msg)) {
+        logger.log("note on request: %d, %f", p->noteNumber, p->velocity);
+        this->eventHub->noteOnFromEditor(p->noteNumber, p->velocity);
+      } else if (auto *p = std::get_if<MsgNoteOffRequest>(&*msg)) {
+        logger.log("note off request: %d", p->noteNumber);
+        this->eventHub->noteOffFromEditor(p->noteNumber);
       }
     });
     parametersManagerSubscriptionId = parametersManager->subscribeFromEditor(
@@ -94,10 +115,17 @@ public:
           logger.log("send message: %s", buffer.c_str());
           webView->sendMessage(buffer);
         });
+    eventHubSubscriptionId =
+        eventHub->subscribeFromEditor([this](DownstreamEvent &event) {
+          logger.log("downstream event: %d", event.type);
+        });
   }
   void stop() {
     if (parametersManagerSubscriptionId > 0) {
       parametersManager->unsubscribeFromEditor(parametersManagerSubscriptionId);
+    }
+    if (eventHubSubscriptionId > 0) {
+      eventHub->unsubscribe(eventHubSubscriptionId);
     }
     webView->setMessageReceiver(nullptr);
   }
@@ -108,18 +136,19 @@ private:
   MacWebView webView;
   ViewRect viewRect{0, 0, 900, 600};
   WebViewMessagingHub webViewMessagingHub;
+  EventHub *eventHub;
 
 public:
   IWebViewIo *getWebViewIO() { return &webView; }
 
   WebViewEditorView(Vst::EditController *controller,
-                    ParametersManager *parametersManager)
+                    ParametersManager *parametersManager, EventHub *eventHub)
       : Vst::EditorView(controller) {
     printf("WebViewEditorView::WebViewEditorView\n");
 
     // webView.loadUrl("https://localhost:3002");
     webView.loadUrl("app://local/index.html");
-    webViewMessagingHub.start(parametersManager, &webView);
+    webViewMessagingHub.start(&webView, parametersManager, eventHub);
   }
 
   ~WebViewEditorView() override {
@@ -179,8 +208,9 @@ public:
 
 Steinberg::IPlugView *
 createWebViewEditorView(Steinberg::Vst::EditController *controller,
-                        ParametersManager *parametersManager) {
-  return new WebViewEditorView(controller, parametersManager);
+                        ParametersManager *parametersManager,
+                        EventHub *eventHub) {
+  return new WebViewEditorView(controller, parametersManager, eventHub);
 }
 
 } // namespace vst3wf

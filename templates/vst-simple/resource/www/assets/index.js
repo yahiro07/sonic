@@ -71,10 +71,32 @@ function addSlider(name, identifier, defaultValue, min=0, max=1, step=0.01) {
   document.body.appendChild(div);
 }
 
+function addNoteButton(label, noteNumber) {
+  const button = document.createElement("button");
+  button.innerText = label;
+  button.onpointerdown = () => {
+    sendMessage({
+      type: "noteOnRequest",
+      noteNumber,
+      velocity: 1.0
+    });
+  };
+  button.onpointerup = () => {
+    sendMessage({
+      type: "noteOffRequest",
+      noteNumber
+    });
+  };
+  document.body.appendChild(button);
+}
+
+
 addSlider("Gain", "gain", 0.5);
 addSlider("Wave", "waveType", 0, 0, 3, 1);
 addSlider("Pitch", "oscPitch", 0.5);
 addSlider("Volume", "oscVolume", 0.5);
+
+addNoteButton("Note(60)", 60);
 
 
 function handleMessage(msg){

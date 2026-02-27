@@ -6,6 +6,7 @@
 
 #include "vst3wf/SynthesizerBase.h"
 #include "vst3wf/general/logger.h"
+#include "vst3wf/modules/event_hub.h"
 #include "vst3wf/modules/parameters_manager.h"
 #include "vst3wf/vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
@@ -20,12 +21,14 @@ private:
   SynthesizerBase *synthInstance;
   vst3wf::ParametersManager parametersManager;
   Amx::ParameterDefinitionsProvider parameterDefinitionsProvider;
+  vst3wf::EventHub eventHub;
 
 public:
   //------------------------------------------------------------------------
   Project1Controller()
       : parametersManager(*this, this->parameters,
-                          this->parameterDefinitionsProvider) {
+                          this->parameterDefinitionsProvider),
+        eventHub(*this) {
     vst3wf::logger.start();
     synthInstance = vst3wf::gPluginFactoryGlobalHolder.synthInstantiateFn();
   }

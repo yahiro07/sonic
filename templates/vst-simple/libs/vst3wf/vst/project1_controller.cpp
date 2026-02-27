@@ -99,7 +99,7 @@ IPlugView *PLUGIN_API Project1Controller::createView(FIDString name) {
   if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
     // create your editor here and return a IPlugView ptr of it
     // return new VSTGUI::VST3Editor(this, "view", "helloworldeditor.uidesc");
-    return createWebViewEditorView(this, &parametersManager);
+    return createWebViewEditorView(this, &parametersManager, &eventHub);
   }
   return nullptr;
 }
