@@ -28,14 +28,14 @@ const windowTyped = window as unknown as {
   pluginEditorCallback?: (msg: MessageFromApp) => void;
 };
 
+type EditorBridgeMessageLister = (msg: MessageFromApp) => void;
+const listeners: Set<EditorBridgeMessageLister> = new Set();
+
 function sendMessage(msg: MessageFromUi) {
   windowTyped.webkit?.messageHandlers.pluginEditor.postMessage(
     JSON.stringify(msg),
   );
 }
-
-type EditorBridgeMessageLister = (msg: MessageFromApp) => void;
-const listeners: Set<EditorBridgeMessageLister> = new Set();
 
 function subscribe(listener: EditorBridgeMessageLister): () => void {
   listeners.add(listener);
