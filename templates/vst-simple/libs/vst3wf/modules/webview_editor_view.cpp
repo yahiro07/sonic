@@ -12,27 +12,53 @@ namespace vst3wf {
 
 using namespace Steinberg;
 
-struct MsgSetParameter {
-  std::string type = "setParameter";
-  std::string identifier;
-  double value;
-};
+// messages from ui
+
 struct MsgUiLoaded {
   std::string type = "uiLoaded";
+};
+struct MsgBeginEdit {
+  std::string type = "beginEdit";
+  std::string paramKey;
+};
+struct MsgPerformEdit {
+  std::string type = "performEdit";
+  std::string paramKey;
+  double value;
+};
+struct MsgEndEdit {
+  std::string type = "endEdit";
+  std::string paramKey;
+};
+struct MsgInstantEdit {
+  std::string type = "instantEdit";
+  std::string paramKey;
+  double value;
 };
 struct MsgNoteOnRequest {
   std::string type = "noteOnRequest";
   int noteNumber;
-  double velocity;
 };
 struct MsgNoteOffRequest {
   std::string type = "noteOffRequest";
   int noteNumber;
 };
 
-using MessageFromUI = std::variant<MsgSetParameter, MsgUiLoaded,
-                                   MsgNoteOnRequest, MsgNoteOffRequest>;
+using MessageFromUI =
+    std::variant<MsgUiLoaded, MsgBeginEdit, MsgPerformEdit, MsgEndEdit,
+                 MsgInstantEdit, MsgNoteOnRequest, MsgNoteOffRequest>;
 
+// messages from app
+
+struct MsgSetParameter {
+  std::string type = "setParameter";
+  std::string paramKey;
+  double value;
+};
+struct MsgBulkSendParameters {
+  std::string type = "bulkSendParameters";
+  std::map<std::string, double> parameters;
+};
 struct MsgHostNoteOn {
   std::string type = "hostNoteOn";
   int noteNumber;
@@ -43,7 +69,7 @@ struct MsgHostNoteOff {
   int noteNumber;
 };
 
-std::optional<MessageFromUI>
+static std::optional<MessageFromUI>
 mapMessageFromUI_fromString(const std::string &jsonStr) {
   MessageFromUI msg;
   if (glz::read_json(msg, jsonStr)) {
@@ -53,11 +79,6 @@ mapMessageFromUI_fromString(const std::string &jsonStr) {
     return std::nullopt;
   }
   return msg;
-};
-
-struct MsgBulkSendParameters {
-  std::string type = "bulkSendParameters";
-  std::map<std::string, double> parameters;
 };
 
 template <typename T>

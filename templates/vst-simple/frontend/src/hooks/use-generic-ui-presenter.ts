@@ -75,7 +75,7 @@ export function useGenericUiPresenter<T extends ParametersRecord>(
       setParameters((prev) => ({ ...prev, [paramKey]: value }));
       const numberValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
       coreBridge.sendMessage({
-        type: isInstantEdit ? "applyInstantEdit" : "performParameterEdit",
+        type: isInstantEdit ? "instantEdit" : "performEdit",
         paramKey,
         value: numberValue,
       });
@@ -90,13 +90,13 @@ export function useGenericUiPresenter<T extends ParametersRecord>(
     parameters,
     hostNoteNumbers,
     beginEdit(paramKey) {
-      coreBridge.sendMessage({ type: "beginParameterEdit", paramKey });
+      coreBridge.sendMessage({ type: "beginEdit", paramKey });
     },
     performEdit(paramKey, value) {
       internalActions.performEdit(paramKey, value, false);
     },
     endEdit(paramKey) {
-      coreBridge.sendMessage({ type: "endParameterEdit", paramKey });
+      coreBridge.sendMessage({ type: "endEdit", paramKey });
     },
     instantEdit(paramKey, value) {
       internalActions.performEdit(paramKey, value, true);

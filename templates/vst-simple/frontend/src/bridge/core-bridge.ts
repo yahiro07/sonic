@@ -1,9 +1,9 @@
 type MessageFromUi =
   | { type: "uiLoaded" }
-  | { type: "beginParameterEdit"; paramKey: string }
-  | { type: "performParameterEdit"; paramKey: string; value: number }
-  | { type: "endParameterEdit"; paramKey: string }
-  | { type: "applyInstantEdit"; paramKey: string; value: number }
+  | { type: "beginEdit"; paramKey: string }
+  | { type: "performEdit"; paramKey: string; value: number }
+  | { type: "endEdit"; paramKey: string }
+  | { type: "instantEdit"; paramKey: string; value: number }
   | { type: "noteOnRequest"; noteNumber: number }
   | { type: "noteOffRequest"; noteNumber: number };
 
