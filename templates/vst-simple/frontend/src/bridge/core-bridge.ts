@@ -5,7 +5,7 @@ type MessageFromUi =
       type: "performParameterEdit";
       paramKey: string;
       value: number;
-      isInstantEdit: boolean; //wrapped with begin/end at destination, reducing bulky messages
+      isInstantEdit: boolean;
     }
   | { type: "endParameterEdit"; paramKey: string }
   | { type: "noteOnRequest"; noteNumber: number }
