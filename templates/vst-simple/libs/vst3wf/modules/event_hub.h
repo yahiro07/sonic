@@ -125,17 +125,19 @@ public:
   }
 
   void noteOnFromEditor(int noteNumber, double velocity) {
-    Steinberg::Vst::IMessage *msg = editController.allocateMessage();
-    msg->setMessageID("noteOnRequestFromEditor");
-    msg->getAttributes()->setInt("noteNumber", noteNumber);
-    msg->getAttributes()->setFloat("velocity", velocity);
-    editController.sendMessage(msg);
+    if (auto msg = owned(editController.allocateMessage())) {
+      msg->setMessageID("noteOnRequestFromEditor");
+      msg->getAttributes()->setInt("noteNumber", noteNumber);
+      msg->getAttributes()->setFloat("velocity", velocity);
+      editController.sendMessage(msg);
+    }
   }
   void noteOffFromEditor(int noteNumber) {
-    Steinberg::Vst::IMessage *msg = editController.allocateMessage();
-    msg->setMessageID("noteOffRequestFromEditor");
-    msg->getAttributes()->setInt("noteNumber", noteNumber);
-    editController.sendMessage(msg);
+    if (auto msg = owned(editController.allocateMessage())) {
+      msg->setMessageID("noteOffRequestFromEditor");
+      msg->getAttributes()->setInt("noteNumber", noteNumber);
+      editController.sendMessage(msg);
+    }
   }
 
   void updatePolling() {
@@ -146,9 +148,10 @@ public:
     }
     downstreamEventsQueue.clear();
 
-    Steinberg::Vst::IMessage *msg = editController.allocateMessage();
-    msg->setMessageID("pullProcessorSideEvents");
-    editController.sendMessage(msg);
+    if (auto msg = owned(editController.allocateMessage())) {
+      msg->setMessageID("pullProcessorSideEvents");
+      editController.sendMessage(msg);
+    }
   }
 };
 

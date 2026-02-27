@@ -6,6 +6,7 @@
 #include "../modules/processor_state_helper.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/base/ibstream.h"
+#include "pluginterfaces/base/smartpointer.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include "vst3wf/general/logger.h"
 #include "vst3wf/logic/parameter_builder_impl.h"
@@ -122,22 +123,19 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
         if (event.type == Vst::Event::kNoteOnEvent) {
           synthInstance->noteOn(event.noteOn.pitch, event.noteOn.velocity);
           vst3wf::logger.log("note on %d", event.noteOn.pitch);
-
-          // TODO: apply queueing and respond out of audio thread
-          Steinberg::Vst::IMessage *msg = allocateMessage();
-          msg->setMessageID("hostNoteOn");
-          msg->getAttributes()->setInt("noteNumber", event.noteOn.pitch);
-          msg->getAttributes()->setFloat("velocity", event.noteOn.velocity);
-          sendMessage(msg);
-
+          realtimeHostEventQueue.push({
+              .type = Amx::RealtimeHostEventType::NoteOn,
+              .data1 = event.noteOn.pitch,
+              .data2 = event.noteOn.velocity,
+          });
         } else if (event.type == Vst::Event::kNoteOffEvent) {
           synthInstance->noteOff(event.noteOff.pitch);
           vst3wf::logger.log("note off %d", event.noteOff.pitch);
-
-          Steinberg::Vst::IMessage *msg = allocateMessage();
-          msg->setMessageID("hostNoteOff");
-          msg->getAttributes()->setInt("noteNumber", event.noteOff.pitch);
-          sendMessage(msg);
+          realtimeHostEventQueue.push({
+              .type = Amx::RealtimeHostEventType::NoteOff,
+              .data1 = event.noteOff.pitch,
+              .data2 = 0,
+          });
         }
       }
     }
@@ -264,7 +262,25 @@ tresult PLUGIN_API Project1Processor::notify(Vst::IMessage *message) {
     synthInstance->noteOff(noteNumber);
   }
   if (strcmp(messageId, "pullProcessorSideEvents") == 0) {
-    // return realtime events
+    Amx::RealtimeHostEvent e;
+    int count = 0;
+    while (realtimeHostEventQueue.pop(e) && count < 64) {
+      if (e.type == Amx::RealtimeHostEventType::NoteOn) {
+        if (auto msg = owned(allocateMessage())) {
+          msg->setMessageID("hostNoteOn");
+          msg->getAttributes()->setInt("noteNumber", e.data1);
+          msg->getAttributes()->setFloat("velocity", e.data2);
+          sendMessage(msg);
+        }
+      } else if (e.type == Amx::RealtimeHostEventType::NoteOff) {
+        if (auto msg = owned(allocateMessage())) {
+          msg->setMessageID("hostNoteOff");
+          msg->getAttributes()->setInt("noteNumber", e.data1);
+          sendMessage(msg);
+        }
+      }
+      count++;
+    }
   }
   return kResultOk;
 }

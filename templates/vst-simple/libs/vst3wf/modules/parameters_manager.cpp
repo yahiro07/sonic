@@ -1,5 +1,4 @@
 #include "./parameters_manager.h"
-#include "../general/logger.h"
 #include "../logic/parameter_item_helper.h"
 #include <base/source/fstring.h>
 #include <cmath>
@@ -114,14 +113,6 @@ void ParametersManager::applyParameterEdit(std::string identifier, double value,
     return;
   }
   auto normValue = ParameterItemHelper::getNormalized(paramItem, value);
-
-  if (address == 0) {
-    vst3wf::logger.log("sending aaa param0c");
-    Steinberg::Vst::IMessage *msg = editController.allocateMessage();
-    msg->setMessageID("aaa");
-    msg->getAttributes()->setInt("param0c", 102);
-    editController.sendMessage(msg);
-  }
 
   if (editingState == ParameterEditingState::Perform ||
       editingState == ParameterEditingState::InstantChange) {

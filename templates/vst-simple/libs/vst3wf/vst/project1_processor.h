@@ -5,6 +5,7 @@
 #pragma once
 
 #include "logic/parameter_item.h"
+#include "logic/realtime_host_event_queue.h"
 #include "vst3wf/SynthesizerBase.h"
 #include "vst3wf/logic/parameter_definitions_provider.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
@@ -19,6 +20,7 @@ private:
   SynthesizerBase *synthInstance;
   Amx::ParameterDefinitionsProvider parameterDefinitionsProvider;
   std::unordered_map<Amx::ParamAddress, double> parametersCache;
+  Amx::RealtimeHostEventQueue realtimeHostEventQueue;
 
 public:
   Project1Processor();
