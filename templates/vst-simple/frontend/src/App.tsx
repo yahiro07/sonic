@@ -52,14 +52,22 @@ const ControlsContent = () => {
   );
 };
 
+const NoteIndicator = () => {
+  const { hostNoteNumbers } = useUiPresenter();
+  const hasHostNote = hostNoteNumbers.length > 0;
+  if (!hasHostNote) return;
+  return <div className="w-[18px] h-[18px] bg-teal-400 rounded-full" />;
+};
+
 const DebugPart = () => {
-  const { parameters } = useUiPresenter();
+  const { parameters, hostNoteNumbers } = useUiPresenter();
   const [visible, setVisible] = useState(false);
   return (
     <div className="flex gap-4 px-2 items-center">
       {visible && (
         <div>
           {JSON.stringify({
+            notes: hostNoteNumbers,
             wave: parameters.wave,
             pitch: parameters.pitch.toFixed(2),
             volume: parameters.volume.toFixed(2),
@@ -77,8 +85,9 @@ const DebugPart = () => {
 const MainPanel = () => {
   return (
     <div className="flex flex-col gap-2 w-[700px] border border-white p-2">
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
         <h1 className="text-xl px-1">MySynth</h1>
+        <NoteIndicator />
         <div className="grow" />
         <DebugPart />
       </div>
