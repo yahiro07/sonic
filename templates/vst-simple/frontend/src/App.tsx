@@ -1,5 +1,7 @@
 import { Knob } from "@/components/Knob";
+import { SelectorPad } from "@/components/SelectorPad";
 import { ToneButton } from "@/components/ToneButton";
+import { waveTypeOptions } from "@/presenter/parameters";
 import { useUiPresenter } from "@/presenter/ui-preseter-context";
 import { useState } from "react";
 
@@ -20,12 +22,10 @@ const ControlsContent = () => {
         onPress={() => requestNoteOn(60)}
         onRelease={() => requestNoteOff(60)}
       />
-      <Knob
+      <SelectorPad
         label="Wave"
+        options={waveTypeOptions}
         value={parameters.wave}
-        min={0}
-        max={3}
-        step={1}
         onChange={(value) => instantEdit("wave", value)}
       />
       <Knob
@@ -43,7 +43,7 @@ const ControlsContent = () => {
         onEndEdit={() => endEdit("volume")}
       />
       <Knob
-        label="isOn"
+        label="On"
         value={parameters.isOn ? 1 : 0}
         step={1}
         onChange={(value) => instantEdit("isOn", value ? true : false)}

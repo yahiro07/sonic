@@ -1,6 +1,6 @@
 import { usePointerCapture } from "@/hooks/use-pointer-capture";
 import { css } from "@emotion/react";
-import type { FC } from "react";
+import { useState, type FC } from "react";
 
 type Props = {
   label: string;
@@ -9,17 +9,23 @@ type Props = {
 };
 
 export const ToneButton: FC<Props> = ({ label, onPress, onRelease }) => {
+  const [isPressed, setIsPressed] = useState(false);
   const handlePointerDown = usePointerCapture({
     onDown() {
       onPress?.();
+      setIsPressed(true);
     },
     onUp() {
       onRelease?.();
+      setIsPressed(false);
     },
   });
   return (
     <div css={styles.frame}>
-      <div css={styles.pad} onPointerDown={handlePointerDown}>
+      <div
+        css={[styles.pad, isPressed && styles.padPressed]}
+        onPointerDown={handlePointerDown}
+      >
         <img src="/vite.svg" />
       </div>
       <div css={styles.label}>{label}</div>
@@ -42,6 +48,9 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
+  }),
+  padPressed: css({
+    background: "#fff2",
   }),
   label: css({
     fontWeight: "600",

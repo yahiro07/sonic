@@ -4,6 +4,12 @@ export enum WaveType {
   Tri,
   Sine,
 }
+export const waveTypeOptions = [
+  { value: WaveType.Saw, label: "Saw" },
+  { value: WaveType.Rect, label: "Rect" },
+  { value: WaveType.Tri, label: "Tri" },
+  { value: WaveType.Sine, label: "Sine" },
+];
 
 export type Parameters = {
   wave: WaveType;
