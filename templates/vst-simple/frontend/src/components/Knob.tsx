@@ -10,6 +10,7 @@ type Props = {
   step?: number;
   onStartEdit?: () => void;
   onEndEdit?: () => void;
+  onChange?: (value: number) => void;
 };
 
 export const Knob: FC<Props> = ({
@@ -20,6 +21,7 @@ export const Knob: FC<Props> = ({
   step,
   onStartEdit,
   onEndEdit,
+  onChange,
 }) => {
   const { normValue, handlePointerDown } = useKnobModel({
     value,
@@ -28,6 +30,7 @@ export const Knob: FC<Props> = ({
     step,
     onStartEdit,
     onEndEdit,
+    onChange,
   });
   const tickAngle = (normValue * 2 - 1) * 135;
   return (
