@@ -1,9 +1,9 @@
 import { clampValue, linearInterpolate } from "@/utils/number-utils";
 import {
-  startPointerCaptureSession,
+  usePointerCapture,
   type PointerPoint,
-} from "@/utils/pointer-capture-session";
-import { useState } from "react";
+} from "@/hooks/use-pointer-capture";
+import { useRef, useState } from "react";
 
 export function useKnobModel(props: {
   value: number;
@@ -35,44 +35,33 @@ export function useKnobModel(props: {
   if (tickDisplaySteps) {
     normValue = Math.round(normValue * tickDisplaySteps) / tickDisplaySteps;
   }
+  const originalPos = useRef<PointerPoint | null>(null);
 
-  const handlePointerDown = (e0: React.PointerEvent<HTMLElement>) => {
-    let originalPos: PointerPoint;
-
-    startPointerCaptureSession(e0.nativeEvent, {
-      onDown(point) {
-        originalPos = point;
-        setEditValue(originalValue);
-        onStartEdit?.();
-      },
-      onMove(point) {
-        const diffXY = {
-          x: point.x - originalPos.x,
-          y: point.y - originalPos.y,
-        };
-        const shiftAmount = clampValue(
-          (diffXY.x - diffXY.y) / dragRange,
-          -1,
-          1,
-        );
-        const range = max - min;
-        let newValue = clampValue(
-          originalValue + shiftAmount * range,
-          min,
-          max,
-        );
-        if (step) {
-          newValue = Math.round(newValue / step) * step;
-        }
-        setEditValue(newValue);
-        onChange?.(newValue);
-      },
-      onUp() {
-        setEditValue(undefined);
-        onEndEdit?.();
-      },
-    });
-  };
+  const handlePointerDown = usePointerCapture({
+    onDown(point) {
+      originalPos.current = point;
+      setEditValue(originalValue);
+      onStartEdit?.();
+    },
+    onMove(point) {
+      const diffXY = {
+        x: point.x - originalPos.current!.x,
+        y: point.y - originalPos.current!.y,
+      };
+      const shiftAmount = clampValue((diffXY.x - diffXY.y) / dragRange, -1, 1);
+      const range = max - min;
+      let newValue = clampValue(originalValue + shiftAmount * range, min, max);
+      if (step) {
+        newValue = Math.round(newValue / step) * step;
+      }
+      setEditValue(newValue);
+      onChange?.(newValue);
+    },
+    onUp() {
+      setEditValue(undefined);
+      onEndEdit?.();
+    },
+  });
 
   return {
     normValue,

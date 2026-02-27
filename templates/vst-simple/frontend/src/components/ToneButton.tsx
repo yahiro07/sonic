@@ -1,4 +1,4 @@
-import { startPointerCaptureSession } from "@/utils/pointer-capture-session";
+import { usePointerCapture } from "@/hooks/use-pointer-capture";
 import { css } from "@emotion/react";
 import type { FC } from "react";
 
@@ -9,16 +9,14 @@ type Props = {
 };
 
 export const ToneButton: FC<Props> = ({ label, onPress, onRelease }) => {
-  const handlePointerDown = (e: React.PointerEvent<HTMLElement>) => {
-    startPointerCaptureSession(e.nativeEvent, {
-      onDown() {
-        onPress?.();
-      },
-      onUp() {
-        onRelease?.();
-      },
-    });
-  };
+  const handlePointerDown = usePointerCapture({
+    onDown() {
+      onPress?.();
+    },
+    onUp() {
+      onRelease?.();
+    },
+  });
   return (
     <div css={styles.frame}>
       <div css={styles.pad} onPointerDown={handlePointerDown}>
