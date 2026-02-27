@@ -35,13 +35,12 @@ public:
      Capture in locals to avoid ObjC member lookups. If "self" is captured in
      render, we're doing it wrong.
      */
-    return ^AUAudioUnitStatus(AudioUnitRenderActionFlags *actionFlags,
-                              const AudioTimeStamp *timestamp,
-                              AUAudioFrameCount frameCount,
-                              NSInteger outputBusNumber,
-                              AudioBufferList *outputData,
-                              const AURenderEvent *realtimeEventListHead,
-                              AURenderPullInputBlock __unsafe_unretained pullInputBlock) {
+    return ^AUAudioUnitStatus(
+        AudioUnitRenderActionFlags *actionFlags,
+        const AudioTimeStamp *timestamp, AUAudioFrameCount frameCount,
+        NSInteger outputBusNumber, AudioBufferList *outputData,
+        const AURenderEvent *realtimeEventListHead,
+        AURenderPullInputBlock __unsafe_unretained pullInputBlock) {
       if (frameCount > mKernel.maximumFramesToRender()) {
         return kAudioUnitErr_TooManyFramesToProcess;
       }
@@ -62,7 +61,8 @@ public:
 
        See the description of the canProcessInPlace property.
        */
-      processWithEvents(outputData, timestamp, frameCount, realtimeEventListHead);
+      processWithEvents(outputData, timestamp, frameCount,
+                        realtimeEventListHead);
 
       return noErr;
     };
@@ -73,13 +73,16 @@ private:
    This function handles the event list processing and rendering loop for you.
    Call it inside your internalRenderBlock.
    */
-  void processWithEvents(AudioBufferList *outBufferList, AudioTimeStamp const *timestamp,
-                         AUAudioFrameCount frameCount, AURenderEvent const *events) {
+  void processWithEvents(AudioBufferList *outBufferList,
+                         AudioTimeStamp const *timestamp,
+                         AUAudioFrameCount frameCount,
+                         AURenderEvent const *events) {
 
     AUEventSampleTime now = AUEventSampleTime(timestamp->mSampleTime);
     AUAudioFrameCount framesRemaining = frameCount;
-    AURenderEvent const *nextEvent = events; // events is a linked list, at the beginning,
-                                             // the nextEvent is the first event
+    AURenderEvent const *nextEvent =
+        events; // events is a linked list, at the beginning,
+                // the nextEvent is the first event
 
     auto callProcess = [this](AudioBufferList *outBufferListPtr,
                               AUEventSampleTime now,
@@ -87,7 +90,7 @@ private:
                               AUAudioFrameCount const frameOffset) {
       for (int channel = 0; channel < mOutputBuffers.size(); ++channel) {
         mOutputBuffers[channel] =
-          (float *)outBufferListPtr->mBuffers[channel].mData + frameOffset;
+            (float *)outBufferListPtr->mBuffers[channel].mData + frameOffset;
       }
 
       mKernel.process(mOutputBuffers, now, frameCount);
@@ -106,7 +109,7 @@ private:
       auto timeZero = AUEventSampleTime(0);
       auto headEventTime = nextEvent->head.eventSampleTime;
       AUAudioFrameCount framesThisSegment =
-        AUAudioFrameCount(std::max(timeZero, headEventTime - now));
+          AUAudioFrameCount(std::max(timeZero, headEventTime - now));
 
       // Compute everything before the next event.
       if (framesThisSegment > 0) {
@@ -124,8 +127,9 @@ private:
     }
   }
 
-  AURenderEvent const *performAllSimultaneousEvents(AUEventSampleTime now,
-                                                    AURenderEvent const *event) {
+  AURenderEvent const *
+  performAllSimultaneousEvents(AUEventSampleTime now,
+                               AURenderEvent const *event) {
     do {
       handleOneEvent(now, event);
 
@@ -159,20 +163,21 @@ private:
     mKernel.setParameter(parameterEvent.parameterAddress, parameterEvent.value);
   }
 
-  void handleMIDIEventList(AUEventSampleTime now, AUMIDIEventList const *midiEvent) {
-    auto visitor =
-      [](void *context, MIDITimeStamp timeStamp, MIDIUniversalMessage message) {
-        auto thisObject = static_cast<AUProcessHelper *>(context);
+  void handleMIDIEventList(AUEventSampleTime now,
+                           AUMIDIEventList const *midiEvent) {
+    auto visitor = [](void *context, MIDITimeStamp timeStamp,
+                      MIDIUniversalMessage message) {
+      auto thisObject = static_cast<AUProcessHelper *>(context);
 
-        switch (message.type) {
-        case kMIDIMessageTypeChannelVoice2: {
-          thisObject->handleMIDI2VoiceMessage(message);
-        } break;
+      switch (message.type) {
+      case kMIDIMessageTypeChannelVoice2: {
+        thisObject->handleMIDI2VoiceMessage(message);
+      } break;
 
-        default:
-          break;
-        }
-      };
+      default:
+        break;
+      }
+    };
 
     MIDIEventListForEachEvent(&midiEvent->eventList, visitor, this);
   }
@@ -183,15 +188,16 @@ private:
     const auto &status = message.channelVoice2.status;
 
     if (status == kMIDICVStatusNoteOn) {
-      auto velocity =
-        (double)note.velocity / (double)std::numeric_limits<std::uint16_t>::max();
+      auto velocity = (double)note.velocity /
+                      (double)std::numeric_limits<std::uint16_t>::max();
       mKernel.noteOn(note.number, velocity);
 
-      realtimeHostEventQueue.push(
-        {RealtimeHostEventType::NoteOn, note.number, static_cast<float>(velocity)});
+      realtimeHostEventQueue.push({RealtimeHostEventType::NoteOn, note.number,
+                                   static_cast<float>(velocity)});
     } else if (status == kMIDICVStatusNoteOff) {
       mKernel.noteOff(note.number);
-      realtimeHostEventQueue.push({RealtimeHostEventType::NoteOff, note.number, 0.f});
+      realtimeHostEventQueue.push(
+          {RealtimeHostEventType::NoteOff, note.number, 0.f});
     }
   }
 };

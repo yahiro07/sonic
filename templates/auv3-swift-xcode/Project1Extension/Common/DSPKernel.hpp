@@ -28,11 +28,13 @@ private:
   std::vector<float> mRightBuffer;
 
 public:
-  void initialize(int channelCount, double inSampleRate) { mSampleRate = inSampleRate; }
+  void initialize(int channelCount, double inSampleRate) {
+    mSampleRate = inSampleRate;
+  }
 
   void deInitialize() {}
 
-  void setSynthesizerInstance(SynthesizerBase* synthInstance) {
+  void setSynthesizerInstance(SynthesizerBase *synthInstance) {
     mSynthInstance = synthInstance;
   }
 
@@ -60,7 +62,7 @@ public:
     auto index = static_cast<size_t>(address);
     if (index < mParameterValues.size()) {
       std::atomic_ref<AUValue>(mParameterValues[index])
-        .store(value, std::memory_order_relaxed);
+          .store(value, std::memory_order_relaxed);
     }
     if (mSynthInstance) {
       mSynthInstance->setParameter(address, value);
@@ -71,7 +73,7 @@ public:
     auto index = static_cast<size_t>(address);
     if (index < mParameterValues.size()) {
       return std::atomic_ref<AUValue>(mParameterValues[index])
-        .load(std::memory_order_relaxed);
+          .load(std::memory_order_relaxed);
     }
     return 0.f;
   }
@@ -96,7 +98,8 @@ public:
    This function does the core siginal processing.
    Do your custom DSP here.
    */
-  void process(std::span<float *> outputBuffers, AUEventSampleTime bufferStartTime,
+  void process(std::span<float *> outputBuffers,
+               AUEventSampleTime bufferStartTime,
                AUAudioFrameCount frameCount) {
     // Fill the 'outputBuffers' with silence
     for (UInt32 channel = 0; channel < outputBuffers.size(); ++channel) {
@@ -126,7 +129,8 @@ public:
     memset(mLeftBuffer.data(), 0, sizeof(float) * frameCount);
     memset(mRightBuffer.data(), 0, sizeof(float) * frameCount);
 
-    mSynthInstance->process(mLeftBuffer.data(), mRightBuffer.data(), frameCount);
+    mSynthInstance->process(mLeftBuffer.data(), mRightBuffer.data(),
+                            frameCount);
 
     auto numChannels = outputBuffers.size();
     if (numChannels == 2) {
@@ -135,7 +139,8 @@ public:
       std::memcpy(outputBuffers[1], mRightBuffer.data(), byteLength);
     } else if (numChannels == 1) {
       for (UInt32 i = 0; i < frameCount; ++i) {
-        auto y = outputBuffers[0][i] = 0.5f * (mLeftBuffer[i] + mRightBuffer[i]);
+        auto y = outputBuffers[0][i] =
+            0.5f * (mLeftBuffer[i] + mRightBuffer[i]);
       }
     }
   }
