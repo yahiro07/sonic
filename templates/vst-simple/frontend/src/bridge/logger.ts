@@ -1,5 +1,5 @@
 const isDebug = location.search.includes("debug=1");
-const isStandalone = location.search.includes("std=1");
+const isDirectLoggingEnabled = location.search.includes("dlog=1");
 
 const loggerOptions = {
   outputToConsole: false,
@@ -10,7 +10,7 @@ if (isDebug) {
   Object.assign(loggerOptions, {
     outputToConsole: true,
     sendToWebViewOwner: true,
-    sendToLocalHttpLogServer: isStandalone,
+    sendToLocalHttpLogServer: isDirectLoggingEnabled,
   });
 }
 
