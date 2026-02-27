@@ -1,26 +1,26 @@
-export enum WaveType {
+export enum OscWaveType {
   Saw = 0,
-  Rect,
-  Tri,
+  Square,
+  Triangle,
   Sine,
 }
 export const waveTypeOptions = [
-  { value: WaveType.Saw, label: "SAW" },
-  { value: WaveType.Rect, label: "RECT" },
-  { value: WaveType.Tri, label: "TRI" },
-  { value: WaveType.Sine, label: "SINE" },
+  { value: OscWaveType.Saw, label: "SAW" },
+  { value: OscWaveType.Square, label: "SQUARE" },
+  { value: OscWaveType.Triangle, label: "TRI" },
+  { value: OscWaveType.Sine, label: "SINE" },
 ];
 
 export type Parameters = {
-  wave: WaveType;
-  pitch: number;
-  volume: number;
-  enabled: boolean;
+  oscEnabled: boolean;
+  oscWave: OscWaveType;
+  oscPitch: number;
+  oscVolume: number;
 };
 
 export const defaultParameters: Parameters = {
-  wave: WaveType.Saw,
-  pitch: 0.5,
-  volume: 0.5,
-  enabled: true,
+  oscEnabled: true,
+  oscWave: OscWaveType.Saw,
+  oscPitch: 0.5,
+  oscVolume: 0.5,
 };

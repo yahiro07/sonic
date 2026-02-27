@@ -25,28 +25,28 @@ const ControlsContent = () => {
       />
       <TogglePad
         label="Enabled"
-        value={parameters.enabled}
-        onChange={(value) => instantEdit("enabled", value)}
+        value={parameters.oscEnabled}
+        onChange={(value) => instantEdit("oscEnabled", value)}
       />
       <SelectorPad
         label="Wave"
         options={waveTypeOptions}
-        value={parameters.wave}
-        onChange={(value) => instantEdit("wave", value)}
+        value={parameters.oscWave}
+        onChange={(value) => instantEdit("oscWave", value)}
       />
       <Knob
         label="Pitch"
-        value={parameters.pitch}
-        onStartEdit={() => beginEdit("pitch")}
-        onChange={(value) => performEdit("pitch", value)}
-        onEndEdit={() => endEdit("pitch")}
+        value={parameters.oscPitch}
+        onStartEdit={() => beginEdit("oscPitch")}
+        onChange={(value) => performEdit("oscPitch", value)}
+        onEndEdit={() => endEdit("oscPitch")}
       />
       <Knob
         label="Volume"
-        value={parameters.volume}
-        onStartEdit={() => beginEdit("volume")}
-        onChange={(value) => performEdit("volume", value)}
-        onEndEdit={() => endEdit("volume")}
+        value={parameters.oscVolume}
+        onStartEdit={() => beginEdit("oscVolume")}
+        onChange={(value) => performEdit("oscVolume", value)}
+        onEndEdit={() => endEdit("oscVolume")}
       />
     </>
   );
@@ -68,10 +68,10 @@ const DebugPart = () => {
         <div>
           {JSON.stringify({
             notes: hostNoteNumbers,
-            enabled: parameters.enabled,
-            wave: parameters.wave,
-            pitch: parameters.pitch.toFixed(2),
-            volume: parameters.volume.toFixed(2),
+            enabled: parameters.oscEnabled,
+            wave: parameters.oscWave,
+            pitch: parameters.oscPitch.toFixed(2),
+            volume: parameters.oscVolume.toFixed(2),
           })}
         </div>
       )}
