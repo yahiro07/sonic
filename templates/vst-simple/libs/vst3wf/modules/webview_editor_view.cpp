@@ -60,6 +60,16 @@ struct MsgBulkSendParameters {
   std::map<std::string, double> parameters;
 };
 
+template <typename T>
+static void sendWebViewJsonMessage(IWebViewIo *webView, T &msg) {
+  std::string buffer{};
+  auto ec = glz::write_json(msg, buffer);
+  if (ec)
+    return;
+  logger.log("send message to ui: %s", buffer.c_str());
+  webView->sendMessage(buffer);
+}
+
 class WebViewMessagingHub {
 private:
   IWebViewIo *webView;
@@ -90,16 +100,8 @@ public:
         logger.log("ui loaded");
         auto parameters = std::map<std::string, double>();
         this->parametersManager->getAllParameterValues(parameters);
-        std::string buffer{};
-        auto ec = glz::write_json(
-            MsgBulkSendParameters{.parameters = parameters}, buffer);
-        if (ec) {
-          logger.log("glz::write_json error: %s",
-                     glz::format_error(ec, buffer).c_str());
-          return;
-        }
-        logger.log("send message: %s", buffer.c_str());
-        this->webView->sendMessage(buffer);
+        MsgBulkSendParameters msg{.parameters = parameters};
+        sendWebViewJsonMessage(webView, msg);
       } else if (auto *p = std::get_if<MsgNoteOnRequest>(&*msg)) {
         logger.log("note on request: %d, %f", p->noteNumber, p->velocity);
         this->eventHub->noteOnFromEditor(p->noteNumber, p->velocity);
@@ -110,17 +112,10 @@ public:
     });
     parametersManagerSubscriptionId = parametersManager->subscribeFromEditor(
         [this](std::string identifier, double value) {
-          printf("WebViewEditorView::subscribeFromEditor: %s, %f\n",
-                 identifier.c_str(), value);
           MsgSetParameter msg;
           msg.identifier = identifier;
           msg.value = value;
-          std::string buffer{};
-          auto ec = glz::write_json(msg, buffer);
-          if (ec)
-            return;
-          logger.log("send message: %s", buffer.c_str());
-          webView->sendMessage(buffer);
+          sendWebViewJsonMessage(webView, msg);
         });
     eventHubSubscriptionId =
         eventHub->subscribeFromEditor([this](DownstreamEvent &event) {
@@ -128,29 +123,15 @@ public:
           if (event.type == DownStreamEventType::hostNoteOn) {
             auto noteNumber = event.noteOn.noteNumber;
             auto velocity = event.noteOn.velocity;
-            vst3wf::logger.log("host note on received @editor view: %d, %f",
-                               noteNumber, velocity);
             MsgHostNoteOn msg;
             msg.noteNumber = noteNumber;
             msg.velocity = velocity;
-            std::string buffer{};
-            auto ec = glz::write_json(msg, buffer);
-            if (ec)
-              return;
-            logger.log("send message: %s", buffer.c_str());
-            webView->sendMessage(buffer);
+            sendWebViewJsonMessage(webView, msg);
           } else if (event.type == DownStreamEventType::hostNoteOff) {
             auto noteNumber = event.noteOff.noteNumber;
-            vst3wf::logger.log("host note off received @editor view: %d",
-                               noteNumber);
             MsgHostNoteOff msg;
             msg.noteNumber = noteNumber;
-            std::string buffer{};
-            auto ec = glz::write_json(msg, buffer);
-            if (ec)
-              return;
-            logger.log("send message: %s", buffer.c_str());
-            webView->sendMessage(buffer);
+            sendWebViewJsonMessage(webView, msg);
           }
         });
   }
