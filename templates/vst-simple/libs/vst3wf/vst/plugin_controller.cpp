@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Steinberg Media Technologies GmbH.
 //------------------------------------------------------------------------
 
-#include "./project1_controller.h"
+#include "./plugin_controller.h"
 #include "../modules/processor_state_helper.h"
 #include "pluginterfaces/base/funknown.h"
 #include "vst3wf/logic/parameter_builder_impl.h"
@@ -13,15 +13,15 @@
 #include <pluginterfaces/base/ibstream.h>
 #include <stdio.h>
 
-namespace Project1 {
+namespace vst3wf {
 using namespace Steinberg;
 
 //------------------------------------------------------------------------
-// HelloWorldController Implementation
+// PluginController Implementation
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
+tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
   // Here the Plug-in will be instantiated
-  vst3wf::logger.log("Project1Controller::initialize");
+  vst3wf::logger.log("PluginController::initialize");
 
   //---do not forget to call parent ------
   tresult result = EditControllerEx1::initialize(context);
@@ -44,7 +44,7 @@ tresult PLUGIN_API Project1Controller::initialize(FUnknown *context) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Controller::terminate() {
+tresult PLUGIN_API PluginController::terminate() {
   // Here the Plug-in will be de-instantiated, last possibility to remove some
   // memory!
   parametersManager.stopObserve();
@@ -54,9 +54,9 @@ tresult PLUGIN_API Project1Controller::terminate() {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Controller::setComponentState(IBStream *state) {
+tresult PLUGIN_API PluginController::setComponentState(IBStream *state) {
   // Here you get the state of the component (Processor part)
-  vst3wf::logger.log("Project1Controller::setComponentState");
+  vst3wf::logger.log("PluginController::setComponentState");
   if (!state)
     return kResultFalse;
 
@@ -79,14 +79,14 @@ tresult PLUGIN_API Project1Controller::setComponentState(IBStream *state) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Controller::setState(IBStream *state) {
+tresult PLUGIN_API PluginController::setState(IBStream *state) {
   // Here you get the state of the controller
 
   return kResultTrue;
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Controller::getState(IBStream *state) {
+tresult PLUGIN_API PluginController::getState(IBStream *state) {
   // Here you are asked to deliver the state of the controller (if needed)
   // Note: the real state of your plug-in is saved in the processor
 
@@ -94,7 +94,7 @@ tresult PLUGIN_API Project1Controller::getState(IBStream *state) {
 }
 
 //------------------------------------------------------------------------
-IPlugView *PLUGIN_API Project1Controller::createView(FIDString name) {
+IPlugView *PLUGIN_API PluginController::createView(FIDString name) {
   // Here the Host wants to open your editor (if you have one)
   if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
     // create your editor here and return a IPlugView ptr of it
@@ -105,8 +105,8 @@ IPlugView *PLUGIN_API Project1Controller::createView(FIDString name) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Controller::setParamNormalized(
-    Vst::ParamID tag, Vst::ParamValue value) {
+tresult PLUGIN_API PluginController::setParamNormalized(Vst::ParamID tag,
+                                                        Vst::ParamValue value) {
   // logger.log("Project1Controller::setParamNormalized: %d, %f", tag, value);
   // called by host to update your parameters
   tresult result = EditControllerEx1::setParamNormalized(tag, value);
@@ -114,7 +114,7 @@ tresult PLUGIN_API Project1Controller::setParamNormalized(
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Controller::getParamStringByValue(
+tresult PLUGIN_API PluginController::getParamStringByValue(
     Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string) {
   // called by host to get a string for given normalized value of a specific
   // parameter (without having to set the value!)
@@ -122,15 +122,15 @@ tresult PLUGIN_API Project1Controller::getParamStringByValue(
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Controller::getParamValueByString(
+tresult PLUGIN_API PluginController::getParamValueByString(
     Vst::ParamID tag, Vst::TChar *string, Vst::ParamValue &valueNormalized) {
   // called by host to get a normalized value from a string representation of a
   // specific parameter (without having to set the value!)
   return EditControllerEx1::getParamValueByString(tag, string, valueNormalized);
 }
 
-tresult PLUGIN_API Project1Controller::notify(Vst::IMessage *message) {
-  vst3wf::logger.log("Project1Controller::notify");
+tresult PLUGIN_API PluginController::notify(Vst::IMessage *message) {
+  vst3wf::logger.log("PluginController::notify");
   auto consumed = eventHub.notifyFromEditController(message);
   if (consumed) {
     return kResultOk;
@@ -140,4 +140,4 @@ tresult PLUGIN_API Project1Controller::notify(Vst::IMessage *message) {
 }
 
 //------------------------------------------------------------------------
-} // namespace Project1
+} // namespace vst3wf

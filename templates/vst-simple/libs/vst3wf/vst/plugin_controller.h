@@ -11,12 +11,12 @@
 #include "vst3wf/vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-namespace Project1 {
+namespace vst3wf {
 
 //------------------------------------------------------------------------
-//  Project1Controller
+//  PluginController
 //------------------------------------------------------------------------
-class Project1Controller : public Steinberg::Vst::EditControllerEx1 {
+class PluginController : public Steinberg::Vst::EditControllerEx1 {
 private:
   SynthesizerBase *synthInstance;
   vst3wf::ParametersManager parametersManager;
@@ -25,21 +25,21 @@ private:
 
 public:
   //------------------------------------------------------------------------
-  Project1Controller()
+  PluginController()
       : parametersManager(*this, this->parameters,
                           this->parameterDefinitionsProvider),
         eventHub(*this) {
     vst3wf::logger.start();
     synthInstance = vst3wf::gPluginFactoryGlobalHolder.synthInstantiateFn();
   }
-  ~Project1Controller() SMTG_OVERRIDE {
+  ~PluginController() SMTG_OVERRIDE {
     delete synthInstance;
     vst3wf::logger.stop();
   }
 
   // Create function
   static Steinberg::FUnknown *createInstance(void * /*context*/) {
-    return (Steinberg::Vst::IEditController *)new Project1Controller;
+    return (Steinberg::Vst::IEditController *)new PluginController;
   }
 
   // IPluginBase
@@ -81,4 +81,4 @@ protected:
 };
 
 //------------------------------------------------------------------------
-} // namespace Project1
+} // namespace vst3wf

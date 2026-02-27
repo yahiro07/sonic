@@ -11,12 +11,12 @@
 #include "vst3wf/logic/parameter_definitions_provider.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
 
-namespace Project1 {
+namespace vst3wf {
 
 //------------------------------------------------------------------------
-//  Project1Processor
+//  PluginProcessor
 //------------------------------------------------------------------------
-class Project1Processor : public Steinberg::Vst::AudioEffect {
+class PluginProcessor : public Steinberg::Vst::AudioEffect {
 private:
   SynthesizerBase *synthInstance;
   Amx::ParameterDefinitionsProvider parameterDefinitionsProvider;
@@ -25,12 +25,12 @@ private:
   vst3wf::ProcessorSideMessagingBridge processorSideMessagingBridge;
 
 public:
-  Project1Processor();
-  ~Project1Processor() SMTG_OVERRIDE;
+  PluginProcessor();
+  ~PluginProcessor() SMTG_OVERRIDE;
 
   // Create function
   static Steinberg::FUnknown *createInstance(void * /*context*/) {
-    return (Steinberg::Vst::IAudioProcessor *)new Project1Processor;
+    return (Steinberg::Vst::IAudioProcessor *)new PluginProcessor;
   }
 
   //--- ---------------------------------------------------------------------
@@ -69,4 +69,4 @@ public:
 };
 
 //------------------------------------------------------------------------
-} // namespace Project1
+} // namespace vst3wf

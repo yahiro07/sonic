@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Steinberg Media Technologies GmbH.
 //------------------------------------------------------------------------
 
-#include "./project1_processor.h"
+#include "./plugin_processor.h"
 #include "../modules/processor_state_helper.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/base/ibstream.h"
@@ -19,27 +19,27 @@
 #include <pluginterfaces/vst/ivstparameterchanges.h>
 #include <unordered_map>
 
-namespace Project1 {
+namespace vst3wf {
 using namespace Steinberg;
 
 //------------------------------------------------------------------------
-// Project1Processor
+// PluginProcessor
 //------------------------------------------------------------------------
-Project1Processor::Project1Processor() : processorSideMessagingBridge(*this) {
+PluginProcessor::PluginProcessor() : processorSideMessagingBridge(*this) {
   //--- set the wanted controller for our processor
   setControllerClass(vst3wf::gPluginFactoryGlobalHolder.controllerCID);
   synthInstance = vst3wf::gPluginFactoryGlobalHolder.synthInstantiateFn();
 }
 
 //------------------------------------------------------------------------
-Project1Processor::~Project1Processor() { delete synthInstance; }
+PluginProcessor::~PluginProcessor() { delete synthInstance; }
 
 float randF() { return (float)rand() / (float)RAND_MAX; }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Processor::initialize(FUnknown *context) {
+tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
   // Here the Plug-in will be instantiated
-  printf("HelloWorldProcessor::initialize\n");
+  printf("PluginProcessor::initialize\n");
 
   //---always initialize the parent-------
   tresult result = AudioEffect::initialize(context);
@@ -69,7 +69,7 @@ tresult PLUGIN_API Project1Processor::initialize(FUnknown *context) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Processor::terminate() {
+tresult PLUGIN_API PluginProcessor::terminate() {
   // Here the Plug-in will be de-instantiated, last possibility to remove some
   // memory!
 
@@ -78,14 +78,14 @@ tresult PLUGIN_API Project1Processor::terminate() {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Processor::setActive(TBool state) {
-  printf("Project1Processor::setActive %d\n", state);
+tresult PLUGIN_API PluginProcessor::setActive(TBool state) {
+  printf("PluginProcessor::setActive %d\n", state);
   //--- called when the Plug-in is enable/disable (On/Off) -----
   return AudioEffect::setActive(state);
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
+tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
   //--- Read inputs parameter changes-----------
   if (data.inputParameterChanges) {
     int32 numParamsChanged = data.inputParameterChanges->getParameterCount();
@@ -172,7 +172,7 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API
-Project1Processor::setupProcessing(Vst::ProcessSetup &newSetup) {
+PluginProcessor::setupProcessing(Vst::ProcessSetup &newSetup) {
   printf("setupProcessing sampleRate: %f, maxSamplesPerBlock: %d\n",
          newSetup.sampleRate, newSetup.maxSamplesPerBlock);
   synthInstance->prepare(newSetup.sampleRate, newSetup.maxSamplesPerBlock);
@@ -183,7 +183,7 @@ Project1Processor::setupProcessing(Vst::ProcessSetup &newSetup) {
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API
-Project1Processor::canProcessSampleSize(int32 symbolicSampleSize) {
+PluginProcessor::canProcessSampleSize(int32 symbolicSampleSize) {
   // by default kSample32 is supported
   if (symbolicSampleSize == Vst::kSample32)
     return kResultTrue;
@@ -196,10 +196,10 @@ Project1Processor::canProcessSampleSize(int32 symbolicSampleSize) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Processor::getState(IBStream *state) {
+tresult PLUGIN_API PluginProcessor::getState(IBStream *state) {
   // here we need to save the model (preset or project)
 
-  vst3wf::logger.log("Project1Processor::getState");
+  vst3wf::logger.log("PluginProcessor::getState");
   if (!state)
     return kResultFalse;
 
@@ -220,9 +220,9 @@ tresult PLUGIN_API Project1Processor::getState(IBStream *state) {
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Project1Processor::setState(IBStream *state) {
+tresult PLUGIN_API PluginProcessor::setState(IBStream *state) {
   // called when we load a preset or project, the model has to be reloaded
-  vst3wf::logger.log("Project1Processor::setState");
+  vst3wf::logger.log("PluginProcessor::setState");
   if (!state)
     return kResultFalse;
 
@@ -243,7 +243,7 @@ tresult PLUGIN_API Project1Processor::setState(IBStream *state) {
   return kResultOk;
 }
 
-tresult PLUGIN_API Project1Processor::notify(Vst::IMessage *message) {
+tresult PLUGIN_API PluginProcessor::notify(Vst::IMessage *message) {
   auto wm = processorSideMessagingBridge.decodeMessage(message);
   if (!wm.has_value()) {
     return AudioEffect::notify(message);
@@ -270,4 +270,4 @@ tresult PLUGIN_API Project1Processor::notify(Vst::IMessage *message) {
 }
 
 //------------------------------------------------------------------------
-} // namespace Project1
+} // namespace vst3wf

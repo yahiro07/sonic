@@ -4,8 +4,8 @@
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "public.sdk/source/main/pluginfactory.h"
-#include "vst/project1_controller.h"
-#include "vst/project1_processor.h"
+#include "vst/plugin_controller.h"
+#include "vst/plugin_processor.h"
 
 namespace vst3wf {
 using namespace Steinberg::Vst;
@@ -79,9 +79,9 @@ IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
 
 IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
     SynthInstantiateFn synthInstantiateFn, PluginMeta &meta) {
-  return GetPluginFactoryInternal(
-      synthInstantiateFn, Project1::Project1Processor::createInstance,
-      Project1::Project1Controller::createInstance, meta);
+  return GetPluginFactoryInternal(synthInstantiateFn,
+                                  PluginProcessor::createInstance,
+                                  PluginController::createInstance, meta);
 }
 
 } // namespace vst3wf
