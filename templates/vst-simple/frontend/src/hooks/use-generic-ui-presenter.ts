@@ -75,10 +75,9 @@ export function useGenericUiPresenter<T extends ParametersRecord>(
       setParameters((prev) => ({ ...prev, [paramKey]: value }));
       const numberValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
       coreBridge.sendMessage({
-        type: "performParameterEdit",
+        type: isInstantEdit ? "applyInstantEdit" : "performParameterEdit",
         paramKey,
         value: numberValue,
-        isInstantEdit,
       });
     },
   };

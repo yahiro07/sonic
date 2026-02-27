@@ -1,13 +1,9 @@
 type MessageFromUi =
   | { type: "uiLoaded" }
   | { type: "beginParameterEdit"; paramKey: string }
-  | {
-      type: "performParameterEdit";
-      paramKey: string;
-      value: number;
-      isInstantEdit: boolean;
-    }
+  | { type: "performParameterEdit"; paramKey: string; value: number }
   | { type: "endParameterEdit"; paramKey: string }
+  | { type: "applyInstantEdit"; paramKey: string; value: number }
   | { type: "noteOnRequest"; noteNumber: number }
   | { type: "noteOffRequest"; noteNumber: number };
 
