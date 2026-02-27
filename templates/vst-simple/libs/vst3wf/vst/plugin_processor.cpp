@@ -161,6 +161,11 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
   if (data.numSamples > 0 && outL) {
     // data.outputs[0].silenceFlags = 0;
 
+    memset(outL, 0, sizeof(float) * data.numSamples);
+    if (outR) {
+      memset(outR, 0, sizeof(float) * data.numSamples);
+    }
+
     if (outL && outR) {
       synthInstance->process(outL, outR, data.numSamples);
     } else if (outL) {
