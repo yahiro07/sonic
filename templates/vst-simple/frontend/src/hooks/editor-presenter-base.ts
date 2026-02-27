@@ -4,10 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 type ParametersRecord = Record<string, number | boolean>;
 
 export type EditorPresenterBase<T extends ParametersRecord> = {
-  beginEdit(paramKey: keyof T): void;
-  performEdit(paramKey: keyof T, value: number): void;
-  endEdit(paramKey: keyof T): void;
-  instantEdit(paramKey: keyof T, value: number): void;
+  beginEdit<K extends Extract<keyof T, string>>(paramKey: K): void;
+  performEdit<K extends Extract<keyof T, string>>(
+    paramKey: K,
+    value: T[K],
+  ): void;
+  endEdit<K extends Extract<keyof T, string>>(paramKey: K): void;
+  instantEdit<K extends Extract<keyof T, string>>(
+    paramKey: K,
+    value: T[K],
+  ): void;
   requestNoteOn(noteNumber: number): void;
   requestNoteOff(noteNumber: number): void;
   parameters: T;
@@ -60,7 +66,7 @@ export function useEditorPresenterBase<T extends ParametersRecord>(
     return unsubscribe;
   }, [initialParameters, boolFlags]);
 
-  const actionsInternal = {
+  const internalActions = {
     performEdit(
       paramKey: string,
       value: number | boolean,
@@ -77,27 +83,6 @@ export function useEditorPresenterBase<T extends ParametersRecord>(
     },
   };
 
-  const actions = {
-    beginEdit(paramKey: string) {
-      coreBridge.sendMessage({ type: "beginParameterEdit", paramKey });
-    },
-    performEdit(paramKey: string, value: number | boolean) {
-      actionsInternal.performEdit(paramKey, value, false);
-    },
-    endEdit(paramKey: string) {
-      coreBridge.sendMessage({ type: "endParameterEdit", paramKey });
-    },
-    instantEdit(paramKey: string, value: number | boolean) {
-      actionsInternal.performEdit(paramKey, value, true);
-    },
-    requestNoteOn(noteNumber: number) {
-      coreBridge.sendMessage({ type: "noteOnRequest", noteNumber });
-    },
-    requestNoteOff(noteNumber: number) {
-      coreBridge.sendMessage({ type: "noteOffRequest", noteNumber });
-    },
-  };
-
   useEffect(() => {
     coreBridge.sendMessage({ type: "uiLoaded" });
   }, []);
@@ -105,6 +90,23 @@ export function useEditorPresenterBase<T extends ParametersRecord>(
   return {
     parameters,
     hostNoteNumbers,
-    ...actions,
+    beginEdit(paramKey) {
+      coreBridge.sendMessage({ type: "beginParameterEdit", paramKey });
+    },
+    performEdit(paramKey, value) {
+      internalActions.performEdit(paramKey, value, false);
+    },
+    endEdit(paramKey) {
+      coreBridge.sendMessage({ type: "endParameterEdit", paramKey });
+    },
+    instantEdit(paramKey, value) {
+      internalActions.performEdit(paramKey, value, true);
+    },
+    requestNoteOn(noteNumber) {
+      coreBridge.sendMessage({ type: "noteOnRequest", noteNumber });
+    },
+    requestNoteOff(noteNumber) {
+      coreBridge.sendMessage({ type: "noteOffRequest", noteNumber });
+    },
   };
 }

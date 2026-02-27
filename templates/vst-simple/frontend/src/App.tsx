@@ -46,7 +46,7 @@ const ControlsContent = () => {
         label="isOn"
         value={parameters.isOn ? 1 : 0}
         step={1}
-        onChange={(value) => instantEdit("isOn", value)}
+        onChange={(value) => instantEdit("isOn", value ? true : false)}
       />
     </>
   );
