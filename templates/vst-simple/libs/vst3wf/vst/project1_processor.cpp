@@ -6,7 +6,6 @@
 #include "../modules/processor_state_helper.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/base/ibstream.h"
-#include "pluginterfaces/base/smartpointer.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include "vst3wf/general/logger.h"
 #include "vst3wf/logic/parameter_builder_impl.h"
@@ -26,7 +25,7 @@ using namespace Steinberg;
 //------------------------------------------------------------------------
 // Project1Processor
 //------------------------------------------------------------------------
-Project1Processor::Project1Processor() {
+Project1Processor::Project1Processor() : processorSideMessagingBridge(*this) {
   //--- set the wanted controller for our processor
   setControllerClass(vst3wf::gPluginFactoryGlobalHolder.controllerCID);
   synthInstance = vst3wf::gPluginFactoryGlobalHolder.synthInstantiateFn();
@@ -245,39 +244,24 @@ tresult PLUGIN_API Project1Processor::setState(IBStream *state) {
 }
 
 tresult PLUGIN_API Project1Processor::notify(Vst::IMessage *message) {
-  auto messageId = message->getMessageID();
-  if (strcmp(messageId, "noteOnRequestFromEditor") == 0) {
-    int64 noteNumber;
-    double velocity;
-    message->getAttributes()->getInt("noteNumber", noteNumber);
-    message->getAttributes()->getFloat("velocity", velocity);
-    vst3wf::logger.log("Project1Processor::notify noteOn %d %f", noteNumber,
-                       velocity);
-    synthInstance->noteOn(noteNumber, velocity);
+  auto wm = processorSideMessagingBridge.decodeMessage(message);
+  if (!wm.has_value()) {
+    return AudioEffect::notify(message);
   }
-  if (strcmp(messageId, "noteOffRequestFromEditor") == 0) {
-    int64 noteNumber;
-    message->getAttributes()->getInt("noteNumber", noteNumber);
-    vst3wf::logger.log("Project1Processor::notify noteOff %d", noteNumber);
-    synthInstance->noteOff(noteNumber);
-  }
-  if (strcmp(messageId, "pullProcessorSideEvents") == 0) {
+
+  if (wm->type == vst3wf::WrappedMessageType::noteOnRequestFromEditor) {
+    synthInstance->noteOn(wm->noteOnRequestFromEditor.noteNumber,
+                          wm->noteOnRequestFromEditor.velocity);
+  } else if (wm->type == vst3wf::WrappedMessageType::noteOffRequestFromEditor) {
+    synthInstance->noteOff(wm->noteOffRequestFromEditor.noteNumber);
+  } else if (wm->type == vst3wf::WrappedMessageType::pullProcessorSideEvents) {
     Amx::RealtimeHostEvent e;
     int count = 0;
     while (realtimeHostEventQueue.pop(e) && count < 64) {
       if (e.type == Amx::RealtimeHostEventType::NoteOn) {
-        if (auto msg = owned(allocateMessage())) {
-          msg->setMessageID("hostNoteOn");
-          msg->getAttributes()->setInt("noteNumber", e.data1);
-          msg->getAttributes()->setFloat("velocity", e.data2);
-          sendMessage(msg);
-        }
+        processorSideMessagingBridge.sendHostNoteOn(e.data1, e.data2);
       } else if (e.type == Amx::RealtimeHostEventType::NoteOff) {
-        if (auto msg = owned(allocateMessage())) {
-          msg->setMessageID("hostNoteOff");
-          msg->getAttributes()->setInt("noteNumber", e.data1);
-          sendMessage(msg);
-        }
+        processorSideMessagingBridge.sendHostNoteOff(e.data1);
       }
       count++;
     }

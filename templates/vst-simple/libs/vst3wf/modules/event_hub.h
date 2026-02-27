@@ -1,5 +1,6 @@
 #pragma once
 
+#include "./messaging_helper.h"
 #include <functional>
 #include <map>
 #include <public.sdk/source/vst/vstcomponentbase.h>
@@ -65,7 +66,7 @@ public:
 
 class EventHub {
 private:
-  Steinberg::Vst::ComponentBase &editController;
+  ControllerSideMessagingBridge messagingBridge;
   EventsPollingTimer eventsPollingTimer;
   int listenersIdCounter = 0;
   std::map<int, std::function<void(DownstreamEvent &)>> listeners;
@@ -74,39 +75,31 @@ private:
 
 public:
   EventHub(Steinberg::Vst::ComponentBase &editController)
-      : editController(editController) {
+      : messagingBridge(editController) {
     eventsPollingTimer.setPollingFn([this]() { this->updatePolling(); });
   }
   ~EventHub() { eventsPollingTimer.clearPollingFn(); }
 
-  void notifyFromEditController(Steinberg::Vst::IMessage *message) {
-    if (strcmp(message->getMessageID(), "hostNoteOn") == 0) {
-      int64 noteNumber;
-      double velocity;
-      if (message->getAttributes()->getInt("noteNumber", noteNumber) !=
-          kResultOk) {
-        return;
-      }
-      if (message->getAttributes()->getFloat("velocity", velocity) !=
-          kResultOk) {
-        return;
-      }
-      DownstreamEvent event;
-      event.type = DownStreamEventType::hostNoteOn;
-      event.noteOn.noteNumber = noteNumber;
-      event.noteOn.velocity = velocity;
+  bool notifyFromEditController(Steinberg::Vst::IMessage *message) {
+    auto wm = messagingBridge.decodeMessage(message);
+    if (!wm.has_value()) {
+      return false;
+    }
+    if (wm->type == WrappedMessageType::hostNoteOn) {
+      DownstreamEvent event({
+          .type = DownStreamEventType::hostNoteOn,
+          .noteOn = {.noteNumber = wm->hostNoteOn.noteNumber,
+                     .velocity = wm->hostNoteOn.velocity},
+      });
       downstreamEventsQueue.push_back(event);
-    } else if (strcmp(message->getMessageID(), "hostNoteOff") == 0) {
-      int64 noteNumber;
-      if (message->getAttributes()->getInt("noteNumber", noteNumber) !=
-          kResultOk) {
-        return;
-      }
-      DownstreamEvent event;
-      event.type = DownStreamEventType::hostNoteOff;
-      event.noteOff.noteNumber = noteNumber;
+    } else if (wm->type == WrappedMessageType::hostNoteOff) {
+      DownstreamEvent event({
+          .type = DownStreamEventType::hostNoteOff,
+          .noteOff = {.noteNumber = wm->hostNoteOff.noteNumber},
+      });
       downstreamEventsQueue.push_back(event);
     }
+    return true;
   }
 
   int subscribeFromEditor(std::function<void(DownstreamEvent &)> callback) {
@@ -125,33 +118,21 @@ public:
   }
 
   void noteOnFromEditor(int noteNumber, double velocity) {
-    if (auto msg = owned(editController.allocateMessage())) {
-      msg->setMessageID("noteOnRequestFromEditor");
-      msg->getAttributes()->setInt("noteNumber", noteNumber);
-      msg->getAttributes()->setFloat("velocity", velocity);
-      editController.sendMessage(msg);
-    }
+    messagingBridge.sendNoteOnRequest(noteNumber, velocity);
   }
   void noteOffFromEditor(int noteNumber) {
-    if (auto msg = owned(editController.allocateMessage())) {
-      msg->setMessageID("noteOffRequestFromEditor");
-      msg->getAttributes()->setInt("noteNumber", noteNumber);
-      editController.sendMessage(msg);
-    }
+    messagingBridge.sendNoteOffRequest(noteNumber);
   }
 
   void updatePolling() {
     for (auto &event : downstreamEventsQueue) {
-      for (auto &listener : listeners) {
-        listener.second(event);
+      for (auto &listenerKv : listeners) {
+        listenerKv.second(event);
       }
     }
     downstreamEventsQueue.clear();
 
-    if (auto msg = owned(editController.allocateMessage())) {
-      msg->setMessageID("pullProcessorSideEvents");
-      editController.sendMessage(msg);
-    }
+    messagingBridge.sendPullProcessorSideEventsRequest();
   }
 };
 

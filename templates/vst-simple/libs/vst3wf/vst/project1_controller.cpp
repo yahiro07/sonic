@@ -131,8 +131,12 @@ tresult PLUGIN_API Project1Controller::getParamValueByString(
 
 tresult PLUGIN_API Project1Controller::notify(Vst::IMessage *message) {
   vst3wf::logger.log("Project1Controller::notify");
-  eventHub.notifyFromEditController(message);
-  return kResultOk;
+  auto consumed = eventHub.notifyFromEditController(message);
+  if (consumed) {
+    return kResultOk;
+  } else {
+    return EditControllerEx1::notify(message);
+  }
 }
 
 //------------------------------------------------------------------------
