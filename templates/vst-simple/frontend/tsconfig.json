@@ -12,6 +12,7 @@
       "vite/client"
     ],
     "jsx": "react-jsx",
+    "jsxImportSource": "@emotion/react",
     "useDefineForClassFields": true,
     "skipLibCheck": true,
     /* Bundler mode */
