@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 type ParametersRecord = Record<string, number | boolean>;
 
-export type EditorPresenterBase<T extends ParametersRecord> = {
+export type GenericUiPresenter<T extends ParametersRecord> = {
   beginEdit<K extends Extract<keyof T, string>>(paramKey: K): void;
   performEdit<K extends Extract<keyof T, string>>(
     paramKey: K,
@@ -20,9 +20,9 @@ export type EditorPresenterBase<T extends ParametersRecord> = {
   hostNoteNumbers: number[];
 };
 
-export function useEditorPresenterBase<T extends ParametersRecord>(
+export function useGenericUiPresenter<T extends ParametersRecord>(
   initialParameters: T,
-): EditorPresenterBase<T> {
+): GenericUiPresenter<T> {
   const [parameters, setParameters] = useState(initialParameters);
   const [hostNoteNumbers, setHostNoteNumbers] = useState<number[]>([]);
 

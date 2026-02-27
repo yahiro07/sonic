@@ -1,14 +1,14 @@
 import { defaultParameters } from "@/presenter/parameters";
 import {
-  useEditorPresenterBase,
-  type EditorPresenterBase,
-} from "@/hooks/editor-presenter-base";
+  useGenericUiPresenter,
+  type GenericUiPresenter,
+} from "@/hooks/use-generic-ui-presenter";
 import { createContext, useContext } from "react";
 import type { Parameters } from "./parameters";
 
-type Presenter = EditorPresenterBase<Parameters>;
+type UiPresenter = GenericUiPresenter<Parameters>;
 
-const uiPresenterContext = createContext<Presenter>({} as Presenter);
+const uiPresenterContext = createContext<UiPresenter>({} as UiPresenter);
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useUiPresenter() {
@@ -20,7 +20,7 @@ export const UiPresenterProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const presenter = useEditorPresenterBase<Parameters>(defaultParameters);
+  const presenter = useGenericUiPresenter<Parameters>(defaultParameters);
   return (
     <uiPresenterContext.Provider value={presenter}>
       {children}

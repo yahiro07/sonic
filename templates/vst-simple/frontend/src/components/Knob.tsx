@@ -1,4 +1,4 @@
-import { useKnobModel } from "@/hooks/knob-model";
+import { useKnobModel } from "@/hooks/use-knob-model";
 import { css } from "@emotion/react";
 import type { FC } from "react";
 
