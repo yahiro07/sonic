@@ -1,7 +1,5 @@
-import { logger } from "@/bridge/logger";
 import { Knob } from "@/components/Knob";
 import { ToneButton } from "@/components/ToneButton";
-import { useEffect } from "react";
 
 const MainPanel = () => {
   return (
@@ -21,9 +19,6 @@ const MainPanel = () => {
 };
 
 export const App = () => {
-  useEffect(() => {
-    logger.mark("frontend start");
-  }, []);
   return (
     <div className="h-dvh bg-gray-400 flex items-center justify-center text-white">
       <MainPanel />

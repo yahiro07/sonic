@@ -41,7 +41,7 @@ function sendLogItemToWebViewOwner(logItem: LogItem) {
   const globalThisTyped = globalThis as unknown as {
     webkit?: {
       messageHandlers: {
-        native: {
+        pluginEditor: {
           postMessage: (msg: {
             type: "log";
             timeStamp: number;
@@ -52,7 +52,7 @@ function sendLogItemToWebViewOwner(logItem: LogItem) {
       };
     };
   };
-  globalThisTyped.webkit?.messageHandlers.native.postMessage({
+  globalThisTyped.webkit?.messageHandlers.pluginEditor.postMessage({
     type: "log",
     timeStamp: logItem.timeStamp,
     kind: logItem.kind,
