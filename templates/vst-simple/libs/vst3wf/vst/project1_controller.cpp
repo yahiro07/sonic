@@ -131,14 +131,7 @@ tresult PLUGIN_API Project1Controller::getParamValueByString(
 
 tresult PLUGIN_API Project1Controller::notify(Vst::IMessage *message) {
   vst3wf::logger.log("Project1Controller::notify");
-  if (strcmp(message->getMessageID(), "note") == 0) {
-    int64 noteNumber;
-    double velocity;
-    message->getAttributes()->getInt("noteNumber", noteNumber);
-    message->getAttributes()->getFloat("velocity", velocity);
-    vst3wf::logger.log("Project1Controller::notify note %d %f", noteNumber,
-                       velocity);
-  }
+  eventHub.notifyFromEditController(message);
   return kResultOk;
 }
 

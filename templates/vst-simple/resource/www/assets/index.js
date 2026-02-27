@@ -112,6 +112,10 @@ function handleMessage(msg){
         slider.value = value;
       }
     }
+  }else if (msg.type === "hostNoteOn") {
+    pushLine(`host note on: ${msg.noteNumber}, ${msg.velocity}`);
+  }else if (msg.type === "hostNoteOff") {
+    pushLine(`host note off: ${msg.noteNumber}`);
   }
 }
 

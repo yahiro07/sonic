@@ -33,6 +33,16 @@ struct MsgNoteOffRequest {
 using MessageFromUI = std::variant<MsgSetParameter, MsgUiLoaded,
                                    MsgNoteOnRequest, MsgNoteOffRequest>;
 
+struct MsgHostNoteOn {
+  std::string type = "hostNoteOn";
+  int noteNumber;
+  double velocity;
+};
+struct MsgHostNoteOff {
+  std::string type = "hostNoteOff";
+  int noteNumber;
+};
+
 std::optional<MessageFromUI>
 mapMessageFromUI_fromString(const std::string &jsonStr) {
   MessageFromUI msg;
@@ -107,17 +117,41 @@ public:
           msg.value = value;
           std::string buffer{};
           auto ec = glz::write_json(msg, buffer);
-          if (ec) {
-            logger.log("glz::write_json error: %s",
-                       glz::format_error(ec, buffer).c_str());
+          if (ec)
             return;
-          }
           logger.log("send message: %s", buffer.c_str());
           webView->sendMessage(buffer);
         });
     eventHubSubscriptionId =
         eventHub->subscribeFromEditor([this](DownstreamEvent &event) {
           logger.log("downstream event: %d", event.type);
+          if (event.type == DownStreamEventType::hostNoteOn) {
+            auto noteNumber = event.noteOn.noteNumber;
+            auto velocity = event.noteOn.velocity;
+            vst3wf::logger.log("host note on received @editor view: %d, %f",
+                               noteNumber, velocity);
+            MsgHostNoteOn msg;
+            msg.noteNumber = noteNumber;
+            msg.velocity = velocity;
+            std::string buffer{};
+            auto ec = glz::write_json(msg, buffer);
+            if (ec)
+              return;
+            logger.log("send message: %s", buffer.c_str());
+            webView->sendMessage(buffer);
+          } else if (event.type == DownStreamEventType::hostNoteOff) {
+            auto noteNumber = event.noteOff.noteNumber;
+            vst3wf::logger.log("host note off received @editor view: %d",
+                               noteNumber);
+            MsgHostNoteOff msg;
+            msg.noteNumber = noteNumber;
+            std::string buffer{};
+            auto ec = glz::write_json(msg, buffer);
+            if (ec)
+              return;
+            logger.log("send message: %s", buffer.c_str());
+            webView->sendMessage(buffer);
+          }
         });
   }
   void stop() {

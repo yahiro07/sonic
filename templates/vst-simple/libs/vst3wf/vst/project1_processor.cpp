@@ -123,8 +123,9 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
           synthInstance->noteOn(event.noteOn.pitch, event.noteOn.velocity);
           vst3wf::logger.log("note on %d", event.noteOn.pitch);
 
+          // TODO: apply queueing and respond out of audio thread
           Steinberg::Vst::IMessage *msg = allocateMessage();
-          msg->setMessageID("note");
+          msg->setMessageID("hostNoteOn");
           msg->getAttributes()->setInt("noteNumber", event.noteOn.pitch);
           msg->getAttributes()->setFloat("velocity", event.noteOn.velocity);
           sendMessage(msg);
@@ -132,6 +133,11 @@ tresult PLUGIN_API Project1Processor::process(Vst::ProcessData &data) {
         } else if (event.type == Vst::Event::kNoteOffEvent) {
           synthInstance->noteOff(event.noteOff.pitch);
           vst3wf::logger.log("note off %d", event.noteOff.pitch);
+
+          Steinberg::Vst::IMessage *msg = allocateMessage();
+          msg->setMessageID("hostNoteOff");
+          msg->getAttributes()->setInt("noteNumber", event.noteOff.pitch);
+          sendMessage(msg);
         }
       }
     }
