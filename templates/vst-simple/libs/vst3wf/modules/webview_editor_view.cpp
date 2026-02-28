@@ -260,12 +260,12 @@ public:
   IWebViewIo *getWebViewIO() { return &webView; }
 
   WebViewEditorView(Vst::EditController *controller,
-                    ParametersManager *parametersManager, EventHub *eventHub)
+                    ParametersManager *parametersManager, EventHub *eventHub,
+                    std::string editorPageUrl)
       : Vst::EditorView(controller) {
     printf("WebViewEditorView::WebViewEditorView\n");
 
-    webView.loadUrl("http://localhost:3000?debug=1&dlog=1");
-    // webView.loadUrl("app://local/index.html");
+    webView.loadUrl(editorPageUrl);
     webViewMessagingHub.start(&webView, parametersManager, eventHub);
   }
 
@@ -327,8 +327,9 @@ public:
 Steinberg::IPlugView *
 createWebViewEditorView(Steinberg::Vst::EditController *controller,
                         ParametersManager *parametersManager,
-                        EventHub *eventHub) {
-  return new WebViewEditorView(controller, parametersManager, eventHub);
+                        EventHub *eventHub, std::string editorPageUrl) {
+  return new WebViewEditorView(controller, parametersManager, eventHub,
+                               editorPageUrl);
 }
 
 } // namespace vst3wf

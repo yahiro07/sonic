@@ -98,8 +98,9 @@ IPlugView *PLUGIN_API PluginController::createView(FIDString name) {
   // Here the Host wants to open your editor (if you have one)
   if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
     // create your editor here and return a IPlugView ptr of it
-    // return new VSTGUI::VST3Editor(this, "view", "helloworldeditor.uidesc");
-    return createWebViewEditorView(this, &parametersManager, &eventHub);
+    auto editorPageUrl = synthInstance->getEditorPageUrl();
+    return createWebViewEditorView(this, &parametersManager, &eventHub,
+                                   editorPageUrl);
   }
   return nullptr;
 }

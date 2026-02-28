@@ -8,6 +8,6 @@ namespace vst3wf {
 Steinberg::IPlugView *
 createWebViewEditorView(Steinberg::Vst::EditController *controller,
                         ParametersManager *parametersManager,
-                        EventHub *eventHub);
+                        EventHub *eventHub, std::string editorPageUrl);
 
 }

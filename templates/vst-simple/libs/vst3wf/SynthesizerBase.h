@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-// #include <map>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -10,7 +9,6 @@ enum ParameterFlags : int {
   None = 0,
   IsReadOnly = 1,
   IsHidden = 2,
-  // IsInternal = 4
 };
 
 class ParameterBuilder {
@@ -43,4 +41,5 @@ public:
   virtual void noteOn(int32_t noteNumber, double velocity) = 0;
   virtual void noteOff(int32_t noteNumber) = 0;
   virtual void process(float *bufferL, float *bufferR, int32_t frames) = 0;
+  virtual std::string getEditorPageUrl() = 0;
 };

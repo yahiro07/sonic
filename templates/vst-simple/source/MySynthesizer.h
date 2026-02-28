@@ -20,6 +20,7 @@ public:
   void noteOn(int32_t noteNumber, double velocity) override;
   void noteOff(int32_t noteNumber) override;
   void process(float *bufferL, float *bufferR, int32_t frames) override;
+  std::string getEditorPageUrl() override;
 
 private:
   bool oscEnabled = true;

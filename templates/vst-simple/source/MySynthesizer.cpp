@@ -77,4 +77,13 @@ void MySynthesizer::process(float *bufferL, float *bufferR, int32_t frames) {
   memcpy(bufferR, bufferL, sizeof(float) * frames);
 }
 
+std::string MySynthesizer::getEditorPageUrl() {
+  if (0) {
+    return "http://localhost:3000?debug=1&dlog=1";
+  } else {
+    // app://local is mapped to the resources/www directory
+    return "app://local/index.html";
+  }
+}
+
 SynthesizerBase *createSynthesizerInstance() { return new MySynthesizer(); }
