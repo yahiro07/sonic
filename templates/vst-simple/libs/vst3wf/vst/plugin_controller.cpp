@@ -9,7 +9,7 @@
 #include <pluginterfaces/base/ibstream.h>
 #include <stdio.h>
 
-namespace vst3wf {
+namespace vst3wf_plugin {
 using namespace Steinberg;
 
 tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
@@ -62,7 +62,6 @@ tresult PLUGIN_API PluginController::setState(IBStream *state) {
   return kResultTrue;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::getState(IBStream *state) {
   // Here you are asked to deliver the state of the controller (if needed)
   // Note: the real state of your plug-in is saved in the processor
@@ -111,4 +110,4 @@ tresult PLUGIN_API PluginController::notify(Vst::IMessage *message) {
   }
 }
 
-} // namespace vst3wf
+} // namespace vst3wf_plugin

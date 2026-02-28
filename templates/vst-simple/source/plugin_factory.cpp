@@ -1,5 +1,6 @@
 #include "./project1_synthesizer.h"
 #include "projectversion.h"
+#include "vst3wf/vst/plugin_entry_wrapper_ex.h"
 #include "vst3wf/vst_entry/vst_entry_wrapper.h"
 
 static vst3wf::PluginMeta pluginMeta{
@@ -14,6 +15,6 @@ static vst3wf::PluginMeta pluginMeta{
 };
 
 VstFactoryResult GetPluginFactory() {
-  return vst3wf::GetPluginFactoryInternal(createSynthesizerInstance,
-                                          pluginMeta);
+  return vst3wf_plugin::GetPluginFactoryInternal(createSynthesizerInstance,
+                                                 pluginMeta);
 }

@@ -4,8 +4,6 @@
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "public.sdk/source/main/pluginfactory.h"
-#include "vst/plugin_controller.h"
-#include "vst/plugin_processor.h"
 
 namespace vst3wf {
 using namespace Steinberg::Vst;
@@ -75,13 +73,6 @@ IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
     gPluginFactory->addRef();
   }
   return gPluginFactory;
-}
-
-IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
-    SynthInstantiateFn synthInstantiateFn, PluginMeta &meta) {
-  return GetPluginFactoryInternal(synthInstantiateFn,
-                                  PluginProcessor::createInstance,
-                                  PluginController::createInstance, meta);
 }
 
 } // namespace vst3wf

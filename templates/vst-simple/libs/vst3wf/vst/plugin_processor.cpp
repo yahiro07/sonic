@@ -1,7 +1,3 @@
-//------------------------------------------------------------------------
-// Copyright(c) 2022 Steinberg Media Technologies GmbH.
-//------------------------------------------------------------------------
-
 #include "./plugin_processor.h"
 #include "../modules/processor_state_helper.h"
 #include "pluginterfaces/base/funknown.h"
@@ -19,7 +15,7 @@
 #include <pluginterfaces/vst/ivstparameterchanges.h>
 #include <unordered_map>
 
-namespace vst3wf {
+namespace vst3wf_plugin {
 using namespace Steinberg;
 
 PluginProcessor::PluginProcessor() : processorSideMessagingBridge(*this) {
@@ -240,4 +236,4 @@ tresult PLUGIN_API PluginProcessor::notify(Vst::IMessage *message) {
   return kResultOk;
 }
 
-} // namespace vst3wf
+} // namespace vst3wf_plugin

@@ -1,13 +1,15 @@
 #pragma once
 
-#include "logic/parameter_item.h"
-#include "logic/realtime_host_event_queue.h"
-#include "modules/event_hub.h"
-#include "vst3wf/logic/parameter_definitions_provider.h"
-#include "vst3wf/synthesizer_base.h"
+#include "../logic/parameter_definitions_provider.h"
+#include "../logic/parameter_item.h"
+#include "../logic/realtime_host_event_queue.h"
+#include "../modules/event_hub.h"
+#include "../synthesizer_base.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
 
-namespace vst3wf {
+namespace vst3wf_plugin {
+
+using namespace vst3wf;
 
 class PluginProcessor : public Steinberg::Vst::AudioEffect {
   using tresult = Steinberg::tresult;
@@ -45,4 +47,4 @@ public:
   tresult PLUGIN_API notify(Steinberg::Vst::IMessage *message) SMTG_OVERRIDE;
 };
 
-} // namespace vst3wf
+} // namespace vst3wf_plugin

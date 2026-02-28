@@ -7,7 +7,9 @@
 #include "vst3wf/vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-namespace vst3wf {
+namespace vst3wf_plugin {
+
+using namespace vst3wf;
 
 class PluginController : public Steinberg::Vst::EditControllerEx1 {
   using tresult = Steinberg::tresult;
@@ -63,4 +65,4 @@ public:
 protected:
 };
 
-} // namespace vst3wf
+} // namespace vst3wf_plugin
