@@ -5,7 +5,7 @@
 #include <cmath>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 class ParameterItemHelper {
 public:
@@ -53,4 +53,4 @@ public:
   }
 };
 
-} // namespace vst3wf
+} // namespace sonic_vst

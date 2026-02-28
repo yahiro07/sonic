@@ -9,7 +9,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 enum class ParameterEditingState { Begin, Perform, End, InstantChange };
 
@@ -62,4 +62,4 @@ public:
   void getAllParameterValues(std::map<std::string, double> &parameters);
 };
 
-} // namespace vst3wf
+} // namespace sonic_vst

@@ -1,9 +1,10 @@
 #include "./project1_synthesizer.h"
+#include "./vst_basis/plugin_controller.h"
+#include "./vst_basis/plugin_processor.h"
 #include "projectversion.h"
-#include "sonic/vst/plugin_entry_wrapper_ex.h"
 #include "sonic/vst_entry/vst_entry_wrapper.h"
 
-static vst3wf::PluginMeta pluginMeta{
+static sonic_vst::PluginMeta pluginMeta{
     .name = "MyPlugin",
     .category = "Instrument",
     .vendor = "MyCompany",
@@ -15,6 +16,7 @@ static vst3wf::PluginMeta pluginMeta{
 };
 
 VstFactoryResult GetPluginFactory() {
-  return vst3wf_plugin::GetPluginFactoryInternal(createSynthesizerInstance,
-                                                 pluginMeta);
+  return sonic_vst::GetPluginFactoryInternal(
+      createSynthesizerInstance, vst_basis::PluginProcessor::createInstance,
+      vst_basis::PluginController::createInstance, pluginMeta);
 }

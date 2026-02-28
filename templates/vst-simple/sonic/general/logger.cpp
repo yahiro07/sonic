@@ -1,5 +1,5 @@
 #include "./logger.h"
-#include "../logic/spsc_queue.h"
+#include "./spsc_queue.h"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <atomic>
@@ -12,7 +12,7 @@
 #include <thread>
 #include <unistd.h>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 enum class LogKind {
   Mark,
@@ -245,4 +245,4 @@ void Logger::directLogNonRT(const char *message) {}
 
 Logger logger;
 
-} // namespace vst3wf
+} // namespace sonic_vst

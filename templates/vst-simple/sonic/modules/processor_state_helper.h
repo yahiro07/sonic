@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 typedef struct {
   int parametersVersion;
@@ -16,4 +16,4 @@ bool processorStateHelper_readState(Steinberg::IBStream *state,
 bool processorStateHelper_writeState(Steinberg::IBStream *state,
                                      const ProcessorState &processorState);
 
-} // namespace vst3wf
+} // namespace sonic_vst

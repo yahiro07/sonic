@@ -8,7 +8,7 @@
 #include <mach-o/dyld.h>
 #include <string>
 
-using namespace vst3wf;
+using namespace sonic_vst;
 
 @interface AppSchemeHandler : NSObject <WKURLSchemeHandler>
 @property(nonatomic, strong) NSString *rootPath;

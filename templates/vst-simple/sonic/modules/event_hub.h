@@ -6,7 +6,7 @@
 #include <public.sdk/source/vst/vstcomponentbase.h>
 #include <thread>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 enum class DownStreamEventType {
   hostNoteOn,
@@ -135,4 +135,4 @@ public:
   }
 };
 
-} // namespace vst3wf
+} // namespace sonic_vst

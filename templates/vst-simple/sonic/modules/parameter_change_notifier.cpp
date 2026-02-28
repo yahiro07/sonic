@@ -2,7 +2,7 @@
 #include <functional>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 using namespace Steinberg;
 
@@ -50,4 +50,4 @@ void PLUGIN_API ParameterChangeNotifier::update(FUnknown *changedUnknown,
   }
 }
 
-} // namespace vst3wf
+} // namespace sonic_vst

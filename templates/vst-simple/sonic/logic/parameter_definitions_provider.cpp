@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 void ParameterDefinitionsProvider::addParameters(
     std::vector<ParameterItem> &parameterItems) {
@@ -59,4 +59,4 @@ ParameterItem *ParameterDefinitionsProvider::getParameterItemByIdentifier(
   return getParameterItemByAddress(val->second);
 }
 
-} // namespace vst3wf
+} // namespace sonic_vst

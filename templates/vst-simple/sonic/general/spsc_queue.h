@@ -2,7 +2,7 @@
 #include <atomic>
 #include <stdint.h>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 template <typename T, size_t Capacity>
 
@@ -49,4 +49,4 @@ public:
   }
 };
 
-} // namespace vst3wf
+} // namespace sonic_vst

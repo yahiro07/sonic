@@ -1,21 +1,13 @@
 #include "./plugin_processor.h"
-#include "../general/logger.h"
-#include "../logic/parameter_builder_impl.h"
-#include "../logic/parameter_item_helper.h"
-#include "../modules/processor_state_helper.h"
-#include "../vst_entry/vst_entry_wrapper.h"
-#include "pluginterfaces/base/funknown.h"
-#include "pluginterfaces/base/ibstream.h"
-#include "pluginterfaces/vst/ivstevents.h"
-#include <base/source/fstreamer.h>
-#include <cstring>
-#include <glaze/glaze.hpp>
-#include <glaze/json/write.hpp>
+#include "sonic/general/logger.h"
+#include "sonic/logic/parameter_builder_impl.h"
+#include "sonic/logic/parameter_item_helper.h"
+#include "sonic/modules/processor_state_helper.h"
+#include "sonic/vst_entry/vst_entry_wrapper.h"
 #include <pluginterfaces/vst/ivstevents.h>
 #include <pluginterfaces/vst/ivstparameterchanges.h>
-#include <unordered_map>
 
-namespace vst3wf_plugin {
+namespace vst_basis {
 
 PluginProcessor::PluginProcessor() : processorSideMessagingBridge(*this) {
   setControllerClass(gPluginFactoryGlobalHolder.controllerCID);
@@ -235,4 +227,4 @@ tresult PLUGIN_API PluginProcessor::notify(Vst::IMessage *message) {
   return kResultOk;
 }
 
-} // namespace vst3wf_plugin
+} // namespace vst_basis

@@ -1,6 +1,6 @@
 #include "./parameter_builder_impl.h"
 
-namespace vst3wf {
+namespace sonic_vst {
 
 void ParameterBuilderImpl::addUnary(uint64_t address, Str identifier, Str label,
                                     double defaultValue, Str group,
@@ -63,4 +63,4 @@ void ParameterBuilderImpl::addBool(uint64_t address, Str identifier, Str label,
   });
 }
 
-} // namespace vst3wf
+} // namespace sonic_vst

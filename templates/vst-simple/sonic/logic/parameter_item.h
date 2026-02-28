@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 typedef uint64_t ParamAddress;
 
@@ -27,4 +27,4 @@ typedef struct _ParameterItem {
   // bool isInternal;
 } ParameterItem;
 
-} // namespace vst3wf
+} // namespace sonic_vst

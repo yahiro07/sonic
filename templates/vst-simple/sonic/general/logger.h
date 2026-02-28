@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 class Logger {
 public:
@@ -26,4 +26,4 @@ private:
 
 extern Logger logger;
 
-} // namespace vst3wf
+} // namespace sonic_vst

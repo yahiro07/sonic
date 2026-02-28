@@ -4,7 +4,7 @@
 #include <glaze/glaze.hpp>
 #include <pluginterfaces/base/ibstream.h>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 using namespace Steinberg;
 
@@ -123,4 +123,4 @@ bool processorStateHelper_writeState(Steinberg::IBStream *state,
   return ProcessorStateWriter::writeState(state, processorState);
 }
 
-} // namespace vst3wf
+} // namespace sonic_vst

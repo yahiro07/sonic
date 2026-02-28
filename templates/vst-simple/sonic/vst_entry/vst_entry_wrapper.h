@@ -3,7 +3,7 @@
 #include "../synthesizer_base.h"
 #include "public.sdk/source/main/pluginfactory.h"
 
-namespace vst3wf {
+namespace sonic_vst {
 
 typedef SynthesizerBase *(*SynthInstantiateFn)();
 
@@ -38,4 +38,4 @@ Steinberg::IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
 #define VstFactoryResult                                                       \
   SMTG_EXPORT_SYMBOL Steinberg::IPluginFactory *PLUGIN_API
 
-} // namespace vst3wf
+} // namespace sonic_vst

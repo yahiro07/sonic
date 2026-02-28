@@ -1,7 +1,7 @@
 #pragma once
 #include "./parameter_item.h"
 
-namespace vst3wf {
+namespace sonic_vst {
 
 class ParameterBuilderImpl : public ParameterBuilder {
 private:
@@ -21,4 +21,4 @@ public:
                Str group, ParameterFlags flags);
 };
 
-} // namespace vst3wf
+} // namespace sonic_vst

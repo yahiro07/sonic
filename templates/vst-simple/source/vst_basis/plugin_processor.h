@@ -1,15 +1,15 @@
 #pragma once
 
-#include "../logic/parameter_definitions_provider.h"
-#include "../logic/parameter_item.h"
-#include "../logic/realtime_host_event_queue.h"
-#include "../modules/event_hub.h"
-#include "../synthesizer_base.h"
+#include "sonic/logic/parameter_definitions_provider.h"
+#include "sonic/logic/parameter_item.h"
+#include "sonic/logic/realtime_host_event_queue.h"
+#include "sonic/modules/event_hub.h"
+#include "sonic/synthesizer_base.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
 
-namespace vst3wf_plugin {
+namespace vst_basis {
 
-using namespace vst3wf;
+using namespace sonic_vst;
 using namespace Steinberg;
 
 class PluginProcessor : public Vst::AudioEffect {
@@ -45,4 +45,4 @@ public:
   tresult PLUGIN_API notify(Vst::IMessage *message) SMTG_OVERRIDE;
 };
 
-} // namespace vst3wf_plugin
+} // namespace vst_basis

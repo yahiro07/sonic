@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 class ParameterDefinitionsProvider {
 private:
@@ -27,4 +27,4 @@ public:
   ParameterItem *getParameterItemByIdentifier(std::string identifier);
 };
 
-} // namespace vst3wf
+} // namespace sonic_vst

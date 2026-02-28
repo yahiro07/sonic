@@ -4,7 +4,7 @@
 #include <pluginterfaces/vst/vsttypes.h>
 #include <string>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 static bool isHexChar(char c) {
   const auto uc = static_cast<unsigned char>(c);
@@ -72,4 +72,4 @@ static void loadTUIDFromGUIDString(Steinberg::TUID tuid,
   uid.toTUID(tuid);
 }
 
-} // namespace vst3wf
+} // namespace sonic_vst

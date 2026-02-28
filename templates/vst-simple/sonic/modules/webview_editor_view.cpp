@@ -8,7 +8,7 @@
 #include <pluginterfaces/vst/ivsteditcontroller.h>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 using namespace Steinberg;
 
@@ -55,10 +55,10 @@ using RxMessageVariant =
                  RxMsgEndEdit, RxMsgInstantEdit, RxMsgNoteOnRequest,
                  RxMsgNoteOffRequest>;
 
-} // namespace vst3wf
+} // namespace sonic_vst
 
 namespace glz {
-template <> struct meta<vst3wf::RxMessageVariant> {
+template <> struct meta<sonic_vst::RxMessageVariant> {
   static constexpr std::string_view tag = "type";
   static constexpr auto ids = std::array{
       "log",     "uiLoaded",    "beginEdit",     "performEdit",
@@ -67,7 +67,7 @@ template <> struct meta<vst3wf::RxMessageVariant> {
 };
 } // namespace glz
 
-namespace vst3wf {
+namespace sonic_vst {
 
 // messages from app
 
@@ -279,4 +279,4 @@ createWebViewEditorView(Steinberg::Vst::EditController *controller,
                                editorPageUrl);
 }
 
-} // namespace vst3wf
+} // namespace sonic_vst

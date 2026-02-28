@@ -1,15 +1,15 @@
 #pragma once
 
-#include "../general/logger.h"
-#include "../modules/event_hub.h"
-#include "../modules/parameters_manager.h"
-#include "../synthesizer_base.h"
-#include "../vst_entry/vst_entry_wrapper.h"
+#include "sonic/general/logger.h"
+#include "sonic/modules/event_hub.h"
+#include "sonic/modules/parameters_manager.h"
+#include "sonic/synthesizer_base.h"
+#include "sonic/vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-namespace vst3wf_plugin {
+namespace vst_basis {
 
-using namespace vst3wf;
+using namespace sonic_vst;
 using namespace Steinberg;
 
 class PluginController : public Vst::EditControllerEx1 {
@@ -60,4 +60,4 @@ public:
 protected:
 };
 
-} // namespace vst3wf_plugin
+} // namespace vst_basis

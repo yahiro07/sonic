@@ -1,7 +1,7 @@
 #pragma once
-#include "spsc_queue.h"
+#include "../general/spsc_queue.h"
 
-namespace vst3wf {
+namespace sonic_vst {
 
 enum class RealtimeHostEventType {
   None = 0,
@@ -26,4 +26,4 @@ public:
   bool pop(RealtimeHostEvent &e) { return queue.pop(e); }
 };
 
-} // namespace vst3wf
+} // namespace sonic_vst

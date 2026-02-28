@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 using namespace Steinberg;
 
@@ -161,4 +161,4 @@ void ParametersManager::getAllParameterValues(
   }
 }
 
-} // namespace vst3wf
+} // namespace sonic_vst

@@ -2,7 +2,7 @@
 #include <functional>
 #include <memory>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 class IWebViewIo {
 public:
@@ -28,4 +28,4 @@ public:
   void setMessageReceiver(std::function<void(const std::string &)> receiver);
 };
 
-} // namespace vst3wf
+} // namespace sonic_vst

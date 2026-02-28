@@ -1,15 +1,10 @@
 #include "./plugin_controller.h"
-#include "../logic/parameter_builder_impl.h"
-#include "../logic/parameter_item_helper.h"
-#include "../modules/processor_state_helper.h"
-#include "../modules/webview_editor_view.h"
-#include "pluginterfaces/base/funknown.h"
-#include <base/source/fstreamer.h>
-#include <glaze/glaze.hpp>
-#include <pluginterfaces/base/ibstream.h>
-#include <stdio.h>
+#include "sonic/logic/parameter_builder_impl.h"
+#include "sonic/logic/parameter_item_helper.h"
+#include "sonic/modules/processor_state_helper.h"
+#include "sonic/modules/webview_editor_view.h"
 
-namespace vst3wf_plugin {
+namespace vst_basis {
 
 tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
   tresult result = EditControllerEx1::initialize(context);
@@ -109,4 +104,4 @@ tresult PLUGIN_API PluginController::notify(Vst::IMessage *message) {
   }
 }
 
-} // namespace vst3wf_plugin
+} // namespace vst_basis

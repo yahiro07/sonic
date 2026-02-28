@@ -33,6 +33,8 @@ smtg_add_vst3plugin(Project1
     source/version.h
     source/plugin_factory.cpp
     source/project1_synthesizer.cpp
+    source/vst_basis/plugin_processor.cpp
+    source/vst_basis/plugin_controller.cpp
 )
 
 smtg_target_configure_version_file(Project1)

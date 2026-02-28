@@ -5,7 +5,7 @@
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "public.sdk/source/main/pluginfactory.h"
 
-namespace vst3wf {
+namespace sonic_vst {
 using namespace Steinberg::Vst;
 using namespace Steinberg;
 
@@ -75,4 +75,4 @@ IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
   return gPluginFactory;
 }
 
-} // namespace vst3wf
+} // namespace sonic_vst

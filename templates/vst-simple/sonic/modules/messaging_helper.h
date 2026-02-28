@@ -4,7 +4,7 @@
 #include "public.sdk/source/vst/vstcomponentbase.h"
 #include <optional>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 enum class WrappedMessageType {
   // from processor to controller
@@ -181,4 +181,4 @@ public:
   }
 };
 
-} // namespace vst3wf
+} // namespace sonic_vst

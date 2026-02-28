@@ -3,7 +3,7 @@
 #include <functional>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-namespace vst3wf {
+namespace sonic_vst {
 
 class ParameterChangeNotifier : public Steinberg::IDependent {
 private:
@@ -29,4 +29,4 @@ public:
   uint32_t PLUGIN_API release() override { return 1; }
 };
 
-} // namespace vst3wf
+} // namespace sonic_vst
