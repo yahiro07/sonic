@@ -16,7 +16,6 @@
 #include <unordered_map>
 
 namespace vst3wf_plugin {
-using namespace Steinberg;
 
 PluginProcessor::PluginProcessor() : processorSideMessagingBridge(*this) {
   setControllerClass(gPluginFactoryGlobalHolder.controllerCID);
@@ -32,8 +31,8 @@ tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
   if (result != kResultOk) {
     return result;
   }
-  addAudioInput(STR16("Stereo In"), Steinberg::Vst::SpeakerArr::kStereo);
-  addAudioOutput(STR16("Stereo Out"), Steinberg::Vst::SpeakerArr::kStereo);
+  addAudioInput(STR16("Stereo In"), Vst::SpeakerArr::kStereo);
+  addAudioOutput(STR16("Stereo Out"), Vst::SpeakerArr::kStereo);
 
   addEventInput(STR16("Event In"), 1);
 

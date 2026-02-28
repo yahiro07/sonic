@@ -10,7 +10,6 @@
 #include <stdio.h>
 
 namespace vst3wf_plugin {
-using namespace Steinberg;
 
 tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
   tresult result = EditControllerEx1::initialize(context);

@@ -10,10 +10,9 @@
 namespace vst3wf_plugin {
 
 using namespace vst3wf;
+using namespace Steinberg;
 
-class PluginController : public Steinberg::Vst::EditControllerEx1 {
-  using tresult = Steinberg::tresult;
-
+class PluginController : public Vst::EditControllerEx1 {
 private:
   SynthesizerBase *synthInstance;
   ParametersManager parametersManager;
@@ -32,31 +31,27 @@ public:
     delete synthInstance;
     logger.stop();
   }
-
-  static Steinberg::FUnknown *createInstance(void *) {
-    return (Steinberg::Vst::IEditController *)new PluginController;
+  static FUnknown *createInstance(void *) {
+    return (Vst::IEditController *)new PluginController;
   }
 
-  tresult PLUGIN_API initialize(Steinberg::FUnknown *context) SMTG_OVERRIDE;
+  tresult PLUGIN_API initialize(FUnknown *context) SMTG_OVERRIDE;
   tresult PLUGIN_API terminate() SMTG_OVERRIDE;
 
-  tresult PLUGIN_API setComponentState(Steinberg::IBStream *state)
+  tresult PLUGIN_API setComponentState(IBStream *state) SMTG_OVERRIDE;
+  IPlugView *PLUGIN_API createView(FIDString name) SMTG_OVERRIDE;
+  tresult PLUGIN_API setState(IBStream *state) SMTG_OVERRIDE;
+  tresult PLUGIN_API getState(IBStream *state) SMTG_OVERRIDE;
+  tresult PLUGIN_API setParamNormalized(Vst::ParamID tag,
+                                        Vst::ParamValue value) SMTG_OVERRIDE;
+  tresult PLUGIN_API getParamStringByValue(Vst::ParamID tag,
+                                           Vst::ParamValue valueNormalized,
+                                           Vst::String128 string) SMTG_OVERRIDE;
+  tresult PLUGIN_API getParamValueByString(Vst::ParamID tag, Vst::TChar *string,
+                                           Vst::ParamValue &valueNormalized)
       SMTG_OVERRIDE;
-  Steinberg::IPlugView *PLUGIN_API createView(Steinberg::FIDString name)
-      SMTG_OVERRIDE;
-  tresult PLUGIN_API setState(Steinberg::IBStream *state) SMTG_OVERRIDE;
-  tresult PLUGIN_API getState(Steinberg::IBStream *state) SMTG_OVERRIDE;
-  tresult PLUGIN_API setParamNormalized(Steinberg::Vst::ParamID tag,
-                                        Steinberg::Vst::ParamValue value)
-      SMTG_OVERRIDE;
-  tresult PLUGIN_API getParamStringByValue(
-      Steinberg::Vst::ParamID tag, Steinberg::Vst::ParamValue valueNormalized,
-      Steinberg::Vst::String128 string) SMTG_OVERRIDE;
-  tresult PLUGIN_API getParamValueByString(
-      Steinberg::Vst::ParamID tag, Steinberg::Vst::TChar *string,
-      Steinberg::Vst::ParamValue &valueNormalized) SMTG_OVERRIDE;
 
-  tresult PLUGIN_API notify(Steinberg::Vst::IMessage *message) SMTG_OVERRIDE;
+  tresult PLUGIN_API notify(Vst::IMessage *message) SMTG_OVERRIDE;
 
   DEFINE_INTERFACES
   END_DEFINE_INTERFACES(EditController)
