@@ -6,8 +6,6 @@
 
 namespace vst3wf {
 
-using namespace Steinberg;
-
 enum class WrappedMessageType {
   // from processor to controller
   hostNoteOn,
@@ -63,14 +61,14 @@ public:
   std::optional<WrappedMessageFromController>
   decodeMessage(Steinberg::Vst::IMessage *message) {
     if (strcmp(message->getMessageID(), "noteOnRequestFromEditor") == 0) {
-      int64 noteNumber;
+      Steinberg::int64 noteNumber;
       double velocity;
       if (message->getAttributes()->getInt("noteNumber", noteNumber) !=
-          kResultOk) {
+          Steinberg::kResultOk) {
         return std::nullopt;
       }
       if (message->getAttributes()->getFloat("velocity", velocity) !=
-          kResultOk) {
+          Steinberg::kResultOk) {
         return std::nullopt;
       }
       return WrappedMessageFromController{
@@ -81,9 +79,9 @@ public:
       };
     } else if (strcmp(message->getMessageID(), "noteOffRequestFromEditor") ==
                0) {
-      int64 noteNumber;
+      Steinberg::int64 noteNumber;
       if (message->getAttributes()->getInt("noteNumber", noteNumber) !=
-          kResultOk) {
+          Steinberg::kResultOk) {
         return std::nullopt;
       }
       return WrappedMessageFromController{
@@ -129,14 +127,14 @@ public:
   std::optional<WrappedMessageFromProcessor>
   decodeMessage(Steinberg::Vst::IMessage *message) {
     if (strcmp(message->getMessageID(), "hostNoteOn") == 0) {
-      int64 noteNumber;
+      Steinberg::int64 noteNumber;
       double velocity;
       if (message->getAttributes()->getInt("noteNumber", noteNumber) !=
-          kResultOk) {
+          Steinberg::kResultOk) {
         return std::nullopt;
       }
       if (message->getAttributes()->getFloat("velocity", velocity) !=
-          kResultOk) {
+          Steinberg::kResultOk) {
         return std::nullopt;
       }
       return WrappedMessageFromProcessor{
@@ -145,9 +143,9 @@ public:
                          .velocity = velocity},
       };
     } else if (strcmp(message->getMessageID(), "hostNoteOff") == 0) {
-      int64 noteNumber;
+      Steinberg::int64 noteNumber;
       if (message->getAttributes()->getInt("noteNumber", noteNumber) !=
-          kResultOk) {
+          Steinberg::kResultOk) {
         return std::nullopt;
       }
       return WrappedMessageFromProcessor{

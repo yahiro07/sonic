@@ -7,7 +7,6 @@
 #include <thread>
 
 namespace vst3wf {
-using namespace Steinberg;
 
 enum class DownStreamEventType {
   hostNoteOn,
