@@ -4,10 +4,6 @@
 namespace vst3wf {
 
 class Logger {
-private:
-  class LoggerImpl;
-  std::unique_ptr<LoggerImpl> impl;
-
 public:
   Logger();
   ~Logger();
@@ -21,6 +17,10 @@ public:
   void warn(const char *fmt, ...);
   void error(const char *fmt, ...);
   void directLogNonRT(const char *message);
+
+private:
+  class LoggerImpl;
+  std::unique_ptr<LoggerImpl> impl;
 };
 
 extern Logger logger;

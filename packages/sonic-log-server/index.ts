@@ -111,6 +111,7 @@ function createLoggerCore() {
     log(jsonString: string) {
       try {
         const logItem = JSON.parse(jsonString) as LogItem;
+        // console.log({ logItem });
         pushLogItem({
           ...logItem,
           subOrdering: subOrderingCounter++,
