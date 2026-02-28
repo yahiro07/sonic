@@ -108,7 +108,7 @@ public:
     this->webView = webViewIo;
     this->eventHub = eventHub;
     webView->setMessageReceiver([this](const std::string &jsonStr) {
-      logger.log("message received: %s", jsonStr.c_str());
+      // logger.log("message received: %s", jsonStr.c_str());
 
       RxMessageVariant rxMessage;
       auto ec = glz::read_json<RxMessageVariant>(rxMessage, jsonStr);

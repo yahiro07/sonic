@@ -1,3 +1,5 @@
+import { logger } from "@/bridge/logger";
+
 type MessageFromUi =
   | { type: "uiLoaded" }
   | { type: "beginEdit"; paramKey: string }
@@ -28,6 +30,7 @@ type EditorBridgeMessageLister = (msg: MessageFromApp) => void;
 const listeners: Set<EditorBridgeMessageLister> = new Set();
 
 function sendMessage(msg: MessageFromUi) {
+  logger.log("⇠ui", msg);
   windowTyped.webkit?.messageHandlers.pluginEditor.postMessage(msg);
 }
 
@@ -39,6 +42,7 @@ function subscribe(listener: EditorBridgeMessageLister): () => void {
 }
 
 windowTyped.pluginEditorCallback = (msg) => {
+  logger.log("⇢ui", msg);
   listeners.forEach((l) => l(msg));
 };
 
