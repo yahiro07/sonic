@@ -1,12 +1,12 @@
-import type { TemplateWorker } from "../../../packages/cli/common";
 import {
+  TemplateWorker,
   casingToCapital,
   casingToSnake,
   workerHelper_copyProjectContents_withWhiteList,
   workerHelper_getNewProjectFolderPath,
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
-} from "../../../packages/cli/common";
+} from "@/common";
 
 function createTemplateWorker(): TemplateWorker {
   return {
