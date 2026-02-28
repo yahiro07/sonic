@@ -3,6 +3,7 @@ import {
   casingToCapital,
   casingToSnake,
   workerHelper_copyProjectContents_withWhiteList,
+  workerHelper_copyProjectContents_withWhiteList_withRenaming,
   workerHelper_getNewProjectFolderPath,
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
@@ -16,9 +17,8 @@ function createTemplateWorker(): TemplateWorker {
         projectName,
         templateName,
         [
-          "external",
           "frontend",
-          // "libs",  //skip copying, it's downloaded from github with FetchContent
+          // "sonic",  //skip copying, it's downloaded from github with FetchContent
           "resource",
           "source",
           ".gitignore",
@@ -26,6 +26,14 @@ function createTemplateWorker(): TemplateWorker {
           "README.md",
         ],
       );
+
+      workerHelper_copyProjectContents_withWhiteList_withRenaming(
+        projectName,
+        templateName,
+        [{ from: "Makefile_exported", to: "Makefile" }],
+      );
+
+      //TODO: patch makefile, change build system based on OS
 
       const newFolderPath = workerHelper_getNewProjectFolderPath(projectName);
 
@@ -73,7 +81,7 @@ function createTemplateWorker(): TemplateWorker {
           {
             from: "Project1",
             to: projectNameCapital,
-          }
+          },
         ],
       });
 

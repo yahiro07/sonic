@@ -92,6 +92,39 @@ export function workerHelper_copyProjectContents_withWhiteList(
   }
 }
 
+export function workerHelper_copyProjectContents_withWhiteList_withRenaming(
+  projectName: string,
+  templateName: string,
+  entries: { from: string; to: string }[],
+) {
+  const binFolderPath = dirname(fileURLToPath(import.meta.url));
+  const templateFolderPath = path.join(
+    binFolderPath,
+    "../",
+    "templates",
+    templateName,
+  );
+  const newProjectFolderPath = path.join(process.cwd(), projectName);
+  fs.mkdirSync(newProjectFolderPath, { recursive: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(templateFolderPath, entry.from);
+    const destPath = path.join(newProjectFolderPath, entry.to);
+    if (!fs.existsSync(srcPath)) {
+      throw new Error(
+        `source entry ${entry} does not exist in template ${templateName}`,
+      );
+    }
+    if (fs.statSync(srcPath).isDirectory()) {
+      fs.cpSync(srcPath, destPath, {
+        recursive: true,
+      });
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
 export function workerHelper_updateFileNamesWithPrefix(
   folderPath: string,
   spec: {
