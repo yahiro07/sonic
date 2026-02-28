@@ -6,8 +6,7 @@
   },
   "scripts": {
     "build-bin": "tsup entry/sonic.ts --format esm --clean --out-dir bin",
-    "copy-templates": "cp -r ../../templates .",
-    "build": "npm run build-bin && npm run copy-templates"
+    "build": "npm run build-bin"
   },
   "files": [
     "bin",
