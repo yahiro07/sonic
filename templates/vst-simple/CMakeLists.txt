@@ -10,6 +10,11 @@ if(APPLE)
     enable_language(OBJCXX)
 endif()
 
+
+
+#----------------
+#download vst3sdk
+
 include(FetchContent)
 
 option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
@@ -25,7 +30,7 @@ else()
     )
     FetchContent_MakeAvailable(vst3sdk)
 endif()
-
+#----------------
 
 smtg_enable_vst3_sdk()
 
@@ -68,14 +73,38 @@ smtg_target_configure_version_file(Project1)
 #     FetchContent_MakeAvailable(vst3wf)
 # endif()
 
-add_subdirectory("sonic")
+# add_subdirectory("sonic")
+
+#----------------
+#download sonic framework
+
+if(USE_LOCAL_SONIC)
+    add_subdirectory("sonic")
+else()
+    FetchContent_Declare(
+        sonic
+        GIT_REPOSITORY https://github.com/yahiro07/sonic.git
+        GIT_TAG main
+        GIT_SHALLOW TRUE
+        SOURCE_SUBDIR  templates/vst-simple/sonic
+    )
+    FetchContent_MakeAvailable(sonic)
+endif()
+#----------------
 
 target_link_libraries(Project1
     PRIVATE
         sonic
 )
 
+#----------------
+#build frontend
 
+execute_process(
+    COMMAND npm install
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/frontend"
+    RESULT_VARIABLE NODE_BUILD_RESULT
+)
 
 execute_process(
     COMMAND npm run build
@@ -86,8 +115,11 @@ execute_process(
 if(NOT NODE_BUILD_RESULT EQUAL 0)
     message(FATAL_ERROR "frontend project build failed with exit code ${NODE_BUILD_RESULT}")
 endif()
+#----------------
 
 
+#----------------
+#copy html page assets
 # Keep web resources in sync with the built plug-in bundle.
 # This registers every file under resource/www (recursively) as a plug-in resource
 # and preserves the folder layout under <Bundle>/Contents/Resources/www/...
@@ -109,6 +141,7 @@ foreach(_www_file IN LISTS PLUGIN_WWW_FILES)
 
     smtg_target_add_plugin_resource(Project1 "${_www_file}" "${_www_outsubdir}")
 endforeach()
+#----------------
 
 
 if(SMTG_MAC)
