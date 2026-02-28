@@ -1,7 +1,3 @@
-//------------------------------------------------------------------------
-// Copyright(c) 2022 Steinberg Media Technologies GmbH.
-//------------------------------------------------------------------------
-
 #pragma once
 
 #include "vst3wf/general/logger.h"
@@ -13,9 +9,6 @@
 
 namespace vst3wf {
 
-//------------------------------------------------------------------------
-//  PluginController
-//------------------------------------------------------------------------
 class PluginController : public Steinberg::Vst::EditControllerEx1 {
 private:
   SynthesizerBase *synthInstance;
@@ -24,7 +17,6 @@ private:
   EventHub eventHub;
 
 public:
-  //------------------------------------------------------------------------
   PluginController()
       : parametersManager(*this, this->parameters,
                           this->parameterDefinitionsProvider),
@@ -37,17 +29,14 @@ public:
     logger.stop();
   }
 
-  // Create function
-  static Steinberg::FUnknown *createInstance(void * /*context*/) {
+  static Steinberg::FUnknown *createInstance(void *) {
     return (Steinberg::Vst::IEditController *)new PluginController;
   }
 
-  // IPluginBase
   Steinberg::tresult PLUGIN_API initialize(Steinberg::FUnknown *context)
       SMTG_OVERRIDE;
   Steinberg::tresult PLUGIN_API terminate() SMTG_OVERRIDE;
 
-  // EditController
   Steinberg::tresult PLUGIN_API setComponentState(Steinberg::IBStream *state)
       SMTG_OVERRIDE;
   Steinberg::IPlugView *PLUGIN_API createView(Steinberg::FIDString name)
@@ -69,16 +58,11 @@ public:
   Steinberg::tresult PLUGIN_API notify(Steinberg::Vst::IMessage *message)
       SMTG_OVERRIDE;
 
-  //---Interface---------
   DEFINE_INTERFACES
-  // Here you can add more supported VST3 interfaces
-  // DEF_INTERFACE (Vst::IXXX)
   END_DEFINE_INTERFACES(EditController)
   DELEGATE_REFCOUNT(EditController)
 
-  //------------------------------------------------------------------------
 protected:
 };
 
-//------------------------------------------------------------------------
 } // namespace vst3wf

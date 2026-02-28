@@ -1,7 +1,3 @@
-//------------------------------------------------------------------------
-// Copyright(c) 2022 Steinberg Media Technologies GmbH.
-//------------------------------------------------------------------------
-
 #include "./plugin_controller.h"
 #include "../modules/processor_state_helper.h"
 #include "pluginterfaces/base/funknown.h"
@@ -16,22 +12,12 @@
 namespace vst3wf {
 using namespace Steinberg;
 
-//------------------------------------------------------------------------
-// PluginController Implementation
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
-  // Here the Plug-in will be instantiated
-  logger.log("PluginController::initialize");
-
-  //---do not forget to call parent ------
   tresult result = EditControllerEx1::initialize(context);
   if (result != kResultOk) {
     return result;
   }
-
-  // Here you could register some parameters
   if (result == kResultTrue) {
-    //---Create Parameters------------
     auto parameterBuilder = ParameterBuilderImpl();
     synthInstance->setupParameters(parameterBuilder);
     auto parameterItems = parameterBuilder.getItems();
@@ -43,19 +29,12 @@ tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
   return result;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::terminate() {
-  // Here the Plug-in will be de-instantiated, last possibility to remove some
-  // memory!
   parametersManager.stopObserve();
-
-  //---do not forget to call parent ------
   return EditControllerEx1::terminate();
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::setComponentState(IBStream *state) {
-  // Here you get the state of the component (Processor part)
   logger.log("PluginController::setComponentState");
   if (!state)
     return kResultFalse;
@@ -77,7 +56,6 @@ tresult PLUGIN_API PluginController::setComponentState(IBStream *state) {
   return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::setState(IBStream *state) {
   // Here you get the state of the controller
 
@@ -92,11 +70,8 @@ tresult PLUGIN_API PluginController::getState(IBStream *state) {
   return kResultTrue;
 }
 
-//------------------------------------------------------------------------
 IPlugView *PLUGIN_API PluginController::createView(FIDString name) {
-  // Here the Host wants to open your editor (if you have one)
   if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
-    // create your editor here and return a IPlugView ptr of it
     auto editorPageUrl = synthInstance->getEditorPageUrl();
     return createWebViewEditorView(this, &parametersManager, &eventHub,
                                    editorPageUrl);
@@ -104,7 +79,6 @@ IPlugView *PLUGIN_API PluginController::createView(FIDString name) {
   return nullptr;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::setParamNormalized(Vst::ParamID tag,
                                                         Vst::ParamValue value) {
   // logger.log("Project1Controller::setParamNormalized: %d, %f", tag, value);
@@ -113,7 +87,6 @@ tresult PLUGIN_API PluginController::setParamNormalized(Vst::ParamID tag,
   return result;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::getParamStringByValue(
     Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string) {
   // called by host to get a string for given normalized value of a specific
@@ -121,7 +94,6 @@ tresult PLUGIN_API PluginController::getParamStringByValue(
   return EditControllerEx1::getParamStringByValue(tag, valueNormalized, string);
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::getParamValueByString(
     Vst::ParamID tag, Vst::TChar *string, Vst::ParamValue &valueNormalized) {
   // called by host to get a normalized value from a string representation of a
@@ -139,5 +111,4 @@ tresult PLUGIN_API PluginController::notify(Vst::IMessage *message) {
   }
 }
 
-//------------------------------------------------------------------------
 } // namespace vst3wf

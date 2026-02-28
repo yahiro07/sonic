@@ -22,37 +22,23 @@
 namespace vst3wf {
 using namespace Steinberg;
 
-//------------------------------------------------------------------------
-// PluginProcessor
-//------------------------------------------------------------------------
 PluginProcessor::PluginProcessor() : processorSideMessagingBridge(*this) {
-  //--- set the wanted controller for our processor
   setControllerClass(gPluginFactoryGlobalHolder.controllerCID);
   synthInstance = gPluginFactoryGlobalHolder.synthInstantiateFn();
 }
 
-//------------------------------------------------------------------------
 PluginProcessor::~PluginProcessor() { delete synthInstance; }
 
 float randF() { return (float)rand() / (float)RAND_MAX; }
-
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
-  // Here the Plug-in will be instantiated
   printf("PluginProcessor::initialize\n");
-
-  //---always initialize the parent-------
   tresult result = AudioEffect::initialize(context);
-  // if everything Ok, continue
   if (result != kResultOk) {
     return result;
   }
-
-  //--- create Audio IO ------
   addAudioInput(STR16("Stereo In"), Steinberg::Vst::SpeakerArr::kStereo);
   addAudioOutput(STR16("Stereo Out"), Steinberg::Vst::SpeakerArr::kStereo);
 
-  /* If you don't need an event bus, you can remove the next line */
   addEventInput(STR16("Event In"), 1);
 
   getAudioOutput(0)->setFlags(Vst::BusInfo::kDefaultActive);
@@ -68,23 +54,15 @@ tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
   return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginProcessor::terminate() {
-  // Here the Plug-in will be de-instantiated, last possibility to remove some
-  // memory!
-
-  //---do not forget to call parent ------
   return AudioEffect::terminate();
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginProcessor::setActive(TBool state) {
   printf("PluginProcessor::setActive %d\n", state);
-  //--- called when the Plug-in is enable/disable (On/Off) -----
   return AudioEffect::setActive(state);
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
   //--- Read inputs parameter changes-----------
   if (data.inputParameterChanges) {
@@ -140,12 +118,7 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
     }
   }
 
-  //--- Process Audio---------------------
-  //--- ----------------------------------
-  if (
-      // data.numInputs == 0 ||
-      data.numOutputs == 0) {
-    // nothing to do
+  if (data.numOutputs == 0) {
     return kResultOk;
   }
 
@@ -175,18 +148,14 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
   return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 PluginProcessor::setupProcessing(Vst::ProcessSetup &newSetup) {
   printf("setupProcessing sampleRate: %f, maxSamplesPerBlock: %d\n",
          newSetup.sampleRate, newSetup.maxSamplesPerBlock);
   synthInstance->prepare(newSetup.sampleRate, newSetup.maxSamplesPerBlock);
-
-  //--- called before any processing ----
   return AudioEffect::setupProcessing(newSetup);
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 PluginProcessor::canProcessSampleSize(int32 symbolicSampleSize) {
   // by default kSample32 is supported
@@ -200,15 +169,11 @@ PluginProcessor::canProcessSampleSize(int32 symbolicSampleSize) {
   return kResultFalse;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginProcessor::getState(IBStream *state) {
-  // here we need to save the model (preset or project)
-
   logger.log("PluginProcessor::getState");
   if (!state)
     return kResultFalse;
 
-  // Version for *parameter schema* (migration target).
   constexpr int kParametersVersion = 1;
   ProcessorState processorState{};
   processorState.parametersVersion = kParametersVersion;
@@ -224,10 +189,7 @@ tresult PLUGIN_API PluginProcessor::getState(IBStream *state) {
   return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API PluginProcessor::setState(IBStream *state) {
-  // called when we load a preset or project, the model has to be reloaded
-  logger.log("PluginProcessor::setState");
   if (!state)
     return kResultFalse;
 
@@ -278,5 +240,4 @@ tresult PLUGIN_API PluginProcessor::notify(Vst::IMessage *message) {
   return kResultOk;
 }
 
-//------------------------------------------------------------------------
 } // namespace vst3wf
