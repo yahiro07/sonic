@@ -68,7 +68,22 @@ smtg_target_configure_version_file(Project1)
 #     FetchContent_MakeAvailable(vst3wf)
 # endif()
 
-add_subdirectory("sonic")
+# add_subdirectory("sonic")
+
+
+
+if(USE_LOCAL_SONIC)
+    add_subdirectory("sonic")
+else()
+    FetchContent_Declare(
+        sonic
+        GIT_REPOSITORY https://github.com/yahiro07/sonic.git
+        GIT_TAG main
+        GIT_SHALLOW TRUE
+        SOURCE_SUBDIR  templates/vst-simple/sonic
+    )
+    FetchContent_MakeAvailable(sonic)
+endif()
 
 target_link_libraries(Project1
     PRIVATE
