@@ -1,0 +1,4 @@
+CompileFlags:
+  Add:
+    - -DDEVELOPMENT=1
+    - -D_DEBUG=1
