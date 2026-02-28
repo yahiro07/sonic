@@ -41,33 +41,35 @@ smtg_target_configure_version_file(Project1)
 # vst3wf dependency
 # - Default: fetch from upstream repository (works for generated project copies that do not include libs/vst3wf).
 # - For developing vst3wf itself: configure with -USE_LOCAL_VST3WF=ON
-option(USE_LOCAL_VST3WF "Use local vst3wf sources instead of fetching" OFF)
-set(VST3WF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/vst3wf" CACHE PATH "Path to local vst3wf (used when PROJECT1_USE_LOCAL_VST3WF=ON)")
+# option(USE_LOCAL_VST3WF "Use local vst3wf sources instead of fetching" OFF)
+# set(VST3WF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/vst3wf" CACHE PATH "Path to local vst3wf (used when PROJECT1_USE_LOCAL_VST3WF=ON)")
 
-if(USE_LOCAL_VST3WF)
-    if(NOT EXISTS "${VST3WF_SOURCE_DIR}/CMakeLists.txt")
-        message(FATAL_ERROR "USE_LOCAL_VST3WF=ON but VST3WF_SOURCE_DIR is invalid: ${VST3WF_SOURCE_DIR}")
-    endif()
-    add_subdirectory("${VST3WF_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/vst3wf-local")
-else()
-    include(FetchContent)
+# if(USE_LOCAL_VST3WF)
+#     if(NOT EXISTS "${VST3WF_SOURCE_DIR}/CMakeLists.txt")
+#         message(FATAL_ERROR "USE_LOCAL_VST3WF=ON but VST3WF_SOURCE_DIR is invalid: ${VST3WF_SOURCE_DIR}")
+#     endif()
+#     add_subdirectory("${VST3WF_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/vst3wf-local")
+# else()
+#     include(FetchContent)
 
-    set(VST3WF_GIT_REPOSITORY "https://github.com/yahiro07/sonic.git" CACHE STRING "vst3wf upstream repository")
-    set(VST3WF_GIT_TAG "main" CACHE STRING "vst3wf git tag/branch/commit")
+#     set(VST3WF_GIT_REPOSITORY "https://github.com/yahiro07/sonic.git" CACHE STRING "vst3wf upstream repository")
+#     set(VST3WF_GIT_TAG "main" CACHE STRING "vst3wf git tag/branch/commit")
 
-    FetchContent_Declare(
-        vst3wf
-        GIT_REPOSITORY ${VST3WF_GIT_REPOSITORY}
-        GIT_TAG        ${VST3WF_GIT_TAG}
-        GIT_SHALLOW    TRUE
-        SOURCE_SUBDIR  templates/vst-simple/libs/vst3wf
-    )
-    FetchContent_MakeAvailable(vst3wf)
-endif()
+#     FetchContent_Declare(
+#         vst3wf
+#         GIT_REPOSITORY ${VST3WF_GIT_REPOSITORY}
+#         GIT_TAG        ${VST3WF_GIT_TAG}
+#         GIT_SHALLOW    TRUE
+#         SOURCE_SUBDIR  templates/vst-simple/libs/vst3wf
+#     )
+#     FetchContent_MakeAvailable(vst3wf)
+# endif()
+
+add_subdirectory("sonic")
 
 target_link_libraries(Project1
     PRIVATE
-        vst3wf
+        sonic
 )
 
 

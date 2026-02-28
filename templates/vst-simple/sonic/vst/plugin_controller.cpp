@@ -1,9 +1,9 @@
 #include "./plugin_controller.h"
+#include "../logic/parameter_builder_impl.h"
+#include "../logic/parameter_item_helper.h"
 #include "../modules/processor_state_helper.h"
+#include "../modules/webview_editor_view.h"
 #include "pluginterfaces/base/funknown.h"
-#include "vst3wf/logic/parameter_builder_impl.h"
-#include "vst3wf/logic/parameter_item_helper.h"
-#include "vst3wf/modules/webview_editor_view.h"
 #include <base/source/fstreamer.h>
 #include <glaze/glaze.hpp>
 #include <pluginterfaces/base/ibstream.h>

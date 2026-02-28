@@ -1,10 +1,10 @@
 #pragma once
 
-#include "vst3wf/general/logger.h"
-#include "vst3wf/modules/event_hub.h"
-#include "vst3wf/modules/parameters_manager.h"
-#include "vst3wf/synthesizer_base.h"
-#include "vst3wf/vst_entry/vst_entry_wrapper.h"
+#include "../general/logger.h"
+#include "../modules/event_hub.h"
+#include "../modules/parameters_manager.h"
+#include "../synthesizer_base.h"
+#include "../vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
 namespace vst3wf_plugin {

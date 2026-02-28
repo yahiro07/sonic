@@ -1,4 +1,4 @@
-add_library(vst3wf STATIC
+add_library(sonic STATIC
   general/logger.cpp 
   logic/parameter_builder_impl.cpp
   logic/parameter_definitions_provider.cpp
@@ -11,17 +11,17 @@ add_library(vst3wf STATIC
   vst_entry/vst_entry_wrapper.cpp
 )
 
-target_link_libraries(vst3wf PUBLIC sdk)
+target_link_libraries(sonic PUBLIC sdk)
 
 # Allow consumers to include headers as: #include "vst3wf/..."
-target_include_directories(vst3wf
+target_include_directories(sonic
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-set_target_properties(vst3wf PROPERTIES
+set_target_properties(sonic PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )
@@ -36,15 +36,15 @@ if (NOT TARGET glaze::glaze)
   )
   FetchContent_MakeAvailable(glaze)
 endif()
-target_link_libraries(vst3wf PRIVATE glaze::glaze)
+target_link_libraries(sonic PRIVATE glaze::glaze)
 
 
 if(SMTG_MAC)
   set_source_files_properties(general/mac_web_view.mm PROPERTIES LANGUAGE CXX)
 
-  target_sources(vst3wf PRIVATE general/mac_web_view.mm)
+  target_sources(sonic PRIVATE general/mac_web_view.mm)
 
-    target_link_libraries(vst3wf PRIVATE
+    target_link_libraries(sonic PRIVATE
         "-framework Cocoa"
     "-framework WebKit"
     )

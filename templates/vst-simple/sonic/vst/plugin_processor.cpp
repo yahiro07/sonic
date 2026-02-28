@@ -1,12 +1,12 @@
 #include "./plugin_processor.h"
+#include "../general/logger.h"
+#include "../logic/parameter_builder_impl.h"
+#include "../logic/parameter_item_helper.h"
 #include "../modules/processor_state_helper.h"
+#include "../vst_entry/vst_entry_wrapper.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/base/ibstream.h"
 #include "pluginterfaces/vst/ivstevents.h"
-#include "vst3wf/general/logger.h"
-#include "vst3wf/logic/parameter_builder_impl.h"
-#include "vst3wf/logic/parameter_item_helper.h"
-#include "vst3wf/vst_entry/vst_entry_wrapper.h"
 #include <base/source/fstreamer.h>
 #include <cstring>
 #include <glaze/glaze.hpp>

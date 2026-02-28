@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vst3wf/synthesizer_base.h"
+#include "sonic/synthesizer_base.h"
 
 enum OscWaveType {
   Saw = 0,

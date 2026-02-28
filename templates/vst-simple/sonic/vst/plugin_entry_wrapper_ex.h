@@ -1,7 +1,7 @@
 
+#include "../vst_entry/vst_entry_wrapper.h"
 #include "./plugin_controller.h"
 #include "./plugin_processor.h"
-#include "vst3wf/vst_entry/vst_entry_wrapper.h"
 
 namespace vst3wf_plugin {
 
