@@ -1,7 +1,0 @@
-{
-  "name": "sonic-framework",
-  "type": "module",
-  "bin": {
-    "sonic": "./bin/sonic.js"
-  }
-}
