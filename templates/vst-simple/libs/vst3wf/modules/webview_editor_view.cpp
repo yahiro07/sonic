@@ -14,6 +14,12 @@ using namespace Steinberg;
 
 // messages from ui
 
+struct RxMsgLog {
+  std::string type = "log";
+  double timestamp;
+  std::string logKind;
+  std::string message;
+};
 struct RxMsgUiLoaded {
   std::string type = "uiLoaded";
 };
@@ -45,8 +51,9 @@ struct RxMsgNoteOffRequest {
 };
 
 using RxMessageVariant =
-    std::variant<RxMsgUiLoaded, RxMsgBeginEdit, RxMsgPerformEdit, RxMsgEndEdit,
-                 RxMsgInstantEdit, RxMsgNoteOnRequest, RxMsgNoteOffRequest>;
+    std::variant<RxMsgLog, RxMsgUiLoaded, RxMsgBeginEdit, RxMsgPerformEdit,
+                 RxMsgEndEdit, RxMsgInstantEdit, RxMsgNoteOnRequest,
+                 RxMsgNoteOffRequest>;
 
 } // namespace vst3wf
 
@@ -54,8 +61,8 @@ namespace glz {
 template <> struct meta<vst3wf::RxMessageVariant> {
   static constexpr std::string_view tag = "type";
   static constexpr auto ids = std::array{
-      "uiLoaded",    "beginEdit",     "performEdit",    "endEdit",
-      "instantEdit", "noteOnRequest", "noteOffRequest",
+      "log",     "uiLoaded",    "beginEdit",     "performEdit",
+      "endEdit", "instantEdit", "noteOnRequest", "noteOffRequest",
   };
 };
 } // namespace glz
@@ -114,7 +121,10 @@ public:
       auto ec = glz::read_json<RxMessageVariant>(rxMessage, jsonStr);
       if (ec)
         return;
-      if (auto *m = std::get_if<RxMsgUiLoaded>(&rxMessage)) {
+      if (auto *m = std::get_if<RxMsgLog>(&rxMessage)) {
+        logger.forwardUiLog(m->logKind.c_str(), m->timestamp,
+                            m->message.c_str());
+      } else if (auto *m = std::get_if<RxMsgUiLoaded>(&rxMessage)) {
         logger.log("ui loaded");
         auto parameters = std::map<std::string, double>();
         this->parametersManager->getAllParameterValues(parameters);

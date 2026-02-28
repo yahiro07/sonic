@@ -128,7 +128,8 @@ public:
       while (running.load(std::memory_order_relaxed)) {
         Message msg;
         if (queue.pop(msg)) {
-          logRaw(msg.logKind, msg.timestamp, msg.data);
+          auto logKindStr = logKindToString(msg.logKind);
+          logRaw(logKindStr.c_str(), "ext", msg.timestamp, msg.data);
         } else {
           std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
@@ -143,11 +144,12 @@ public:
     close(sock);
   }
 
-  void logRaw(LogKind logKind, double timestamp, const char *message) {
+  void logRaw(const char *logKind, const char *subsystem, double timestamp,
+              const char *message) {
     auto item = UdpLoggerLogItem{
         .timestamp = timestamp,
-        .subsystem = "ext",
-        .logKind = logKindToString(logKind),
+        .subsystem = subsystem,
+        .logKind = logKind,
         .message = message,
     };
 
@@ -217,7 +219,12 @@ void Logger::error(const char *fmt, ...) {
 }
 
 void Logger::directLogNonRT(const char *message) {
-  impl->logRaw(LogKind::Log, getSystemTimestamp(), message);
+  impl->logRaw("log", "ext", getSystemTimestamp(), message);
+}
+
+void Logger::forwardUiLog(const char *logKind, double timestamp,
+                          const char *message) {
+  impl->logRaw(logKind, "ui", timestamp, message);
 }
 
 #else
