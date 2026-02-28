@@ -90,7 +90,14 @@ target_link_libraries(Project1
         sonic
 )
 
+#----------------
+#build frontend
 
+execute_process(
+    COMMAND npm install
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/frontend"
+    RESULT_VARIABLE NODE_BUILD_RESULT
+)
 
 execute_process(
     COMMAND npm run build
