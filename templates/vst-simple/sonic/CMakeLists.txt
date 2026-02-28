@@ -14,7 +14,7 @@ add_library(sonic STATIC
 
 target_link_libraries(sonic PUBLIC sdk)
 
-# Allow consumers to include headers as: #include "vst3wf/..."
+# Allow consumers to include headers as: #include "sonic/..."
 target_include_directories(sonic
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..
