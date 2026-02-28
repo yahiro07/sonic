@@ -28,6 +28,16 @@ target_link_libraries(Project1
 
 
 
+execute_process(
+    COMMAND npm run build
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/frontend"
+    RESULT_VARIABLE NODE_BUILD_RESULT
+)
+
+if(NOT NODE_BUILD_RESULT EQUAL 0)
+    message(FATAL_ERROR "frontend project build failed with exit code ${NODE_BUILD_RESULT}")
+endif()
+
 
 # Keep web resources in sync with the built plug-in bundle.
 # This registers every file under resource/www (recursively) as a plug-in resource

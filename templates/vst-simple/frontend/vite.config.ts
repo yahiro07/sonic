@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [tailwindcss(), react(), tsconfigPaths()],
   build: {
     outDir: "../resource/www",
+    emptyOutDir: true,
   },
   server: {
     port: 3000,
