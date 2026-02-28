@@ -7,25 +7,46 @@ import { templateEntries } from "./template-entries";
 
 type InputCommand =
   | { type: "create" }
-  | { type: "createIncompatibleArgs" }
   | { type: "help" }
-  | { type: "version" };
+  | { type: "version" }
+  | { type: "cancelled" };
 
-function parseArgs(args: string[]): InputCommand | undefined {
-  if (args[0] === "create") {
+async function chooseOperation(): Promise<InputCommand> {
+  const operation = await clackPrompts.select({
+    message: "Select an operation",
+    options: [
+      { value: "create", hint: "Create a new project" },
+      { value: "help", hint: "Show help" },
+      { value: "version", hint: "Show version" },
+      { value: "cancelled", label: "cancel", hint: "Cancel operation" },
+    ],
+  });
+  if (clackPrompts.isCancel(operation)) {
+    return { type: "cancelled" };
+  }
+  return { type: operation };
+}
+
+async function parseArgs(args: string[]): Promise<InputCommand | undefined> {
+  const len = args.length;
+  const firstArg = args[0];
+  if (len === 0) {
+    return await chooseOperation();
+  } else if (len === 1 && firstArg === "create") {
     return { type: "create" };
-  } else if (args[0] === "--version") {
+  } else if (len == 1 && (firstArg === "version" || firstArg === "--version")) {
     return { type: "version" };
-  } else if (args[0] === "--help") {
+  } else if (len == 1 && (firstArg === "help" || firstArg === "--help")) {
     return { type: "help" };
   }
   return undefined;
 }
 
-function handleInputCommand(inputCommand: InputCommand | undefined) {
+async function handleInputCommand(inputCommand: InputCommand | undefined) {
   if (!inputCommand) {
     console.log("incompatible command.");
-    console.log("command should be one of:");
+    console.log("invocation should be one of:");
+    console.log("sonic");
     console.log("sonic create");
     console.log("sonic --version");
     console.log("sonic --help");
@@ -33,14 +54,14 @@ function handleInputCommand(inputCommand: InputCommand | undefined) {
     console.log("sonic cli version 0.0.0-in-development");
   } else if (inputCommand.type === "help") {
     console.log("supported commands:");
+    console.log("sonic");
     console.log("sonic create");
     console.log("sonic --version");
     console.log("sonic --help");
-  } else if (inputCommand.type === "createIncompatibleArgs") {
-    console.log("incompatible arguments");
-    console.log("please use: sonic create");
   } else if (inputCommand.type === "create") {
-    createProject();
+    await createProject();
+  } else if (inputCommand.type === "cancelled") {
+    console.log("operation cancelled.");
   }
 }
 
@@ -114,11 +135,11 @@ async function createProject() {
   }
 }
 
-function run() {
+async function run() {
   console.log("Sonic Framework CLI");
   const args = process.argv.slice(2);
-  const inputCommand = parseArgs(args);
-  handleInputCommand(inputCommand);
+  const inputCommand = await parseArgs(args);
+  await handleInputCommand(inputCommand);
 }
 
 run();

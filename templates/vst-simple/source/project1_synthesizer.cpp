@@ -18,7 +18,7 @@ void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addUnary(kOscVolume, "oscVolume", "OSC Volume", 0.8);
 }
 
-void Project1Synthesizer::setParameter(uint32_t address, double value) {
+void Project1Synthesizer::setParameter(uint64_t address, double value) {
   if (address == kOscEnabled) {
     oscEnabled = value;
   } else if (address == kOscWave) {
@@ -80,10 +80,11 @@ void Project1Synthesizer::process(float *bufferL, float *bufferR,
 
 std::string Project1Synthesizer::getEditorPageUrl() {
   if (0) {
-    return "http://localhost:3000?debug=1&dlog=1";
+    return "http://localhost:3000?debug=1";
   } else {
+    return "app://local/index.html?debug=1";
     // app://local is mapped to the resources/www directory
-    return "app://local/index.html";
+    // return "app://local/index.html";
   }
 }
 

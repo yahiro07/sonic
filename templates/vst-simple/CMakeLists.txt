@@ -6,7 +6,26 @@ project(Project1
     DESCRIPTION "Project1 VST 3 Plug-in"
 )
 
-add_subdirectory(external)
+if(APPLE)
+    enable_language(OBJCXX)
+endif()
+
+include(FetchContent)
+
+option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
+option(SMTG_ENABLE_VST3_HOSTING_EXAMPLES "Enable VST 3 Hosting Examples" OFF)
+
+if(SMTG_VST3_LOCATION_DIR)
+    add_subdirectory(${SMTG_VST3_LOCATION_DIR} ${PROJECT_BINARY_DIR}/vst3sdk_build)
+else()
+    FetchContent_Declare(
+        vst3sdk
+        GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk.git
+        GIT_TAG v3.7.14_build_55
+    )
+    FetchContent_MakeAvailable(vst3sdk)
+endif()
+
 
 smtg_enable_vst3_sdk()
 
@@ -14,16 +33,46 @@ smtg_add_vst3plugin(Project1
     source/version.h
     source/plugin_factory.cpp
     source/project1_synthesizer.cpp
+    #--
+    # source/vst_basis/plugin_processor.cpp
+    # source/vst_basis/plugin_controller.cpp
 )
 
 smtg_target_configure_version_file(Project1)
 
 
-add_subdirectory(libs/vst3wf)
+# vst3wf dependency
+# - Default: fetch from upstream repository (works for generated project copies that do not include libs/vst3wf).
+# - For developing vst3wf itself: configure with -USE_LOCAL_VST3WF=ON
+# option(USE_LOCAL_VST3WF "Use local vst3wf sources instead of fetching" OFF)
+# set(VST3WF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/vst3wf" CACHE PATH "Path to local vst3wf (used when PROJECT1_USE_LOCAL_VST3WF=ON)")
+
+# if(USE_LOCAL_VST3WF)
+#     if(NOT EXISTS "${VST3WF_SOURCE_DIR}/CMakeLists.txt")
+#         message(FATAL_ERROR "USE_LOCAL_VST3WF=ON but VST3WF_SOURCE_DIR is invalid: ${VST3WF_SOURCE_DIR}")
+#     endif()
+#     add_subdirectory("${VST3WF_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/vst3wf-local")
+# else()
+#     include(FetchContent)
+
+#     set(VST3WF_GIT_REPOSITORY "https://github.com/yahiro07/sonic.git" CACHE STRING "vst3wf upstream repository")
+#     set(VST3WF_GIT_TAG "main" CACHE STRING "vst3wf git tag/branch/commit")
+
+#     FetchContent_Declare(
+#         vst3wf
+#         GIT_REPOSITORY ${VST3WF_GIT_REPOSITORY}
+#         GIT_TAG        ${VST3WF_GIT_TAG}
+#         GIT_SHALLOW    TRUE
+#         SOURCE_SUBDIR  templates/vst-simple/libs/vst3wf
+#     )
+#     FetchContent_MakeAvailable(vst3wf)
+# endif()
+
+add_subdirectory("sonic")
 
 target_link_libraries(Project1
     PRIVATE
-        vst3wf
+        sonic
 )
 
 
@@ -42,14 +91,14 @@ endif()
 # Keep web resources in sync with the built plug-in bundle.
 # This registers every file under resource/www (recursively) as a plug-in resource
 # and preserves the folder layout under <Bundle>/Contents/Resources/www/...
-set(PROJECT1_WWW_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/resource/www")
-file(GLOB_RECURSE PROJECT1_WWW_FILES CONFIGURE_DEPENDS "${PROJECT1_WWW_ROOT}/*")
-foreach(_www_file IN LISTS PROJECT1_WWW_FILES)
+set(PLUGIN_WWW_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/resource/www")
+file(GLOB_RECURSE PLUGIN_WWW_FILES CONFIGURE_DEPENDS "${PLUGIN_WWW_ROOT}/*")
+foreach(_www_file IN LISTS PLUGIN_WWW_FILES)
     if(IS_DIRECTORY "${_www_file}")
         continue()
     endif()
 
-    file(RELATIVE_PATH _www_relpath "${PROJECT1_WWW_ROOT}" "${_www_file}")
+    file(RELATIVE_PATH _www_relpath "${PLUGIN_WWW_ROOT}" "${_www_file}")
     get_filename_component(_www_reldir "${_www_relpath}" DIRECTORY)
 
     if(_www_reldir STREQUAL "")

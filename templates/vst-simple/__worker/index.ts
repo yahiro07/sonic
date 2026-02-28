@@ -11,14 +11,14 @@ import {
 function createTemplateWorker(): TemplateWorker {
   return {
     async createProject(projectName, templateName) {
-      console.log("vst-simple worker 1050");
+      console.log("vst-simple worker");
       workerHelper_copyProjectContents_withWhiteList(
         projectName,
         templateName,
         [
           "external",
           "frontend",
-          "libs",
+          // "libs",  //skip copying, it's downloaded from github with FetchContent
           "resource",
           "source",
           ".gitignore",
@@ -70,6 +70,10 @@ function createTemplateWorker(): TemplateWorker {
             from: "project1_synthesizer.cpp",
             to: `${projectNameSnake}_synthesizer.cpp`,
           },
+          {
+            from: "Project1",
+            to: projectNameCapital,
+          }
         ],
       });
 
