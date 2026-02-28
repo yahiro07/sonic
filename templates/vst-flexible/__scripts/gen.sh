@@ -1,0 +1,1 @@
+npx tsx forge-from-vst-simple.ts
