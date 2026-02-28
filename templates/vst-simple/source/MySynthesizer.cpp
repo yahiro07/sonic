@@ -39,7 +39,11 @@ void MySynthesizer::noteOn(int32_t noteNumber, double _velocity) {
   this->gateOn = true;
 }
 
-void MySynthesizer::noteOff(int32_t _noteNumber) { this->gateOn = false; }
+void MySynthesizer::noteOff(int32_t noteNumber) {
+  if (noteNumber == this->noteNumber) {
+    this->gateOn = false;
+  }
+}
 
 void MySynthesizer::process(float *bufferL, float *bufferR, int32_t frames) {
   if (sampleRate <= 0.0f)

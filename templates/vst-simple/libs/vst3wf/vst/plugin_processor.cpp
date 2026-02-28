@@ -255,10 +255,14 @@ tresult PLUGIN_API PluginProcessor::notify(Vst::IMessage *message) {
   }
 
   if (wm->type == vst3wf::WrappedMessageType::noteOnRequestFromEditor) {
-    synthInstance->noteOn(wm->noteOnRequestFromEditor.noteNumber,
-                          wm->noteOnRequestFromEditor.velocity);
+    auto noteNumber = wm->noteOnRequestFromEditor.noteNumber;
+    auto velocity = wm->noteOnRequestFromEditor.velocity;
+    synthInstance->noteOn(noteNumber, velocity);
+    processorSideMessagingBridge.sendHostNoteOn(noteNumber, velocity);
   } else if (wm->type == vst3wf::WrappedMessageType::noteOffRequestFromEditor) {
-    synthInstance->noteOff(wm->noteOffRequestFromEditor.noteNumber);
+    auto noteNumber = wm->noteOffRequestFromEditor.noteNumber;
+    synthInstance->noteOff(noteNumber);
+    processorSideMessagingBridge.sendHostNoteOff(noteNumber);
   } else if (wm->type == vst3wf::WrappedMessageType::pullProcessorSideEvents) {
     Amx::RealtimeHostEvent e;
     int count = 0;
