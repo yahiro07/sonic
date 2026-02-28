@@ -14,39 +14,53 @@ using namespace Steinberg;
 
 // messages from ui
 
-struct MsgUiLoaded {
+struct RxMsgUiLoaded {
   std::string type = "uiLoaded";
 };
-struct MsgBeginEdit {
+struct RxMsgBeginEdit {
   std::string type = "beginEdit";
   std::string paramKey;
 };
-struct MsgPerformEdit {
+struct RxMsgPerformEdit {
   std::string type = "performEdit";
   std::string paramKey;
   double value;
 };
-struct MsgEndEdit {
+struct RxMsgEndEdit {
   std::string type = "endEdit";
   std::string paramKey;
 };
-struct MsgInstantEdit {
+struct RxMsgInstantEdit {
   std::string type = "instantEdit";
   std::string paramKey;
   double value;
 };
-struct MsgNoteOnRequest {
+struct RxMsgNoteOnRequest {
   std::string type = "noteOnRequest";
   int noteNumber;
 };
-struct MsgNoteOffRequest {
+struct RxMsgNoteOffRequest {
   std::string type = "noteOffRequest";
   int noteNumber;
 };
 
-using MessageFromUI =
-    std::variant<MsgUiLoaded, MsgBeginEdit, MsgPerformEdit, MsgEndEdit,
-                 MsgInstantEdit, MsgNoteOnRequest, MsgNoteOffRequest>;
+using RxMessageVariant =
+    std::variant<RxMsgUiLoaded, RxMsgBeginEdit, RxMsgPerformEdit, RxMsgEndEdit,
+                 RxMsgInstantEdit, RxMsgNoteOnRequest, RxMsgNoteOffRequest>;
+
+} // namespace vst3wf
+
+namespace glz {
+template <> struct meta<vst3wf::RxMessageVariant> {
+  static constexpr std::string_view tag = "type";
+  static constexpr auto ids = std::array{
+      "uiLoaded",    "beginEdit",     "performEdit",    "endEdit",
+      "instantEdit", "noteOnRequest", "noteOffRequest",
+  };
+};
+} // namespace glz
+
+namespace vst3wf {
 
 // messages from app
 
@@ -67,84 +81,6 @@ struct MsgHostNoteOn {
 struct MsgHostNoteOff {
   std::string type = "hostNoteOff";
   int noteNumber;
-};
-
-// Used only for discriminating MessageFromUI by `type`.
-struct MsgTypeHeader {
-  std::string type;
-};
-
-static std::optional<MessageFromUI>
-mapMessageFromUI_fromString(const std::string &jsonStr) {
-  // NOTE: glz deserializing directly into a std::variant chooses the first
-  // alternative that matches the JSON shape. MsgNoteOnRequest and
-  // MsgNoteOffRequest have identical fields, so we must discriminate by `type`.
-  MsgTypeHeader header;
-  // Header decode must allow unknown keys because real messages include more
-  // fields than just `type`.
-  {
-    glz::context ctx{};
-    if (auto ec = glz::read<glz::opts{.error_on_unknown_keys = false}>(
-            header, jsonStr, ctx);
-        ec) {
-      return std::nullopt;
-    }
-  }
-
-  auto decode = [&](auto &out) -> bool {
-    if (auto ec = glz::read_json(out, jsonStr); ec) {
-      logger.log("messageFromUI_fromJson(%s): %s", header.type.c_str(),
-                 glz::format_error(ec, jsonStr).c_str());
-      return false;
-    }
-    return true;
-  };
-
-  if (header.type == "uiLoaded") {
-    MsgUiLoaded msg;
-    if (!decode(msg))
-      return std::nullopt;
-    return msg;
-  }
-  if (header.type == "beginEdit") {
-    MsgBeginEdit msg;
-    if (!decode(msg))
-      return std::nullopt;
-    return msg;
-  }
-  if (header.type == "performEdit") {
-    MsgPerformEdit msg;
-    if (!decode(msg))
-      return std::nullopt;
-    return msg;
-  }
-  if (header.type == "endEdit") {
-    MsgEndEdit msg;
-    if (!decode(msg))
-      return std::nullopt;
-    return msg;
-  }
-  if (header.type == "instantEdit") {
-    MsgInstantEdit msg;
-    if (!decode(msg))
-      return std::nullopt;
-    return msg;
-  }
-  if (header.type == "noteOnRequest") {
-    MsgNoteOnRequest msg;
-    if (!decode(msg))
-      return std::nullopt;
-    return msg;
-  }
-  if (header.type == "noteOffRequest") {
-    MsgNoteOffRequest msg;
-    if (!decode(msg))
-      return std::nullopt;
-    return msg;
-  }
-
-  logger.log("messageFromUI_fromJson: unknown type '%s'", header.type.c_str());
-  return std::nullopt;
 };
 
 template <typename T>
@@ -174,43 +110,44 @@ public:
     webView->setMessageReceiver([this](const std::string &jsonStr) {
       logger.log("message received: %s", jsonStr.c_str());
 
-      auto msg = mapMessageFromUI_fromString(jsonStr);
-      if (!msg)
+      RxMessageVariant rxMessage;
+      auto ec = glz::read_json<RxMessageVariant>(rxMessage, jsonStr);
+      if (ec)
         return;
-      if (auto *p = std::get_if<MsgUiLoaded>(&*msg)) {
+      if (auto *m = std::get_if<RxMsgUiLoaded>(&rxMessage)) {
         logger.log("ui loaded");
         auto parameters = std::map<std::string, double>();
         this->parametersManager->getAllParameterValues(parameters);
         MsgBulkSendParameters msg{.parameters = parameters};
         sendWebViewJsonMessage(webView, msg);
-      } else if (auto *p = std::get_if<MsgBeginEdit>(&*msg)) {
-        logger.log("begin edit: %s", p->paramKey.c_str());
-        auto paramKey = p->paramKey;
+      } else if (auto *m = std::get_if<RxMsgBeginEdit>(&rxMessage)) {
+        logger.log("begin edit: %s", m->paramKey.c_str());
+        auto paramKey = m->paramKey;
         this->parametersManager->applyParameterEdit(
             paramKey, 0, ParameterEditingState::Begin);
-      } else if (auto *p = std::get_if<MsgPerformEdit>(&*msg)) {
-        logger.log("perform edit: %s, %f", p->paramKey.c_str(), p->value);
-        auto paramKey = p->paramKey;
-        auto value = p->value;
+      } else if (auto *m = std::get_if<RxMsgPerformEdit>(&rxMessage)) {
+        logger.log("perform edit: %s, %f", m->paramKey.c_str(), m->value);
+        auto paramKey = m->paramKey;
+        auto value = m->value;
         this->parametersManager->applyParameterEdit(
             paramKey, value, ParameterEditingState::Perform);
-      } else if (auto *p = std::get_if<MsgEndEdit>(&*msg)) {
-        logger.log("end edit: %s", p->paramKey.c_str());
-        auto paramKey = p->paramKey;
+      } else if (auto *m = std::get_if<RxMsgEndEdit>(&rxMessage)) {
+        logger.log("end edit: %s", m->paramKey.c_str());
+        auto paramKey = m->paramKey;
         this->parametersManager->applyParameterEdit(paramKey, 0,
                                                     ParameterEditingState::End);
-      } else if (auto *p = std::get_if<MsgInstantEdit>(&*msg)) {
-        logger.log("instant edit: %s, %f", p->paramKey.c_str(), p->value);
-        auto paramKey = p->paramKey;
-        auto value = p->value;
+      } else if (auto *m = std::get_if<RxMsgInstantEdit>(&rxMessage)) {
+        logger.log("instant edit: %s, %f", m->paramKey.c_str(), m->value);
+        auto paramKey = m->paramKey;
+        auto value = m->value;
         this->parametersManager->applyParameterEdit(
             paramKey, value, ParameterEditingState::InstantChange);
-      } else if (auto *p = std::get_if<MsgNoteOnRequest>(&*msg)) {
-        logger.log("note on request: %d %s", p->noteNumber, p->type.c_str());
-        this->eventHub->noteOnFromEditor(p->noteNumber, 1.0);
-      } else if (auto *p = std::get_if<MsgNoteOffRequest>(&*msg)) {
-        logger.log("note off request: %d %s", p->noteNumber, p->type.c_str());
-        this->eventHub->noteOffFromEditor(p->noteNumber);
+      } else if (auto *m = std::get_if<RxMsgNoteOnRequest>(&rxMessage)) {
+        logger.log("note on request: %d %s", m->noteNumber, m->type.c_str());
+        this->eventHub->noteOnFromEditor(m->noteNumber, 1.0);
+      } else if (auto *m = std::get_if<RxMsgNoteOffRequest>(&rxMessage)) {
+        logger.log("note off request: %d %s", m->noteNumber, m->type.c_str());
+        this->eventHub->noteOffFromEditor(m->noteNumber);
       }
     });
     parametersManagerSubscriptionId = parametersManager->subscribeFromEditor(
