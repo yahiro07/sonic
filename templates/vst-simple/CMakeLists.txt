@@ -13,7 +13,7 @@ smtg_enable_vst3_sdk()
 smtg_add_vst3plugin(Project1
     source/version.h
     source/plugin_factory.cpp
-    source/MySynthesizer.cpp
+    source/project1_synthesizer.cpp
 )
 
 smtg_target_configure_version_file(Project1)

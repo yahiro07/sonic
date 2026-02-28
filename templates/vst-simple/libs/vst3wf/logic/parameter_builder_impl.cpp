@@ -1,5 +1,4 @@
 #include "./parameter_builder_impl.h"
-#include "../SynthesizerBase.h"
 
 namespace vst3wf {
 

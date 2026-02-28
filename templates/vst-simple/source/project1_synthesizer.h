@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vst3wf/SynthesizerBase.h"
+#include "vst3wf/synthesizer_base.h"
 
 enum OscWaveType {
   Saw = 0,
@@ -9,10 +9,10 @@ enum OscWaveType {
   Sine,
 };
 
-class MySynthesizer : public SynthesizerBase {
+class Project1Synthesizer : public SynthesizerBase {
 public:
-  MySynthesizer();
-  ~MySynthesizer() override = default;
+  Project1Synthesizer();
+  ~Project1Synthesizer() override = default;
 
   void setupParameters(ParameterBuilder &builder) override;
   void setParameter(uint32_t address, double value) override;

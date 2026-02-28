@@ -1,6 +1,4 @@
 #pragma once
-
-#include "../SynthesizerBase.h"
 #include "./parameter_item.h"
 
 namespace vst3wf {

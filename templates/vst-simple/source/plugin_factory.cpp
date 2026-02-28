@@ -1,4 +1,4 @@
-#include "./MySynthesizer.h"
+#include "./project1_synthesizer.h"
 #include "projectversion.h"
 #include "vst3wf/vst_entry/vst_entry_wrapper.h"
 

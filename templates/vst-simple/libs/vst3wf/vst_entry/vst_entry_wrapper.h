@@ -1,7 +1,7 @@
 #pragma once
 
 #include "public.sdk/source/main/pluginfactory.h"
-#include "vst3wf/SynthesizerBase.h"
+#include "vst3wf/synthesizer_base.h"
 
 namespace vst3wf {
 

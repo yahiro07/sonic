@@ -7,8 +7,8 @@
 #include "logic/parameter_item.h"
 #include "logic/realtime_host_event_queue.h"
 #include "modules/event_hub.h"
-#include "vst3wf/SynthesizerBase.h"
 #include "vst3wf/logic/parameter_definitions_provider.h"
+#include "vst3wf/synthesizer_base.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
 
 namespace vst3wf {

@@ -1,16 +1,16 @@
-#include "MySynthesizer.h"
+#include "project1_synthesizer.h"
 #include <cmath>
 
-MySynthesizer::MySynthesizer() {}
+Project1Synthesizer::Project1Synthesizer() {}
 
 enum ParameterAddress {
-  kOscEnabled,
+  kOscEnabled = 0,
   kOscWave,
   kOscPitch,
   kOscVolume,
 };
 
-void MySynthesizer::setupParameters(ParameterBuilder &builder) {
+void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addBool(kOscEnabled, "oscEnabled", "Osc Enabled", true);
   builder.addEnum(kOscWave, "oscWave", "Wave Type", "Saw",
                   {"Saw", "Square", "Triangle", "Sine"});
@@ -18,7 +18,7 @@ void MySynthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addUnary(kOscVolume, "oscVolume", "OSC Volume", 0.8);
 }
 
-void MySynthesizer::setParameter(uint32_t address, double value) {
+void Project1Synthesizer::setParameter(uint32_t address, double value) {
   if (address == kOscEnabled) {
     oscEnabled = value;
   } else if (address == kOscWave) {
@@ -30,22 +30,23 @@ void MySynthesizer::setParameter(uint32_t address, double value) {
   }
 }
 
-void MySynthesizer::prepare(double sampleRate, int32_t _maxFrameCount) {
+void Project1Synthesizer::prepare(double sampleRate, int32_t _maxFrameCount) {
   this->sampleRate = sampleRate;
 }
 
-void MySynthesizer::noteOn(int32_t noteNumber, double _velocity) {
+void Project1Synthesizer::noteOn(int32_t noteNumber, double _velocity) {
   this->noteNumber = noteNumber;
   this->gateOn = true;
 }
 
-void MySynthesizer::noteOff(int32_t noteNumber) {
+void Project1Synthesizer::noteOff(int32_t noteNumber) {
   if (noteNumber == this->noteNumber) {
     this->gateOn = false;
   }
 }
 
-void MySynthesizer::process(float *bufferL, float *bufferR, int32_t frames) {
+void Project1Synthesizer::process(float *bufferL, float *bufferR,
+                                  int32_t frames) {
   if (sampleRate <= 0.0f)
     return;
 
@@ -77,7 +78,7 @@ void MySynthesizer::process(float *bufferL, float *bufferR, int32_t frames) {
   memcpy(bufferR, bufferL, sizeof(float) * frames);
 }
 
-std::string MySynthesizer::getEditorPageUrl() {
+std::string Project1Synthesizer::getEditorPageUrl() {
   if (0) {
     return "http://localhost:3000?debug=1&dlog=1";
   } else {
@@ -86,4 +87,6 @@ std::string MySynthesizer::getEditorPageUrl() {
   }
 }
 
-SynthesizerBase *createSynthesizerInstance() { return new MySynthesizer(); }
+SynthesizerBase *createSynthesizerInstance() {
+  return new Project1Synthesizer();
+}
