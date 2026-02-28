@@ -3,7 +3,7 @@
 #include "../SynthesizerBase.h"
 #include "./parameter_item.h"
 
-namespace Amx {
+namespace vst3wf {
 
 class ParameterBuilderImpl : public ParameterBuilder {
 private:
@@ -23,4 +23,4 @@ public:
                Str group, ParameterFlags flags);
 };
 
-} // namespace Amx
+} // namespace vst3wf

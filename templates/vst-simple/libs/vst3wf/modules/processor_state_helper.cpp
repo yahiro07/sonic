@@ -26,20 +26,20 @@ class ProcessorStateReader {
       return false;
 
     if (size < 0 || size > kMaxStateBytes) {
-      vst3wf::logger.error("invalid state size: %d", size);
+      logger.error("invalid state size: %d", size);
       return false;
     }
 
     if (size == 0) {
-      vst3wf::logger.log("empty state (size=0)");
+      logger.log("empty state (size=0)");
       return true;
     }
 
     jsonStr.resize(static_cast<size_t>(size));
     const auto bytesRead = streamer.readRaw(jsonStr.data(), size);
     if (bytesRead != size) {
-      vst3wf::logger.error("failed reading state bytes: %d/%d",
-                           static_cast<int32>(bytesRead), size);
+      logger.error("failed reading state bytes: %d/%d",
+                   static_cast<int32>(bytesRead), size);
       return false;
     }
     return true;
@@ -49,8 +49,8 @@ class ProcessorStateReader {
                                          const std::string &jsonStr) {
     auto ec = glz::read_jsonc(processorState, jsonStr);
     if (ec) {
-      vst3wf::logger.error("error reading json: %s",
-                           glz::format_error(ec, jsonStr).c_str());
+      logger.error("error reading json: %s",
+                   glz::format_error(ec, jsonStr).c_str());
       return false;
     }
     return true;
@@ -63,7 +63,7 @@ public:
     if (!ok) {
       return false;
     }
-    vst3wf::logger.log("jsonStr: %s", jsonStr.c_str());
+    logger.log("jsonStr: %s", jsonStr.c_str());
     //
     return readProcessorStateFromJson(processorState, jsonStr);
   }
@@ -81,9 +81,9 @@ class ProcessorStateWriter {
       const auto bytesWritten =
           streamer.writeRaw(jsonStr.data(), static_cast<int32>(jsonStr.size()));
       if (bytesWritten != static_cast<int32>(jsonStr.size())) {
-        vst3wf::logger.error("failed writing state bytes: %d/%d",
-                             static_cast<int32>(bytesWritten),
-                             static_cast<int32>(jsonStr.size()));
+        logger.error("failed writing state bytes: %d/%d",
+                     static_cast<int32>(bytesWritten),
+                     static_cast<int32>(jsonStr.size()));
         return false;
       }
     }
@@ -94,8 +94,8 @@ class ProcessorStateWriter {
                                         std::string &jsonStr) {
     auto ec = glz::write_jsonc(processorState, jsonStr);
     if (ec) {
-      vst3wf::logger.log("error writing json: %s",
-                         glz::format_error(ec, jsonStr).c_str());
+      logger.log("error writing json: %s",
+                 glz::format_error(ec, jsonStr).c_str());
       return false;
     }
     return true;
@@ -108,7 +108,7 @@ public:
     auto ok = writeProcessorStateToJson(processorState, jsonStr);
     if (!ok)
       return false;
-    vst3wf::logger.log("jsonStr: %s", jsonStr.c_str());
+    logger.log("jsonStr: %s", jsonStr.c_str());
     return writeJsonStringToVstState(state, jsonStr);
   }
 };

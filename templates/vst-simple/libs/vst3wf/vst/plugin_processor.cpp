@@ -27,8 +27,8 @@ using namespace Steinberg;
 //------------------------------------------------------------------------
 PluginProcessor::PluginProcessor() : processorSideMessagingBridge(*this) {
   //--- set the wanted controller for our processor
-  setControllerClass(vst3wf::gPluginFactoryGlobalHolder.controllerCID);
-  synthInstance = vst3wf::gPluginFactoryGlobalHolder.synthInstantiateFn();
+  setControllerClass(gPluginFactoryGlobalHolder.controllerCID);
+  synthInstance = gPluginFactoryGlobalHolder.synthInstantiateFn();
 }
 
 //------------------------------------------------------------------------
@@ -57,7 +57,7 @@ tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
 
   getAudioOutput(0)->setFlags(Vst::BusInfo::kDefaultActive);
 
-  auto parameterBuilder = Amx::ParameterBuilderImpl();
+  auto parameterBuilder = ParameterBuilderImpl();
   synthInstance->setupParameters(parameterBuilder);
   auto parameterItems = parameterBuilder.getItems();
   parameterDefinitionsProvider.addParameters(parameterItems);
@@ -103,8 +103,8 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
           auto paramItem =
               parameterDefinitionsProvider.getParameterItemByAddress(paramId);
           const auto unnormalizedValue =
-              Amx::ParameterItemHelper::getUnnormalized(paramItem, value);
-          // vst3wf::logger.log("parameter %d received in audio thread %f %f",
+              ParameterItemHelper::getUnnormalized(paramItem, value);
+          // logger.log("parameter %d received in audio thread %f %f",
           //                    paramId, value, unnormalizedValue);
           parametersCache[paramId] = unnormalizedValue;
           synthInstance->setParameter(paramId, unnormalizedValue);
@@ -121,17 +121,17 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
       if (eventList->getEvent(i, event) == kResultOk) {
         if (event.type == Vst::Event::kNoteOnEvent) {
           synthInstance->noteOn(event.noteOn.pitch, event.noteOn.velocity);
-          // vst3wf::logger.log("note on %d", event.noteOn.pitch);
+          // logger.log("note on %d", event.noteOn.pitch);
           realtimeHostEventQueue.push({
-              .type = Amx::RealtimeHostEventType::NoteOn,
+              .type = RealtimeHostEventType::NoteOn,
               .data1 = event.noteOn.pitch,
               .data2 = event.noteOn.velocity,
           });
         } else if (event.type == Vst::Event::kNoteOffEvent) {
           synthInstance->noteOff(event.noteOff.pitch);
-          // vst3wf::logger.log("note off %d", event.noteOff.pitch);
+          // logger.log("note off %d", event.noteOff.pitch);
           realtimeHostEventQueue.push({
-              .type = Amx::RealtimeHostEventType::NoteOff,
+              .type = RealtimeHostEventType::NoteOff,
               .data1 = event.noteOff.pitch,
               .data2 = 0,
           });
@@ -204,13 +204,13 @@ PluginProcessor::canProcessSampleSize(int32 symbolicSampleSize) {
 tresult PLUGIN_API PluginProcessor::getState(IBStream *state) {
   // here we need to save the model (preset or project)
 
-  vst3wf::logger.log("PluginProcessor::getState");
+  logger.log("PluginProcessor::getState");
   if (!state)
     return kResultFalse;
 
   // Version for *parameter schema* (migration target).
   constexpr int kParametersVersion = 1;
-  vst3wf::ProcessorState processorState{};
+  ProcessorState processorState{};
   processorState.parametersVersion = kParametersVersion;
   for (auto &kv : parametersCache) {
     auto paramItem =
@@ -227,11 +227,11 @@ tresult PLUGIN_API PluginProcessor::getState(IBStream *state) {
 //------------------------------------------------------------------------
 tresult PLUGIN_API PluginProcessor::setState(IBStream *state) {
   // called when we load a preset or project, the model has to be reloaded
-  vst3wf::logger.log("PluginProcessor::setState");
+  logger.log("PluginProcessor::setState");
   if (!state)
     return kResultFalse;
 
-  vst3wf::ProcessorState processorState;
+  ProcessorState processorState;
   auto ok = processorStateHelper_readState(state, processorState);
   if (!ok) {
     return kResultFalse;
@@ -254,22 +254,22 @@ tresult PLUGIN_API PluginProcessor::notify(Vst::IMessage *message) {
     return AudioEffect::notify(message);
   }
 
-  if (wm->type == vst3wf::WrappedMessageType::noteOnRequestFromEditor) {
+  if (wm->type == WrappedMessageType::noteOnRequestFromEditor) {
     auto noteNumber = wm->noteOnRequestFromEditor.noteNumber;
     auto velocity = wm->noteOnRequestFromEditor.velocity;
     synthInstance->noteOn(noteNumber, velocity);
     processorSideMessagingBridge.sendHostNoteOn(noteNumber, velocity);
-  } else if (wm->type == vst3wf::WrappedMessageType::noteOffRequestFromEditor) {
+  } else if (wm->type == WrappedMessageType::noteOffRequestFromEditor) {
     auto noteNumber = wm->noteOffRequestFromEditor.noteNumber;
     synthInstance->noteOff(noteNumber);
     processorSideMessagingBridge.sendHostNoteOff(noteNumber);
-  } else if (wm->type == vst3wf::WrappedMessageType::pullProcessorSideEvents) {
-    Amx::RealtimeHostEvent e;
+  } else if (wm->type == WrappedMessageType::pullProcessorSideEvents) {
+    RealtimeHostEvent e;
     int count = 0;
     while (realtimeHostEventQueue.pop(e) && count < 64) {
-      if (e.type == Amx::RealtimeHostEventType::NoteOn) {
+      if (e.type == RealtimeHostEventType::NoteOn) {
         processorSideMessagingBridge.sendHostNoteOn(e.data1, e.data2);
-      } else if (e.type == Amx::RealtimeHostEventType::NoteOff) {
+      } else if (e.type == RealtimeHostEventType::NoteOff) {
         processorSideMessagingBridge.sendHostNoteOff(e.data1);
       }
       count++;

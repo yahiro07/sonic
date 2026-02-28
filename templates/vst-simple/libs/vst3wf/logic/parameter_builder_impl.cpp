@@ -1,7 +1,7 @@
 #include "./parameter_builder_impl.h"
 #include "../SynthesizerBase.h"
 
-namespace Amx {
+namespace vst3wf {
 
 void ParameterBuilderImpl::addUnary(uint32_t address, Str identifier, Str label,
                                     double defaultValue, Str group,
@@ -64,4 +64,4 @@ void ParameterBuilderImpl::addBool(uint32_t address, Str identifier, Str label,
   });
 }
 
-} // namespace Amx
+} // namespace vst3wf

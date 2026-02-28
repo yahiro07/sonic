@@ -21,7 +21,7 @@ using namespace Steinberg;
 //------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
   // Here the Plug-in will be instantiated
-  vst3wf::logger.log("PluginController::initialize");
+  logger.log("PluginController::initialize");
 
   //---do not forget to call parent ------
   tresult result = EditControllerEx1::initialize(context);
@@ -32,7 +32,7 @@ tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
   // Here you could register some parameters
   if (result == kResultTrue) {
     //---Create Parameters------------
-    auto parameterBuilder = Amx::ParameterBuilderImpl();
+    auto parameterBuilder = ParameterBuilderImpl();
     synthInstance->setupParameters(parameterBuilder);
     auto parameterItems = parameterBuilder.getItems();
     parameterDefinitionsProvider.addParameters(parameterItems);
@@ -56,11 +56,11 @@ tresult PLUGIN_API PluginController::terminate() {
 //------------------------------------------------------------------------
 tresult PLUGIN_API PluginController::setComponentState(IBStream *state) {
   // Here you get the state of the component (Processor part)
-  vst3wf::logger.log("PluginController::setComponentState");
+  logger.log("PluginController::setComponentState");
   if (!state)
     return kResultFalse;
 
-  vst3wf::ProcessorState processorState;
+  ProcessorState processorState;
   auto ok = processorStateHelper_readState(state, processorState);
   if (!ok) {
     return kResultFalse;
@@ -71,8 +71,7 @@ tresult PLUGIN_API PluginController::setComponentState(IBStream *state) {
     if (!paramItem)
       continue;
     auto value = kv.second;
-    auto normalizedValue =
-        Amx::ParameterItemHelper::getNormalized(paramItem, value);
+    auto normalizedValue = ParameterItemHelper::getNormalized(paramItem, value);
     setParamNormalized(paramItem->address, normalizedValue);
   }
   return kResultOk;
@@ -131,7 +130,7 @@ tresult PLUGIN_API PluginController::getParamValueByString(
 }
 
 tresult PLUGIN_API PluginController::notify(Vst::IMessage *message) {
-  vst3wf::logger.log("PluginController::notify");
+  logger.log("PluginController::notify");
   auto consumed = eventHub.notifyFromEditController(message);
   if (consumed) {
     return kResultOk;

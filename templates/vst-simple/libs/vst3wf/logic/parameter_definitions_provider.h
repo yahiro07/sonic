@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace Amx {
+namespace vst3wf {
 
 class ParameterDefinitionsProvider {
 private:
@@ -27,4 +27,4 @@ public:
   ParameterItem *getParameterItemByIdentifier(std::string identifier);
 };
 
-} // namespace Amx
+} // namespace vst3wf

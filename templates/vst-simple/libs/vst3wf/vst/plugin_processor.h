@@ -19,10 +19,10 @@ namespace vst3wf {
 class PluginProcessor : public Steinberg::Vst::AudioEffect {
 private:
   SynthesizerBase *synthInstance;
-  Amx::ParameterDefinitionsProvider parameterDefinitionsProvider;
-  std::unordered_map<Amx::ParamAddress, double> parametersCache;
-  Amx::RealtimeHostEventQueue realtimeHostEventQueue;
-  vst3wf::ProcessorSideMessagingBridge processorSideMessagingBridge;
+  ParameterDefinitionsProvider parameterDefinitionsProvider;
+  std::unordered_map<ParamAddress, double> parametersCache;
+  RealtimeHostEventQueue realtimeHostEventQueue;
+  ProcessorSideMessagingBridge processorSideMessagingBridge;
 
 public:
   PluginProcessor();

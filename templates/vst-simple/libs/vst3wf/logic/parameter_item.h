@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace Amx {
+namespace vst3wf {
 
 typedef uint32_t ParamAddress;
 
@@ -27,4 +27,4 @@ typedef struct _ParameterItem {
   // bool isInternal;
 } ParameterItem;
 
-} // namespace Amx
+} // namespace vst3wf

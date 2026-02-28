@@ -5,7 +5,7 @@
 #include <cmath>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
-namespace Amx {
+namespace vst3wf {
 
 class ParameterItemHelper {
 public:
@@ -53,4 +53,4 @@ public:
   }
 };
 
-} // namespace Amx
+} // namespace vst3wf

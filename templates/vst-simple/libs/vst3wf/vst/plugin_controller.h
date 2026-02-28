@@ -19,9 +19,9 @@ namespace vst3wf {
 class PluginController : public Steinberg::Vst::EditControllerEx1 {
 private:
   SynthesizerBase *synthInstance;
-  vst3wf::ParametersManager parametersManager;
-  Amx::ParameterDefinitionsProvider parameterDefinitionsProvider;
-  vst3wf::EventHub eventHub;
+  ParametersManager parametersManager;
+  ParameterDefinitionsProvider parameterDefinitionsProvider;
+  EventHub eventHub;
 
 public:
   //------------------------------------------------------------------------
@@ -29,12 +29,12 @@ public:
       : parametersManager(*this, this->parameters,
                           this->parameterDefinitionsProvider),
         eventHub(*this) {
-    vst3wf::logger.start();
-    synthInstance = vst3wf::gPluginFactoryGlobalHolder.synthInstantiateFn();
+    logger.start();
+    synthInstance = gPluginFactoryGlobalHolder.synthInstantiateFn();
   }
   ~PluginController() SMTG_OVERRIDE {
     delete synthInstance;
-    vst3wf::logger.stop();
+    logger.stop();
   }
 
   // Create function

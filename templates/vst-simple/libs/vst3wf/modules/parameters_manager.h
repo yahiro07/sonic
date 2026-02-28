@@ -11,8 +11,6 @@
 
 namespace vst3wf {
 
-using ParamAddress = Amx::ParamAddress;
-
 enum class ParameterEditingState { Begin, Perform, End, InstantChange };
 
 class ParametersManager {
@@ -20,7 +18,7 @@ class ParametersManager {
 private:
   Steinberg::Vst::EditController &editController;
   Steinberg::Vst::ParameterContainer &vstParameters;
-  Amx::ParameterDefinitionsProvider &parameterDefinitionsProvider;
+  ParameterDefinitionsProvider &parameterDefinitionsProvider;
 
   ParameterChangeNotifier parameterChangeNotifier;
   // Cache is stored in normalized (0..1) space.
@@ -31,7 +29,7 @@ private:
       uiSideReceivers;
   ParamAddress editingParamAddress = Steinberg::Vst::kNoParamId;
 
-  void addVstParameter(const Amx::ParameterItem &item);
+  void addVstParameter(const ParameterItem &item);
 
   void setEditing(ParamAddress address);
 
@@ -40,16 +38,15 @@ private:
   bool checkParameterChanging(ParamAddress address, double newNormValue);
 
 public:
-  ParametersManager(
-      Steinberg::Vst::EditController &editController,
-      Steinberg::Vst::ParameterContainer &vstParameters,
-      Amx::ParameterDefinitionsProvider &parameterDefinitionsProvider)
+  ParametersManager(Steinberg::Vst::EditController &editController,
+                    Steinberg::Vst::ParameterContainer &vstParameters,
+                    ParameterDefinitionsProvider &parameterDefinitionsProvider)
       : editController(editController), vstParameters(vstParameters),
         parameterDefinitionsProvider(parameterDefinitionsProvider) {}
 
   ~ParametersManager() {}
 
-  void addParameters(std::vector<Amx::ParameterItem> &parameterItems);
+  void addParameters(std::vector<ParameterItem> &parameterItems);
 
   void startObserve();
 

@@ -2,7 +2,7 @@
 #include <atomic>
 #include <stdint.h>
 
-namespace Amx {
+namespace vst3wf {
 
 template <typename T, size_t Capacity>
 
@@ -49,4 +49,4 @@ public:
   }
 };
 
-} // namespace Amx
+} // namespace vst3wf
