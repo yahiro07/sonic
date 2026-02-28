@@ -1,4 +1,3 @@
-import { usePointerCapture } from "@/hooks/use-pointer-capture";
 import { css } from "@emotion/react";
 import { useState, type FC } from "react";
 
@@ -10,21 +9,18 @@ type Props = {
 
 export const ToneButton: FC<Props> = ({ label, onPress, onRelease }) => {
   const [isPressed, setIsPressed] = useState(false);
-  const handlePointerDown = usePointerCapture({
-    onDown() {
-      onPress?.();
-      setIsPressed(true);
-    },
-    onUp() {
-      onRelease?.();
-      setIsPressed(false);
-    },
-  });
   return (
     <div css={styles.frame}>
       <div
         css={[styles.pad, isPressed && styles.padPressed]}
-        onPointerDown={handlePointerDown}
+        onPointerDown={() => {
+          onPress?.();
+          setIsPressed(true);
+        }}
+        onPointerUp={() => {
+          onRelease?.();
+          setIsPressed(false);
+        }}
       >
         {/* grommet-icons:trigger */}
         <svg
