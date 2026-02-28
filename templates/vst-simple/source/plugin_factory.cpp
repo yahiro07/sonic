@@ -1,7 +1,7 @@
 #include "./project1_synthesizer.h"
-#include "./vst_basis/plugin_controller.h"
-#include "./vst_basis/plugin_processor.h"
 #include "projectversion.h"
+#include "sonic/vst_basis/plugin_controller.h"
+#include "sonic/vst_basis/plugin_processor.h"
 #include "sonic/vst_entry/vst_entry_wrapper.h"
 
 static sonic_vst::PluginMeta pluginMeta{
