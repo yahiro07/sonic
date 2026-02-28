@@ -15,7 +15,7 @@ const configs = {
 type LogKind = "log" | "mark" | "warn" | "error" | "mute" | "unmute";
 
 type LogItem = {
-  timestamp: number;
+  timestamp: number; //ms from epoch
   subsystem: string;
   logKind: LogKind;
   message: string;
@@ -61,6 +61,9 @@ function createLogFormatter() {
 }
 const logFormatter = createLogFormatter();
 
+//messages are shown with a little delay and sorted by timestamp
+//since http messages from UI are received asynchronously, their order might not be strictly chronological
+
 function createLoggerCore() {
   const logItems: LogItemEx[] = [];
   let timerId: NodeJS.Timeout | undefined;
@@ -97,22 +100,24 @@ function createLoggerCore() {
   }
 
   function pushLogItem(logItem: LogItem) {
-    logItems.push({
-      ...logItem,
-      subOrdering: subOrderingCounter++,
-    });
+    logItems.push(logItem);
     if (timerId) {
       clearTimeout(timerId);
     }
-    timerId = setTimeout(consumeLogItems, 100);
+    timerId = setTimeout(consumeLogItems, 10);
   }
 
   return {
     log(jsonString: string) {
       try {
         const logItem = JSON.parse(jsonString) as LogItem;
-        pushLogItem(logItem);
-      } catch {}
+        pushLogItem({
+          ...logItem,
+          subOrdering: subOrderingCounter++,
+        });
+      } catch {
+        console.warn("Failed to parse log item:", jsonString);
+      }
     },
   };
 }

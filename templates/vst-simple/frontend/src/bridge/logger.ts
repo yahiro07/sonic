@@ -16,12 +16,56 @@ if (isDebug) {
 
 let postFailed = false;
 
-async function loggingViaLocalHttp(msg: string) {
+type LogKind = "log" | "mark" | "warn" | "error" | "mute" | "unmute";
+
+type LogItem = {
+  timestamp: number;
+  subsystem: string;
+  logKind: LogKind;
+  message: string;
+};
+
+function createLogFormatter() {
+  // const subsystemIcons: Record<string, string> = {
+  //   host: "🟣",
+  //   ext: "🔸",
+  //   ui: "🔹",
+  //   dsp: "🔺",
+  // };
+
+  const logKindIcons: Record<string, string> = {
+    log: "",
+    mark: "🔽",
+    warn: "⚠️",
+    error: "📛",
+  };
+
+  function formatTimestamp(timestamp: number) {
+    const date = new Date(timestamp);
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    const milliseconds = String(date.getMilliseconds()).padStart(3, "0");
+    //00:00:00.000
+    return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+  }
+
+  function formatLogLine(logItem: LogItem): string {
+    // const ssIcon = subsystemIcons[logItem.subsystem ?? ""] ?? "";
+    const kindIcon = logKindIcons[logItem.logKind ?? ""] ?? "";
+    const ts = formatTimestamp(logItem.timestamp);
+    return `${ts} ${kindIcon} ${logItem.message}`;
+  }
+  return { formatLogLine };
+}
+const logFormatter = createLogFormatter();
+
+async function loggingViaLocalHttp(logItem: LogItem) {
   if (!postFailed) {
     try {
-      await fetch("http://localhost:9003", {
+      await fetch("http://localhost:9002", {
         method: "POST",
-        body: msg,
+        body: JSON.stringify(logItem),
       });
     } catch {
       //skip sending logs after first failure
@@ -31,12 +75,6 @@ async function loggingViaLocalHttp(msg: string) {
   }
 }
 
-type LogItem = {
-  timeStamp: number;
-  kind: string;
-  message: string;
-};
-
 function sendLogItemToWebViewOwner(logItem: LogItem) {
   const globalThisTyped = globalThis as unknown as {
     webkit?: {
@@ -44,8 +82,8 @@ function sendLogItemToWebViewOwner(logItem: LogItem) {
         pluginEditor: {
           postMessage: (msg: {
             type: "log";
-            timeStamp: number;
-            kind: string;
+            timestamp: number;
+            logKind: string;
             message: string;
           }) => void;
         };
@@ -54,10 +92,15 @@ function sendLogItemToWebViewOwner(logItem: LogItem) {
   };
   globalThisTyped.webkit?.messageHandlers.pluginEditor.postMessage({
     type: "log",
-    timeStamp: logItem.timeStamp,
-    kind: logItem.kind,
+    timestamp: logItem.timestamp,
+    logKind: logItem.logKind,
     message: logItem.message,
   });
+}
+
+function writeLogItemToConsole(logItem: LogItem) {
+  const logLine = logFormatter.formatLogLine(logItem);
+  console.log(logLine);
 }
 
 type LogArguments = (
@@ -81,7 +124,7 @@ function mapLogArgumentsToString(args: LogArguments) {
 }
 
 function createLoggerEntry() {
-  function pushLog(kind: string, args: LogArguments) {
+  function pushLog(kind: LogKind, args: LogArguments) {
     if (
       !loggerOptions.outputToConsole &&
       !loggerOptions.sendToLocalHttpLogServer &&
@@ -91,20 +134,23 @@ function createLoggerEntry() {
     }
     const msg = mapLogArgumentsToString(args);
 
+    const logItem: LogItem = {
+      timestamp: Date.now(),
+      subsystem: "ui",
+      logKind: kind,
+      message: msg,
+    };
+
     if (loggerOptions.outputToConsole) {
-      console.log(msg);
+      writeLogItemToConsole(logItem);
     }
 
     if (loggerOptions.sendToLocalHttpLogServer) {
-      void loggingViaLocalHttp(`(t:${Date.now()}, s:ui, k:${kind}) ${msg}`);
+      void loggingViaLocalHttp(logItem);
     }
 
     if (loggerOptions.sendToWebViewOwner) {
-      sendLogItemToWebViewOwner({
-        timeStamp: Date.now(),
-        kind: kind,
-        message: msg,
-      });
+      sendLogItemToWebViewOwner(logItem);
     }
   }
 
