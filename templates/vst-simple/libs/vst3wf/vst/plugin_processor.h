@@ -10,6 +10,8 @@
 namespace vst3wf {
 
 class PluginProcessor : public Steinberg::Vst::AudioEffect {
+  using tresult = Steinberg::tresult;
+
 private:
   SynthesizerBase *synthInstance;
   ParameterDefinitionsProvider parameterDefinitionsProvider;
@@ -25,27 +27,22 @@ public:
     return (Steinberg::Vst::IAudioProcessor *)new PluginProcessor;
   }
 
-  Steinberg::tresult PLUGIN_API initialize(Steinberg::FUnknown *context)
+  tresult PLUGIN_API initialize(Steinberg::FUnknown *context) SMTG_OVERRIDE;
+  tresult PLUGIN_API terminate() SMTG_OVERRIDE;
+
+  tresult PLUGIN_API setActive(Steinberg::TBool state) SMTG_OVERRIDE;
+
+  tresult PLUGIN_API setupProcessing(Steinberg::Vst::ProcessSetup &newSetup)
       SMTG_OVERRIDE;
-  Steinberg::tresult PLUGIN_API terminate() SMTG_OVERRIDE;
-
-  Steinberg::tresult PLUGIN_API setActive(Steinberg::TBool state) SMTG_OVERRIDE;
-
-  Steinberg::tresult PLUGIN_API
-  setupProcessing(Steinberg::Vst::ProcessSetup &newSetup) SMTG_OVERRIDE;
-  Steinberg::tresult PLUGIN_API
-  canProcessSampleSize(Steinberg::int32 symbolicSampleSize) SMTG_OVERRIDE;
-
-  Steinberg::tresult PLUGIN_API process(Steinberg::Vst::ProcessData &data)
+  tresult PLUGIN_API canProcessSampleSize(Steinberg::int32 symbolicSampleSize)
       SMTG_OVERRIDE;
 
-  Steinberg::tresult PLUGIN_API getState(Steinberg::IBStream *state)
-      SMTG_OVERRIDE;
-  Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream *state)
-      SMTG_OVERRIDE;
+  tresult PLUGIN_API process(Steinberg::Vst::ProcessData &data) SMTG_OVERRIDE;
 
-  Steinberg::tresult PLUGIN_API notify(Steinberg::Vst::IMessage *message)
-      SMTG_OVERRIDE;
+  tresult PLUGIN_API getState(Steinberg::IBStream *state) SMTG_OVERRIDE;
+  tresult PLUGIN_API setState(Steinberg::IBStream *state) SMTG_OVERRIDE;
+
+  tresult PLUGIN_API notify(Steinberg::Vst::IMessage *message) SMTG_OVERRIDE;
 };
 
 } // namespace vst3wf
