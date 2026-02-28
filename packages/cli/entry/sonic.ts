@@ -78,7 +78,7 @@ async function createProject() {
 		const newProjectFolderPath = path.join(process.cwd(), projectName);
 		if (fs.existsSync(newProjectFolderPath)) {
 			const ok = await clackPrompts.confirm({
-				message: `Project ${projectName} already exists. Do you want to overwrite it?`,
+				message: `Project ${projectName} already exists. Do you want to replace it?`,
 				initialValue: false,
 			});
 			if (!ok) {
