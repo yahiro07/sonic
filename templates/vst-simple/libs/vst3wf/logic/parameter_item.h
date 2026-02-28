@@ -5,7 +5,7 @@
 
 namespace vst3wf {
 
-typedef uint32_t ParamAddress;
+typedef uint64_t ParamAddress;
 
 enum class ParameterType {
   Unary,

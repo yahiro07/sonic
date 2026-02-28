@@ -18,7 +18,7 @@ void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addUnary(kOscVolume, "oscVolume", "OSC Volume", 0.8);
 }
 
-void Project1Synthesizer::setParameter(uint32_t address, double value) {
+void Project1Synthesizer::setParameter(uint64_t address, double value) {
   if (address == kOscEnabled) {
     oscEnabled = value;
   } else if (address == kOscWave) {

@@ -11,7 +11,7 @@ public:
   virtual ~SynthesizerBase() = default;
   virtual void setupParameters(ParameterBuilder &builder) = 0;
   virtual void prepare(double sampleRate, int32_t maxFrameCount) = 0;
-  virtual void setParameter(uint32_t address, double value) = 0;
+  virtual void setParameter(uint64_t address, double value) = 0;
   virtual void noteOn(int32_t noteNumber, double velocity) = 0;
   virtual void noteOff(int32_t noteNumber) = 0;
   virtual void process(float *bufferL, float *bufferR, int32_t frames) = 0;
@@ -60,7 +60,7 @@ virtual void prepare(double sampleRate, int32_t maxFrameCount) = 0;
 ### setParameter
 
 ```cpp
-virtual void setParameter(uint32_t address, double value) = 0;
+virtual void setParameter(uint64_t address, double value) = 0;
 ```
 
 パラメータが変更されると呼び出されます。setupParametersで登録したパラメタアドレスによって識別されます。valueの値は非正規化された値です。この処理はオーディオスレッドで呼ばれます。
@@ -138,14 +138,14 @@ protected:
 
 public:
   virtual ~ParameterBuilder() = default;
-  virtual void addUnary(uint32_t address, Str identifier, Str label,
+  virtual void addUnary(uint64_t address, Str identifier, Str label,
                         double defaultValue, Str group = "",
                         ParameterFlags flags = ParameterFlags::None) = 0;
-  virtual void addEnum(uint32_t address, Str identifier, Str label,
+  virtual void addEnum(uint64_t address, Str identifier, Str label,
                        Str defaultValueString, StrVec valueStrings,
                        Str group = "",
                        ParameterFlags flags = ParameterFlags::None) = 0;
-  virtual void addBool(uint32_t address, Str identifier, Str label,
+  virtual void addBool(uint64_t address, Str identifier, Str label,
                        bool defaultValue, Str group = "",
                        ParameterFlags flags = ParameterFlags::None) = 0;
 };
@@ -169,7 +169,7 @@ ON/OFFのような二値のパラメータです。
 
 ### address
 
-アドレスはuint32_tの型で表されます。有効なアドレス値の範囲は0<=address<=0x7FFFFFFFです。0x80000000以上の値は予約されており、使用できないので注意してください。0,1,2,3...のように連番である必要はなく、各パラメータのアドレスは有効な範囲内の値であれば自由に設定できます。
+アドレスはuint64_tの型で表されます。VST3をターゲットとする場合、有効なアドレス値の範囲は0<=address<=0x7FFFFFFFとなります。0x80000000以上の値は予約されており、使用できないので注意してください。AUv3の場合はuint64_tの範囲の値をフルに使えます。アドレスは0,1,2,3...のように連番である必要はなく、有効な範囲内の値であれば自由に設定できます。
 
 ### identifier
 

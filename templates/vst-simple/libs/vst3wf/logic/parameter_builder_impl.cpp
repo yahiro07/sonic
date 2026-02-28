@@ -2,7 +2,7 @@
 
 namespace vst3wf {
 
-void ParameterBuilderImpl::addUnary(uint32_t address, Str identifier, Str label,
+void ParameterBuilderImpl::addUnary(uint64_t address, Str identifier, Str label,
                                     double defaultValue, Str group,
                                     ParameterFlags flags) {
   parameters.push_back({
@@ -19,7 +19,7 @@ void ParameterBuilderImpl::addUnary(uint32_t address, Str identifier, Str label,
   });
 }
 
-void ParameterBuilderImpl::addEnum(uint32_t address, Str identifier, Str label,
+void ParameterBuilderImpl::addEnum(uint64_t address, Str identifier, Str label,
                                    Str defaultValueString, StrVec valueStrings,
                                    Str group, ParameterFlags flags) {
   const double maxValue =
@@ -46,7 +46,7 @@ void ParameterBuilderImpl::addEnum(uint32_t address, Str identifier, Str label,
   });
 }
 
-void ParameterBuilderImpl::addBool(uint32_t address, Str identifier, Str label,
+void ParameterBuilderImpl::addBool(uint64_t address, Str identifier, Str label,
                                    bool defaultValue, Str group,
                                    ParameterFlags flags) {
   parameters.push_back({

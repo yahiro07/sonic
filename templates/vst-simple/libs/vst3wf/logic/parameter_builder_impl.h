@@ -12,12 +12,12 @@ public:
   void callSetupParameters(SynthesizerBase *synthInstance) {
     synthInstance->setupParameters(*this);
   }
-  void addUnary(uint32_t address, Str identifier, Str label,
+  void addUnary(uint64_t address, Str identifier, Str label,
                 double defaultValue, Str group, ParameterFlags flags);
-  void addEnum(uint32_t address, Str identifier, Str label,
+  void addEnum(uint64_t address, Str identifier, Str label,
                Str defaultValueString, StrVec valueStrings, Str group,
                ParameterFlags flags);
-  void addBool(uint32_t address, Str identifier, Str label, bool defaultValue,
+  void addBool(uint64_t address, Str identifier, Str label, bool defaultValue,
                Str group, ParameterFlags flags);
 };
 
