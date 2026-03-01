@@ -1,4 +1,4 @@
-#include "midi_input.h"
+#include "midi_input_manager.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreMIDI/CoreMIDI.h>
 #include <cstring>

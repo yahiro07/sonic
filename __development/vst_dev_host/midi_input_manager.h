@@ -1,23 +1,19 @@
 #pragma once
+#include "midi_input_manager_base.h"
 
 #include <CoreMIDI/CoreMIDI.h>
-#include <string>
 #include <vector>
 
-typedef struct {
-  int deviceId;
-  std::string name;
-} MidiDeviceInfo;
-
-class MidiInputManager {
+class MidiInputManager : public MidiInputManagerBase {
 public:
   MidiInputManager();
   ~MidiInputManager();
 
-  static std::vector<MidiDeviceInfo> enumerateDevices();
-  void open(int deviceId,
-            void (*callback)(const std::vector<unsigned char> &message));
-  void close();
+  std::vector<MidiDeviceInfo> enumerateDevices() override;
+  void
+  open(int deviceId,
+       void (*callback)(const std::vector<unsigned char> &message)) override;
+  void close() override;
 
 private:
   static void midiReadProc(const MIDIPacketList *packetList,

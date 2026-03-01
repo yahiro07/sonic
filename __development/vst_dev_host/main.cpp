@@ -1,4 +1,4 @@
-#include "midi_input.h"
+#include "midi_input_manager.h"
 #include "views.h"
 #include <stdio.h>
 
@@ -7,7 +7,7 @@ int main() {
   // auto midiDevices = enumerateMidiInput();
 
   MidiInputManager midiIn;
-  auto devices = MidiInputManager::enumerateDevices();
+  auto devices = midiIn.enumerateDevices();
   printf("Available MIDI Input Devices:\n");
   for (const auto &device : devices) {
     printf("[%d]: %s\n", device.deviceId, device.name.c_str());
