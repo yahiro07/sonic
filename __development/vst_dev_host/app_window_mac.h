@@ -15,7 +15,14 @@ public:
                                  const std::string &selectedDeviceKey) override;
   void subscribeMidiInputDeviceSelection(
       void (*callback)(const std::string &deviceKey)) override;
-  void clearMenuSubscriptions() override;
+  void unsubscribeMidiInputDeviceSelection() override;
+
+  void
+  refreshAudioDeviceListMenu(const std::vector<AudioDeviceInfo> &devices,
+                             const std::string &selectedDeviceKey) override;
+  void subscribeAudioDeviceSelection(
+      void (*callback)(const std::string &deviceKey)) override;
+  void unsubscribeAudioDeviceSelection() override;
 
 private:
   struct InternalStates;

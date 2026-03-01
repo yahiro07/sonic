@@ -4,8 +4,11 @@
 #include <stdio.h>
 
 @interface AppWindowDelegate : NSObject <NSWindowDelegate>
-@property(nonatomic, assign) void (*selectionCallback)(const std::string &);
+@property(nonatomic, assign) void (*midiSelectionCallback)(const std::string &);
+@property(nonatomic, assign) void (*audioSelectionCallback)(const std::string &)
+    ;
 - (void)midiDeviceSelected:(NSMenuItem *)sender;
+- (void)audioDeviceSelected:(NSMenuItem *)sender;
 @end
 
 @implementation AppWindowDelegate
@@ -15,8 +18,14 @@
 }
 
 - (void)midiDeviceSelected:(NSMenuItem *)sender {
-  if (self.selectionCallback) {
-    self.selectionCallback([sender.representedObject UTF8String]);
+  if (self.midiSelectionCallback) {
+    self.midiSelectionCallback([sender.representedObject UTF8String]);
+  }
+}
+
+- (void)audioDeviceSelected:(NSMenuItem *)sender {
+  if (self.audioSelectionCallback) {
+    self.audioSelectionCallback([sender.representedObject UTF8String]);
   }
 }
 @end
@@ -24,7 +33,8 @@
 struct AppWindowMac::InternalStates {
   void *window{nullptr};
   void *delegate{nullptr};
-  void (*selection_callback)(const std::string &){nullptr};
+  void (*midi_selection_callback)(const std::string &){nullptr};
+  void (*audio_selection_callback)(const std::string &){nullptr};
 };
 
 AppWindowMac::AppWindowMac() : states(std::make_unique<InternalStates>()) {}
@@ -51,9 +61,11 @@ void AppWindowMac::show() {
       states->delegate = [[AppWindowDelegate alloc] init];
     }
 
-    // Set callback if it was already subscribed
-    ((AppWindowDelegate *)states->delegate).selectionCallback =
-        states->selection_callback;
+    // Set callbacks if they were already subscribed
+    ((AppWindowDelegate *)states->delegate).midiSelectionCallback =
+        states->midi_selection_callback;
+    ((AppWindowDelegate *)states->delegate).audioSelectionCallback =
+        states->audio_selection_callback;
 
     NSRect frame = NSMakeRect(0, 0, 800, 600);
     NSWindow *window =
@@ -159,17 +171,74 @@ void AppWindowMac::refreshMidiInputDeviceListMenu(
 
 void AppWindowMac::subscribeMidiInputDeviceSelection(
     void (*callback)(const std::string &deviceKey)) {
-  states->selection_callback = callback;
+  states->midi_selection_callback = callback;
   if (states->delegate) {
     AppWindowDelegate *delegate = (AppWindowDelegate *)states->delegate;
-    delegate.selectionCallback = callback;
+    delegate.midiSelectionCallback = callback;
   }
 }
 
-void AppWindowMac::clearMenuSubscriptions() {
-  states->selection_callback = nullptr;
+void AppWindowMac::unsubscribeMidiInputDeviceSelection() {
+  states->midi_selection_callback = nullptr;
   if (states->delegate) {
     AppWindowDelegate *delegate = (AppWindowDelegate *)states->delegate;
-    delegate.selectionCallback = nullptr;
+    delegate.midiSelectionCallback = nullptr;
+  }
+}
+
+void AppWindowMac::refreshAudioDeviceListMenu(
+    const std::vector<AudioDeviceInfo> &devices,
+    const std::string &selectedDeviceKey) {
+  @autoreleasepool {
+    [NSApplication sharedApplication];
+    NSMenu *mainMenu = [NSApp mainMenu];
+    if (!mainMenu) {
+      mainMenu = [[NSMenu alloc] init];
+      [NSApp setMainMenu:mainMenu];
+    }
+
+    NSString *menuName = @"Audio Device";
+    NSMenuItem *audioMenuItem = [mainMenu itemWithTitle:menuName];
+    if (!audioMenuItem) {
+      audioMenuItem = [[NSMenuItem alloc] initWithTitle:menuName
+                                                 action:nil
+                                          keyEquivalent:@""];
+      [mainMenu addItem:audioMenuItem];
+    }
+
+    NSMenu *audioMenu = [[NSMenu alloc] initWithTitle:menuName];
+    audioMenuItem.submenu = audioMenu;
+
+    for (const auto &device : devices) {
+      NSMenuItem *item = [[NSMenuItem alloc]
+          initWithTitle:[NSString
+                            stringWithUTF8String:device.displayName.c_str()]
+                 action:@selector(audioDeviceSelected:)
+          keyEquivalent:@""];
+      item.target = (id)states->delegate;
+      item.representedObject =
+          [NSString stringWithUTF8String:device.deviceKey.c_str()];
+      if (device.deviceKey == selectedDeviceKey) {
+        [item setState:NSControlStateValueOn];
+      }
+      [audioMenu addItem:item];
+    }
+  }
+}
+
+void AppWindowMac::subscribeAudioDeviceSelection(
+    void (*callback)(const std::string &deviceKey)) {
+  states->audio_selection_callback = callback;
+  if (states->delegate) {
+    AppWindowDelegate *delegate = (AppWindowDelegate *)states->delegate;
+    delegate.audioSelectionCallback = callback;
+  }
+}
+
+void AppWindowMac::unsubscribeAudioDeviceSelection() {
+  states->audio_selection_callback = nullptr;
+  if (states->delegate) {
+    AppWindowDelegate *delegate = (AppWindowDelegate *)states->delegate;
+    delegate.audioSelectionCallback = nullptr;
   }
 }
