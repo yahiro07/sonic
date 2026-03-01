@@ -103,7 +103,6 @@ void AppWindowMac::show() {
     [NSApp activateIgnoringOtherApps:YES];
 
     states->window = window;
-    printf("Window should be visible now.\n");
   }
 }
 

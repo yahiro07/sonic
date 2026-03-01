@@ -14,8 +14,7 @@ class Application {
   float phase = 0.0f;
 
   void audioPrepareFn(double sampleRate, int maxFrameLength) {
-    printf("Audio Prepare: sampleRate=%f, maxFrameLength=%d\n", sampleRate,
-           maxFrameLength);
+    printf("sampleRate:%.0f, bufferSize:%d\n", sampleRate, maxFrameLength);
     this->sampleRate = sampleRate;
   }
 
@@ -42,62 +41,53 @@ class Application {
     printf("\n");
   }
 
-public:
-  void run() {
-    printf("Hello VST Dev Host! 2224\n");
-    auto audioDevices = audioIo.enumerateDevices();
-    auto midiDevices = midiIn.enumerateDevices();
-    printf("Available Audio Output Devices:\n");
-    for (const auto &device : audioDevices) {
-      printf("[%s]: %s\n", device.deviceKey.c_str(),
-             device.displayName.c_str());
-    }
-    printf("Available MIDI Input Devices:\n");
-    for (const auto &device : midiDevices) {
-      printf("[%s]: %s\n", device.deviceKey.c_str(),
-             device.displayName.c_str());
-    }
-
-    auto initialAudioDeviceKey = audioDevices[0].deviceKey;
-    auto initialMidiDeviceKey =
-        midiDevices.size() > 0 ? midiDevices[0].deviceKey : "";
-
+  void openAudioIo(const std::string &deviceKey) {
     audioIo.open(
-        initialAudioDeviceKey, true,
+        deviceKey, true,
         [this](double sr, int maxFrames) {
           this->audioPrepareFn(sr, maxFrames);
         },
         [this](float *l, float *r, int n) { this->audioProcessFn(l, r, n); });
-    if (initialMidiDeviceKey != "") {
-      printf("Opening MIDI Input Device: %s\n",
-             midiDevices[0].displayName.c_str());
-      midiIn.open(initialMidiDeviceKey,
-                  [this](const std::vector<unsigned char> &message) {
-                    this->handleMidiMessage(message);
-                  });
-    }
-    printf("showing window...\n");
+  }
+
+  void openMidiInput(const std::string &deviceKey) {
+    midiIn.open(deviceKey, [this](const std::vector<unsigned char> &message) {
+      this->handleMidiMessage(message);
+    });
+  }
+
+public:
+  void run() {
+    printf("VstDevHost 0048\n");
+    auto audioDevices = audioIo.enumerateDevices();
+    auto midiDevices = midiIn.enumerateDevices();
     window.show();
 
-    window.refreshAudioDeviceListMenu(audioDevices, initialAudioDeviceKey);
-    window.refreshMidiInputDeviceListMenu(midiDevices, initialMidiDeviceKey);
+    if (audioDevices.size() > 0) {
+      auto initialDeviceKey = audioDevices[0].deviceKey;
+      printf("Opening Audio Device: %s\n", audioDevices[0].displayName.c_str());
+      openAudioIo(initialDeviceKey);
+      window.refreshAudioDeviceListMenu(audioDevices, initialDeviceKey);
+    }
+    if (midiDevices.size() > 0) {
+      auto initialDeviceKey = midiDevices[0].deviceKey;
+      printf("Opening MIDI Input Device: %s\n",
+             midiDevices[0].displayName.c_str());
+      openMidiInput(initialDeviceKey);
+      window.refreshMidiInputDeviceListMenu(midiDevices, initialDeviceKey);
+    }
 
-    window.subscribeAudioDeviceSelection([this](const std::string &deviceKey) {
-      this->audioIo.close();
-      this->audioIo.open(
-          deviceKey, true,
-          [this](double sr, int maxFrames) {
-            this->audioPrepareFn(sr, maxFrames);
-          },
-          [this](float *l, float *r, int n) { this->audioProcessFn(l, r, n); });
-    });
+    window.subscribeAudioDeviceSelection(
+        [this, audioDevices](const std::string &deviceKey) {
+          this->audioIo.close();
+          this->openAudioIo(deviceKey);
+          window.refreshAudioDeviceListMenu(audioDevices, deviceKey);
+        });
     window.subscribeMidiInputDeviceSelection(
-        [this](const std::string &deviceKey) {
+        [this, midiDevices](const std::string &deviceKey) {
           this->midiIn.close();
-          this->midiIn.open(deviceKey,
-                            [this](const std::vector<unsigned char> &message) {
-                              this->handleMidiMessage(message);
-                            });
+          this->openMidiInput(deviceKey);
+          window.refreshMidiInputDeviceListMenu(midiDevices, deviceKey);
         });
 
     window.loop();
