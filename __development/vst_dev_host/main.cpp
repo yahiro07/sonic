@@ -10,11 +10,11 @@ int main() {
   auto devices = midiIn.enumerateDevices();
   printf("Available MIDI Input Devices:\n");
   for (const auto &device : devices) {
-    printf("[%d]: %s\n", device.deviceId, device.name.c_str());
+    printf("[%s]: %s\n", device.deviceKey.c_str(), device.name.c_str());
   }
   if (devices.size() > 0) {
     printf("Opening MIDI Input Device: %s\n", devices[0].name.c_str());
-    midiIn.open(devices[0].deviceId,
+    midiIn.open(devices[0].deviceKey,
                 [](const std::vector<unsigned char> &message) {
                   printf("Received MIDI message: ");
                   for (unsigned char byte : message) {

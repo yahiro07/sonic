@@ -36,24 +36,45 @@ std::vector<MidiDeviceInfo> MidiInputManager::enumerateDevices() {
   for (ItemCount index = 0; index < sourceCount; ++index) {
     MIDIEndpointRef source = MIDIGetSource(index);
     CFStringRef name = nullptr;
+    std::string displayName = "Unknown MIDI Input";
     if (MIDIObjectGetStringProperty(source, kMIDIPropertyName, &name) ==
         noErr) {
-      std::string displayName = copyCFString(name);
+      displayName = copyCFString(name);
       CFRelease(name);
-      devices.push_back({static_cast<int>(index), displayName});
-    } else {
-      devices.push_back(
-          {static_cast<int>(index), std::string("Unknown MIDI Input")});
     }
+
+    std::string deviceKey = "0";
+    SInt32 uniqueID = 0;
+    if (MIDIObjectGetIntegerProperty(source, kMIDIPropertyUniqueID,
+                                     &uniqueID) == noErr) {
+      deviceKey = std::to_string(uniqueID);
+    }
+
+    devices.push_back({deviceKey, displayName});
   }
   return devices;
 }
 
 void MidiInputManager::open(
-    int deviceId, void (*callback)(const std::vector<unsigned char> &message)) {
+    const std::string &deviceKey,
+    void (*callback)(const std::vector<unsigned char> &message)) {
   close();
 
-  if (deviceId < 0 || deviceId >= static_cast<int>(MIDIGetNumberOfSources())) {
+  MIDIEndpointRef source = 0;
+  ItemCount sourceCount = MIDIGetNumberOfSources();
+  for (ItemCount i = 0; i < sourceCount; ++i) {
+    MIDIEndpointRef src = MIDIGetSource(i);
+    SInt32 uniqueID = 0;
+    if (MIDIObjectGetIntegerProperty(src, kMIDIPropertyUniqueID, &uniqueID) ==
+        noErr) {
+      if (std::to_string(uniqueID) == deviceKey) {
+        source = src;
+        break;
+      }
+    }
+  }
+
+  if (source == 0) {
     return;
   }
 
@@ -68,12 +89,6 @@ void MidiInputManager::open(
   status = MIDIInputPortCreate(client_, CFSTR("VST Midi Input"), midiReadProc,
                                this, &inputPort_);
   if (status != noErr) {
-    close();
-    return;
-  }
-
-  MIDIEndpointRef source = MIDIGetSource(deviceId);
-  if (source == 0) {
     close();
     return;
   }

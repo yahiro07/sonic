@@ -11,7 +11,7 @@ public:
 
   std::vector<MidiDeviceInfo> enumerateDevices() override;
   void
-  open(int deviceId,
+  open(const std::string &deviceKey,
        void (*callback)(const std::vector<unsigned char> &message)) override;
   void close() override;
 

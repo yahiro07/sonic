@@ -3,15 +3,16 @@
 #include <vector>
 
 typedef struct {
-  int deviceId;
+  std::string deviceKey;
   std::string name;
 } MidiDeviceInfo;
 
 class MidiInputManagerBase {
 public:
-  virtual std::vector<MidiDeviceInfo> enumerateDevices();
+  virtual ~MidiInputManagerBase() = default;
+  virtual std::vector<MidiDeviceInfo> enumerateDevices() = 0;
   virtual void
-  open(int deviceId,
-       void (*callback)(const std::vector<unsigned char> &message));
-  virtual void close();
+  open(const std::string &deviceKey,
+       void (*callback)(const std::vector<unsigned char> &message)) = 0;
+  virtual void close() = 0;
 };
