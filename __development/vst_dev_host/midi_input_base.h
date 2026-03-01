@@ -4,7 +4,7 @@
 
 typedef struct {
   std::string deviceKey;
-  std::string name;
+  std::string displayName;
 } MidiDeviceInfo;
 
 class MidiInputBase {

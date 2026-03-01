@@ -45,10 +45,10 @@ int main() {
   auto devices = midiIn.enumerateDevices();
   printf("Available MIDI Input Devices:\n");
   for (const auto &device : devices) {
-    printf("[%s]: %s\n", device.deviceKey.c_str(), device.name.c_str());
+    printf("[%s]: %s\n", device.deviceKey.c_str(), device.displayName.c_str());
   }
   if (devices.size() > 0) {
-    printf("Opening MIDI Input Device: %s\n", devices[0].name.c_str());
+    printf("Opening MIDI Input Device: %s\n", devices[0].displayName.c_str());
     midiIn.open(devices[0].deviceKey, handleMidiMessage);
   }
   printf("showing window...\n");
@@ -64,7 +64,7 @@ int main() {
   auto audioDevices = audioIo.enumerateDevices();
   printf("Available Audio Output Devices:\n");
   for (const auto &device : audioDevices) {
-    printf("[%s]: %s\n", device.deviceKey.c_str(), device.name.c_str());
+    printf("[%s]: %s\n", device.deviceKey.c_str(), device.displayName.c_str());
   }
   audioIo.open(audioDevices[0].deviceKey, true, audioPrepareFn, audioProcessFn);
 

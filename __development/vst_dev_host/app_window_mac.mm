@@ -142,7 +142,8 @@ void AppWindowMac::refreshMidiInputDeviceListMenu(
 
     for (const auto &device : devices) {
       NSMenuItem *item = [[NSMenuItem alloc]
-          initWithTitle:[NSString stringWithUTF8String:device.name.c_str()]
+          initWithTitle:[NSString
+                            stringWithUTF8String:device.displayName.c_str()]
                  action:@selector(midiDeviceSelected:)
           keyEquivalent:@""];
       item.target = (id)states->delegate;
