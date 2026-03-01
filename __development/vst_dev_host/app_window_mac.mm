@@ -113,6 +113,26 @@ void AppWindowMac::loop() {
   }
 }
 
+static NSMenu *buildMainMenu() {
+  NSMenu *mainMenu = [[NSMenu alloc] init];
+
+  // macOS requires the first menu to be the "Application" menu
+  NSMenuItem *appMenuItem = [[NSMenuItem alloc] initWithTitle:@""
+                                                       action:nil
+                                                keyEquivalent:@""];
+  [mainMenu addItem:appMenuItem];
+  NSMenu *appMenu = [[NSMenu alloc] initWithTitle:@""];
+  appMenuItem.submenu = appMenu;
+
+  [appMenu
+      addItemWithTitle:[NSString stringWithFormat:@"Quit %@",
+                                                  [[NSProcessInfo processInfo]
+                                                      processName]]
+                action:@selector(terminate:)
+         keyEquivalent:@"q"];
+  return mainMenu;
+}
+
 void AppWindowMac::refreshMidiInputDeviceListMenu(
     const std::vector<MidiDeviceInfo> &devices,
     const std::string &selectedDeviceKey) {
@@ -120,24 +140,8 @@ void AppWindowMac::refreshMidiInputDeviceListMenu(
     [NSApplication sharedApplication];
     NSMenu *mainMenu = [NSApp mainMenu];
     if (!mainMenu) {
-      mainMenu = [[NSMenu alloc] init];
+      mainMenu = buildMainMenu();
       [NSApp setMainMenu:mainMenu];
-
-      // macOS requires the first menu to be the "Application" menu
-      NSMenuItem *appMenuItem = [[NSMenuItem alloc] initWithTitle:@""
-                                                           action:nil
-                                                    keyEquivalent:@""];
-      [mainMenu addItem:appMenuItem];
-      NSMenu *appMenu = [[NSMenu alloc] initWithTitle:@""];
-      appMenuItem.submenu = appMenu;
-
-      [appMenu
-          addItemWithTitle:[NSString
-                               stringWithFormat:@"Quit %@",
-                                                [[NSProcessInfo processInfo]
-                                                    processName]]
-                    action:@selector(terminate:)
-             keyEquivalent:@"q"];
     }
 
     NSString *menuName = @"MIDI Input";
@@ -193,7 +197,7 @@ void AppWindowMac::refreshAudioDeviceListMenu(
     [NSApplication sharedApplication];
     NSMenu *mainMenu = [NSApp mainMenu];
     if (!mainMenu) {
-      mainMenu = [[NSMenu alloc] init];
+      mainMenu = buildMainMenu();
       [NSApp setMainMenu:mainMenu];
     }
 
