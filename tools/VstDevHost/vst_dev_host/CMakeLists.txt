@@ -6,6 +6,9 @@ add_executable(VstDevHost main.cpp
 target_sources(VstDevHost PRIVATE modules/app_window_mac.mm)
 
 target_link_libraries(VstDevHost PRIVATE
+  sdk
+  base
+  pluginterfaces
   "-framework Cocoa"
   "-framework WebKit"
   "-framework CoreMIDI"

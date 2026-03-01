@@ -1,6 +1,9 @@
 #include "./modules/app_window_mac.h"
 #include "./modules/audio_io_mac.h"
 #include "./modules/midi_input_mac.h"
+#include "pluginterfaces/base/ftypes.h"
+#include "pluginterfaces/base/funknown.h"
+#include "pluginterfaces/vst/vsttypes.h"
 #include <stdio.h>
 
 namespace vst_dev_host {
@@ -105,7 +108,10 @@ public:
 } // namespace vst_dev_host
 
 int main() {
+  Steinberg::tresult res = Steinberg::kResultOk;
+  printf("r: %d\n", res);
   vst_dev_host::Application app;
   app.run();
+
   return 0;
 }

@@ -6,6 +6,12 @@ if(APPLE)
     enable_language(OBJCXX)
 endif()
 
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  add_definitions(-DDEVELOPMENT=1)
+else()
+  add_definitions(-DRELEASE=1)
+endif()
+
 #----------------
 #fetch vst3sdk
 option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
@@ -28,3 +34,4 @@ endif()
 smtg_enable_vst3_sdk()
 
 add_subdirectory(vst_dev_host)
+
