@@ -4,6 +4,8 @@
 #include <functional>
 #include <vector>
 
+namespace vst_dev_host {
+
 class MidiInputMac : public MidiInputBase {
 public:
   MidiInputMac();
@@ -26,3 +28,4 @@ private:
   std::function<void(const std::vector<unsigned char> &message)> callback_ =
       nullptr;
 };
+} // namespace vst_dev_host

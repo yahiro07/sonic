@@ -1,8 +1,10 @@
 #pragma once
-#include "audio_io_base.h"
+#include "./audio_io_base.h"
 #include <AudioUnit/AudioUnit.h>
 #include <functional>
 #include <vector>
+
+namespace vst_dev_host {
 
 class AudioIoMac : public AudioIoBase {
 public:
@@ -35,3 +37,5 @@ private:
   std::vector<float> bufferL;
   std::vector<float> bufferR;
 };
+
+} // namespace vst_dev_host

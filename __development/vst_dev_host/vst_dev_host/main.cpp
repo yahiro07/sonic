@@ -1,7 +1,9 @@
-#include "app_window_mac.h"
-#include "audio_io_mac.h"
-#include "midi_input_mac.h"
+#include "./app_window_mac.h"
+#include "./audio_io_mac.h"
+#include "./midi_input_mac.h"
 #include <stdio.h>
+
+namespace vst_dev_host {
 
 float randF() { return (float)rand() / (float)RAND_MAX; }
 
@@ -100,8 +102,10 @@ public:
   }
 };
 
+} // namespace vst_dev_host
+
 int main() {
-  Application app;
+  vst_dev_host::Application app;
   app.run();
   return 0;
 }

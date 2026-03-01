@@ -1,8 +1,10 @@
-#include "audio_io_mac.h"
+#include "./audio_io_mac.h"
 #include <AudioToolbox/AudioToolbox.h>
 #include <CoreAudio/CoreAudio.h>
 #include <algorithm>
 #include <cstdio>
+
+namespace vst_dev_host {
 
 AudioIoMac::AudioIoMac() = default;
 
@@ -241,3 +243,5 @@ OSStatus AudioIoMac::inputProc(void *inRefCon,
 
   return noErr;
 }
+
+} // namespace vst_dev_host

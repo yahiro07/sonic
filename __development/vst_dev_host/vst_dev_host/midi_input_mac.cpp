@@ -4,6 +4,8 @@
 #include <cstring>
 #include <vector>
 
+namespace vst_dev_host {
+
 static std::string copyCFString(CFStringRef source) {
   if (!source) {
     return std::string();
@@ -145,3 +147,5 @@ void MidiInputMac::handlePacket(const MIDIPacketList *packetList) {
     packet = MIDIPacketNext(packet);
   }
 }
+
+} // namespace vst_dev_host

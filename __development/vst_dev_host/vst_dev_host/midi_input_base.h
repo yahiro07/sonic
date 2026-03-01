@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+namespace vst_dev_host {
+
 typedef struct {
   std::string deviceKey;
   std::string displayName;
@@ -18,3 +20,4 @@ public:
            callback) = 0;
   virtual void close() = 0;
 };
+} // namespace vst_dev_host

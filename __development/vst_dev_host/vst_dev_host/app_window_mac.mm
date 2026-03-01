@@ -1,4 +1,4 @@
-#include "app_window_mac.h"
+#include "./app_window_mac.h"
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 #include <stdio.h>
@@ -30,6 +30,8 @@
   }
 }
 @end
+
+namespace vst_dev_host {
 
 struct AppWindowMac::InternalStates {
   void *window{nullptr};
@@ -229,3 +231,5 @@ void AppWindowMac::subscribeAudioDeviceSelection(
 void AppWindowMac::unsubscribeAudioDeviceSelection() {
   states->audio_selection_callback = nullptr;
 }
+
+} // namespace vst_dev_host

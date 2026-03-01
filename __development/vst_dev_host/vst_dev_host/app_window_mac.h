@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+namespace vst_dev_host {
+
 class AppWindowMac : public AppWindowBase {
 public:
   AppWindowMac();
@@ -31,3 +33,5 @@ private:
   struct InternalStates;
   std::unique_ptr<InternalStates> states;
 };
+
+} // namespace vst_dev_host

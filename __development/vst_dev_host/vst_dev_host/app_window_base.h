@@ -1,6 +1,8 @@
-#include "audio_io_base.h"
-#include "midi_input_base.h"
+#include "./audio_io_base.h"
+#include "./midi_input_base.h"
 #include <functional>
+
+namespace vst_dev_host {
 
 class AppWindowBase {
 public:
@@ -21,3 +23,5 @@ public:
       std::function<void(const std::string &deviceKey)> callback) = 0;
   virtual void unsubscribeAudioDeviceSelection() = 0;
 };
+
+} // namespace vst_dev_host
