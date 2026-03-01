@@ -1,13 +1,13 @@
 #pragma once
-#include "midi_input_manager_base.h"
+#include "midi_input_base.h"
 
 #include <CoreMIDI/CoreMIDI.h>
 #include <vector>
 
-class MidiInputManager : public MidiInputManagerBase {
+class MidiInputMac : public MidiInputBase {
 public:
-  MidiInputManager();
-  ~MidiInputManager();
+  MidiInputMac();
+  ~MidiInputMac();
 
   std::vector<MidiDeviceInfo> enumerateDevices() override;
   void

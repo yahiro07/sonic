@@ -1,5 +1,5 @@
 #include "app_window_mac.h"
-#include "midi_input_manager_mac.h"
+#include "midi_input_mac.h"
 #include <stdio.h>
 
 void handleMidiMessage(const std::vector<unsigned char> &message) {
@@ -10,7 +10,7 @@ void handleMidiMessage(const std::vector<unsigned char> &message) {
   printf("\n");
 }
 AppWindowMac window;
-MidiInputManager midiIn;
+MidiInputMac midiIn;
 
 int main() {
   printf("Hello VST Dev Host! 2224\n");

@@ -1,4 +1,4 @@
-#include "midi_input_manager_mac.h"
+#include "midi_input_mac.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreMIDI/CoreMIDI.h>
 #include <cstring>
@@ -26,11 +26,11 @@ static std::string copyCFString(CFStringRef source) {
   return std::string();
 }
 
-MidiInputManager::MidiInputManager() = default;
+MidiInputMac::MidiInputMac() = default;
 
-MidiInputManager::~MidiInputManager() { close(); }
+MidiInputMac::~MidiInputMac() { close(); }
 
-std::vector<MidiDeviceInfo> MidiInputManager::enumerateDevices() {
+std::vector<MidiDeviceInfo> MidiInputMac::enumerateDevices() {
   std::vector<MidiDeviceInfo> devices;
   ItemCount sourceCount = MIDIGetNumberOfSources();
   for (ItemCount index = 0; index < sourceCount; ++index) {
@@ -55,7 +55,7 @@ std::vector<MidiDeviceInfo> MidiInputManager::enumerateDevices() {
   return devices;
 }
 
-void MidiInputManager::open(
+void MidiInputMac::open(
     const std::string &deviceKey,
     void (*callback)(const std::vector<unsigned char> &message)) {
   close();
@@ -102,7 +102,7 @@ void MidiInputManager::open(
   connectedSource_ = source;
 }
 
-void MidiInputManager::close() {
+void MidiInputMac::close() {
   if (inputPort_) {
     if (connectedSource_) {
       MIDIPortDisconnectSource(inputPort_, connectedSource_);
@@ -120,16 +120,16 @@ void MidiInputManager::close() {
   callback_ = nullptr;
 }
 
-void MidiInputManager::midiReadProc(const MIDIPacketList *packetList,
-                                    void *readProcRefCon,
-                                    void * /* srcConnRefCon */) {
-  auto *self = static_cast<MidiInputManager *>(readProcRefCon);
+void MidiInputMac::midiReadProc(const MIDIPacketList *packetList,
+                                void *readProcRefCon,
+                                void * /* srcConnRefCon */) {
+  auto *self = static_cast<MidiInputMac *>(readProcRefCon);
   if (self) {
     self->handlePacket(packetList);
   }
 }
 
-void MidiInputManager::handlePacket(const MIDIPacketList *packetList) {
+void MidiInputMac::handlePacket(const MIDIPacketList *packetList) {
   if (!packetList || !callback_) {
     return;
   }

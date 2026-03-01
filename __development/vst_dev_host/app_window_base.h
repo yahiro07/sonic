@@ -1,4 +1,4 @@
-#include "midi_input_manager_base.h"
+#include "midi_input_base.h"
 
 class AppWindowBase {
 public:

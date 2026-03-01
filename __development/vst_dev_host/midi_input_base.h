@@ -7,9 +7,9 @@ typedef struct {
   std::string name;
 } MidiDeviceInfo;
 
-class MidiInputManagerBase {
+class MidiInputBase {
 public:
-  virtual ~MidiInputManagerBase() = default;
+  virtual ~MidiInputBase() = default;
   virtual std::vector<MidiDeviceInfo> enumerateDevices() = 0;
   virtual void
   open(const std::string &deviceKey,
