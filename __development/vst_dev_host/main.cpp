@@ -1,5 +1,5 @@
+#include "app_window_mac.h"
 #include "midi_input_manager.h"
-#include "views.h"
 #include <stdio.h>
 
 int main() {
@@ -24,8 +24,9 @@ int main() {
                 });
   }
   printf("showing window...\n");
-  showWindow();
-  windowLoop();
+  AppWindowMac window;
+  window.show();
+  window.loop();
 
   printf("window closed, exiting...\n");
   midiIn.close();

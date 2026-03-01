@@ -1,4 +1,4 @@
-#include "views.h"
+#include "app_window_mac.h"
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 #include <stdio.h>
@@ -13,14 +13,28 @@
 }
 @end
 
-void showWindow() {
+AppWindowMac::AppWindowMac() = default;
+
+AppWindowMac::~AppWindowMac() {
+  @autoreleasepool {
+    if (delegate_) {
+      AppWindowDelegate *delegate = (AppWindowDelegate *)delegate_;
+      [delegate release];
+    }
+    if (window_) {
+      NSWindow *window = (NSWindow *)window_;
+      [window close];
+    }
+  }
+}
+
+void AppWindowMac::show() {
   @autoreleasepool {
     [NSApplication sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 
-    static AppWindowDelegate *windowDelegate = nil;
-    if (!windowDelegate) {
-      windowDelegate = [[AppWindowDelegate alloc] init];
+    if (!delegate_) {
+      delegate_ = [[AppWindowDelegate alloc] init];
     }
 
     NSRect frame = NSMakeRect(0, 0, 800, 600);
@@ -53,16 +67,17 @@ void showWindow() {
     [contentView addSubview:label];
 
     window.contentView = contentView;
-    window.delegate = windowDelegate;
+    window.delegate = (id<NSWindowDelegate>)delegate_;
     [window makeKeyAndOrderFront:nil];
 
     [NSApp activateIgnoringOtherApps:YES];
 
+    window_ = window;
     printf("Window should be visible now.\n");
   }
 }
 
-void windowLoop() {
+void AppWindowMac::loop() {
   @autoreleasepool {
     [NSApp run];
   }
