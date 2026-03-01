@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app_window_base.h"
+#include <memory>
 
 class AppWindowMac : public AppWindowBase {
 public:
@@ -11,6 +12,6 @@ public:
   void loop() override;
 
 private:
-  void *window_{nullptr};
-  void *delegate_{nullptr};
+  struct InternalStates;
+  std::unique_ptr<InternalStates> states;
 };

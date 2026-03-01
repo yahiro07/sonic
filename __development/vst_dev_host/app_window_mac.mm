@@ -13,16 +13,21 @@
 }
 @end
 
-AppWindowMac::AppWindowMac() = default;
+struct AppWindowMac::InternalStates {
+  void *window{nullptr};
+  void *delegate{nullptr};
+};
+
+AppWindowMac::AppWindowMac() : states(std::make_unique<InternalStates>()) {}
 
 AppWindowMac::~AppWindowMac() {
   @autoreleasepool {
-    if (delegate_) {
-      AppWindowDelegate *delegate = (AppWindowDelegate *)delegate_;
+    if (states->delegate) {
+      AppWindowDelegate *delegate = (AppWindowDelegate *)states->delegate;
       [delegate release];
     }
-    if (window_) {
-      NSWindow *window = (NSWindow *)window_;
+    if (states->window) {
+      NSWindow *window = (NSWindow *)states->window;
       [window close];
     }
   }
@@ -33,8 +38,8 @@ void AppWindowMac::show() {
     [NSApplication sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 
-    if (!delegate_) {
-      delegate_ = [[AppWindowDelegate alloc] init];
+    if (!states->delegate) {
+      states->delegate = [[AppWindowDelegate alloc] init];
     }
 
     NSRect frame = NSMakeRect(0, 0, 800, 600);
@@ -67,12 +72,12 @@ void AppWindowMac::show() {
     [contentView addSubview:label];
 
     window.contentView = contentView;
-    window.delegate = (id<NSWindowDelegate>)delegate_;
+    window.delegate = (id<NSWindowDelegate>)states->delegate;
     [window makeKeyAndOrderFront:nil];
 
     [NSApp activateIgnoringOtherApps:YES];
 
-    window_ = window;
+    states->window = window;
     printf("Window should be visible now.\n");
   }
 }
