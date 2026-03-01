@@ -10,6 +10,12 @@ public:
 
   void show() override;
   void loop() override;
+  void
+  refreshMidiInputDeviceListMenu(const std::vector<MidiDeviceInfo> &devices,
+                                 const std::string &selectedDeviceKey) override;
+  void subscribeMidiInputDeviceSelection(
+      void (*callback)(const std::string &deviceKey)) override;
+  void clearMenuSubscriptions() override;
 
 private:
   struct InternalStates;
