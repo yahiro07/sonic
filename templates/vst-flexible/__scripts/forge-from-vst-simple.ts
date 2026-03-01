@@ -75,6 +75,7 @@ function run() {
     "source",
     ".gitignore",
     "CMakeLists.txt",
+    "Makefile",
     "Makefile_exported",
     "README.md",
   ]) {
@@ -108,7 +109,7 @@ endif()
     to: `add_subdirectory("sonic")`,
   });
 
-  //move sonic/vst_basis to source/vst_basis and patch CMakeLists.txt to use it
+  //move sonic/vst_basis to source/vst_basis
   moveEntry(
     relativeFromBase("sonic/vst_basis"),
     relativeFromBase("source/vst_basis"),
@@ -119,20 +120,55 @@ endif()
   vst_basis/plugin_controller.cpp`,
     to: "",
   });
-  patchFileContent(relativeFromBase("CMakeLists.txt"), {
-    from: `    #--
-    # source/vst_basis/plugin_processor.cpp
-    # source/vst_basis/plugin_controller.cpp`,
-    to: `    #--
-    source/vst_basis/plugin_processor.cpp
-    source/vst_basis/plugin_controller.cpp`,
-  });
-  patchFileContent(relativeFromBase("source/plugin_factory.cpp"), {
-    from: `#include "sonic/vst_basis/plugin_controller.h"
-#include "sonic/vst_basis/plugin_processor.h"`,
-    to: `#include "./vst_basis/plugin_controller.h"
-#include "./vst_basis/plugin_processor.h"`,
-  });
+
+  //move version.h and plugin_factory.cpp
+  moveEntry(
+    relativeFromBase("source/version.h"),
+    relativeFromBase("source/vst_basis/version.h"),
+  );
+  moveEntry(
+    relativeFromBase("source/plugin_factory.cpp"),
+    relativeFromBase("source/vst_basis/plugin_factory.cpp"),
+  );
+
+  //patch plugin_factory.cpp
+  patchFileContentMultiple(
+    relativeFromBase("source/vst_basis/plugin_factory.cpp"),
+    [
+      {
+        from: `#include "sonic/vst_basis/plugin_controller.h"`,
+        to: `#include "./plugin_controller.h"`,
+      },
+      {
+        from: `#include "sonic/vst_basis/plugin_processor.h"`,
+        to: `#include "./plugin_processor.h"`,
+      },
+      {
+        from: `#include "./project1_synthesizer.h"`,
+        to: `#include "../project1_synthesizer.h"`,
+      },
+    ],
+  );
+
+  //patch CMakeLists.txt
+  patchFileContentMultiple(relativeFromBase("CMakeLists.txt"), [
+    {
+      from: `# source/vst_basis/plugin_processor.cpp`,
+      to: `source/vst_basis/plugin_processor.cpp`,
+    },
+    {
+      from: `# source/vst_basis/plugin_controller.cpp`,
+      to: `source/vst_basis/plugin_controller.cpp`,
+    },
+    {
+      from: `source/version.h`,
+      to: `source/vst_basis/version.h`,
+    },
+    {
+      from: `source/plugin_factory.cpp`,
+      to: `source/vst_basis/plugin_factory.cpp`,
+    },
+  ]);
 
   //patch readme
   patchFileContent(relativeFromBase("README.md"), {
