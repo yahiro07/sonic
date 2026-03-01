@@ -1,5 +1,5 @@
 #include "app_window_mac.h"
-#include "midi_input_manager.h"
+#include "midi_input_manager_mac.h"
 #include <stdio.h>
 
 int main() {

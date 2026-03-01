@@ -3,7 +3,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "")
 
 project(VstDevHost VERSION 1.0.0.0)
 
-add_executable(VstDevHost main.cpp midi_input_manager.cpp)
+add_executable(VstDevHost main.cpp midi_input_manager_mac.cpp)
 
 set_source_files_properties(app_window_mac.mm PROPERTIES LANGUAGE CXX)
 
