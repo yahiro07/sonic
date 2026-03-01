@@ -1,6 +1,6 @@
-#include "./app_window_mac.h"
-#include "./audio_io_mac.h"
-#include "./midi_input_mac.h"
+#include "./modules/app_window_mac.h"
+#include "./modules/audio_io_mac.h"
+#include "./modules/midi_input_mac.h"
 #include <stdio.h>
 
 namespace vst_dev_host {
