@@ -57,7 +57,7 @@ std::vector<MidiDeviceInfo> MidiInputMac::enumerateDevices() {
 
 void MidiInputMac::open(
     const std::string &deviceKey,
-    void (*callback)(const std::vector<unsigned char> &message)) {
+    std::function<void(const std::vector<unsigned char> &message)> callback) {
   close();
 
   MIDIEndpointRef source = 0;

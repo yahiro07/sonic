@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -11,9 +12,10 @@ class AudioIoBase {
 public:
   virtual ~AudioIoBase() = default;
   virtual std::vector<AudioDeviceInfo> enumerateDevices() = 0;
-  virtual void open(const std::string &deviceKey, bool enableInput,
-                    void (*prepareFn)(double sampleRate, int maxFrameLength),
-                    void (*processFn)(float *bufferL, float *bufferR,
-                                      int nframes)) = 0;
+  virtual void
+  open(const std::string &deviceKey, bool enableInput,
+       std::function<void(double sampleRate, int maxFrameLength)> prepareFn,
+       std::function<void(float *bufferL, float *bufferR, int nframes)>
+           processFn) = 0;
   virtual void close() = 0;
 };

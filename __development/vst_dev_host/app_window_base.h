@@ -1,5 +1,7 @@
 #include "audio_io_base.h"
 #include "midi_input_base.h"
+#include <functional>
+
 class AppWindowBase {
 public:
   virtual ~AppWindowBase() = default;
@@ -9,13 +11,13 @@ public:
   refreshMidiInputDeviceListMenu(const std::vector<MidiDeviceInfo> &devices,
                                  const std::string &selectedDeviceKey) = 0;
   virtual void subscribeMidiInputDeviceSelection(
-      void (*callback)(const std::string &deviceKey)) = 0;
+      std::function<void(const std::string &deviceKey)> callback) = 0;
   virtual void unsubscribeMidiInputDeviceSelection() = 0;
 
   virtual void
   refreshAudioDeviceListMenu(const std::vector<AudioDeviceInfo> &devices,
                              const std::string &selectedDeviceKey) = 0;
   virtual void subscribeAudioDeviceSelection(
-      void (*callback)(const std::string &deviceKey)) = 0;
+      std::function<void(const std::string &deviceKey)> callback) = 0;
   virtual void unsubscribeAudioDeviceSelection() = 0;
 };

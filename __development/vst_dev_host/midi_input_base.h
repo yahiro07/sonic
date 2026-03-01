@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -13,6 +14,7 @@ public:
   virtual std::vector<MidiDeviceInfo> enumerateDevices() = 0;
   virtual void
   open(const std::string &deviceKey,
-       void (*callback)(const std::vector<unsigned char> &message)) = 0;
+       std::function<void(const std::vector<unsigned char> &message)>
+           callback) = 0;
   virtual void close() = 0;
 };

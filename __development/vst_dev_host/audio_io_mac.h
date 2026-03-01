@@ -1,6 +1,8 @@
+#pragma once
 #include "audio_io_base.h"
-
-#include <AudioToolbox/AudioToolbox.h>
+#include <AudioUnit/AudioUnit.h>
+#include <functional>
+#include <vector>
 
 class AudioIoMac : public AudioIoBase {
 public:
@@ -8,10 +10,11 @@ public:
   ~AudioIoMac();
 
   std::vector<AudioDeviceInfo> enumerateDevices() override;
-  void open(const std::string &deviceKey, bool enableInput,
-            void (*prepareFn)(double sampleRate, int maxFrameLength),
-            void (*processFn)(float *bufferL, float *bufferR,
-                              int nframes)) override;
+  void
+  open(const std::string &deviceKey, bool enableInput,
+       std::function<void(double sampleRate, int maxFrameLength)> prepareFn,
+       std::function<void(float *bufferL, float *bufferR, int nframes)>
+           processFn) override;
   void close() override;
 
 private:
@@ -24,8 +27,10 @@ private:
   AudioUnit audioUnit = nullptr;
   bool isRunning = false;
 
-  void (*prepareFn)(double sampleRate, int maxFrameLength) = nullptr;
-  void (*processFn)(float *bufferL, float *bufferR, int nframes) = nullptr;
+  std::function<void(double sampleRate, int maxFrameLength)> prepareFn =
+      nullptr;
+  std::function<void(float *bufferL, float *bufferR, int nframes)> processFn =
+      nullptr;
 
   std::vector<float> bufferL;
   std::vector<float> bufferR;

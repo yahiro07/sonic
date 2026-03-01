@@ -4,9 +4,10 @@
 #include <stdio.h>
 
 @interface AppWindowDelegate : NSObject <NSWindowDelegate>
-@property(nonatomic, assign) void (*midiSelectionCallback)(const std::string &);
-@property(nonatomic, assign) void (*audioSelectionCallback)(const std::string &)
-    ;
+@property(nonatomic, assign)
+    std::function<void(const std::string &)> *midiSelectionCallback;
+@property(nonatomic, assign)
+    std::function<void(const std::string &)> *audioSelectionCallback;
 - (void)midiDeviceSelected:(NSMenuItem *)sender;
 - (void)audioDeviceSelected:(NSMenuItem *)sender;
 @end
@@ -18,14 +19,14 @@
 }
 
 - (void)midiDeviceSelected:(NSMenuItem *)sender {
-  if (self.midiSelectionCallback) {
-    self.midiSelectionCallback([sender.representedObject UTF8String]);
+  if (self.midiSelectionCallback && *self.midiSelectionCallback) {
+    (*self.midiSelectionCallback)([sender.representedObject UTF8String]);
   }
 }
 
 - (void)audioDeviceSelected:(NSMenuItem *)sender {
-  if (self.audioSelectionCallback) {
-    self.audioSelectionCallback([sender.representedObject UTF8String]);
+  if (self.audioSelectionCallback && *self.audioSelectionCallback) {
+    (*self.audioSelectionCallback)([sender.representedObject UTF8String]);
   }
 }
 @end
@@ -33,8 +34,8 @@
 struct AppWindowMac::InternalStates {
   void *window{nullptr};
   void *delegate{nullptr};
-  void (*midi_selection_callback)(const std::string &){nullptr};
-  void (*audio_selection_callback)(const std::string &){nullptr};
+  std::function<void(const std::string &)> midi_selection_callback;
+  std::function<void(const std::string &)> audio_selection_callback;
 };
 
 AppWindowMac::AppWindowMac() : states(std::make_unique<InternalStates>()) {}
@@ -61,11 +62,10 @@ void AppWindowMac::show() {
       states->delegate = [[AppWindowDelegate alloc] init];
     }
 
-    // Set callbacks if they were already subscribed
-    ((AppWindowDelegate *)states->delegate).midiSelectionCallback =
-        states->midi_selection_callback;
-    ((AppWindowDelegate *)states->delegate).audioSelectionCallback =
-        states->audio_selection_callback;
+    // Set pointers to callbacks in InternalStates
+    AppWindowDelegate *delegate = (AppWindowDelegate *)states->delegate;
+    delegate.midiSelectionCallback = &states->midi_selection_callback;
+    delegate.audioSelectionCallback = &states->audio_selection_callback;
 
     NSRect frame = NSMakeRect(0, 0, 800, 600);
     NSWindow *window =
@@ -174,20 +174,12 @@ void AppWindowMac::refreshMidiInputDeviceListMenu(
 }
 
 void AppWindowMac::subscribeMidiInputDeviceSelection(
-    void (*callback)(const std::string &deviceKey)) {
+    std::function<void(const std::string &deviceKey)> callback) {
   states->midi_selection_callback = callback;
-  if (states->delegate) {
-    AppWindowDelegate *delegate = (AppWindowDelegate *)states->delegate;
-    delegate.midiSelectionCallback = callback;
-  }
 }
 
 void AppWindowMac::unsubscribeMidiInputDeviceSelection() {
   states->midi_selection_callback = nullptr;
-  if (states->delegate) {
-    AppWindowDelegate *delegate = (AppWindowDelegate *)states->delegate;
-    delegate.midiSelectionCallback = nullptr;
-  }
 }
 
 void AppWindowMac::refreshAudioDeviceListMenu(
@@ -231,18 +223,10 @@ void AppWindowMac::refreshAudioDeviceListMenu(
 }
 
 void AppWindowMac::subscribeAudioDeviceSelection(
-    void (*callback)(const std::string &deviceKey)) {
+    std::function<void(const std::string &deviceKey)> callback) {
   states->audio_selection_callback = callback;
-  if (states->delegate) {
-    AppWindowDelegate *delegate = (AppWindowDelegate *)states->delegate;
-    delegate.audioSelectionCallback = callback;
-  }
 }
 
 void AppWindowMac::unsubscribeAudioDeviceSelection() {
   states->audio_selection_callback = nullptr;
-  if (states->delegate) {
-    AppWindowDelegate *delegate = (AppWindowDelegate *)states->delegate;
-    delegate.audioSelectionCallback = nullptr;
-  }
 }

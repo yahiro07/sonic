@@ -67,10 +67,11 @@ std::vector<AudioDeviceInfo> AudioIoMac::enumerateDevices() {
   return devices;
 }
 
-void AudioIoMac::open(const std::string &deviceKey, bool enableInput,
-                      void (*prepareFn)(double sampleRate, int maxFrameLength),
-                      void (*processFn)(float *bufferL, float *bufferR,
-                                        int nframes)) {
+void AudioIoMac::open(
+    const std::string &deviceKey, bool enableInput,
+    std::function<void(double sampleRate, int maxFrameLength)> prepareFn,
+    std::function<void(float *bufferL, float *bufferR, int nframes)>
+        processFn) {
   close();
 
   this->prepareFn = prepareFn;

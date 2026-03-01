@@ -1,7 +1,7 @@
 #pragma once
 #include "midi_input_base.h"
-
 #include <CoreMIDI/CoreMIDI.h>
+#include <functional>
 #include <vector>
 
 class MidiInputMac : public MidiInputBase {
@@ -10,9 +10,9 @@ public:
   ~MidiInputMac();
 
   std::vector<MidiDeviceInfo> enumerateDevices() override;
-  void
-  open(const std::string &deviceKey,
-       void (*callback)(const std::vector<unsigned char> &message)) override;
+  void open(const std::string &deviceKey,
+            std::function<void(const std::vector<unsigned char> &message)>
+                callback) override;
   void close() override;
 
 private:
@@ -23,5 +23,6 @@ private:
   MIDIClientRef client_{};
   MIDIPortRef inputPort_{};
   MIDIEndpointRef connectedSource_{};
-  void (*callback_)(const std::vector<unsigned char> &message){};
+  std::function<void(const std::vector<unsigned char> &message)> callback_ =
+      nullptr;
 };
