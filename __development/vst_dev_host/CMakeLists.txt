@@ -3,7 +3,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "")
 
 project(VstDevHost VERSION 1.0.0.0)
 
-add_executable(VstDevHost main.cpp midi_input_mac.cpp)
+add_executable(VstDevHost main.cpp midi_input_mac.cpp audio_io_mac.cpp)
 
 set_source_files_properties(app_window_mac.mm PROPERTIES LANGUAGE CXX)
 
@@ -14,4 +14,6 @@ target_link_libraries(VstDevHost PRIVATE
   "-framework WebKit"
   "-framework CoreMIDI"
   "-framework CoreFoundation"
+  "-framework AudioToolbox"
+  "-framework CoreAudio"
 )
