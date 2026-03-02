@@ -45,7 +45,7 @@ class Application {
   //   }
   // }
 
-  void handelMidiShortMessage(const unsigned char *message, size_t length) {
+  void handleMidiShortMessage(const unsigned char *message, size_t length) {
     auto status = message[0];
     auto data1 = length >= 2 ? message[1] : 0;
     auto data2 = length >= 3 ? message[2] : 0;
@@ -95,7 +95,7 @@ class Application {
     midiIn.open(deviceKey, [this](const unsigned char *packet, size_t len) {
       decodeMidiPacketBytes(packet, len,
                             [this](const unsigned char *msg, size_t len) {
-                              this->handelMidiShortMessage(msg, len);
+                              this->handleMidiShortMessage(msg, len);
                             });
     });
   }
