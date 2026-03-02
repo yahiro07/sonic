@@ -117,9 +117,14 @@ public:
           window.refreshMidiInputDeviceListMenu(midiDevices, deviceKey);
         });
 
+    pluginBridge.subscribeParameterEdit([](uint32_t paramId, double value) {
+      printf("Parameter edited: paramId=%d, value=%.02f\n", paramId, value);
+    });
+
     window.loop();
 
     printf("window closed, exiting...\n");
+    pluginBridge.unsubscribeParameterEdit();
     midiIn.close();
     audioIo.close();
     window.unsubscribeMidiInputDeviceSelection();

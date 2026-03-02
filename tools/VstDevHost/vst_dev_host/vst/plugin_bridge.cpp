@@ -1,12 +1,52 @@
 #include "plugin_bridge.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/gui/iplugview.h"
+#include "pluginterfaces/vst/ivsteditcontroller.h"
 #include <cstdio>
 
 namespace vst_dev_host {
 
 using namespace Steinberg;
 using namespace Steinberg::Vst;
+
+class PluginBridge::ComponentHandler
+    : public Steinberg::Vst::IComponentHandler {
+public:
+  ComponentHandler() {}
+  ~ComponentHandler() {}
+
+  tresult PLUGIN_API beginEdit(Vst::ParamID paramId) override {
+    return kResultTrue;
+  }
+
+  tresult PLUGIN_API performEdit(Vst::ParamID paramId, double value) override {
+    if (parameterEditCallback) {
+      parameterEditCallback(paramId, value);
+    }
+    return kResultTrue;
+  }
+
+  tresult PLUGIN_API endEdit(Vst::ParamID paramId) override {
+    return kResultTrue;
+  }
+
+  tresult PLUGIN_API restartComponent(int32_t flags) override {
+    return kResultTrue;
+  }
+
+  void setParameterEditCallback(
+      std::function<void(uint32_t paramId, double value)> fn) {
+    parameterEditCallback = fn;
+  }
+  void clearParameterEditCallback() { parameterEditCallback = nullptr; }
+
+  DECLARE_FUNKNOWN_METHODS
+private:
+  std::function<void(uint32_t paramId, double value)> parameterEditCallback =
+      nullptr;
+};
+IMPLEMENT_FUNKNOWN_METHODS(PluginBridge::ComponentHandler, IComponentHandler,
+                           IComponentHandler::iid)
 
 PluginBridge::PluginBridge() {}
 
@@ -59,6 +99,9 @@ void PluginBridge::loadPlugin(const std::string &path) {
   if (!editController) {
     printf("Failed to get edit controller\n");
   }
+
+  componentHandler = new ComponentHandler();
+  editController->setComponentHandler(componentHandler);
 }
 
 void PluginBridge::createEditor(void *ownerViewHandle) {
@@ -96,6 +139,7 @@ void PluginBridge::closeEditor() {
 }
 
 void PluginBridge::unloadPlugin() {
+  editController->setComponentHandler(nullptr);
   closeEditor();
   audioProcessor = nullptr;
   editController = nullptr;
@@ -141,6 +185,15 @@ void PluginBridge::processAudio(float *bufferL, float *bufferR, int nframes) {
   data.outputs = &outputs_buf;
 
   audioProcessor->process(data);
+}
+
+void PluginBridge::subscribeParameterEdit(
+    std::function<void(uint32_t paramId, double value)> fn) {
+  componentHandler->setParameterEditCallback(fn);
+}
+
+void PluginBridge::unsubscribeParameterEdit() {
+  componentHandler->setParameterEditCallback(nullptr);
 }
 
 } // namespace vst_dev_host

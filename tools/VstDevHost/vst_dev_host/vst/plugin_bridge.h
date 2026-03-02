@@ -4,6 +4,7 @@
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "public.sdk/source/vst/hosting/module.h"
 #include "public.sdk/source/vst/hosting/plugprovider.h"
+#include <functional>
 #include <string>
 
 namespace vst_dev_host {
@@ -20,6 +21,9 @@ public:
   void prepareAudio(double sampleRate, int maxBlockSize);
   void processAudio(float *bufferL, float *bufferR, int nframes);
 
+  void subscribeParameterEdit(std::function<void(uint32_t, double)> fn);
+  void unsubscribeParameterEdit();
+
 private:
   VST3::Hosting::Module::Ptr module;
   Steinberg::IPtr<Steinberg::Vst::PlugProvider> plugProvider;
@@ -29,6 +33,9 @@ private:
 
   double sampleRate = 44100.0;
   int maxBlockSize = 512;
+
+  class ComponentHandler;
+  ComponentHandler *componentHandler;
 };
 
 } // namespace vst_dev_host
