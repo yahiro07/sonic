@@ -1,0 +1,12 @@
+fetch vst3sdk and make strip downed of unneeded files and folders
+in ../sdk folder, do
+----
+clone vst3sdk from github with submodules
+remove .git
+remove doc
+remove vstgui4
+remove tutorials
+remove public.sdk/samples/vst
+remove public.sdk/samples/vst-hosting/audiohost
+remove public.sdk/samples/vst-hosting/editorhost
+remove public.sdk/samples/vst-hosting/inspectorapp
