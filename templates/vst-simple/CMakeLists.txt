@@ -93,6 +93,7 @@ else()
     )
     FetchContent_MakeAvailable(sonic)
 endif()
+
 #----------------
 
 target_link_libraries(Project1
@@ -103,20 +104,22 @@ target_link_libraries(Project1
 #----------------
 #build frontend
 
-execute_process(
-    COMMAND npm install
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/frontend"
-    RESULT_VARIABLE NODE_BUILD_RESULT
-)
+if(SONIC_BUILD_FRONTEND)
+  execute_process(
+      COMMAND npm install
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/frontend"
+      RESULT_VARIABLE NODE_BUILD_RESULT
+  )
 
-execute_process(
-    COMMAND npm run build
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/frontend"
-    RESULT_VARIABLE NODE_BUILD_RESULT
-)
+  execute_process(
+      COMMAND npm run build
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/frontend"
+      RESULT_VARIABLE NODE_BUILD_RESULT
+  )
 
-if(NOT NODE_BUILD_RESULT EQUAL 0)
-    message(FATAL_ERROR "frontend project build failed with exit code ${NODE_BUILD_RESULT}")
+  if(NOT NODE_BUILD_RESULT EQUAL 0)
+      message(FATAL_ERROR "frontend project build failed with exit code ${NODE_BUILD_RESULT}")
+  endif()
 endif()
 #----------------
 
