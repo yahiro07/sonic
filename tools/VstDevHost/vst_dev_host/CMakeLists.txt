@@ -6,6 +6,7 @@ target_sources(VstDevHost PRIVATE
     modules/midi_input_mac.cpp 
     modules/audio_io_mac.cpp
     modules/app_window_mac.mm
+    vst/plugin_bridge.cpp
     main.cpp
     app0_mac_devices.cpp
     app1_plugin_interfacing.cpp

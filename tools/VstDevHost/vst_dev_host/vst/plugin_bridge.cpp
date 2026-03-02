@@ -1,0 +1,146 @@
+#include "plugin_bridge.h"
+#include "pluginterfaces/base/funknown.h"
+#include "pluginterfaces/gui/iplugview.h"
+#include <cstdio>
+
+namespace vst_dev_host {
+
+using namespace Steinberg;
+using namespace Steinberg::Vst;
+
+PluginBridge::PluginBridge() {}
+
+PluginBridge::~PluginBridge() { unloadPlugin(); }
+
+void PluginBridge::loadPlugin(const std::string &path) {
+  printf("PluginBridge::loadPlugin: %s\n", path.c_str());
+
+  std::string errorDescription;
+  module = VST3::Hosting::Module::create(path, errorDescription);
+  if (!module) {
+    printf("Failed to load module: %s\n", errorDescription.c_str());
+    return;
+  }
+
+  auto factory = module->getFactory();
+  VST3::Hosting::ClassInfo audioEffectClassInfo;
+  bool found = false;
+  for (auto &classInfo : factory.classInfos()) {
+    if (classInfo.category() == kVstAudioEffectClass) {
+      audioEffectClassInfo = classInfo;
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    printf("No audio effect class found in plugin\n");
+    return;
+  }
+
+  plugProvider = new PlugProvider(factory, audioEffectClassInfo, true);
+  if (!plugProvider) {
+    printf("Failed to create PlugProvider\n");
+    return;
+  }
+
+  auto component = plugProvider->getComponent();
+  if (!component) {
+    printf("Failed to get component from PlugProvider\n");
+    return;
+  }
+
+  audioProcessor = FUnknownPtr<IAudioProcessor>(component);
+  if (!audioProcessor) {
+    printf("Component does not support IAudioProcessor\n");
+  }
+
+  editController = plugProvider->getController();
+  if (!editController) {
+    printf("Failed to get edit controller\n");
+  }
+}
+
+void PluginBridge::createEditor(void *ownerViewHandle) {
+  if (!editController)
+    return;
+
+  if (plugView) {
+    closeEditor();
+  }
+
+  plugView = editController->createView(ViewType::kEditor);
+  if (!plugView) {
+    printf("Failed to create IPlugView\n");
+    return;
+  }
+
+  ViewRect rect;
+  if (plugView->getSize(&rect) != kResultTrue) {
+    printf("Failed to get view size\n");
+  }
+
+  if (plugView->attached(ownerViewHandle, kPlatformTypeNSView) != kResultTrue) {
+    printf("Failed to attach view to owner\n");
+    plugView->release();
+    plugView = nullptr;
+  }
+}
+
+void PluginBridge::closeEditor() {
+  if (plugView) {
+    plugView->removed();
+    plugView->release();
+    plugView = nullptr;
+  }
+}
+
+void PluginBridge::unloadPlugin() {
+  closeEditor();
+  audioProcessor = nullptr;
+  editController = nullptr;
+  plugProvider = nullptr;
+  module = nullptr;
+}
+
+void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {
+  this->sampleRate = sampleRate;
+  this->maxBlockSize = maxBlockSize;
+
+  if (audioProcessor) {
+    ProcessSetup setup;
+    setup.processMode = kRealtime;
+    setup.symbolicSampleSize = kSample32;
+    setup.maxSamplesPerBlock = maxBlockSize;
+    setup.sampleRate = sampleRate;
+
+    audioProcessor->setupProcessing(setup);
+    audioProcessor->setProcessing(true);
+  }
+}
+
+void PluginBridge::processAudio(float *bufferL, float *bufferR, int nframes) {
+  if (!audioProcessor)
+    return;
+
+  ProcessData data;
+  data.processMode = kRealtime;
+  data.symbolicSampleSize = kSample32;
+  data.numSamples = nframes;
+
+  AudioBusBuffers inputs_buf;
+  AudioBusBuffers outputs_buf;
+
+  float *outBuffers[2] = {bufferL, bufferR};
+  outputs_buf.numChannels = 2;
+  outputs_buf.channelBuffers32 = outBuffers;
+
+  data.numInputs = 0;
+  data.inputs = nullptr;
+  data.numOutputs = 1;
+  data.outputs = &outputs_buf;
+
+  audioProcessor->process(data);
+}
+
+} // namespace vst_dev_host
