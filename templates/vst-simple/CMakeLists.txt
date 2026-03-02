@@ -10,38 +10,28 @@ if(APPLE)
     enable_language(OBJCXX)
 endif()
 
+if(NOT FETCHCONTENT_BASE_DIR)
+  set(FETCHCONTENT_BASE_DIR "$ENV{HOME}/.sonic/deps" CACHE PATH "" FORCE)
+endif()
 
 
 #----------------
-#download vst3sdk
-
+#download vst3sdk (stripped down version)
 include(FetchContent)
+FetchContent_Declare(
+    sonic_vst3sdk
+    GIT_REPOSITORY https://github.com/yahiro07/sonic.git
+    GIT_TAG "080de34ccda2c7b1ff0b8b7dc306d7a7011abf27"
+    GIT_SHALLOW TRUE
+    SOURCE_SUBDIR  dependencies/vst3sdk
+)
+FetchContent_MakeAvailable(sonic_vst3sdk)
+#----------------
+
 
 option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
 option(SMTG_ENABLE_VST3_HOSTING_EXAMPLES "Enable VST 3 Hosting Examples" OFF)
 option(SMTG_ENABLE_VSTGUI_SUPPORT "Enable VSTGUI Support" OFF)
-
-# add_subdirectory(../../dependencies/vst3sdk)
-
-get_filename_component(VST3SDK_SOURCE_DIR
-  "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/vst3sdk"
-  ABSOLUTE
-)
-add_subdirectory("${VST3SDK_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/vst3sdk_build")
-
-
-
-# if(SMTG_VST3_LOCATION_DIR)
-#     add_subdirectory(${SMTG_VST3_LOCATION_DIR} ${PROJECT_BINARY_DIR}/vst3sdk_build)
-# else()
-#     FetchContent_Declare(
-#         vst3sdk
-#         GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk.git
-#         GIT_TAG v3.7.14_build_55
-#     )
-#     FetchContent_MakeAvailable(vst3sdk)
-# endif()
-#----------------
 
 smtg_enable_vst3_sdk()
 
