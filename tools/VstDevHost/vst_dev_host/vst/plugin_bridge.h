@@ -35,7 +35,7 @@ private:
   int maxBlockSize = 512;
 
   class ComponentHandler;
-  ComponentHandler *componentHandler;
+  Steinberg::IPtr<ComponentHandler> componentHandler = nullptr;
 };
 
 } // namespace vst_dev_host

@@ -100,7 +100,7 @@ void PluginBridge::loadPlugin(const std::string &path) {
     printf("Failed to get edit controller\n");
   }
 
-  componentHandler = new ComponentHandler();
+  componentHandler = IPtr<ComponentHandler>(new ComponentHandler(this), false);
   editController->setComponentHandler(componentHandler);
 }
 
@@ -139,12 +139,15 @@ void PluginBridge::closeEditor() {
 }
 
 void PluginBridge::unloadPlugin() {
-  editController->setComponentHandler(nullptr);
+  if (editController) {
+    editController->setComponentHandler(nullptr);
+  }
   closeEditor();
   audioProcessor = nullptr;
   editController = nullptr;
   plugProvider = nullptr;
   module = nullptr;
+  componentHandler = nullptr;
 }
 
 void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {
@@ -189,11 +192,15 @@ void PluginBridge::processAudio(float *bufferL, float *bufferR, int nframes) {
 
 void PluginBridge::subscribeParameterEdit(
     std::function<void(uint32_t paramId, double value)> fn) {
-  componentHandler->setParameterEditCallback(fn);
+  if (componentHandler) {
+    componentHandler->setParameterEditCallback(fn);
+  }
 }
 
 void PluginBridge::unsubscribeParameterEdit() {
-  componentHandler->setParameterEditCallback(nullptr);
+  if (componentHandler) {
+    componentHandler->setParameterEditCallback(nullptr);
+  }
 }
 
 } // namespace vst_dev_host
