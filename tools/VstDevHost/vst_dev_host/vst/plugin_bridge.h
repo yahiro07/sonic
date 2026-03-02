@@ -2,12 +2,32 @@
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
+#include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/module.h"
+#include "public.sdk/source/vst/hosting/parameterchanges.h"
 #include "public.sdk/source/vst/hosting/plugprovider.h"
 #include <functional>
 #include <string>
 
 namespace vst_dev_host {
+
+enum class InputEventType : uint8_t {
+  NoteOn,
+  NoteOff,
+  ParameterChange,
+  PitchBend,
+};
+
+struct InputEvent {
+  InputEventType type;
+  uint8_t __padding[3];
+  //[id, value] represents
+  // [noteNumber, velocity] for NoteOn/NoteOff
+  // [paramId, paramValue] for ParameterChange
+  // [noteNumber, pitchBendValue] for PitchBend
+  uint32_t id;
+  float value;
+};
 
 class PluginBridge {
 public:
@@ -19,7 +39,8 @@ public:
   void closeEditor();
   void unloadPlugin();
   void prepareAudio(double sampleRate, int maxBlockSize);
-  void processAudio(float *bufferL, float *bufferR, int nframes);
+  void processAudio(float *bufferL, float *bufferR, int nframes,
+                    const InputEvent *events, size_t eventCount);
 
   void subscribeParameterEdit(std::function<void(uint32_t, double)> fn);
   void unsubscribeParameterEdit();
@@ -31,9 +52,8 @@ private:
   Steinberg::FUnknownPtr<Steinberg::Vst::IEditController> editController;
   Steinberg::IPlugView *plugView = nullptr;
 
-  double sampleRate = 44100.0;
-  int maxBlockSize = 512;
-
+  Steinberg::Vst::EventList eventList;
+  Steinberg::Vst::ParameterChanges paramChanges;
   class ComponentHandler;
   Steinberg::IPtr<ComponentHandler> componentHandler = nullptr;
 };

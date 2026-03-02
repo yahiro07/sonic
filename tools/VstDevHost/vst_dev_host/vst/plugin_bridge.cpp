@@ -151,9 +151,6 @@ void PluginBridge::unloadPlugin() {
 }
 
 void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {
-  this->sampleRate = sampleRate;
-  this->maxBlockSize = maxBlockSize;
-
   if (audioProcessor) {
     ProcessSetup setup;
     setup.processMode = kRealtime;
@@ -163,12 +160,60 @@ void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {
 
     audioProcessor->setupProcessing(setup);
     audioProcessor->setProcessing(true);
+
+    eventList.setMaxSize(128);
+    paramChanges.setMaxParameters(128);
   }
 }
 
-void PluginBridge::processAudio(float *bufferL, float *bufferR, int nframes) {
-  if (!audioProcessor)
+static void loadProcessDataFromInputEvents(ProcessData &data,
+                                           Vst::EventList &eventList,
+                                           Vst::ParameterChanges &paramChanges,
+                                           const InputEvent *events,
+                                           size_t eventCount) {
+  eventList.clear();
+  paramChanges.clearQueue();
+
+  for (size_t i = 0; i < eventCount; ++i) {
+    const auto &e = events[i];
+
+    if (e.type == InputEventType::NoteOn || e.type == InputEventType::NoteOff) {
+      Vst::Event vstEvent{};
+      vstEvent.busIndex = 0;
+      vstEvent.sampleOffset = 0;
+      vstEvent.ppqPosition = 0;
+
+      if (e.type == InputEventType::NoteOn) {
+        vstEvent.type = Vst::Event::kNoteOnEvent;
+        vstEvent.noteOn.channel = 0;
+        vstEvent.noteOn.pitch = static_cast<int16>(e.id);
+        vstEvent.noteOn.velocity = e.value;
+      } else {
+        vstEvent.type = Vst::Event::kNoteOffEvent;
+        vstEvent.noteOff.channel = 0;
+        vstEvent.noteOff.pitch = static_cast<int16>(e.id);
+        vstEvent.noteOff.velocity = e.value;
+      }
+
+      eventList.addEvent(vstEvent);
+    } else if (e.type == InputEventType::ParameterChange) {
+      int32 index = 0;
+      auto *queue = paramChanges.addParameterData(e.id, index);
+      if (queue) {
+        queue->addPoint(0, e.value, index);
+      }
+    }
+  }
+
+  data.inputEvents = &eventList;
+  data.inputParameterChanges = &paramChanges;
+}
+
+void PluginBridge::processAudio(float *bufferL, float *bufferR, int nframes,
+                                const InputEvent *events, size_t eventCount) {
+  if (!audioProcessor) {
     return;
+  }
 
   ProcessData data;
   data.processMode = kRealtime;
@@ -186,6 +231,9 @@ void PluginBridge::processAudio(float *bufferL, float *bufferR, int nframes) {
   data.inputs = nullptr;
   data.numOutputs = 1;
   data.outputs = &outputs_buf;
+
+  loadProcessDataFromInputEvents(data, eventList, paramChanges, events,
+                                 eventCount);
 
   audioProcessor->process(data);
 }
