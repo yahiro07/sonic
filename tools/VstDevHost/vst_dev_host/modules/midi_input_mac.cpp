@@ -59,7 +59,7 @@ std::vector<MidiDeviceInfo> MidiInputMac::enumerateDevices() {
 
 void MidiInputMac::open(
     const std::string &deviceKey,
-    std::function<void(const std::vector<unsigned char> &message)> callback) {
+    std::function<void(const unsigned char *message, size_t length)> callback) {
   close();
 
   MIDIEndpointRef source = 0;
@@ -139,11 +139,7 @@ void MidiInputMac::handlePacket(const MIDIPacketList *packetList) {
   const MIDIPacket *packet = &packetList->packet[0];
   for (UInt32 packetIndex = 0; packetIndex < packetList->numPackets;
        ++packetIndex) {
-    std::vector<unsigned char> message(packet->length);
-    if (packet->length > 0) {
-      std::memcpy(message.data(), packet->data, packet->length);
-    }
-    callback_(message);
+    callback_(packet->data, packet->length);
     packet = MIDIPacketNext(packet);
   }
 }

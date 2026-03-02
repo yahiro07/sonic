@@ -13,7 +13,7 @@ public:
 
   std::vector<MidiDeviceInfo> enumerateDevices() override;
   void open(const std::string &deviceKey,
-            std::function<void(const std::vector<unsigned char> &message)>
+            std::function<void(const unsigned char *message, size_t length)>
                 callback) override;
   void close() override;
 
@@ -25,7 +25,7 @@ private:
   MIDIClientRef client_{};
   MIDIPortRef inputPort_{};
   MIDIEndpointRef connectedSource_{};
-  std::function<void(const std::vector<unsigned char> &message)> callback_ =
+  std::function<void(const unsigned char *message, size_t length)> callback_ =
       nullptr;
 };
 } // namespace vst_dev_host

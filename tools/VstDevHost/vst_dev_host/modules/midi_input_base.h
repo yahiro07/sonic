@@ -16,7 +16,7 @@ public:
   virtual std::vector<MidiDeviceInfo> enumerateDevices() = 0;
   virtual void
   open(const std::string &deviceKey,
-       std::function<void(const std::vector<unsigned char> &message)>
+       std::function<void(const unsigned char *message, size_t length)>
            callback) = 0;
   virtual void close() = 0;
 };
