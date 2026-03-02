@@ -14,7 +14,18 @@
 
 @implementation AppWindowDelegate
 - (BOOL)windowShouldClose:(NSWindow *)sender {
-  [NSApp terminate:nil];
+  [NSApp stop:nil];
+  // Post a dummy event to wake up the run loop so it can exit
+  NSEvent *event = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
+                                      location:NSMakePoint(0, 0)
+                                 modifierFlags:0
+                                     timestamp:0.0
+                                  windowNumber:0
+                                       context:nil
+                                       subtype:0
+                                         data1:0
+                                         data2:0];
+  [NSApp postEvent:event atStart:YES];
   return YES;
 }
 
@@ -223,6 +234,23 @@ void AppWindowMac::subscribeAudioDeviceSelection(
 
 void AppWindowMac::unsubscribeAudioDeviceSelection() {
   states->audio_selection_callback = nullptr;
+}
+
+void mac_stop_app() {
+  @autoreleasepool {
+    [NSApp stop:nil];
+    // Post a dummy event to wake up the run loop so it can exit
+    NSEvent *event = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
+                                        location:NSMakePoint(0, 0)
+                                   modifierFlags:0
+                                       timestamp:0.0
+                                    windowNumber:0
+                                         context:nil
+                                         subtype:0
+                                           data1:0
+                                           data2:0];
+    [NSApp postEvent:event atStart:YES];
+  }
 }
 
 } // namespace vst_dev_host

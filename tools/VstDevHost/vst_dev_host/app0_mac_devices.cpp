@@ -5,6 +5,7 @@
 #include "pluginterfaces/base/ftypes.h"
 #include "pluginterfaces/base/funknown.h"
 #include <filesystem>
+#include <signal.h>
 #include <stdio.h>
 
 namespace vst_dev_host {
@@ -69,6 +70,14 @@ public:
   void run() {
     printf("VstDevHost 0048\n");
 
+    // Handle ctrl+c
+    signal(SIGINT, [](int) {
+      printf("\nCaught SIGINT, stopping...\n");
+      // On macOS, we can stop the NSApp run loop
+      extern void mac_stop_app();
+      mac_stop_app();
+    });
+
     std::filesystem::path relPath =
         "../../templates/vst-simple/build/VST3/Debug/Project1.vst3";
     auto vstPath =
@@ -118,6 +127,7 @@ public:
 
     pluginBridge.closeEditor();
     pluginBridge.unloadPlugin();
+    printf("cleanup done\n");
   }
 };
 
