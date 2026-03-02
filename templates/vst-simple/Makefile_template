@@ -2,9 +2,6 @@
 
 default: build
 
-# if you want to share the single sdk across multiple projects,
-# add cmake flag -DSMTG_VST3_LOCATION_DIR=/path/to/vst3sdk in prepare target
-
 prepare:
 	cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 	ln -sf build/compile_commands.json .
@@ -12,4 +9,8 @@ prepare:
 build:
 	cmake --build build
 
-all: prepare build
+run: build
+	build/bin/Debug/VstDevHost build/VST3/Debug/Project1.vst3
+
+clean:
+	rm -rf build .cache
