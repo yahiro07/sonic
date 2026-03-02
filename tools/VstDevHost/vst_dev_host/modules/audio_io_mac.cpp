@@ -2,7 +2,6 @@
 #include <AudioToolbox/AudioToolbox.h>
 #include <CoreAudio/CoreAudio.h>
 #include <algorithm>
-#include <cstdio>
 
 namespace vst_dev_host {
 
