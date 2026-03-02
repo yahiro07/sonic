@@ -6,11 +6,18 @@ project(Project1
     DESCRIPTION "Project1 VST 3 Plug-in"
 )
 
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  add_definitions(-DDEVELOPMENT=1)
+else()
+  add_definitions(-DRELEASE=1)
+endif()
+
 if(APPLE)
     enable_language(OBJCXX)
 endif()
 
 if(NOT FETCHCONTENT_BASE_DIR)
+  #store fetchContent cache in ~/.sonic/deps
   set(FETCHCONTENT_BASE_DIR "$ENV{HOME}/.sonic/deps" CACHE PATH "" FORCE)
 endif()
 
@@ -34,68 +41,93 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(sonic_vst3sdk)
 #----------------
 
-# if(USE_LOCAL_SONIC)
-add_subdirectory("sonic")
+# Make VST3 SDK root path available to subprojects.
+smtg_enable_vst3_sdk()
+get_filename_component(SMTG_VST3_LOCATION_DIR "${public_sdk_SOURCE_DIR}" DIRECTORY)
+set(SDK_ROOT "${SMTG_VST3_LOCATION_DIR}")
+
+#一旦構成の簡単さを優先して重複してgitリポジトリをフェッチする
+#vst3sdk, VstDevHost, sonic の3つのコードで重複してフェッチが発生するのであとで改善したい
+
+#----------------
+#fetch VstDevHost
+FetchContent_Declare(
+    sonic_vst_dev_host
+    GIT_REPOSITORY ${SONIC_GIT_REPOSITORY}
+    GIT_TAG ${SONIC_GIT_COMMIT_HASH}
+    GIT_SHALLOW TRUE
+    SOURCE_SUBDIR  templates/VstDevHost/vst_dev_host
+)
+FetchContent_MakeAvailable(sonic_vst_dev_host)
+#----------------
+#fetch sonic vst wrapper (or use local code)
+if(NOT USE_LOCAL_SONIC)
+  FetchContent_Declare(
+      sonic_vst_wrapper
+      GIT_REPOSITORY ${SONIC_GIT_REPOSITORY}
+      GIT_TAG ${SONIC_GIT_COMMIT_HASH}
+      GIT_SHALLOW TRUE
+      SOURCE_SUBDIR  templates/vst-simple/sonic
+  )
+  FetchContent_MakeAvailable(sonic_vst_wrapper)
+else()
+  add_subdirectory("sonic")
+endif()
+#----------------
+
+# option(SONIC_FORCE_FETCHED_VSTDEVHOST "Force using VstDevHost from fetched sonic sources" OFF)
+
+# set(_local_vstdevhost_dir "${CMAKE_CURRENT_SOURCE_DIR}/vst_dev_host")
+
+# if(EXISTS "${_local_vstdevhost_dir}/CMakeLists.txt" AND NOT SONIC_FORCE_FETCHED_VSTDEVHOST)
+#     add_subdirectory("vst_dev_host")
 # else()
-#     FetchContent_Declare(
-#         sonic
-#         GIT_REPOSITORY https://github.com/yahiro07/sonic.git
-#         GIT_TAG main
-#         GIT_SHALLOW TRUE
-#         SOURCE_SUBDIR  templates/vst-simple/sonic
+#     # Use the already fetched sonic repo (via sonic_vst3sdk) as a source for VstDevHost.
+#     FetchContent_GetProperties(sonic_vst3sdk)
+#     if(NOT sonic_vst3sdk_POPULATED)
+#         message(FATAL_ERROR "sonic_vst3sdk is not populated. Ensure FetchContent_MakeAvailable(sonic_vst3sdk) ran before adding VstDevHost.")
+#     endif()
+
+#     set(_vstdevhost_candidates
+#         "${sonic_vst3sdk_SOURCE_DIR}/templates/vst-simple/vst_dev_host"
+#         "${sonic_vst3sdk_SOURCE_DIR}/templates/VstDevHost/vst_dev_host"
 #     )
-#     FetchContent_MakeAvailable(sonic)
+#     get_filename_component(_sonic_parent "${sonic_vst3sdk_SOURCE_DIR}" DIRECTORY)
+#     list(APPEND _vstdevhost_candidates
+#         "${_sonic_parent}/templates/vst-simple/vst_dev_host"
+#         "${_sonic_parent}/templates/VstDevHost/vst_dev_host"
+#     )
+#     get_filename_component(_sonic_parent2 "${_sonic_parent}" DIRECTORY)
+#     list(APPEND _vstdevhost_candidates
+#         "${_sonic_parent2}/templates/vst-simple/vst_dev_host"
+#         "${_sonic_parent2}/templates/VstDevHost/vst_dev_host"
+#     )
+
+#     set(VSTDEVHOST_SOURCE_DIR "")
+#     foreach(_cand IN LISTS _vstdevhost_candidates)
+#         if(EXISTS "${_cand}/CMakeLists.txt")
+#             set(VSTDEVHOST_SOURCE_DIR "${_cand}")
+#             break()
+#         endif()
+#     endforeach()
+
+#     if(VSTDEVHOST_SOURCE_DIR STREQUAL "")
+#         message(FATAL_ERROR "Could not find VstDevHost sources. Expected either a local ./vst_dev_host/ or one of: ${_vstdevhost_candidates}")
+#     endif()
+
+#     add_subdirectory("${VSTDEVHOST_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/vstdevhost_build")
 # endif()
 
-smtg_enable_vst3_sdk()
+#----------------
+
 
 smtg_add_vst3plugin(Project1
     source/version.h
     source/plugin_factory.cpp
     source/project1_synthesizer.cpp
-    #--
-    # source/vst_basis/plugin_processor.cpp
-    # source/vst_basis/plugin_controller.cpp
 )
 
 smtg_target_configure_version_file(Project1)
-
-
-# vst3wf dependency
-# - Default: fetch from upstream repository (works for generated project copies that do not include libs/vst3wf).
-# - For developing vst3wf itself: configure with -USE_LOCAL_VST3WF=ON
-# option(USE_LOCAL_VST3WF "Use local vst3wf sources instead of fetching" OFF)
-# set(VST3WF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/vst3wf" CACHE PATH "Path to local vst3wf (used when PROJECT1_USE_LOCAL_VST3WF=ON)")
-
-# if(USE_LOCAL_VST3WF)
-#     if(NOT EXISTS "${VST3WF_SOURCE_DIR}/CMakeLists.txt")
-#         message(FATAL_ERROR "USE_LOCAL_VST3WF=ON but VST3WF_SOURCE_DIR is invalid: ${VST3WF_SOURCE_DIR}")
-#     endif()
-#     add_subdirectory("${VST3WF_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/vst3wf-local")
-# else()
-#     include(FetchContent)
-
-#     set(VST3WF_GIT_REPOSITORY "https://github.com/yahiro07/sonic.git" CACHE STRING "vst3wf upstream repository")
-#     set(VST3WF_GIT_TAG "main" CACHE STRING "vst3wf git tag/branch/commit")
-
-#     FetchContent_Declare(
-#         vst3wf
-#         GIT_REPOSITORY ${VST3WF_GIT_REPOSITORY}
-#         GIT_TAG        ${VST3WF_GIT_TAG}
-#         GIT_SHALLOW    TRUE
-#         SOURCE_SUBDIR  templates/vst-simple/libs/vst3wf
-#     )
-#     FetchContent_MakeAvailable(vst3wf)
-# endif()
-
-# add_subdirectory("sonic")
-
-#----------------
-#download sonic framework
-
-
-
-#----------------
 
 target_link_libraries(Project1
     PRIVATE

@@ -1,5 +1,3 @@
-set(SDK_ROOT "${SMTG_VST3_LOCATION_DIR}")
-
 add_executable(VstDevHost)
 
 target_sources(VstDevHost PRIVATE 
