@@ -21,7 +21,15 @@ option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
 option(SMTG_ENABLE_VST3_HOSTING_EXAMPLES "Enable VST 3 Hosting Examples" OFF)
 option(SMTG_ENABLE_VSTGUI_SUPPORT "Enable VSTGUI Support" OFF)
 
-add_subdirectory(sdk/vst3sdk)
+# add_subdirectory(../../dependencies/vst3sdk)
+
+get_filename_component(VST3SDK_SOURCE_DIR
+  "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/vst3sdk"
+  ABSOLUTE
+)
+add_subdirectory("${VST3SDK_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/vst3sdk_build")
+
+
 
 # if(SMTG_VST3_LOCATION_DIR)
 #     add_subdirectory(${SMTG_VST3_LOCATION_DIR} ${PROJECT_BINARY_DIR}/vst3sdk_build)
