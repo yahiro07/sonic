@@ -100,7 +100,7 @@ void PluginBridge::loadPlugin(const std::string &path) {
     printf("Failed to get edit controller\n");
   }
 
-  componentHandler = IPtr<ComponentHandler>(new ComponentHandler(this), false);
+  componentHandler = IPtr<ComponentHandler>(new ComponentHandler(), false);
   editController->setComponentHandler(componentHandler);
 }
 
