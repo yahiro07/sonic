@@ -15,7 +15,6 @@ enum class InputEventType : uint8_t {
   NoteOn,
   NoteOff,
   ParameterChange,
-  PitchBend,
 };
 
 struct InputEvent {
@@ -24,7 +23,6 @@ struct InputEvent {
   //[id, value] represents
   // [noteNumber, velocity] for NoteOn/NoteOff
   // [paramId, paramValue] for ParameterChange
-  // [noteNumber, pitchBendValue] for PitchBend
   uint32_t id;
   float value;
 };
