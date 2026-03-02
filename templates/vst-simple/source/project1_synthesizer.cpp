@@ -56,8 +56,7 @@ void Project1Synthesizer::process(float *bufferL, float *bufferR,
       440.0f * std::pow(2.0f, (effectiveNoteNumber - 69.0f) / 12.0f);
   float phaseDelta = frequency / sampleRate;
 
-  // float gain = (oscEnabled && gateOn) ? oscVolume : 0.0f;
-  float gain = 1.0f;
+  float gain = (oscEnabled && gateOn) ? oscVolume : 0.0f;
 
   for (int32_t i = 0; i < frames; ++i) {
     phase += phaseDelta;
