@@ -66,16 +66,6 @@ class Application {
           .id = static_cast<uint32_t>(noteNumber),
           .value = 0.0f,
       });
-    } else if (upper4 == 0xE0) {
-      int lsb = data1;
-      int msb = data2;
-      int value14 = (msb << 7) | lsb;                // 0〜16383
-      float normalized = (value14 - 8192) / 8192.0f; // -1.0〜+1.0
-      inputEventQueue.push(InputEvent{
-          .type = InputEventType::PitchBend,
-          .id = 0,
-          .value = normalized,
-      });
     }
   }
 
