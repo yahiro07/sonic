@@ -14,24 +14,38 @@ if(NOT FETCHCONTENT_BASE_DIR)
   set(FETCHCONTENT_BASE_DIR "$ENV{HOME}/.sonic/deps" CACHE PATH "" FORCE)
 endif()
 
+option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
+option(SMTG_ENABLE_VST3_HOSTING_EXAMPLES "Enable VST 3 Hosting Examples" OFF)
+option(SMTG_ENABLE_VSTGUI_SUPPORT "Enable VSTGUI Support" OFF)
 
-#----------------
-#download vst3sdk (stripped down version)
+
+set(SONIC_GIT_REPOSITORY https://github.com/yahiro07/sonic.git)
+set(SONIC_GIT_COMMIT_HASH "080de34ccda2c7b1ff0b8b7dc306d7a7011abf27")
 include(FetchContent)
+#----------------
+#fetch vst3sdk (stripped down version)
 FetchContent_Declare(
     sonic_vst3sdk
-    GIT_REPOSITORY https://github.com/yahiro07/sonic.git
-    GIT_TAG "080de34ccda2c7b1ff0b8b7dc306d7a7011abf27"
+    GIT_REPOSITORY ${SONIC_GIT_REPOSITORY}
+    GIT_TAG ${SONIC_GIT_COMMIT_HASH}
     GIT_SHALLOW TRUE
     SOURCE_SUBDIR  dependencies/vst3sdk
 )
 FetchContent_MakeAvailable(sonic_vst3sdk)
 #----------------
 
-
-option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
-option(SMTG_ENABLE_VST3_HOSTING_EXAMPLES "Enable VST 3 Hosting Examples" OFF)
-option(SMTG_ENABLE_VSTGUI_SUPPORT "Enable VSTGUI Support" OFF)
+# if(USE_LOCAL_SONIC)
+add_subdirectory("sonic")
+# else()
+#     FetchContent_Declare(
+#         sonic
+#         GIT_REPOSITORY https://github.com/yahiro07/sonic.git
+#         GIT_TAG main
+#         GIT_SHALLOW TRUE
+#         SOURCE_SUBDIR  templates/vst-simple/sonic
+#     )
+#     FetchContent_MakeAvailable(sonic)
+# endif()
 
 smtg_enable_vst3_sdk()
 
@@ -79,18 +93,7 @@ smtg_target_configure_version_file(Project1)
 #----------------
 #download sonic framework
 
-if(USE_LOCAL_SONIC)
-    add_subdirectory("sonic")
-else()
-    FetchContent_Declare(
-        sonic
-        GIT_REPOSITORY https://github.com/yahiro07/sonic.git
-        GIT_TAG main
-        GIT_SHALLOW TRUE
-        SOURCE_SUBDIR  templates/vst-simple/sonic
-    )
-    FetchContent_MakeAvailable(sonic)
-endif()
+
 
 #----------------
 
