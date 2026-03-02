@@ -1,12 +1,9 @@
-#pragma once
-#include <atomic>
+#include <mutex>
 #include <stdint.h>
 
 namespace vst_dev_host {
 
-template <typename T, size_t Capacity>
-
-class SPSCQueue {
+template <typename T, size_t Capacity> class SPSCQueue {
   static_assert(Capacity >= 2, "Capacity must be >= 2");
   static_assert((Capacity & (Capacity - 1)) == 0,
                 "Capacity must be power of two");
@@ -15,12 +12,15 @@ private:
   std::atomic<uint32_t> readIndex{0};
   std::atomic<uint32_t> writeIndex{0};
   T buffer[Capacity];
+  std::mutex pushMutex;
 
 public:
   SPSCQueue() = default;
   ~SPSCQueue() = default;
 
   bool push(const T &item) noexcept {
+    std::lock_guard<std::mutex> lock(
+        pushMutex); // support push from more than one thread (so actually MPSC)
     uint32_t currentWrite = writeIndex.load(std::memory_order_relaxed);
     uint32_t nextWrite = (currentWrite + 1) & (Capacity - 1);
 
