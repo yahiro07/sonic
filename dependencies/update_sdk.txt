@@ -2,7 +2,7 @@ fetch vst3sdk and make strip downed of unneeded files and folders
 in ../sdk folder, do
 ----
 clone vst3sdk from github with submodules
-remove .git
+remove */.git
 remove doc
 remove vstgui4
 remove tutorials
