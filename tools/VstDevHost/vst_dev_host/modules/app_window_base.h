@@ -9,6 +9,8 @@ public:
   virtual ~AppWindowBase() = default;
   virtual void show() = 0;
   virtual void loop() = 0;
+  virtual void *getViewHandle() = 0;
+
   virtual void
   refreshMidiInputDeviceListMenu(const std::vector<MidiDeviceInfo> &devices,
                                  const std::string &selectedDeviceKey) = 0;

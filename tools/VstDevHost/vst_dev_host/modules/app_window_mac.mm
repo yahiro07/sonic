@@ -86,18 +86,6 @@ void AppWindowMac::show() {
     contentView.layer.backgroundColor =
         [[NSColor windowBackgroundColor] CGColor];
 
-    NSTextField *label = [[NSTextField alloc]
-        initWithFrame:NSMakeRect((frame.size.width - 240) / 2,
-                                 (frame.size.height - 40) / 2, 240, 40)];
-    label.stringValue = @"Hello World";
-    label.alignment = NSTextAlignmentCenter;
-    label.editable = NO;
-    label.bezeled = NO;
-    label.drawsBackground = NO;
-    label.font = [NSFont boldSystemFontOfSize:24];
-    label.translatesAutoresizingMaskIntoConstraints = YES;
-    [contentView addSubview:label];
-
     window.contentView = contentView;
     window.delegate = (id<NSWindowDelegate>)states->delegate;
     [window makeKeyAndOrderFront:nil];
@@ -106,6 +94,11 @@ void AppWindowMac::show() {
 
     states->window = window;
   }
+}
+
+void *AppWindowMac::getViewHandle() {
+  NSWindow *window = (NSWindow *)states->window;
+  return window.contentView;
 }
 
 void AppWindowMac::loop() {

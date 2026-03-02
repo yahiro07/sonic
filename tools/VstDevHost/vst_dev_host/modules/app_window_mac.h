@@ -14,6 +14,7 @@ public:
 
   void show() override;
   void loop() override;
+  void *getViewHandle() override;
 
   void
   refreshMidiInputDeviceListMenu(const std::vector<MidiDeviceInfo> &devices,
