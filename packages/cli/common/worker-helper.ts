@@ -6,71 +6,31 @@ export function workerHelper_getNewProjectFolderPath(projectName: string) {
   return path.join(process.cwd(), projectName);
 }
 
-export function workerHelper_copyProjectContent(
-  projectName: string,
-  templateName: string,
-) {
+export function workerHelper_getTemplateFolderPath(templateName: string) {
   const binFolderPath = dirname(fileURLToPath(import.meta.url));
-  const templateContentsFolderPath = path.join(
-    binFolderPath,
-    "../",
-    "templates",
-    templateName,
-    "contents",
-  );
-
-  const newProjectFolderPath = path.join(process.cwd(), projectName);
-  console.log("templateContentsFolderPath: ", templateContentsFolderPath);
-  console.log("targetFolderPath: ", newProjectFolderPath);
-
-  fs.cpSync(templateContentsFolderPath, newProjectFolderPath, {
-    recursive: true,
-  });
+  return path.join(binFolderPath, "../", "templates", templateName);
 }
 
-export function workerHelper_copyProjectContents_excludingWorkerFolder(
-  projectName: string,
-  templateName: string,
-) {
-  const binFolderPath = dirname(fileURLToPath(import.meta.url));
-  const templateFolderPath = path.join(
-    binFolderPath,
-    "../",
-    "templates",
-    templateName,
-  );
-  const newProjectFolderPath = path.join(process.cwd(), projectName);
-  fs.mkdirSync(newProjectFolderPath, { recursive: true });
-
-  //copy other entities than __worker folder
-  const templateEntities = fs.readdirSync(templateFolderPath);
-  for (const entity of templateEntities) {
-    if (entity !== "__worker") {
-      const srcPath = path.join(templateFolderPath, entity);
-      const destPath = path.join(newProjectFolderPath, entity);
-      if (fs.statSync(srcPath).isDirectory()) {
-        fs.cpSync(srcPath, destPath, {
-          recursive: true,
-        });
-      } else {
-        fs.copyFileSync(srcPath, destPath);
-      }
-    }
+export function workerHelper_copyFile(srcPath: string, destPath: string) {
+  if (!fs.existsSync(srcPath)) {
+    throw new Error(`source file ${srcPath} does not exist`);
+  }
+  if (fs.statSync(srcPath).isDirectory()) {
+    fs.cpSync(srcPath, destPath, {
+      recursive: true,
+    });
+  } else {
+    fs.copyFileSync(srcPath, destPath);
   }
 }
 
-export function workerHelper_copyProjectContents_withWhiteList(
+export function workerHelper_copyProjectContentFiles(
   projectName: string,
   templateName: string,
   entries: string[],
 ) {
-  const binFolderPath = dirname(fileURLToPath(import.meta.url));
-  const templateFolderPath = path.join(
-    binFolderPath,
-    "../",
-    "templates",
-    templateName,
-  );
+  const templateFolderPath = workerHelper_getTemplateFolderPath(templateName);
+
   const newProjectFolderPath = path.join(process.cwd(), projectName);
   fs.mkdirSync(newProjectFolderPath, { recursive: true });
 
@@ -92,7 +52,7 @@ export function workerHelper_copyProjectContents_withWhiteList(
   }
 }
 
-export function workerHelper_copyProjectContents_withWhiteList_withRenaming(
+export function workerHelper_copyProjectContentFiles_withRenaming(
   projectName: string,
   templateName: string,
   entries: { from: string; to: string }[],
@@ -112,7 +72,7 @@ export function workerHelper_copyProjectContents_withWhiteList_withRenaming(
     const destPath = path.join(newProjectFolderPath, entry.to);
     if (!fs.existsSync(srcPath)) {
       throw new Error(
-        `source entry ${entry} does not exist in template ${templateName}`,
+        `source entry ${entry.from} does not exist in template ${templateName}`,
       );
     }
     if (fs.statSync(srcPath).isDirectory()) {
@@ -168,7 +128,10 @@ export function workerHelper_replaceStrings(
     filePaths: string[];
     replacements: { from: string; to: string }[];
   },
+  checkReplaced = true,
 ) {
+  let fromKeysRemaining = new Set(spec.replacements.map((r) => r.from));
+
   const fullPaths = spec.filePaths.map((filePath) =>
     path.join(folderPath, filePath),
   );
@@ -179,14 +142,41 @@ export function workerHelper_replaceStrings(
     let fileContent = fs.readFileSync(filePath, "utf-8");
     let replaced = false;
     for (const replacement of spec.replacements) {
-      fileContent = fileContent.replace(
-        new RegExp(replacement.from, "g"),
-        replacement.to,
-      );
-      replaced = true;
+      const original = fileContent;
+      fileContent = fileContent.replaceAll(replacement.from, replacement.to);
+      const thisReplaced = fileContent !== original;
+      if (thisReplaced) {
+        fromKeysRemaining.delete(replacement.from);
+      }
+      replaced ||= thisReplaced;
     }
     if (replaced) {
       fs.writeFileSync(filePath, fileContent);
     }
   }
+  if (checkReplaced && fromKeysRemaining.size > 0) {
+    throw new Error(
+      `Some strings to replace were not found in the files. Remaining: ${Array.from(fromKeysRemaining).join(", ")}`,
+    );
+  }
+}
+
+export function workerHelper_relocateFile(
+  folderPath: string,
+  spec: { from: string; to: string },
+) {
+  const fromPath = path.join(folderPath, spec.from);
+  const toPath = path.join(folderPath, spec.to);
+  if (!fs.existsSync(fromPath)) {
+    throw new Error(`file ${fromPath} does not exist`);
+  }
+  fs.renameSync(fromPath, toPath);
+}
+
+export function workerHelper_checkFileExists(
+  folderPath: string,
+  relativeFilePath: string,
+) {
+  const filePath = path.join(folderPath, relativeFilePath);
+  return fs.existsSync(filePath);
 }

@@ -1,3 +1,6 @@
+#----------------
+#basic setup
+
 cmake_minimum_required(VERSION 3.14.0)
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "")
 
@@ -6,103 +9,66 @@ project(Project1
     DESCRIPTION "Project1 VST 3 Plug-in"
 )
 
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  add_definitions(-DDEVELOPMENT=1)
+else()
+  add_definitions(-DRELEASE=1)
+endif()
+
 if(APPLE)
     enable_language(OBJCXX)
 endif()
 
-
-
 #----------------
-#download vst3sdk
+#fetch dependent modules
 
+if(NOT FETCHCONTENT_BASE_DIR)
+  #store fetchContent cache in ~/.sonic/deps
+  set(FETCHCONTENT_BASE_DIR "$ENV{HOME}/.sonic/deps" CACHE PATH "" FORCE)
+endif()
+
+#fetch sonic repository root
 include(FetchContent)
+FetchContent_Populate(
+    sonic_repo
+    GIT_REPOSITORY https://github.com/yahiro07/sonic.git
+    GIT_TAG        "080de34ccda2c7b1ff0b8b7dc306d7a7011abf27"
+    GIT_SHALLOW    TRUE
+)
 
 option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
 option(SMTG_ENABLE_VST3_HOSTING_EXAMPLES "Enable VST 3 Hosting Examples" OFF)
 option(SMTG_ENABLE_VSTGUI_SUPPORT "Enable VSTGUI Support" OFF)
 
-# add_subdirectory(../../dependencies/vst3sdk)
+#add vst3sdk
+add_subdirectory(${sonic_repo_SOURCE_DIR}/dependencies/vst3sdk)
 
-get_filename_component(VST3SDK_SOURCE_DIR
-  "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/vst3sdk"
-  ABSOLUTE
-)
-add_subdirectory("${VST3SDK_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/vst3sdk_build")
-
-
-
-# if(SMTG_VST3_LOCATION_DIR)
-#     add_subdirectory(${SMTG_VST3_LOCATION_DIR} ${PROJECT_BINARY_DIR}/vst3sdk_build)
-# else()
-#     FetchContent_Declare(
-#         vst3sdk
-#         GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk.git
-#         GIT_TAG v3.7.14_build_55
-#     )
-#     FetchContent_MakeAvailable(vst3sdk)
-# endif()
-#----------------
-
+# Make VST3 SDK root path available to subprojects.
 smtg_enable_vst3_sdk()
+get_filename_component(SMTG_VST3_LOCATION_DIR "${public_sdk_SOURCE_DIR}" DIRECTORY)
+set(SDK_ROOT "${SMTG_VST3_LOCATION_DIR}")
+
+#add VstDevHost
+add_subdirectory(${sonic_repo_SOURCE_DIR}/templates/VstDevHost/vst_dev_host)
+
+#add sonic vst3 wrapper library
+if(USE_LOCAL_SONIC)
+  add_subdirectory("sonic")
+else()
+  add_subdirectory(${sonic_repo_SOURCE_DIR}/templates/vst-simple/sonic)
+endif()
+
+
+#----------------
+#plugin source configurations
 
 smtg_add_vst3plugin(Project1
     source/version.h
     source/plugin_factory.cpp
     source/project1_synthesizer.cpp
-    #--
-    # source/vst_basis/plugin_processor.cpp
-    # source/vst_basis/plugin_controller.cpp
 )
 
 smtg_target_configure_version_file(Project1)
-
-
-# vst3wf dependency
-# - Default: fetch from upstream repository (works for generated project copies that do not include libs/vst3wf).
-# - For developing vst3wf itself: configure with -USE_LOCAL_VST3WF=ON
-# option(USE_LOCAL_VST3WF "Use local vst3wf sources instead of fetching" OFF)
-# set(VST3WF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/vst3wf" CACHE PATH "Path to local vst3wf (used when PROJECT1_USE_LOCAL_VST3WF=ON)")
-
-# if(USE_LOCAL_VST3WF)
-#     if(NOT EXISTS "${VST3WF_SOURCE_DIR}/CMakeLists.txt")
-#         message(FATAL_ERROR "USE_LOCAL_VST3WF=ON but VST3WF_SOURCE_DIR is invalid: ${VST3WF_SOURCE_DIR}")
-#     endif()
-#     add_subdirectory("${VST3WF_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/vst3wf-local")
-# else()
-#     include(FetchContent)
-
-#     set(VST3WF_GIT_REPOSITORY "https://github.com/yahiro07/sonic.git" CACHE STRING "vst3wf upstream repository")
-#     set(VST3WF_GIT_TAG "main" CACHE STRING "vst3wf git tag/branch/commit")
-
-#     FetchContent_Declare(
-#         vst3wf
-#         GIT_REPOSITORY ${VST3WF_GIT_REPOSITORY}
-#         GIT_TAG        ${VST3WF_GIT_TAG}
-#         GIT_SHALLOW    TRUE
-#         SOURCE_SUBDIR  templates/vst-simple/libs/vst3wf
-#     )
-#     FetchContent_MakeAvailable(vst3wf)
-# endif()
-
-# add_subdirectory("sonic")
-
-#----------------
-#download sonic framework
-
-if(USE_LOCAL_SONIC)
-    add_subdirectory("sonic")
-else()
-    FetchContent_Declare(
-        sonic
-        GIT_REPOSITORY https://github.com/yahiro07/sonic.git
-        GIT_TAG main
-        GIT_SHALLOW TRUE
-        SOURCE_SUBDIR  templates/vst-simple/sonic
-    )
-    FetchContent_MakeAvailable(sonic)
-endif()
-
-#----------------
 
 target_link_libraries(Project1
     PRIVATE
@@ -129,11 +95,11 @@ if(SONIC_BUILD_FRONTEND)
       message(FATAL_ERROR "frontend project build failed with exit code ${NODE_BUILD_RESULT}")
   endif()
 endif()
-#----------------
 
 
 #----------------
 #copy html page assets
+
 # Keep web resources in sync with the built plug-in bundle.
 # This registers every file under resource/www (recursively) as a plug-in resource
 # and preserves the folder layout under <Bundle>/Contents/Resources/www/...
@@ -155,8 +121,9 @@ foreach(_www_file IN LISTS PLUGIN_WWW_FILES)
 
     smtg_target_add_plugin_resource(Project1 "${_www_file}" "${_www_outsubdir}")
 endforeach()
-#----------------
 
+#----------------
+#output configurations
 
 if(SMTG_MAC)
     smtg_target_set_bundle(Project1
@@ -180,3 +147,5 @@ elseif(SMTG_WIN)
         )
     endif()
 endif()
+
+#----------------

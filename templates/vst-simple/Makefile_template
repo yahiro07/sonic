@@ -1,0 +1,15 @@
+.PHONY: build
+
+default: build
+
+prepare:
+	cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+build:
+	cmake --build build
+
+run: build
+	build/bin/Debug/VstDevHost build/VST3/Debug/Project1.vst3
+
+clean:
+	rm -rf build .cache

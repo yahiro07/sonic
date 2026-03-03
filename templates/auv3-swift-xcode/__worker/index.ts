@@ -2,7 +2,7 @@ import {
   TemplateWorker,
   casingToCapital,
   generateRandomString,
-  workerHelper_copyProjectContents_withWhiteList,
+  workerHelper_copyProjectContentFiles,
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
   workerHelper_getNewProjectFolderPath,
@@ -11,19 +11,15 @@ import {
 function createTemplateWorker(): TemplateWorker {
   return {
     async createProject(projectName, templateName) {
-      workerHelper_copyProjectContents_withWhiteList(
-        projectName,
-        templateName,
-        [
-          "Project1",
-          "Project1.xcodeproj/project.pbxproj",
-          "Project1Extension/Common",
-          "Project1Extension/DSP",
-          "Project1Extension/Root",
-          "Project1Extension/Info.plist",
-          "README.md",
-        ],
-      );
+      workerHelper_copyProjectContentFiles(projectName, templateName, [
+        "Project1",
+        "Project1.xcodeproj/project.pbxproj",
+        "Project1Extension/Common",
+        "Project1Extension/DSP",
+        "Project1Extension/Root",
+        "Project1Extension/Info.plist",
+        "README.md",
+      ]);
 
       const newFolderPath = workerHelper_getNewProjectFolderPath(projectName);
 

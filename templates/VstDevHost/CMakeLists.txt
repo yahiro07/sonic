@@ -17,21 +17,29 @@ endif()
 option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
 option(SMTG_ENABLE_VST3_HOSTING_EXAMPLES "Enable VST 3 Hosting Examples" OFF)
 option(SMTG_ENABLE_VSTGUI_SUPPORT "Enable VSTGUI Support" OFF)
-include(FetchContent)
 
-if(SMTG_VST3_LOCATION_DIR)
-    add_subdirectory(${SMTG_VST3_LOCATION_DIR} ${PROJECT_BINARY_DIR}/vst3sdk_build)
+if(NOT SONIC_USE_LOCAL_SDK)
+  include(FetchContent)
+  FetchContent_Populate(
+      sonic_repo
+      GIT_REPOSITORY https://github.com/yahiro07/sonic.git
+      GIT_TAG        "080de34ccda2c7b1ff0b8b7dc306d7a7011abf27"
+      GIT_SHALLOW    TRUE
+      SOURCE_SUBDIR  dependencies/vst3sdk
+  )
 else()
-    FetchContent_Declare(
-        vst3sdk
-        GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk.git
-        GIT_TAG v3.8.0_build_66
-    )
-    FetchContent_MakeAvailable(vst3sdk)
+  get_filename_component(VST3SDK_SOURCE_DIR
+    "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/vst3sdk"
+    ABSOLUTE
+  )
+  add_subdirectory("${VST3SDK_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/vst3sdk_build")
 endif()
-#----------------
 
 smtg_enable_vst3_sdk()
+get_filename_component(SMTG_VST3_LOCATION_DIR "${public_sdk_SOURCE_DIR}" DIRECTORY)
+set(SDK_ROOT "${SMTG_VST3_LOCATION_DIR}")
+
+#----------------
 
 add_subdirectory(vst_dev_host)
 

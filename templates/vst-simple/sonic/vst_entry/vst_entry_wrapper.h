@@ -27,9 +27,6 @@ typedef struct _PluginFactoryGlobalHolder {
 extern PluginFactoryGlobalHolder gPluginFactoryGlobalHolder;
 
 Steinberg::IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
-    SynthInstantiateFn synthInstantiateFn, PluginMeta &meta);
-
-Steinberg::IPluginFactory *PLUGIN_API GetPluginFactoryInternal(
     SynthInstantiateFn synthInstantiateFn,
     Steinberg::FUnknown *(*processorCreateInstanceFn)(void *),
     Steinberg::FUnknown *(*controllerCreateInstanceFn)(void *),
