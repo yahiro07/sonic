@@ -173,7 +173,9 @@ async function createProject() {
         return;
       }
     } catch (error) {
-      fs.rmSync(newProjectFolderPath, { recursive: true });
+      if (!isWorkerDev) {
+        fs.rmSync(newProjectFolderPath, { recursive: true });
+      }
       throw error;
     }
   } catch (error) {
