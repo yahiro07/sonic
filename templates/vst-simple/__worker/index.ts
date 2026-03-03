@@ -39,8 +39,8 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   }
   const useExtensibleBase = await clackPrompts.confirm({
     message: `Use extensible code structure? (for advanced users)`,
-    // initialValue: false,
-    initialValue: true,
+    initialValue: false,
+    // initialValue: true,//debug
   });
   if (clackPrompts.isCancel(useExtensibleBase)) {
     return "cancelled";
