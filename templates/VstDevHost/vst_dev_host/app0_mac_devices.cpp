@@ -107,7 +107,12 @@ public:
     auto vstPath = std::filesystem::absolute(path).lexically_normal().string();
     printf("Loading plugin: %s\n", vstPath.c_str());
 
-    pluginBridge.loadPlugin(vstPath);
+    auto loaded = pluginBridge.loadPlugin(vstPath);
+    if (!loaded) {
+      printf("Failed to load plugin: %s\n", vstPath.c_str());
+      return;
+    }
+
     window.show();
     pluginBridge.createEditor(window.getViewHandle());
 
