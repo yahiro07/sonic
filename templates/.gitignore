@@ -7,6 +7,3 @@ buildServer.json
 cspell.json
 compile_flags.txt
 compile_commands.json
-
-vst-flexible/**
-!vst-flexible/__scripts
