@@ -112,7 +112,7 @@ export function workerHelper_copyProjectContents_withWhiteList_withRenaming(
     const destPath = path.join(newProjectFolderPath, entry.to);
     if (!fs.existsSync(srcPath)) {
       throw new Error(
-        `source entry ${entry} does not exist in template ${templateName}`,
+        `source entry ${entry.from} does not exist in template ${templateName}`,
       );
     }
     if (fs.statSync(srcPath).isDirectory()) {
