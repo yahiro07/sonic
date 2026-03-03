@@ -6,59 +6,6 @@ export function workerHelper_getNewProjectFolderPath(projectName: string) {
   return path.join(process.cwd(), projectName);
 }
 
-export function workerHelper_copyProjectContent(
-  projectName: string,
-  templateName: string,
-) {
-  const binFolderPath = dirname(fileURLToPath(import.meta.url));
-  const templateContentsFolderPath = path.join(
-    binFolderPath,
-    "../",
-    "templates",
-    templateName,
-    "contents",
-  );
-
-  const newProjectFolderPath = path.join(process.cwd(), projectName);
-  console.log("templateContentsFolderPath: ", templateContentsFolderPath);
-  console.log("targetFolderPath: ", newProjectFolderPath);
-
-  fs.cpSync(templateContentsFolderPath, newProjectFolderPath, {
-    recursive: true,
-  });
-}
-
-export function workerHelper_copyProjectContents_excludingWorkerFolder(
-  projectName: string,
-  templateName: string,
-) {
-  const binFolderPath = dirname(fileURLToPath(import.meta.url));
-  const templateFolderPath = path.join(
-    binFolderPath,
-    "../",
-    "templates",
-    templateName,
-  );
-  const newProjectFolderPath = path.join(process.cwd(), projectName);
-  fs.mkdirSync(newProjectFolderPath, { recursive: true });
-
-  //copy other entities than __worker folder
-  const templateEntities = fs.readdirSync(templateFolderPath);
-  for (const entity of templateEntities) {
-    if (entity !== "__worker") {
-      const srcPath = path.join(templateFolderPath, entity);
-      const destPath = path.join(newProjectFolderPath, entity);
-      if (fs.statSync(srcPath).isDirectory()) {
-        fs.cpSync(srcPath, destPath, {
-          recursive: true,
-        });
-      } else {
-        fs.copyFileSync(srcPath, destPath);
-      }
-    }
-  }
-}
-
 export function workerHelper_copyProjectContentFiles(
   projectName: string,
   templateName: string,
