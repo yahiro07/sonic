@@ -233,6 +233,8 @@ function copyTemplateFiles(
 
   patchTemplateCodeRenaming(projectName);
 
+  //TODO: handle option includeVstDevHost and buildWrapper
+
   //TODO: patch makefile, change build system based on OS
 
   return true;
