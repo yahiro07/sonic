@@ -168,7 +168,10 @@ export function workerHelper_replaceStrings(
     filePaths: string[];
     replacements: { from: string; to: string }[];
   },
+  checkReplaced = true,
 ) {
+  let fromKeysRemaining = new Set(spec.replacements.map((r) => r.from));
+
   const fullPaths = spec.filePaths.map((filePath) =>
     path.join(folderPath, filePath),
   );
@@ -179,14 +182,18 @@ export function workerHelper_replaceStrings(
     let fileContent = fs.readFileSync(filePath, "utf-8");
     let replaced = false;
     for (const replacement of spec.replacements) {
-      fileContent = fileContent.replace(
-        new RegExp(replacement.from, "g"),
-        replacement.to,
-      );
-      replaced = true;
+      const original = fileContent;
+      fileContent = fileContent.replaceAll(replacement.from, replacement.to);
+      replaced ||= fileContent !== original;
+      fromKeysRemaining.delete(replacement.from);
     }
     if (replaced) {
       fs.writeFileSync(filePath, fileContent);
     }
+  }
+  if (checkReplaced && fromKeysRemaining.size > 0) {
+    throw new Error(
+      `Some strings to replace were not found in the files. Remaining: ${Array.from(fromKeysRemaining).join(", ")}`,
+    );
   }
 }

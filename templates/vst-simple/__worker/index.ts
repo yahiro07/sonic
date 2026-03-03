@@ -50,27 +50,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   };
 }
 
-function copyTemplateFiles(
-  projectName: string,
-  templateName: string,
-  options: TemplateOptions,
-) {
-  workerHelper_copyProjectContentFiles(projectName, templateName, [
-    "frontend",
-    // "sonic",  //skip copying, it's downloaded from github with FetchContent
-    "resource",
-    "source",
-    "CMakeLists.txt",
-    "README.md",
-  ]);
-
-  workerHelper_copyProjectContentFiles_withRenaming(projectName, templateName, [
-    { from: "Makefile_template", to: "Makefile" },
-    { from: ".gitignore_template", to: ".gitignore" },
-  ]);
-
-  //TODO: patch makefile, change build system based on OS
-
+function patchTemplateCodeRenaming(projectName: string) {
   const newFolderPath = workerHelper_getNewProjectFolderPath(projectName);
 
   const projectNameSnake = casingToSnake(projectName);
@@ -136,6 +116,65 @@ function copyTemplateFiles(
       { from: "6BAD2674-0204-4522-8971-58C6296A4552", to: controllerCID },
     ],
   });
+}
+
+function utilizeWrapperFramework(
+  projectName: string,
+  templateName: string,
+  useExtensibleBase: boolean,
+) {
+  const newFolderPath = workerHelper_getNewProjectFolderPath(projectName);
+
+  const originalCodePart = `if(USE_LOCAL_SONIC)
+  add_subdirectory("sonic")
+else()
+  add_subdirectory(\${sonic_repo_SOURCE_DIR}/templates/vst-simple/sonic)
+endif()`;
+  if (!useExtensibleBase) {
+    workerHelper_replaceStrings(newFolderPath, {
+      filePaths: ["CMakeLists.txt"],
+      replacements: [
+        {
+          from: originalCodePart,
+          to: `add_subdirectory(\${sonic_repo_SOURCE_DIR}/templates/vst-simple/sonic)`,
+        },
+      ],
+    });
+  } else {
+    workerHelper_replaceStrings(newFolderPath, {
+      filePaths: ["CMakeLists.txt"],
+      replacements: [
+        { from: originalCodePart, to: `add_subdirectory("sonic")` },
+      ],
+    });
+    workerHelper_copyProjectContentFiles(projectName, templateName, ["sonic"]);
+  }
+}
+
+function copyTemplateFiles(
+  projectName: string,
+  templateName: string,
+  options: TemplateOptions,
+) {
+  workerHelper_copyProjectContentFiles(projectName, templateName, [
+    "frontend",
+    "resource",
+    "source",
+    "CMakeLists.txt",
+    "README.md",
+  ]);
+
+  workerHelper_copyProjectContentFiles_withRenaming(projectName, templateName, [
+    { from: "Makefile_template", to: "Makefile" },
+    { from: ".gitignore_template", to: ".gitignore" },
+  ]);
+
+  patchTemplateCodeRenaming(projectName);
+
+  utilizeWrapperFramework(projectName, templateName, options.useExtensibleBase);
+
+  //TODO: patch makefile, change build system based on OS
+
   return true;
 }
 
