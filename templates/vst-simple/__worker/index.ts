@@ -5,6 +5,7 @@ import {
   workerHelper_copyProjectContentFiles,
   workerHelper_copyProjectContentFiles_withRenaming,
   workerHelper_getNewProjectFolderPath,
+  workerHelper_relocateFile,
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
 } from "@/common";
@@ -38,7 +39,8 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   }
   const useExtensibleBase = await clackPrompts.confirm({
     message: `Use extensible code structure? (for advanced users)`,
-    initialValue: false,
+    // initialValue: false,
+    initialValue: true,
   });
   if (clackPrompts.isCancel(useExtensibleBase)) {
     return "cancelled";
@@ -151,6 +153,60 @@ endif()`;
   }
 }
 
+function rearrangeProjectStructureExtensible(projectName: string) {
+  const projectFolderPath = workerHelper_getNewProjectFolderPath(projectName);
+
+  //move sonic/vst_basis to source/vst_basis
+  workerHelper_relocateFile(projectFolderPath, {
+    from: "sonic/vst_basis",
+    to: "source/vst_basis",
+  });
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["sonic/CMakeLists.txt"],
+    replacements: [
+      {
+        from: `  vst_basis/plugin_processor.cpp
+  vst_basis/plugin_controller.cpp
+)`,
+        to: ")",
+      },
+    ],
+  });
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["CMakeLists.txt"],
+    replacements: [
+      {
+        from: `smtg_add_vst3plugin(Project1
+    source/version.h
+    source/plugin_factory.cpp
+    source/project1_synthesizer.cpp
+)`,
+        to: `smtg_add_vst3plugin(Project1
+    source/version.h
+    source/plugin_factory.cpp
+    source/project1_synthesizer.cpp
+    source/vst_basis/plugin_processor.cpp
+    source/vst_basis/plugin_controller.cpp
+)
+`,
+      },
+    ],
+  });
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["source/plugin_factory.cpp"],
+    replacements: [
+      {
+        from: `#include "sonic/vst_basis/plugin_controller.h"`,
+        to: `#include "./vst_basis/plugin_controller.h"`,
+      },
+      {
+        from: `#include "sonic/vst_basis/plugin_processor.h"`,
+        to: `#include "./vst_basis/plugin_processor.h"`,
+      },
+    ],
+  });
+}
+
 function copyTemplateFiles(
   projectName: string,
   templateName: string,
@@ -169,9 +225,13 @@ function copyTemplateFiles(
     { from: ".gitignore_template", to: ".gitignore" },
   ]);
 
-  patchTemplateCodeRenaming(projectName);
-
   utilizeWrapperFramework(projectName, templateName, options.useExtensibleBase);
+
+  if (options.useExtensibleBase) {
+    rearrangeProjectStructureExtensible(projectName);
+  }
+
+  patchTemplateCodeRenaming(projectName);
 
   //TODO: patch makefile, change build system based on OS
 

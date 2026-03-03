@@ -7,7 +7,6 @@ add_library(sonic STATIC
   modules/webview_editor_view.cpp
   modules/processor_state_helper.cpp
   vst_entry/vst_entry_wrapper.cpp
-  #--
   vst_basis/plugin_processor.cpp
   vst_basis/plugin_controller.cpp
 )

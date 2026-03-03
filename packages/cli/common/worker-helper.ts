@@ -184,8 +184,11 @@ export function workerHelper_replaceStrings(
     for (const replacement of spec.replacements) {
       const original = fileContent;
       fileContent = fileContent.replaceAll(replacement.from, replacement.to);
-      replaced ||= fileContent !== original;
-      fromKeysRemaining.delete(replacement.from);
+      const thisReplaced = fileContent !== original;
+      if (thisReplaced) {
+        fromKeysRemaining.delete(replacement.from);
+      }
+      replaced ||= thisReplaced;
     }
     if (replaced) {
       fs.writeFileSync(filePath, fileContent);
@@ -196,4 +199,16 @@ export function workerHelper_replaceStrings(
       `Some strings to replace were not found in the files. Remaining: ${Array.from(fromKeysRemaining).join(", ")}`,
     );
   }
+}
+
+export function workerHelper_relocateFile(
+  folderPath: string,
+  spec: { from: string; to: string },
+) {
+  const fromPath = path.join(folderPath, spec.from);
+  const toPath = path.join(folderPath, spec.to);
+  if (!fs.existsSync(fromPath)) {
+    throw new Error(`file ${fromPath} does not exist`);
+  }
+  fs.renameSync(fromPath, toPath);
 }
