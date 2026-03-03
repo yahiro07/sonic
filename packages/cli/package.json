@@ -5,8 +5,7 @@
     "sonic": "./bin/sonic.js"
   },
   "scripts": {
-    "build-bin": "tsup entry/sonic.ts --format esm --clean --out-dir bin",
-    "build": "npm run build-bin"
+    "build": "tsup entry/sonic.ts --format esm --clean --out-dir bin"
   },
   "files": [
     "bin",
