@@ -2,8 +2,8 @@ import {
   TemplateWorker,
   casingToCapital,
   casingToSnake,
-  workerHelper_copyProjectContents_withWhiteList,
-  workerHelper_copyProjectContents_withWhiteList_withRenaming,
+  workerHelper_copyProjectContentFiles,
+  workerHelper_copyProjectContentFiles_withRenaming,
   workerHelper_getNewProjectFolderPath,
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
@@ -55,7 +55,7 @@ function copyTemplateFiles(
   templateName: string,
   options: TemplateOptions,
 ) {
-  workerHelper_copyProjectContents_withWhiteList(projectName, templateName, [
+  workerHelper_copyProjectContentFiles(projectName, templateName, [
     "frontend",
     // "sonic",  //skip copying, it's downloaded from github with FetchContent
     "resource",
@@ -64,14 +64,10 @@ function copyTemplateFiles(
     "README.md",
   ]);
 
-  workerHelper_copyProjectContents_withWhiteList_withRenaming(
-    projectName,
-    templateName,
-    [
-      { from: "Makefile_template", to: "Makefile" },
-      { from: ".gitignore_template", to: ".gitignore" },
-    ],
-  );
+  workerHelper_copyProjectContentFiles_withRenaming(projectName, templateName, [
+    { from: "Makefile_template", to: "Makefile" },
+    { from: ".gitignore_template", to: ".gitignore" },
+  ]);
 
   //TODO: patch makefile, change build system based on OS
 
