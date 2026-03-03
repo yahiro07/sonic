@@ -59,7 +59,7 @@ export function workerHelper_copyProjectContents_excludingWorkerFolder(
   }
 }
 
-export function workerHelper_copyProjectContents_withWhiteList(
+export function workerHelper_copyProjectContentFiles(
   projectName: string,
   templateName: string,
   entries: string[],
@@ -92,7 +92,7 @@ export function workerHelper_copyProjectContents_withWhiteList(
   }
 }
 
-export function workerHelper_copyProjectContents_withWhiteList_withRenaming(
+export function workerHelper_copyProjectContentFiles_withRenaming(
   projectName: string,
   templateName: string,
   entries: { from: string; to: string }[],
