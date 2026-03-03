@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <signal.h>
 #include <stdio.h>
+#include <string>
 
 namespace vst_dev_host {
 
@@ -91,7 +92,7 @@ class Application {
   }
 
 public:
-  void run() {
+  void run(const std::string &pluginPath) {
     printf("VstDevHost 0048\n");
 
     // Handle ctrl+c
@@ -102,10 +103,9 @@ public:
       mac_stop_app();
     });
 
-    std::filesystem::path relPath =
-        "../../templates/vst-simple/build/VST3/Debug/Project1.vst3";
-    auto vstPath =
-        std::filesystem::absolute(relPath).lexically_normal().string();
+    std::filesystem::path path(pluginPath);
+    auto vstPath = std::filesystem::absolute(path).lexically_normal().string();
+    printf("Loading plugin: %s\n", vstPath.c_str());
 
     pluginBridge.loadPlugin(vstPath);
     window.show();
@@ -167,9 +167,20 @@ public:
 
 } // namespace vst_dev_host
 
-void app0Entry() {
-  Steinberg::tresult res = Steinberg::kResultOk;
-  printf("r: %d\n", res);
+void app0Entry(int argc, char **argv) {
   vst_dev_host::Application app;
-  app.run();
+
+  if (argc >= 2 && argv && argv[1]) {
+    std::string arg1 = argv[1];
+    if (arg1 == "--help" || arg1 == "-h") {
+      printf("Usage: VstDevHost path/to/plugin.vst3\n");
+    } else if (arg1 == "--version" || arg1 == "-v") {
+      printf("VstDevHost version 0.0.1\n");
+    } else {
+      auto &pluginPath = arg1;
+      app.run(pluginPath);
+    }
+  } else {
+    printf("Usage: VstDevHost path/to/plugin.vst3\n");
+  }
 }
