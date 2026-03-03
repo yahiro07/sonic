@@ -21,7 +21,6 @@ function createTemplateWorker(): TemplateWorker {
           // "sonic",  //skip copying, it's downloaded from github with FetchContent
           "resource",
           "source",
-          ".gitignore",
           "CMakeLists.txt",
           "README.md",
         ],
@@ -30,7 +29,10 @@ function createTemplateWorker(): TemplateWorker {
       workerHelper_copyProjectContents_withWhiteList_withRenaming(
         projectName,
         templateName,
-        [{ from: "Makefile_exported", to: "Makefile" }],
+        [
+          { from: "Makefile_template", to: "Makefile" },
+          { from: ".gitignore_template", to: ".gitignore" },
+        ],
       );
 
       //TODO: patch makefile, change build system based on OS
