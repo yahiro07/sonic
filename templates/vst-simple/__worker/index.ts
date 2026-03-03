@@ -33,7 +33,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     initialValue: "makefile",
     options: [
       { value: "none", label: "None" },
-      // { value: "cmakePresets", label: "CMakePresets.json" },      //unsupported yet
+      { value: "cmakePresets", label: "CMakePresets.json" },
       { value: "makefile", label: "Makefile" },
     ] satisfies { value: BuildWrapperType; label: string }[],
   });
@@ -184,6 +184,12 @@ function configureBuildWrapper(
       projectName,
       templateName,
       [{ from: "Makefile_template", to: "Makefile" }],
+    );
+  } else if (buildWrapper === "cmakePresets") {
+    workerHelper_copyProjectContentFiles_withRenaming(
+      projectName,
+      templateName,
+      [{ from: "CMakePresets_template.json", to: "CMakePresets.json" }],
     );
   }
 }
