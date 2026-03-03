@@ -52,14 +52,14 @@ PluginBridge::PluginBridge() {}
 
 PluginBridge::~PluginBridge() { unloadPlugin(); }
 
-void PluginBridge::loadPlugin(const std::string &path) {
+bool PluginBridge::loadPlugin(const std::string &path) {
   printf("PluginBridge::loadPlugin: %s\n", path.c_str());
 
   std::string errorDescription;
   module = VST3::Hosting::Module::create(path, errorDescription);
   if (!module) {
     printf("Failed to load module: %s\n", errorDescription.c_str());
-    return;
+    return false;
   }
 
   auto factory = module->getFactory();
@@ -75,19 +75,19 @@ void PluginBridge::loadPlugin(const std::string &path) {
 
   if (!found) {
     printf("No audio effect class found in plugin\n");
-    return;
+    return false;
   }
 
   plugProvider = new PlugProvider(factory, audioEffectClassInfo, true);
   if (!plugProvider) {
     printf("Failed to create PlugProvider\n");
-    return;
+    return false;
   }
 
   auto component = plugProvider->getComponent();
   if (!component) {
     printf("Failed to get component from PlugProvider\n");
-    return;
+    return false;
   }
 
   audioProcessor = FUnknownPtr<IAudioProcessor>(component);
@@ -102,6 +102,8 @@ void PluginBridge::loadPlugin(const std::string &path) {
 
   componentHandler = IPtr<ComponentHandler>(new ComponentHandler(), false);
   editController->setComponentHandler(componentHandler);
+
+  return true;
 }
 
 void PluginBridge::createEditor(void *ownerViewHandle) {
