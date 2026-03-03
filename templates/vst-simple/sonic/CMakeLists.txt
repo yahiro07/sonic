@@ -27,15 +27,15 @@ set_target_properties(sonic PROPERTIES
 )
 
 include(FetchContent)
-if (NOT TARGET glaze::glaze)
-  FetchContent_Declare(
-    glaze
-    GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-    GIT_TAG main
-    GIT_SHALLOW TRUE
-  )
-  FetchContent_MakeAvailable(glaze)
-endif()
+
+FetchContent_Declare(
+  glaze
+  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
+  GIT_TAG v7.1.0
+  GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(glaze)
+
 target_link_libraries(sonic PRIVATE glaze::glaze)
 
 
