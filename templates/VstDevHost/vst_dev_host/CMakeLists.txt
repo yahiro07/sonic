@@ -17,8 +17,6 @@ set_source_files_properties(${SDK_ROOT}/public.sdk/source/vst/hosting/module_mac
 target_link_libraries(VstDevHost PRIVATE
   sdk
   sdk_hosting
-  base
-  pluginterfaces
   "-framework Cocoa"
   "-framework WebKit"
   "-framework CoreMIDI"
