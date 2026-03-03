@@ -6,18 +6,31 @@ export function workerHelper_getNewProjectFolderPath(projectName: string) {
   return path.join(process.cwd(), projectName);
 }
 
+export function workerHelper_getTemplateFolderPath(templateName: string) {
+  const binFolderPath = dirname(fileURLToPath(import.meta.url));
+  return path.join(binFolderPath, "../", "templates", templateName);
+}
+
+export function workerHelper_copyFile(srcPath: string, destPath: string) {
+  if (!fs.existsSync(srcPath)) {
+    throw new Error(`source file ${srcPath} does not exist`);
+  }
+  if (fs.statSync(srcPath).isDirectory()) {
+    fs.cpSync(srcPath, destPath, {
+      recursive: true,
+    });
+  } else {
+    fs.copyFileSync(srcPath, destPath);
+  }
+}
+
 export function workerHelper_copyProjectContentFiles(
   projectName: string,
   templateName: string,
   entries: string[],
 ) {
-  const binFolderPath = dirname(fileURLToPath(import.meta.url));
-  const templateFolderPath = path.join(
-    binFolderPath,
-    "../",
-    "templates",
-    templateName,
-  );
+  const templateFolderPath = workerHelper_getTemplateFolderPath(templateName);
+
   const newProjectFolderPath = path.join(process.cwd(), projectName);
   fs.mkdirSync(newProjectFolderPath, { recursive: true });
 
@@ -158,4 +171,12 @@ export function workerHelper_relocateFile(
     throw new Error(`file ${fromPath} does not exist`);
   }
   fs.renameSync(fromPath, toPath);
+}
+
+export function workerHelper_checkFileExists(
+  folderPath: string,
+  relativeFilePath: string,
+) {
+  const filePath = path.join(folderPath, relativeFilePath);
+  return fs.existsSync(filePath);
 }
