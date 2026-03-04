@@ -55,6 +55,8 @@ PluginBridge::~PluginBridge() { unloadPlugin(); }
 bool PluginBridge::loadPlugin(const std::string &path) {
   printf("PluginBridge::loadPlugin: %s\n", path.c_str());
 
+  unloadPlugin();
+
   std::string errorDescription;
   module = VST3::Hosting::Module::create(path, errorDescription);
   if (!module) {
@@ -89,15 +91,21 @@ bool PluginBridge::loadPlugin(const std::string &path) {
     printf("Failed to get component from PlugProvider\n");
     return false;
   }
-
   audioProcessor = FUnknownPtr<IAudioProcessor>(component);
   if (!audioProcessor) {
     printf("Component does not support IAudioProcessor\n");
   }
+  // PlugProvider::getComponent() adds a ref. Balance it here.
+  component->release();
 
-  editController = plugProvider->getController();
+  auto *controller = plugProvider->getController();
+  editController = controller;
   if (!editController) {
     printf("Failed to get edit controller\n");
+  }
+  // PlugProvider::getController() adds a ref. Balance it here.
+  if (controller) {
+    controller->release();
   }
 
   componentHandler = IPtr<ComponentHandler>(new ComponentHandler(), false);
@@ -141,15 +149,27 @@ void PluginBridge::closeEditor() {
 }
 
 void PluginBridge::unloadPlugin() {
-  if (editController) {
-    editController->setComponentHandler(nullptr);
+  if (!module && !plugProvider && !audioProcessor && !editController &&
+      !plugView && !componentHandler) {
+    return;
   }
+
+  printf("Unloading plugin\n");
   closeEditor();
+
+  if (audioProcessor) {
+    audioProcessor->setProcessing(false);
+  }
+  if (componentHandler) {
+    componentHandler->clearParameterEditCallback();
+  }
+
   audioProcessor = nullptr;
   editController = nullptr;
   plugProvider = nullptr;
   module = nullptr;
   componentHandler = nullptr;
+  printf("Unloading plugin...done\n");
 }
 
 void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {
