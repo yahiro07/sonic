@@ -7,9 +7,9 @@
 class PlugDriver {
 private:
   const clap_host_t *claHost;
-  std::unique_ptr<SynthesizerBase> synth;
 
 public:
+  std::unique_ptr<SynthesizerBase> synth;
   clap_plugin_t clapPlugin;
 
   PlugDriver(const clap_host_t *claHost, SynthesizerBase *synth)
@@ -32,6 +32,11 @@ public:
         } else if (event->type == CLAP_EVENT_NOTE_OFF) {
           synth->noteOff(noteEvent->key);
         }
+      }
+      if (event->type == CLAP_EVENT_PARAM_VALUE) {
+        auto *paramEvent = (const clap_event_param_value_t *)event;
+        // printf("param %d %f\n", paramEvent->param_id, paramEvent->value);
+        synth->setParameterValue(paramEvent->param_id, paramEvent->value);
       }
     }
   }
@@ -85,6 +90,61 @@ public:
     return CLAP_PROCESS_CONTINUE;
   }
 };
+
+static const clap_plugin_params_t extensionParams = {
+
+    .count = [](const clap_plugin_t *plugin) -> uint32_t {
+      auto drv = (PlugDriver *)plugin->plugin_data;
+      return drv->synth->getParameterCount();
+    },
+
+    .get_info = [](const clap_plugin_t *plugin, uint32_t index,
+                   clap_param_info_t *info) -> bool {
+      auto drv = (PlugDriver *)plugin->plugin_data;
+      if (index >= drv->synth->getParameterCount())
+        return false;
+
+      drv->synth->getParameterInfo(index, info);
+      // printf("get_info %d %s %d %f\n", index, info->name, info->id,
+      //        info->default_value);
+      return true;
+    },
+
+    .get_value = [](const clap_plugin_t *plugin, clap_id id,
+                    double *value) -> bool {
+      auto drv = (PlugDriver *)plugin->plugin_data;
+      *value = drv->synth->getParameterValue(id);
+      // printf("get_value %f\n", *value);
+      return true;
+    },
+
+    .value_to_text = [](const clap_plugin_t *plugin, clap_id id, double value,
+                        char *display, uint32_t size) -> bool {
+      snprintf(display, size, "%.3f", value);
+      return true;
+    },
+
+    .text_to_value = [](const clap_plugin_t *plugin, clap_id id,
+                        const char *display, double *value) -> bool {
+      *value = atof(display);
+      return true;
+    },
+
+    .flush =
+        [](const clap_plugin_t *plugin, const clap_input_events_t *in,
+           const clap_output_events_t *out) {
+          auto drv = (PlugDriver *)plugin->plugin_data;
+
+          const uint32_t n = in->size(in);
+          for (uint32_t i = 0; i < n; ++i) {
+            const clap_event_header_t *hdr = in->get(in, i);
+            if (hdr->type == CLAP_EVENT_PARAM_VALUE) {
+              auto *ev = (const clap_event_param_value_t *)hdr;
+              // printf("flush, param %d %f\n", ev->param_id, ev->value);
+              drv->synth->setParameterValue(ev->param_id, ev->value);
+            }
+          }
+        }};
 
 static const char *const pluginFeatures[] = {
     CLAP_PLUGIN_FEATURE_INSTRUMENT,
@@ -200,6 +260,8 @@ static const clap_plugin_t pluginClass = {
         return &extensionNotePorts;
       if (0 == strcmp(id, CLAP_EXT_AUDIO_PORTS))
         return &extensionAudioPorts;
+      if (!strcmp(id, CLAP_EXT_PARAMS))
+        return &extensionParams;
       return nullptr;
     },
 
