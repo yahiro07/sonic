@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <sonic_common/general/mac_web_view.h>
 
 class PlugDriver {
 private:
@@ -11,6 +12,8 @@ private:
 public:
   std::unique_ptr<SynthesizerBase> synth;
   clap_plugin_t clapPlugin;
+
+  sonic_common::MacWebView *webView;
 
   PlugDriver(const clap_host_t *claHost, SynthesizerBase *synth)
       : claHost(claHost), synth(synth) {}
@@ -146,6 +149,91 @@ static const clap_plugin_params_t extensionParams = {
           }
         }};
 
+#define GUI_API CLAP_WINDOW_API_COCOA
+
+static const clap_plugin_gui_t extensionGUI = {
+    .is_api_supported = [](const clap_plugin_t *plugin, const char *api,
+                           bool isFloating) -> bool {
+      return 0 == strcmp(api, GUI_API) && !isFloating;
+    },
+
+    .get_preferred_api = [](const clap_plugin_t *plugin, const char **api,
+                            bool *isFloating) -> bool {
+      *api = GUI_API;
+      *isFloating = false;
+      return true;
+    },
+
+    .create = [](const clap_plugin_t *_plugin, const char *api,
+                 bool isFloating) -> bool {
+      if (!extensionGUI.is_api_supported(_plugin, api, isFloating))
+        return false;
+      auto drv = (PlugDriver *)_plugin->plugin_data;
+      drv->webView = new sonic_common::MacWebView();
+      return true;
+    },
+
+    .destroy =
+        [](const clap_plugin_t *_plugin) {
+          auto drv = (PlugDriver *)_plugin->plugin_data;
+          if (drv->webView) {
+            delete drv->webView;
+            drv->webView = nullptr;
+          }
+        },
+
+    .set_scale = [](const clap_plugin_t *plugin, double scale) -> bool {
+      return false;
+    },
+
+    .get_size = [](const clap_plugin_t *plugin, uint32_t *width,
+                   uint32_t *height) -> bool {
+      *width = 800;
+      *height = 600;
+      return true;
+    },
+
+    .can_resize = [](const clap_plugin_t *plugin) -> bool { return false; },
+
+    .get_resize_hints = [](const clap_plugin_t *plugin,
+                           clap_gui_resize_hints_t *hints) -> bool {
+      return false;
+    },
+
+    .adjust_size = [](const clap_plugin_t *plugin, uint32_t *width,
+                      uint32_t *height) -> bool {
+      return extensionGUI.get_size(plugin, width, height);
+    },
+
+    .set_size = [](const clap_plugin_t *plugin, uint32_t width,
+                   uint32_t height) -> bool { return true; },
+
+    .set_parent = [](const clap_plugin_t *_plugin,
+                     const clap_window_t *window) -> bool {
+      assert(0 == strcmp(window->api, GUI_API));
+      auto drv = (PlugDriver *)_plugin->plugin_data;
+      drv->webView->attachToParent(window->cocoa);
+      return true;
+    },
+
+    .set_transient = [](const clap_plugin_t *plugin,
+                        const clap_window_t *window) -> bool { return false; },
+
+    .suggest_title = [](const clap_plugin_t *plugin, const char *title) {},
+
+    .show = [](const clap_plugin_t *_plugin) -> bool {
+      auto drv = (PlugDriver *)_plugin->plugin_data;
+      // drv->webView->show();
+      return true;
+    },
+
+    .hide = [](const clap_plugin_t *_plugin) -> bool {
+      auto drv = (PlugDriver *)_plugin->plugin_data;
+      drv->webView->removeFromParent();
+      return true;
+    },
+};
+
 static const char *const pluginFeatures[] = {
     CLAP_PLUGIN_FEATURE_INSTRUMENT,
     CLAP_PLUGIN_FEATURE_SYNTHESIZER,
@@ -262,6 +350,8 @@ static const clap_plugin_t pluginClass = {
         return &extensionAudioPorts;
       if (!strcmp(id, CLAP_EXT_PARAMS))
         return &extensionParams;
+      if (!strcmp(id, CLAP_EXT_GUI))
+        return &extensionGUI;
       return nullptr;
     },
 
