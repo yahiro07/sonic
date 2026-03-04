@@ -1,6 +1,8 @@
-add_library(MyClap1 SHARED main.cpp clap_wrapper.cpp)
+project(MyClap1)
 
-set_target_properties(MyClap1 PROPERTIES
+add_library(${PROJECT_NAME} SHARED main.cpp clap_wrapper.cpp)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
     PREFIX ""
     OUTPUT_NAME "MyClap1"
     POSITION_INDEPENDENT_CODE ON
