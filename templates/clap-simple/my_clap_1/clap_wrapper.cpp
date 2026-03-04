@@ -7,7 +7,7 @@
 
 class PlugDriver {
 private:
-  const clap_host_t *claHost;
+  const clap_host_t *clapHost;
 
 public:
   std::unique_ptr<SynthesizerBase> synth;
@@ -15,8 +15,8 @@ public:
 
   sonic_common::MacWebView *webView;
 
-  PlugDriver(const clap_host_t *claHost, SynthesizerBase *synth)
-      : claHost(claHost), synth(synth) {}
+  PlugDriver(const clap_host_t *clapHost, SynthesizerBase *synth)
+      : clapHost(clapHost), synth(synth) {}
 
   void setSampleRate(double sampleRate) { synth->setSampleRate(sampleRate); }
 
