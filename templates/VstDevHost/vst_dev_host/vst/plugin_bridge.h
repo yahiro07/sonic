@@ -1,5 +1,6 @@
 #pragma once
 #include "pluginterfaces/base/funknown.h"
+#include "pluginterfaces/gui/iplugview.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
@@ -11,6 +12,8 @@
 #include <string>
 
 namespace vst_dev_host {
+
+class HostPlugFrame;
 
 enum class InputEventType : uint8_t {
   NoteOn,
@@ -34,8 +37,14 @@ public:
   ~PluginBridge();
 
   bool loadPlugin(const std::string &path);
-  void createEditor(void *ownerViewHandle);
+  void getDesiredEditorSize(int &width, int &height);
+  void openEditor(void *ownerViewHandle);
   void closeEditor();
+  bool requestEditorResize(int &width, int &height);
+  void subscribeEditorSizeChangeRequest(
+      std::function<bool(int width, int height)> callback);
+  void unsubscribeEditorSizeChangeRequest();
+
   void unloadPlugin();
   void prepareAudio(double sampleRate, int maxBlockSize);
   void processAudio(float *bufferL, float *bufferR, int nframes,
@@ -51,6 +60,10 @@ private:
   Steinberg::FUnknownPtr<Steinberg::Vst::IAudioProcessor> audioProcessor;
   Steinberg::FUnknownPtr<Steinberg::Vst::IEditController> editController;
   Steinberg::IPlugView *plugView = nullptr;
+  Steinberg::IPtr<Steinberg::IPlugFrame> plugFrame = nullptr;
+  HostPlugFrame *hostPlugFrame = nullptr;
+  std::function<bool(int width, int height)> editorSizeChangeRequestCallback =
+      nullptr;
   bool controllerIsComponent = false;
   bool isConnected = false;
   bool isActive = false;
@@ -60,6 +73,8 @@ private:
   Steinberg::Vst::ParameterChanges paramChanges;
   class ComponentHandler;
   Steinberg::IPtr<ComponentHandler> componentHandler = nullptr;
+
+  void createEditor(void *ownerViewHandle);
 };
 
 } // namespace vst_dev_host

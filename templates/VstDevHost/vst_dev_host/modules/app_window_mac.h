@@ -15,6 +15,10 @@ public:
   void show() override;
   void loop() override;
   void *getViewHandle() override;
+  void setWindowSize(int width, int height) override;
+  void subscribeWindowResize(
+      std::function<void(int width, int height)> callback) override;
+  void unsubscribeWindowResize() override;
 
   void
   refreshMidiInputDeviceListMenu(const std::vector<MidiDeviceInfo> &devices,

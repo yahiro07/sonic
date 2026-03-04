@@ -11,6 +11,55 @@ namespace vst_dev_host {
 using namespace Steinberg;
 using namespace Steinberg::Vst;
 
+static inline bool isOk(tresult r) {
+  return (r == kResultTrue) || (r == kResultOk);
+}
+
+class HostPlugFrame final : public Steinberg::IPlugFrame {
+public:
+  HostPlugFrame() { FUNKNOWN_CTOR }
+  ~HostPlugFrame() { FUNKNOWN_DTOR }
+
+  void setResizeRequestCallback(
+      std::function<bool(int width, int height)> callback) {
+    resizeRequestCallback = std::move(callback);
+  }
+
+  void clearResizeRequestCallback() { resizeRequestCallback = nullptr; }
+
+  tresult PLUGIN_API resizeView(Steinberg::IPlugView *view,
+                                Steinberg::ViewRect *newSize) override {
+    if (!newSize) {
+      return kResultFalse;
+    }
+
+    const int width = (int)(newSize->right - newSize->left);
+    const int height = (int)(newSize->bottom - newSize->top);
+
+    if (!resizeRequestCallback) {
+      return kResultFalse;
+    }
+
+    const bool accepted = resizeRequestCallback(width, height);
+
+    if (!accepted) {
+      return kResultFalse;
+    }
+
+    // Ensure the plugin view is informed about the new size.
+    if (view) {
+      (void)view->onSize(newSize);
+    }
+    return kResultTrue;
+  }
+
+  DECLARE_FUNKNOWN_METHODS
+
+private:
+  std::function<bool(int width, int height)> resizeRequestCallback = nullptr;
+};
+IMPLEMENT_FUNKNOWN_METHODS(HostPlugFrame, IPlugFrame, IPlugFrame::iid)
+
 class PluginBridge::ComponentHandler
     : public Steinberg::Vst::IComponentHandler {
 public:
@@ -53,6 +102,102 @@ IMPLEMENT_FUNKNOWN_METHODS(PluginBridge::ComponentHandler, IComponentHandler,
 PluginBridge::PluginBridge() {}
 
 PluginBridge::~PluginBridge() { unloadPlugin(); }
+
+void PluginBridge::getDesiredEditorSize(int &width, int &height) {
+  width = 0;
+  height = 0;
+  if (!editController) {
+    return;
+  }
+
+  Steinberg::IPlugView *view = plugView;
+  bool temporary = false;
+  if (!view) {
+    view = editController->createView(ViewType::kEditor);
+    temporary = (view != nullptr);
+  }
+
+  if (!view) {
+    return;
+  }
+
+  ViewRect rect;
+  if (isOk(view->getSize(&rect))) {
+    width = (int)(rect.right - rect.left);
+    height = (int)(rect.bottom - rect.top);
+  }
+
+  if (temporary) {
+    view->release();
+  }
+}
+
+void PluginBridge::openEditor(void *ownerViewHandle) {
+  createEditor(ownerViewHandle);
+}
+
+bool PluginBridge::requestEditorResize(int &width, int &height) {
+  if (!plugView) {
+    return false;
+  }
+
+  // If the plugin cannot resize, keep the current size.
+  if (!isOk(plugView->canResize())) {
+    ViewRect current;
+    if (isOk(plugView->getSize(&current))) {
+      width = (int)(current.right - current.left);
+      height = (int)(current.bottom - current.top);
+    }
+    return false;
+  }
+
+  ViewRect rect;
+  rect.left = 0;
+  rect.top = 0;
+  rect.right = width;
+  rect.bottom = height;
+
+  // Let the plugin clamp/adjust sizes if it wants.
+  if (isOk(plugView->checkSizeConstraint(&rect))) {
+    width = (int)(rect.right - rect.left);
+    height = (int)(rect.bottom - rect.top);
+  }
+
+  const auto r = plugView->onSize(&rect);
+  if (!isOk(r)) {
+    return false;
+  }
+
+  width = (int)(rect.right - rect.left);
+  height = (int)(rect.bottom - rect.top);
+  return true;
+}
+
+void PluginBridge::subscribeEditorSizeChangeRequest(
+    std::function<bool(int width, int height)> callback) {
+  editorSizeChangeRequestCallback = callback;
+
+  // Ensure we have a frame to receive resize requests.
+  if (!plugFrame) {
+    hostPlugFrame = new HostPlugFrame();
+    plugFrame = Steinberg::IPtr<Steinberg::IPlugFrame>(hostPlugFrame, false);
+  }
+
+  if (hostPlugFrame) {
+    hostPlugFrame->setResizeRequestCallback(editorSizeChangeRequestCallback);
+  }
+
+  if (plugView) {
+    (void)plugView->setFrame(plugFrame);
+  }
+}
+
+void PluginBridge::unsubscribeEditorSizeChangeRequest() {
+  editorSizeChangeRequestCallback = nullptr;
+  if (hostPlugFrame) {
+    hostPlugFrame->clearResizeRequestCallback();
+  }
+}
 
 static bool connectComponentAndController(IComponent *component,
                                           IEditController *controller) {
@@ -200,6 +345,17 @@ void PluginBridge::createEditor(void *ownerViewHandle) {
     return;
   }
 
+  // Provide an IPlugFrame so plugins can request host resizes.
+  if (!plugFrame) {
+    hostPlugFrame = new HostPlugFrame();
+    plugFrame = Steinberg::IPtr<Steinberg::IPlugFrame>(hostPlugFrame, false);
+  }
+
+  if (hostPlugFrame) {
+    hostPlugFrame->setResizeRequestCallback(editorSizeChangeRequestCallback);
+  }
+  (void)plugView->setFrame(plugFrame);
+
   ViewRect rect;
   if (plugView->getSize(&rect) != kResultTrue) {
     printf("Failed to get view size\n");
@@ -214,6 +370,7 @@ void PluginBridge::createEditor(void *ownerViewHandle) {
 
 void PluginBridge::closeEditor() {
   if (plugView) {
+    (void)plugView->setFrame(nullptr);
     plugView->removed();
     plugView->release();
     plugView = nullptr;
@@ -276,6 +433,12 @@ void PluginBridge::unloadPlugin() {
   editController = nullptr;
   module = nullptr;
   componentHandler = nullptr;
+  editorSizeChangeRequestCallback = nullptr;
+  if (hostPlugFrame) {
+    hostPlugFrame->clearResizeRequestCallback();
+  }
+  plugFrame = nullptr;
+  hostPlugFrame = nullptr;
   controllerIsComponent = false;
   isConnected = false;
   isActive = false;

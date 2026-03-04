@@ -10,6 +10,10 @@ public:
   virtual void show() = 0;
   virtual void loop() = 0;
   virtual void *getViewHandle() = 0;
+  virtual void setWindowSize(int width, int height) = 0;
+  virtual void subscribeWindowResize(
+      std::function<void(int width, int height)> callback) = 0;
+  virtual void unsubscribeWindowResize() = 0;
 
   virtual void
   refreshMidiInputDeviceListMenu(const std::vector<MidiDeviceInfo> &devices,
