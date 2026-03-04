@@ -1,5 +1,6 @@
 #include "plugin_bridge.h"
 #include "pluginterfaces/base/funknown.h"
+#include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/gui/iplugview.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include <cstdio>
@@ -64,7 +65,7 @@ bool PluginBridge::loadPlugin(const std::string &path) {
     return false;
   }
 
-  auto factory = module->getFactory();
+  VST3::Hosting::PluginFactory factory = module->getFactory();
   VST3::Hosting::ClassInfo audioEffectClassInfo;
   bool found = false;
   for (auto &classInfo : factory.classInfos()) {
@@ -86,7 +87,7 @@ bool PluginBridge::loadPlugin(const std::string &path) {
     return false;
   }
 
-  auto component = plugProvider->getComponent();
+  IComponent *component = plugProvider->getComponent();
   if (!component) {
     printf("Failed to get component from PlugProvider\n");
     return false;
@@ -98,7 +99,7 @@ bool PluginBridge::loadPlugin(const std::string &path) {
   // PlugProvider::getComponent() adds a ref. Balance it here.
   component->release();
 
-  auto *controller = plugProvider->getController();
+  IEditController *controller = plugProvider->getController();
   editController = controller;
   if (!editController) {
     printf("Failed to get edit controller\n");
@@ -179,6 +180,9 @@ void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {
     setup.symbolicSampleSize = kSample32;
     setup.maxSamplesPerBlock = maxBlockSize;
     setup.sampleRate = sampleRate;
+
+    Vst::SpeakerArrangement stereo = Vst::SpeakerArr::kStereo;
+    audioProcessor->setBusArrangements(&stereo, 1, &stereo, 1);
 
     audioProcessor->setupProcessing(setup);
     audioProcessor->setProcessing(true);
