@@ -121,7 +121,23 @@ public:
     }
 
     window.show();
-    pluginBridge.createEditor(window.getViewHandle());
+    int editorWidth = 0, editorHeight = 0;
+    pluginBridge.getDesiredEditorSize(editorWidth, editorHeight);
+    if (editorWidth > 0 && editorHeight > 0) {
+      window.setWindowSize(editorWidth, editorHeight);
+    }
+    pluginBridge.openEditor(window.getViewHandle());
+    window.subscribeWindowResize([this](int width, int height) {
+      int w = width;
+      int h = height;
+      (void)pluginBridge.requestEditorResize(w, h);
+      window.setWindowSize(w, h);
+    });
+    pluginBridge.subscribeEditorSizeChangeRequest(
+        [this](int width, int height) -> bool {
+          window.setWindowSize(width, height);
+          return true;
+        });
 
     auto audioDevices = audioIo.enumerateDevices();
     auto midiDevices = midiIn.enumerateDevices();
@@ -166,8 +182,10 @@ public:
 
     printf("window closed, exiting...\n");
     pluginBridge.unsubscribeParameterEdit();
+    pluginBridge.unsubscribeEditorSizeChangeRequest();
     midiIn.close();
     audioIo.close();
+    window.unsubscribeWindowResize();
     window.unsubscribeMidiInputDeviceSelection();
     window.unsubscribeAudioDeviceSelection();
 
