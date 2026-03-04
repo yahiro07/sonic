@@ -5,11 +5,17 @@
 #include <memory>
 
 class PlugDriver {
-public:
-  clap_plugin_t clapPlugin;
+private:
   const clap_host_t *claHost;
   std::unique_ptr<SynthesizerBase> synth;
-  PlugDriver(SynthesizerBase *synth) : synth(synth) {}
+
+public:
+  clap_plugin_t clapPlugin;
+
+  PlugDriver(const clap_host_t *claHost, SynthesizerBase *synth)
+      : claHost(claHost), synth(synth) {}
+
+  void setSampleRate(double sampleRate) { synth->setSampleRate(sampleRate); }
 
   void renderAudio(uint32_t start, uint32_t end, float *outputL,
                    float *outputR) {
@@ -167,7 +173,7 @@ static const clap_plugin_t pluginClass = {
                    uint32_t minimumFramesCount,
                    uint32_t maximumFramesCount) -> bool {
       auto plugDriver = (PlugDriver *)_plugin->plugin_data;
-      plugDriver->synth->setSampleRate(sampleRate);
+      plugDriver->setSampleRate(sampleRate);
       return true;
     },
 
@@ -225,8 +231,7 @@ static const clap_plugin_factory_t pluginFactory = {
       }
 
       auto synth = rootage.synthInitializer();
-      PlugDriver *plugDriver = new PlugDriver(synth);
-      plugDriver->claHost = host;
+      PlugDriver *plugDriver = new PlugDriver(host, synth);
       plugDriver->clapPlugin = pluginClass;
       plugDriver->clapPlugin.plugin_data = plugDriver;
       return &plugDriver->clapPlugin;

@@ -23,8 +23,8 @@ public:
       phase += phaseInc;
       phase -= floorf(phase);
       // auto y = rand() / (float)RAND_MAX * 2.f - 1.f;
-      // auto y = (phase * 2.f - 1.f);
-      auto y = sinf(phase * 2.f * M_PI);
+      auto y = (phase * 2.f - 1.f);
+      // auto y = sinf(phase * 2.f * M_PI);
       y *= gain;
       bufferL[index] = y;
       bufferR[index] = y;
