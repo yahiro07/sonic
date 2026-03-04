@@ -23,7 +23,7 @@ if(NOT SONIC_USE_LOCAL_SDK)
   FetchContent_Populate(
       sonic_repo
       GIT_REPOSITORY https://github.com/yahiro07/sonic.git
-      GIT_TAG        "9b92887ec631862596a67b5b2e1b85930b520fc5"
+      GIT_TAG        "33c46ffea9036535ed813eaf5558871138ba5984"
       GIT_SHALLOW    TRUE
       SOURCE_SUBDIR  dependencies/vst3sdk
   )
