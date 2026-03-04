@@ -92,7 +92,7 @@ class Application {
   }
 
 public:
-  void run(const std::string &pluginPath) {
+  void run(const std::string &pluginPath, bool smoke = false) {
     printf("VstDevHost 0048\n");
 
     // Handle ctrl+c
@@ -110,6 +110,13 @@ public:
     auto loaded = pluginBridge.loadPlugin(vstPath);
     if (!loaded) {
       printf("Failed to load plugin: %s\n", vstPath.c_str());
+      return;
+    }
+
+    if (smoke) {
+      printf("Smoke mode: unloading immediately\n");
+      pluginBridge.unloadPlugin();
+      printf("Smoke mode: done\n");
       return;
     }
 
@@ -178,14 +185,16 @@ void app0Entry(int argc, char **argv) {
   if (argc >= 2 && argv && argv[1]) {
     std::string arg1 = argv[1];
     if (arg1 == "--help" || arg1 == "-h") {
-      printf("Usage: VstDevHost path/to/plugin.vst3\n");
+      printf("Usage: VstDevHost path/to/plugin.vst3 [--smoke]\n");
     } else if (arg1 == "--version" || arg1 == "-v") {
       printf("VstDevHost version 0.0.1\n");
     } else {
       auto &pluginPath = arg1;
-      app.run(pluginPath);
+      const bool smoke =
+          (argc >= 3 && argv[2] && std::string(argv[2]) == "--smoke");
+      app.run(pluginPath, smoke);
     }
   } else {
-    printf("Usage: VstDevHost path/to/plugin.vst3\n");
+    printf("Usage: VstDevHost path/to/plugin.vst3 [--smoke]\n");
   }
 }

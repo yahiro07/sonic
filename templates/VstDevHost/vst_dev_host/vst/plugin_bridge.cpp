@@ -3,6 +3,7 @@
 #include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/gui/iplugview.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
+#include "pluginterfaces/vst/ivstmessage.h"
 #include <cstdio>
 
 namespace vst_dev_host {
@@ -13,8 +14,8 @@ using namespace Steinberg::Vst;
 class PluginBridge::ComponentHandler
     : public Steinberg::Vst::IComponentHandler {
 public:
-  ComponentHandler() {}
-  ~ComponentHandler() {}
+  ComponentHandler() { FUNKNOWN_CTOR }
+  ~ComponentHandler(){FUNKNOWN_DTOR}
 
   tresult PLUGIN_API beginEdit(Vst::ParamID paramId) override {
     return kResultTrue;
@@ -53,6 +54,36 @@ PluginBridge::PluginBridge() {}
 
 PluginBridge::~PluginBridge() { unloadPlugin(); }
 
+static bool connectComponentAndController(IComponent *component,
+                                          IEditController *controller) {
+  FUnknownPtr<IConnectionPoint> componentCP(component);
+  FUnknownPtr<IConnectionPoint> controllerCP(controller);
+
+  if (!componentCP || !controllerCP) {
+    return false;
+  }
+  const auto r1 = componentCP->connect(controllerCP);
+  const auto r2 = controllerCP->connect(componentCP);
+
+  return (r1 == kResultOk || r1 == kResultTrue) &&
+         (r2 == kResultOk || r2 == kResultTrue);
+}
+static bool disconnectComponentAndController(IComponent *component,
+                                             IEditController *controller) {
+  FUnknownPtr<IConnectionPoint> componentCP(component);
+  FUnknownPtr<IConnectionPoint> controllerCP(controller);
+
+  if (!componentCP || !controllerCP) {
+    return false;
+  }
+
+  const auto r1 = componentCP->disconnect(controllerCP);
+  const auto r2 = controllerCP->disconnect(componentCP);
+
+  return (r1 == kResultOk || r1 == kResultTrue) &&
+         (r2 == kResultOk || r2 == kResultTrue);
+}
+
 bool PluginBridge::loadPlugin(const std::string &path) {
   printf("PluginBridge::loadPlugin: %s\n", path.c_str());
 
@@ -81,36 +112,76 @@ bool PluginBridge::loadPlugin(const std::string &path) {
     return false;
   }
 
-  plugProvider = new PlugProvider(factory, audioEffectClassInfo, true);
-  if (!plugProvider) {
-    printf("Failed to create PlugProvider\n");
+  isConnected = false;
+  isActive = false;
+  isProcessing = false;
+  controllerIsComponent = false;
+
+  component = factory.createInstance<IComponent>(audioEffectClassInfo.ID());
+  if (!component) {
+    printf("Failed to create component instance\n");
     return false;
   }
 
-  IComponent *component = plugProvider->getComponent();
-  if (!component) {
-    printf("Failed to get component from PlugProvider\n");
-    return false;
+  {
+    FUnknownPtr<IPluginBase> plugBase(component);
+    if (!plugBase) {
+      printf("Component does not support IPluginBase\n");
+    } else {
+      const auto initResult = plugBase->initialize(&hostApp);
+      if (initResult != kResultOk && initResult != kResultTrue) {
+        printf("Component initialize failed: %d\n",
+               static_cast<int>(initResult));
+      }
+    }
   }
+
   audioProcessor = FUnknownPtr<IAudioProcessor>(component);
   if (!audioProcessor) {
     printf("Component does not support IAudioProcessor\n");
   }
-  // PlugProvider::getComponent() adds a ref. Balance it here.
-  component->release();
 
-  IEditController *controller = plugProvider->getController();
-  editController = controller;
-  if (!editController) {
-    printf("Failed to get edit controller\n");
-  }
-  // PlugProvider::getController() adds a ref. Balance it here.
-  if (controller) {
-    controller->release();
+  // Controller: either the component is also a controller, or we create one
+  // using the component-provided controller class ID.
+  {
+    FUnknownPtr<IEditController> controllerFromComponent(component);
+    if (controllerFromComponent) {
+      controllerIsComponent = true;
+      editController = controllerFromComponent;
+    } else {
+      TUID controllerCID;
+      if (component->getControllerClassId(controllerCID) == kResultTrue) {
+        editController =
+            factory.createInstance<IEditController>(VST3::UID(controllerCID));
+        if (!editController) {
+          printf("Failed to create edit controller instance\n");
+        } else {
+          FUnknownPtr<IPluginBase> plugBase(editController);
+          if (!plugBase) {
+            printf("Controller does not support IPluginBase\n");
+          } else {
+            const auto initResult = plugBase->initialize(&hostApp);
+            if (initResult != kResultOk && initResult != kResultTrue) {
+              printf("Controller initialize failed: %d\n",
+                     static_cast<int>(initResult));
+            }
+          }
+        }
+      } else {
+        printf(
+            "Component did not provide controller class ID (no controller)\n");
+      }
+    }
   }
 
   componentHandler = IPtr<ComponentHandler>(new ComponentHandler(), false);
-  editController->setComponentHandler(componentHandler);
+  if (editController) {
+    editController->setComponentHandler(componentHandler);
+  }
+
+  if (component && editController && !controllerIsComponent) {
+    isConnected = connectComponentAndController(component, editController);
+  }
 
   return true;
 }
@@ -150,7 +221,7 @@ void PluginBridge::closeEditor() {
 }
 
 void PluginBridge::unloadPlugin() {
-  if (!module && !plugProvider && !audioProcessor && !editController &&
+  if (!module && !component && !audioProcessor && !editController &&
       !plugView && !componentHandler) {
     return;
   }
@@ -158,23 +229,68 @@ void PluginBridge::unloadPlugin() {
   printf("Unloading plugin\n");
   closeEditor();
 
-  if (audioProcessor) {
-    audioProcessor->setProcessing(false);
+  // Stop audio processing first.
+  if (audioProcessor && isProcessing) {
+    const auto r = audioProcessor->setProcessing(false);
+    (void)r;
+    isProcessing = false;
+  }
+
+  // Deactivate while controller/connection is still present.
+  if (component && isActive) {
+    const auto r = component->setActive(false);
+    (void)r;
+    isActive = false;
+  }
+
+  // Now it is safe to disconnect.
+  if (component && editController && !controllerIsComponent && isConnected) {
+    (void)disconnectComponentAndController(component, editController);
+    isConnected = false;
+  }
+
+  // Detach host handler before termination.
+  if (editController) {
+    editController->setComponentHandler(nullptr);
   }
   if (componentHandler) {
     componentHandler->clearParameterEditCallback();
   }
 
+  // Terminate in the same order as the SDK helper (component first).
+  if (component) {
+    FUnknownPtr<IPluginBase> plugBase(component);
+    if (plugBase) {
+      plugBase->terminate();
+    }
+  }
+  if (editController && !controllerIsComponent) {
+    FUnknownPtr<IPluginBase> plugBase(editController);
+    if (plugBase) {
+      plugBase->terminate();
+    }
+  }
+
+  component = nullptr;
   audioProcessor = nullptr;
   editController = nullptr;
-  plugProvider = nullptr;
   module = nullptr;
   componentHandler = nullptr;
+  controllerIsComponent = false;
+  isConnected = false;
+  isActive = false;
+  isProcessing = false;
   printf("Unloading plugin...done\n");
 }
 
 void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {
   if (audioProcessor) {
+    if (component) {
+      const auto r = component->setActive(true);
+      (void)r;
+      isActive = true;
+    }
+
     ProcessSetup setup;
     setup.processMode = kRealtime;
     setup.symbolicSampleSize = kSample32;
@@ -186,6 +302,7 @@ void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {
 
     audioProcessor->setupProcessing(setup);
     audioProcessor->setProcessing(true);
+    isProcessing = true;
 
     eventList.setMaxSize(128);
     paramChanges.setMaxParameters(128);
