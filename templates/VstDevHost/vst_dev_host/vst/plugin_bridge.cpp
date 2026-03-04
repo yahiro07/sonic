@@ -1,5 +1,6 @@
 #include "plugin_bridge.h"
 #include "pluginterfaces/base/funknown.h"
+#include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/gui/iplugview.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include <cstdio>
@@ -52,17 +53,19 @@ PluginBridge::PluginBridge() {}
 
 PluginBridge::~PluginBridge() { unloadPlugin(); }
 
-void PluginBridge::loadPlugin(const std::string &path) {
+bool PluginBridge::loadPlugin(const std::string &path) {
   printf("PluginBridge::loadPlugin: %s\n", path.c_str());
+
+  unloadPlugin();
 
   std::string errorDescription;
   module = VST3::Hosting::Module::create(path, errorDescription);
   if (!module) {
     printf("Failed to load module: %s\n", errorDescription.c_str());
-    return;
+    return false;
   }
 
-  auto factory = module->getFactory();
+  VST3::Hosting::PluginFactory factory = module->getFactory();
   VST3::Hosting::ClassInfo audioEffectClassInfo;
   bool found = false;
   for (auto &classInfo : factory.classInfos()) {
@@ -75,33 +78,41 @@ void PluginBridge::loadPlugin(const std::string &path) {
 
   if (!found) {
     printf("No audio effect class found in plugin\n");
-    return;
+    return false;
   }
 
   plugProvider = new PlugProvider(factory, audioEffectClassInfo, true);
   if (!plugProvider) {
     printf("Failed to create PlugProvider\n");
-    return;
+    return false;
   }
 
-  auto component = plugProvider->getComponent();
+  IComponent *component = plugProvider->getComponent();
   if (!component) {
     printf("Failed to get component from PlugProvider\n");
-    return;
+    return false;
   }
-
   audioProcessor = FUnknownPtr<IAudioProcessor>(component);
   if (!audioProcessor) {
     printf("Component does not support IAudioProcessor\n");
   }
+  // PlugProvider::getComponent() adds a ref. Balance it here.
+  component->release();
 
-  editController = plugProvider->getController();
+  IEditController *controller = plugProvider->getController();
+  editController = controller;
   if (!editController) {
     printf("Failed to get edit controller\n");
+  }
+  // PlugProvider::getController() adds a ref. Balance it here.
+  if (controller) {
+    controller->release();
   }
 
   componentHandler = IPtr<ComponentHandler>(new ComponentHandler(), false);
   editController->setComponentHandler(componentHandler);
+
+  return true;
 }
 
 void PluginBridge::createEditor(void *ownerViewHandle) {
@@ -139,15 +150,27 @@ void PluginBridge::closeEditor() {
 }
 
 void PluginBridge::unloadPlugin() {
-  if (editController) {
-    editController->setComponentHandler(nullptr);
+  if (!module && !plugProvider && !audioProcessor && !editController &&
+      !plugView && !componentHandler) {
+    return;
   }
+
+  printf("Unloading plugin\n");
   closeEditor();
+
+  if (audioProcessor) {
+    audioProcessor->setProcessing(false);
+  }
+  if (componentHandler) {
+    componentHandler->clearParameterEditCallback();
+  }
+
   audioProcessor = nullptr;
   editController = nullptr;
   plugProvider = nullptr;
   module = nullptr;
   componentHandler = nullptr;
+  printf("Unloading plugin...done\n");
 }
 
 void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {
@@ -157,6 +180,9 @@ void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {
     setup.symbolicSampleSize = kSample32;
     setup.maxSamplesPerBlock = maxBlockSize;
     setup.sampleRate = sampleRate;
+
+    Vst::SpeakerArrangement stereo = Vst::SpeakerArr::kStereo;
+    audioProcessor->setBusArrangements(&stereo, 1, &stereo, 1);
 
     audioProcessor->setupProcessing(setup);
     audioProcessor->setProcessing(true);

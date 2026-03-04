@@ -5,8 +5,7 @@
     "sonic": "./bin/sonic.js"
   },
   "scripts": {
-    "build-bin": "tsup entry/sonic.ts --format esm --clean --out-dir bin",
-    "build": "npm run build-bin"
+    "build": "tsup entry/sonic.ts --format esm --clean --out-dir bin"
   },
   "files": [
     "bin",
@@ -15,6 +14,7 @@
   "devDependencies": {
     "@types/node": "^25.3.0",
     "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {

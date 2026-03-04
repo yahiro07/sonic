@@ -32,7 +32,7 @@ public:
   PluginBridge();
   ~PluginBridge();
 
-  void loadPlugin(const std::string &path);
+  bool loadPlugin(const std::string &path);
   void createEditor(void *ownerViewHandle);
   void closeEditor();
   void unloadPlugin();
