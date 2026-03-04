@@ -16,6 +16,8 @@ FetchContent_MakeAvailable(clap)
 
 include_directories(${clap_SOURCE_DIR}/include)
 
+add_subdirectory(sonic_common)
+
 add_subdirectory(my_clap_1)
 
 
