@@ -116,6 +116,14 @@ private:
   SPSCQueue<Message, 32> queue;
 
 public:
+  ~LoggerImpl() noexcept {
+    try {
+      stop();
+    } catch (...) {
+      // best-effort: destructors must not throw
+    }
+  }
+
   void start() {
     if (running.exchange(true))
       return;
@@ -141,7 +149,10 @@ public:
     if (worker.joinable()) {
       worker.join();
     }
-    close(sock);
+    if (sock >= 0) {
+      close(sock);
+      sock = -1;
+    }
   }
 
   void logRaw(const char *logKind, const char *subsystem, double timestamp,
@@ -178,7 +189,9 @@ public:
 #if !defined(NDEBUG)
 Logger::Logger() : impl(std::make_unique<LoggerImpl>()) {}
 
-Logger::~Logger() = default;
+Logger::~Logger() {
+  stop();
+}
 
 void Logger::start() { impl->start(); }
 
