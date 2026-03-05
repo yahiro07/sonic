@@ -30,3 +30,14 @@ public:
 
   void stop() { webViewIo.setMessageReceiver(nullptr); }
 };
+
+inline void messagingHub_dev_handleMessageFromUi(
+    const std::string &message,
+    std::function<void(uint32_t, double)> setParameterFromUi) {
+  printf("message: %s\n", message.c_str());
+  if (true) {
+    uint32_t paramId = 0;
+    double paramValue = rand() / (double)RAND_MAX; // debug;
+    setParameterFromUi(paramId, paramValue);
+  }
+}
