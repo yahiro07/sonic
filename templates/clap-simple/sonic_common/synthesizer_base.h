@@ -9,6 +9,7 @@ enum ParameterFlags : int {
   None = 0,
   IsReadOnly = 1,
   IsHidden = 2,
+  NonAutomatable = 4,
 };
 
 class ParameterBuilder {
@@ -35,9 +36,10 @@ public:
   virtual ~SynthesizerBase() = default;
   virtual void setupParameters(ParameterBuilder &builder) = 0;
   virtual void setParameter(uint64_t address, double value) = 0;
-  virtual void prepare(double sampleRate, int32_t maxFrameCount) = 0;
-  virtual void noteOn(int32_t noteNumber, double velocity) = 0;
-  virtual void noteOff(int32_t noteNumber) = 0;
-  virtual void process(float *bufferL, float *bufferR, int32_t frames) = 0;
-  virtual std::string getEditorPageUrl() = 0;
+  virtual void setSampleRate(double sampleRate) = 0;
+  // virtual void prepare(double sampleRate, int32_t maxFrameCount) = 0;
+  virtual void processAudio(float *bufferL, float *bufferR, int32_t frames) = 0;
+  virtual void noteOn(int noteNumber, double velocity) = 0;
+  virtual void noteOff(int noteNumber) = 0;
+  virtual std::string_view getEditorPageUrl() = 0;
 };

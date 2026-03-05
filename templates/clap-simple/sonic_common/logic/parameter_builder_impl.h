@@ -9,9 +9,7 @@ private:
 
 public:
   std::vector<ParameterItem> getItems() { return parameters; }
-  void callSetupParameters(SynthesizerBase *synthInstance) {
-    synthInstance->setupParameters(*this);
-  }
+
   void addUnary(uint64_t address, Str identifier, Str label,
                 double defaultValue, Str group, ParameterFlags flags);
   void addEnum(uint64_t address, Str identifier, Str label,

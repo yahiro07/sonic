@@ -1,5 +1,4 @@
-#include "./synthesizer_base.h"
-#include <cstdio>
+#include "sonic_common/synthesizer_base.h"
 #include <math.h>
 
 class MySynthesizer : public SynthesizerBase {
@@ -10,12 +9,35 @@ private:
   bool gateOn = false;
 
   float paramGain = 0.5f;
+  float paramWaveType = 0.f;
+  float paramOscPitch = 0.5f;
+  float paramOscVolume = 0.5f;
 
 public:
+  void setupParameters(ParameterBuilder &builder) override {
+    builder.addUnary(0, "gain", "Gain", 0.5);
+    builder.addEnum(1, "waveType", "Wave Type", "saw",
+                    {"saw", "square", "triangle", "sine"});
+    builder.addUnary(2, "oscPitch", "Pitch", 0.5);
+    builder.addUnary(3, "oscVolume", "Volume", 0.5);
+  }
+
+  void setParameter(uint64_t address, double value) override {
+    if (address == 0) {
+      paramGain = value;
+    } else if (address == 1) {
+      paramWaveType = value;
+    } else if (address == 2) {
+      paramOscPitch = value;
+    } else if (address == 3) {
+      paramOscVolume = value;
+    }
+  }
+
   void setSampleRate(double sampleRate) override {
     this->sampleRate = (float)sampleRate;
   }
-  void processAudio(float *bufferL, float *bufferR, uint32_t frames) override {
+  void processAudio(float *bufferL, float *bufferR, int32_t frames) override {
     if (sampleRate == 0.f)
       return;
     auto freq = exp2f((noteNumber - 57.f) / 12.f) * 440.f;
@@ -43,22 +65,8 @@ public:
     }
   }
 
-  uint32_t getParameterCount() const override { return 1; }
-
-  void getParameterInfo(uint32_t index,
-                        clap_param_info_t *info) const override {
-    info->id = 0;
-    info->flags = CLAP_PARAM_IS_AUTOMATABLE;
-    info->min_value = 0.0;
-    info->max_value = 1.0;
-    info->default_value = 0.5;
-    snprintf(info->name, sizeof(info->name), "Gain");
-  }
-
-  double getParameterValue(clap_id id) const override { return paramGain; }
-
-  void setParameterValue(clap_id id, double value) override {
-    paramGain = value;
+  std::string_view getEditorPageUrl() override {
+    return "http://localhost:3000";
   }
 };
 

@@ -18,7 +18,6 @@ public:
   virtual void getParameterInfo(uint32_t index,
                                 clap_param_info_t *info) const = 0;
   virtual double getParameterValue(clap_id id) const = 0;
-  virtual void setParameterValue(clap_id id, double value) = 0;
   virtual void flushParameters(const clap_input_events_t *inputEvents,
                                const clap_output_events_t *outputEvents) = 0;
 

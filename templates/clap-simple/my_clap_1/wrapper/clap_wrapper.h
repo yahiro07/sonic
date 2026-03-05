@@ -1,5 +1,5 @@
 #pragma once
-#include "../synthesizer_base.h"
+#include "sonic_common/synthesizer_base.h"
 #include <clap/clap.h>
 
 struct PluginMeta {
@@ -12,6 +12,8 @@ struct PluginMeta {
   const char *version;
   const char *description;
 };
+
+typedef SynthesizerBase *(*SynthesizerInitializerFn)();
 
 const clap_plugin_entry_t &
 createClapPluginEntry(SynthesizerInitializerFn synthInitializer,
