@@ -43,8 +43,23 @@ public:
       }
     }
   }
+};
 
-  clap_process_status process(const clap_process_t *process) {
+#define GUI_API CLAP_WINDOW_API_COCOA
+
+class PlugBasisImpl : public PlugBasis {
+private:
+  PlugDriver plugDriver;
+  sonic_common::MacWebView *webView = nullptr;
+
+public:
+  PlugBasisImpl(SynthesizerBase &synth) : plugDriver(&synth) {}
+
+  void setSampleRate(double sampleRate) override {
+    plugDriver.setSampleRate(sampleRate);
+  }
+
+  clap_process_status process(const clap_process_t *process) override {
     if (!process)
       return CLAP_PROCESS_ERROR;
     if (process->audio_outputs_count != 1)
@@ -77,7 +92,7 @@ public:
           break;
         }
 
-        processEvent(event);
+        plugDriver.processEvent(event);
         eventIndex++;
 
         if (eventIndex == inputEventCount) {
@@ -86,30 +101,11 @@ public:
         }
       }
 
-      renderAudio(i, nextEventFrame, out.data32[0], out.data32[1]);
+      plugDriver.renderAudio(i, nextEventFrame, out.data32[0], out.data32[1]);
       i = nextEventFrame;
     }
 
     return CLAP_PROCESS_CONTINUE;
-  }
-};
-
-#define GUI_API CLAP_WINDOW_API_COCOA
-
-class PlugBasisImpl : public PlugBasis {
-private:
-  PlugDriver plugDriver;
-  sonic_common::MacWebView *webView = nullptr;
-
-public:
-  PlugBasisImpl(SynthesizerBase &synth) : plugDriver(&synth) {}
-
-  void setSampleRate(double sampleRate) override {
-    plugDriver.setSampleRate(sampleRate);
-  }
-
-  clap_process_status process(const clap_process_t *processData) override {
-    return plugDriver.process(processData);
   }
 
   uint32_t getParameterCount() const override {
