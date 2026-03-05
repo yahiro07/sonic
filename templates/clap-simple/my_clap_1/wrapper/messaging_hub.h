@@ -5,32 +5,75 @@
 #include <glaze/glaze.hpp>
 #include <string>
 
-class IDownStreamEventPort {};
-
-class IParametersManager {};
-
-class MessagingHub {
-private:
-  sonic_common::IWebViewIo &webViewIo;
-  IDownStreamEventPort &downStreamEventPort;
-  IParametersManager &parametersManager;
-
-public:
-  MessagingHub(sonic_common::IWebViewIo &webViewIo,
-               IDownStreamEventPort &downStreamEventPort,
-               IParametersManager &parametersManager)
-      : webViewIo(webViewIo), downStreamEventPort(downStreamEventPort),
-        parametersManager(parametersManager) {}
-  void start() {
-    webViewIo.setMessageReceiver(
-        [this](const std::string &message) { onMessageFromWebView(message); });
-  }
-  void onMessageFromWebView(const std::string &message) {
-    printf("message from webview: %s\n", message.c_str());
-  }
-
-  void stop() { webViewIo.setMessageReceiver(nullptr); }
+enum class UpStreamEventType {
+  parameterBeginEdit,
+  parameterApplyEdit,
+  parameterEndEdit,
+  noteOnRequest,
+  noteOffRequest,
 };
+
+struct UpstreamEvent {
+  UpStreamEventType type;
+  union {
+    struct {
+      uint32_t paramId;
+      double value;
+    } param;
+    struct {
+      int noteNumber;
+      double velocity;
+    } note;
+  };
+};
+
+enum class DownStreamEventType {
+  parameterChange,
+  hostNoteOn,
+  hostNoteOff,
+};
+
+struct DownstreamEvent {
+  DownStreamEventType type;
+  union {
+    struct {
+      uint32_t paramId;
+      double value;
+    } param;
+    struct {
+      int noteNumber;
+      double velocity;
+    } note;
+  };
+};
+
+// class IDownStreamEventPort {};
+
+// class IParametersManager {};
+
+// class MessagingHub {
+// private:
+//   sonic_common::IWebViewIo &webViewIo;
+//   IDownStreamEventPort &downStreamEventPort;
+//   IParametersManager &parametersManager;
+
+// public:
+//   MessagingHub(sonic_common::IWebViewIo &webViewIo,
+//                IDownStreamEventPort &downStreamEventPort,
+//                IParametersManager &parametersManager)
+//       : webViewIo(webViewIo), downStreamEventPort(downStreamEventPort),
+//         parametersManager(parametersManager) {}
+//   void start() {
+//     webViewIo.setMessageReceiver(
+//         [this](const std::string &message) { onMessageFromWebView(message);
+//         });
+//   }
+//   void onMessageFromWebView(const std::string &message) {
+//     printf("message from webview: %s\n", message.c_str());
+//   }
+
+//   void stop() { webViewIo.setMessageReceiver(nullptr); }
+// };
 
 struct RxMsgLog {
   std::string type = "log";
@@ -82,9 +125,39 @@ template <> struct meta<RxMessageVariant> {
 };
 } // namespace glz
 
+struct TxMsgSetParameter {
+  std::string type = "setParameter";
+  std::string identifier;
+  double value;
+};
+struct TxMsgBulkSendParameters {
+  std::string type = "bulkSendParameters";
+  std::map<std::string, double> parameters;
+};
+struct TxMsgHostNoteOn {
+  std::string type = "hostNoteOn";
+  int noteNumber;
+  double velocity;
+};
+struct TxMsgHostNoteOff {
+  std::string type = "hostNoteOff";
+  int noteNumber;
+};
+
+// template <typename T>
+// static void sendWebViewJsonMessage(IWebViewIo *webView, T &msg) {
+//   std::string buffer{};
+//   auto ec = glz::write_json(msg, buffer);
+//   if (ec)
+//     return;
+//   // logger.log("send message to ui: %s", buffer.c_str());
+//   webView->sendMessage(buffer);
+// }
+
 inline void messagingHub_dev_handleMessageFromUi(
     const std::string &jsonStr,
-    std::function<void(std::string &, double)> performParameterEditFromUi) {
+    std::function<void(std::string &, double)> performParameterEditFromUi,
+    std::function<void(UpstreamEvent &)> emitUpstreamEvent) {
   printf("message: %s\n", jsonStr.c_str());
 
   RxMessageVariant rxMessage;
@@ -93,5 +166,35 @@ inline void messagingHub_dev_handleMessageFromUi(
     return;
   if (auto *m = std::get_if<RxMsgPerformEdit>(&rxMessage)) {
     performParameterEditFromUi(m->identifier, m->value);
+  }
+}
+
+inline void messagingHub_dev_handleEventFromHost(
+    DownstreamEvent &e,
+    std::function<void(std::string &)> sendMessageToWebView) {
+  if (e.type == DownStreamEventType::parameterChange) {
+    printf("downstream param %d %f\n", e.param.paramId, e.param.value);
+    // todo: lookup identifier from paramId
+    //  std::string identifier = "";
+    // this->webView->sendMessage(JSON({paramChange,
+    // identifier,e.param.value}));
+  } else if (e.type == DownStreamEventType::hostNoteOn) {
+    printf("downstream noteOn %d %f\n", e.note.noteNumber, e.note.velocity);
+  } else if (e.type == DownStreamEventType::hostNoteOff) {
+    printf("downstream noteOff %d\n", e.note.noteNumber);
+  }
+
+  if (e.type == DownStreamEventType::parameterChange) {
+    auto identifier = "oscVolume"; // todo: lookup identifier from param id
+    TxMsgSetParameter msg{
+        .type = "setParameter",
+        .identifier = identifier,
+        .value = e.param.value,
+    };
+    std::string buffer;
+    auto ec = glz::write_json(msg, buffer);
+    if (ec)
+      return;
+    sendMessageToWebView(buffer);
   }
 }
