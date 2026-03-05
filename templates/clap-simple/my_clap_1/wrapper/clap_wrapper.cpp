@@ -7,6 +7,7 @@
 #include "clap/process.h"
 #include "messaging_hub.h"
 #include "sonic_common/general/mac_web_view.h"
+#include "sonic_common/general/polling_timer.h"
 #include "sonic_common/general/spsc_queue.h"
 #include <assert.h>
 #include <cstring>
@@ -38,6 +39,7 @@ private:
   sonic_common::MacWebView *webView = nullptr;
   sonic_common::SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
   sonic_common::SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
+  sonic_common::PollingTimer pollingTimer;
 
 private:
   void renderAudio(uint32_t start, uint32_t end, float *outputL,
@@ -192,10 +194,6 @@ public:
     webView->loadUrl("http://localhost:3000");
 
     webView->setMessageReceiver([this](const std::string &message) {
-      // debug pulling downstream events
-      // this is originally supposed to be handled in timer loop
-      this->drainDownstreamEvents();
-
       auto performParameterEditFromUi = [this](std::string &identifier,
                                                double value) {
         printf("setParameterFromUi: %s %f\n", identifier.c_str(), value);
@@ -219,10 +217,12 @@ public:
       messagingHub_dev_handleMessageFromUi(message, performParameterEditFromUi,
                                            emitUpstreamEvent);
     });
+    pollingTimer.start([this]() { this->drainDownstreamEvents(); }, 50);
     return true;
   }
 
   void guiDestroy() override {
+    pollingTimer.stop();
     webView->setMessageReceiver(nullptr);
     webView->removeFromParent();
     if (webView) {
