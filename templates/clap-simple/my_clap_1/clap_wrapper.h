@@ -20,7 +20,7 @@ public:
   virtual void setParameterValue(clap_id id, double value) = 0;
 };
 
-typedef SynthesizerBase *(*synthesizerInitializerFn)();
+typedef SynthesizerBase *(*SynthesizerInitializerFn)();
 
 struct PluginMeta {
   const char *id;
@@ -34,5 +34,5 @@ struct PluginMeta {
 };
 
 const clap_plugin_entry_t &
-createClapPluginEntry(synthesizerInitializerFn synthInitializer,
+createClapPluginEntry(SynthesizerInitializerFn synthInitializer,
                       const PluginMeta &meta);

@@ -1,4 +1,6 @@
 #include "clap_wrapper.h"
+#include "clap/factory/plugin-factory.h"
+#include "clap/process.h"
 #include <assert.h>
 #include <cstdio>
 #include <cstring>
@@ -6,17 +8,11 @@
 #include <sonic_common/general/mac_web_view.h>
 
 class PlugDriver {
-private:
-  const clap_host_t *clapHost;
 
 public:
   std::unique_ptr<SynthesizerBase> synth;
-  clap_plugin_t clapPlugin;
 
-  sonic_common::MacWebView *webView;
-
-  PlugDriver(const clap_host_t *clapHost, SynthesizerBase *synth)
-      : clapHost(clapHost), synth(synth) {}
+  PlugDriver(SynthesizerBase *synth) : synth(synth) {}
 
   void setSampleRate(double sampleRate) { synth->setSampleRate(sampleRate); }
 
@@ -94,20 +90,71 @@ public:
   }
 };
 
+static const char *const pluginFeatures[] = {
+    CLAP_PLUGIN_FEATURE_INSTRUMENT,
+    CLAP_PLUGIN_FEATURE_SYNTHESIZER,
+    CLAP_PLUGIN_FEATURE_STEREO,
+    nullptr,
+};
+
+static clap_plugin_descriptor_t pluginDescriptor = {
+    .clap_version = CLAP_VERSION_INIT,
+    .id = "com.my-company.my-plugin",
+    .name = "MyPlugin",
+    .vendor = "MyCompany",
+    .url = "https://my-company.com",
+    .manual_url = "https://my-company.com/manual",
+    .support_url = "https://my-company.com/support",
+    .version = "1.0.0",
+    .description = "Example CLAP plugin.",
+    .features = pluginFeatures,
+};
+
+static void overwriteDescriptor(const PluginMeta &meta) {
+  pluginDescriptor.id = meta.id;
+  pluginDescriptor.name = meta.name;
+  pluginDescriptor.vendor = meta.vendor;
+  pluginDescriptor.url = meta.url;
+  pluginDescriptor.manual_url = meta.manualUrl;
+  pluginDescriptor.support_url = meta.supportUrl;
+  pluginDescriptor.version = meta.version;
+  pluginDescriptor.description = meta.description;
+}
+
+class PlugBasis {
+public:
+  clap_plugin_t clapPlugin;
+  sonic_common::MacWebView *webView;
+
+  virtual ~PlugBasis() = default;
+  virtual void setSampleRate(double sampleRate) = 0;
+  virtual clap_process_status process(const clap_process_t *processData) = 0;
+
+  virtual uint32_t getParameterCount() const = 0;
+  virtual void getParameterInfo(uint32_t index,
+                                clap_param_info_t *info) const = 0;
+  virtual double getParameterValue(clap_id id) const = 0;
+  virtual void setParameterValue(clap_id id, double value) = 0;
+};
+
+static PlugBasis *getPluginData(const clap_plugin_t *plugin) {
+  return (PlugBasis *)plugin->plugin_data;
+}
+
 static const clap_plugin_params_t extensionParams = {
 
     .count = [](const clap_plugin_t *plugin) -> uint32_t {
-      auto drv = (PlugDriver *)plugin->plugin_data;
-      return drv->synth->getParameterCount();
+      auto plug = getPluginData(plugin);
+      return plug->getParameterCount();
     },
 
     .get_info = [](const clap_plugin_t *plugin, uint32_t index,
                    clap_param_info_t *info) -> bool {
-      auto drv = (PlugDriver *)plugin->plugin_data;
-      if (index >= drv->synth->getParameterCount())
+      auto plug = getPluginData(plugin);
+      if (index >= plug->getParameterCount())
         return false;
 
-      drv->synth->getParameterInfo(index, info);
+      plug->getParameterInfo(index, info);
       // printf("get_info %d %s %d %f\n", index, info->name, info->id,
       //        info->default_value);
       return true;
@@ -115,8 +162,8 @@ static const clap_plugin_params_t extensionParams = {
 
     .get_value = [](const clap_plugin_t *plugin, clap_id id,
                     double *value) -> bool {
-      auto drv = (PlugDriver *)plugin->plugin_data;
-      *value = drv->synth->getParameterValue(id);
+      auto plug = getPluginData(plugin);
+      *value = plug->getParameterValue(id);
       // printf("get_value %f\n", *value);
       return true;
     },
@@ -136,7 +183,7 @@ static const clap_plugin_params_t extensionParams = {
     .flush =
         [](const clap_plugin_t *plugin, const clap_input_events_t *in,
            const clap_output_events_t *out) {
-          auto drv = (PlugDriver *)plugin->plugin_data;
+          auto plug = getPluginData(plugin);
 
           const uint32_t n = in->size(in);
           for (uint32_t i = 0; i < n; ++i) {
@@ -144,7 +191,7 @@ static const clap_plugin_params_t extensionParams = {
             if (hdr->type == CLAP_EVENT_PARAM_VALUE) {
               auto *ev = (const clap_event_param_value_t *)hdr;
               // printf("flush, param %d %f\n", ev->param_id, ev->value);
-              drv->synth->setParameterValue(ev->param_id, ev->value);
+              plug->setParameterValue(ev->param_id, ev->value);
             }
           }
         }};
@@ -168,17 +215,17 @@ static const clap_plugin_gui_t extensionGUI = {
                  bool isFloating) -> bool {
       if (!extensionGUI.is_api_supported(_plugin, api, isFloating))
         return false;
-      auto drv = (PlugDriver *)_plugin->plugin_data;
-      drv->webView = new sonic_common::MacWebView();
+      auto plug = getPluginData(_plugin);
+      plug->webView = new sonic_common::MacWebView();
       return true;
     },
 
     .destroy =
         [](const clap_plugin_t *_plugin) {
-          auto drv = (PlugDriver *)_plugin->plugin_data;
-          if (drv->webView) {
-            delete drv->webView;
-            drv->webView = nullptr;
+          auto plug = getPluginData(_plugin);
+          if (plug->webView) {
+            delete plug->webView;
+            plug->webView = nullptr;
           }
         },
 
@@ -211,8 +258,8 @@ static const clap_plugin_gui_t extensionGUI = {
     .set_parent = [](const clap_plugin_t *_plugin,
                      const clap_window_t *window) -> bool {
       assert(0 == strcmp(window->api, GUI_API));
-      auto drv = (PlugDriver *)_plugin->plugin_data;
-      drv->webView->attachToParent(window->cocoa);
+      auto plug = getPluginData(_plugin);
+      plug->webView->attachToParent(window->cocoa);
       return true;
     },
 
@@ -222,48 +269,17 @@ static const clap_plugin_gui_t extensionGUI = {
     .suggest_title = [](const clap_plugin_t *plugin, const char *title) {},
 
     .show = [](const clap_plugin_t *_plugin) -> bool {
-      auto drv = (PlugDriver *)_plugin->plugin_data;
-      // drv->webView->show();
+      auto plug = getPluginData(_plugin);
+      // plug->webView->show();
       return true;
     },
 
     .hide = [](const clap_plugin_t *_plugin) -> bool {
-      auto drv = (PlugDriver *)_plugin->plugin_data;
-      drv->webView->removeFromParent();
+      auto plug = getPluginData(_plugin);
+      plug->webView->removeFromParent();
       return true;
     },
 };
-
-static const char *const pluginFeatures[] = {
-    CLAP_PLUGIN_FEATURE_INSTRUMENT,
-    CLAP_PLUGIN_FEATURE_SYNTHESIZER,
-    CLAP_PLUGIN_FEATURE_STEREO,
-    nullptr,
-};
-
-static clap_plugin_descriptor_t pluginDescriptor = {
-    .clap_version = CLAP_VERSION_INIT,
-    .id = "com.my-company.my-plugin",
-    .name = "MyPlugin",
-    .vendor = "MyCompany",
-    .url = "https://my-company.com",
-    .manual_url = "https://my-company.com/manual",
-    .support_url = "https://my-company.com/support",
-    .version = "1.0.0",
-    .description = "Example CLAP plugin.",
-    .features = pluginFeatures,
-};
-
-static void overwriteDescriptor(const PluginMeta &meta) {
-  pluginDescriptor.id = meta.id;
-  pluginDescriptor.name = meta.name;
-  pluginDescriptor.vendor = meta.vendor;
-  pluginDescriptor.url = meta.url;
-  pluginDescriptor.manual_url = meta.manualUrl;
-  pluginDescriptor.support_url = meta.supportUrl;
-  pluginDescriptor.version = meta.version;
-  pluginDescriptor.description = meta.description;
-}
 
 static const clap_plugin_note_ports_t extensionNotePorts = {
     .count = [](const clap_plugin_t *plugin, bool isInput) -> uint32_t {
@@ -306,22 +322,22 @@ static const clap_plugin_t pluginClass = {
     .plugin_data = nullptr,
 
     .init = [](const clap_plugin *_plugin) -> bool {
-      auto plugDriver = (PlugDriver *)_plugin->plugin_data;
-      (void)plugDriver;
+      auto plug = getPluginData(_plugin);
+      (void)plug;
       return true;
     },
 
     .destroy =
         [](const clap_plugin *_plugin) {
-          auto plugDriver = (PlugDriver *)_plugin->plugin_data;
-          delete plugDriver;
+          auto plug = getPluginData(_plugin);
+          delete plug;
         },
 
     .activate = [](const clap_plugin *_plugin, double sampleRate,
                    uint32_t minimumFramesCount,
                    uint32_t maximumFramesCount) -> bool {
-      auto plugDriver = (PlugDriver *)_plugin->plugin_data;
-      plugDriver->setSampleRate(sampleRate);
+      auto plug = getPluginData(_plugin);
+      plug->setSampleRate(sampleRate);
       return true;
     },
 
@@ -332,14 +348,12 @@ static const clap_plugin_t pluginClass = {
     .stop_processing = [](const clap_plugin *_plugin) {},
 
     .reset =
-        [](const clap_plugin *_plugin) {
-          auto plugDriver = (PlugDriver *)_plugin->plugin_data;
-        },
+        [](const clap_plugin *_plugin) { auto plug = getPluginData(_plugin); },
 
     .process = [](const clap_plugin *_plugin,
-                  const clap_process_t *process) -> clap_process_status {
-      auto plugDriver = (PlugDriver *)_plugin->plugin_data;
-      return plugDriver->process(process);
+                  const clap_process_t *processData) -> clap_process_status {
+      auto plug = getPluginData(_plugin);
+      return plug->process(processData);
     },
 
     .get_extension = [](const clap_plugin *plugin,
@@ -359,8 +373,11 @@ static const clap_plugin_t pluginClass = {
 
 };
 
+typedef PlugBasis *(*createPLugBasisInstanceFn)(SynthesizerBase *synth);
+
 static struct ClapRootage {
-  synthesizerInitializerFn synthInitializer;
+  SynthesizerInitializerFn synthInitializer;
+  createPLugBasisInstanceFn createPlugBasisInstance;
 } rootage;
 
 static const clap_plugin_factory_t pluginFactory = {
@@ -383,10 +400,10 @@ static const clap_plugin_factory_t pluginFactory = {
       }
 
       auto synth = rootage.synthInitializer();
-      PlugDriver *plugDriver = new PlugDriver(host, synth);
-      plugDriver->clapPlugin = pluginClass;
-      plugDriver->clapPlugin.plugin_data = plugDriver;
-      return &plugDriver->clapPlugin;
+      PlugBasis *plugBasis = rootage.createPlugBasisInstance(synth);
+      plugBasis->clapPlugin = pluginClass;
+      plugBasis->clapPlugin.plugin_data = plugBasis;
+      return &plugBasis->clapPlugin;
     },
 };
 
@@ -400,10 +417,52 @@ static const clap_plugin_entry_t clapEntry = {
     },
 };
 
+class PlugBasisImpl : public PlugBasis {
+private:
+  const clap_host_t *clapHost;
+  PlugDriver plugDriver;
+
+public:
+  PlugBasisImpl(SynthesizerBase &synth) : plugDriver(&synth) {}
+
+  void setSampleRate(double sampleRate) override {
+    plugDriver.setSampleRate(sampleRate);
+  }
+
+  clap_process_status process(const clap_process_t *processData) override {
+    plugDriver.process(processData);
+    return CLAP_PROCESS_CONTINUE;
+  }
+
+  uint32_t getParameterCount() const override {
+    return plugDriver.synth->getParameterCount();
+  }
+
+  void getParameterInfo(uint32_t index,
+                        clap_param_info_t *info) const override {
+    plugDriver.synth->getParameterInfo(index, info);
+  }
+
+  double getParameterValue(clap_id id) const override {
+    return plugDriver.synth->getParameterValue(id);
+  }
+
+  void setParameterValue(clap_id id, double value) override {
+    plugDriver.synth->setParameterValue(id, value);
+  }
+};
+
+PlugBasis *createPlugBasisInstance(SynthesizerBase *synth) {
+  return new PlugBasisImpl(*synth);
+}
+
 const clap_plugin_entry_t &
-createClapPluginEntry(synthesizerInitializerFn synthInitializer,
+createClapPluginEntry(SynthesizerInitializerFn synthInitializer,
                       const PluginMeta &meta) {
   rootage.synthInitializer = synthInitializer;
+  rootage.createPlugBasisInstance = createPlugBasisInstance;
+
   overwriteDescriptor(meta);
+
   return clapEntry;
 }
