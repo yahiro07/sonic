@@ -1,5 +1,5 @@
 #pragma once
-#include "synthesizer_base.h"
+#include "../synthesizer_base.h"
 #include <clap/clap.h>
 
 struct PluginMeta {

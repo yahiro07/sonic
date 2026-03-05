@@ -1,7 +1,7 @@
-#include "clap_wrapper.h"
-#include "clap/process.h"
-#include "clap_rootage.h"
+#include "./clap_wrapper.h"
+#include "./clap_rootage.h"
 #include <assert.h>
+#include <clap/process.h>
 #include <cstring>
 #include <memory>
 #include <sonic_common/general/mac_web_view.h>
