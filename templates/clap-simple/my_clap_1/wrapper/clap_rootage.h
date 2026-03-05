@@ -1,6 +1,7 @@
 #pragma once
 
-#include <clap/clap.h>
+#include "clap/clap.h"
+#include "clap/plugin.h"
 #include <functional>
 
 class PlugBasis {
@@ -25,6 +26,7 @@ public:
   virtual bool guiHide() = 0;
 };
 
-void clapRootage_setPlugBasisInstantiateFn(std::function<PlugBasis *()> fn);
+void clapRootage_setPluginBasisInstantiateFn(
+    const std::function<PlugBasis *()> fn);
 clap_plugin_descriptor_t &clapRootage_getPluginDescriptor();
 const clap_plugin_entry_t &clapRootage_getClapPluginEntry();

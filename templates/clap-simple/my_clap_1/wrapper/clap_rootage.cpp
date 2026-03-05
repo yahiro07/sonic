@@ -188,7 +188,7 @@ static const char *const pluginFeatures[] = {
     nullptr,
 };
 
-clap_plugin_descriptor_t pluginDescriptor = {
+static clap_plugin_descriptor_t pluginDescriptor = {
     .clap_version = CLAP_VERSION_INIT,
     .id = "com.my-company.my-plugin",
     .name = "MyPlugin",
@@ -260,14 +260,9 @@ static const clap_plugin_t pluginClass = {
 struct ClapFactoryGlobals {
   std::function<PlugBasis *()> fnCreatePlugBasisInstance;
 };
-
 static ClapFactoryGlobals &getClapFactoryGlobals() {
   static ClapFactoryGlobals globals;
   return globals;
-}
-
-void clapRootage_setPlugBasisInstantiateFn(std::function<PlugBasis *()> fn) {
-  getClapFactoryGlobals().fnCreatePlugBasisInstance = fn;
 }
 
 static const clap_plugin_factory_t pluginFactory = {
@@ -288,19 +283,15 @@ static const clap_plugin_factory_t pluginFactory = {
           strcmp(pluginID, pluginDescriptor.id)) {
         return nullptr;
       }
-      auto &globals = getClapFactoryGlobals();
-      if (!globals.fnCreatePlugBasisInstance) {
-        return nullptr;
-      }
-
-      PlugBasis *plugBasis = globals.fnCreatePlugBasisInstance();
+      PlugBasis *plugBasis =
+          getClapFactoryGlobals().fnCreatePlugBasisInstance();
       plugBasis->clapPlugin = pluginClass;
       plugBasis->clapPlugin.plugin_data = plugBasis;
       return &plugBasis->clapPlugin;
     },
 };
 
-const clap_plugin_entry_t clapEntry = {
+static const clap_plugin_entry_t clapEntry = {
     .clap_version = CLAP_VERSION_INIT,
     .init = [](const char *path) -> bool { return true; },
     .deinit = []() {},
@@ -312,6 +303,11 @@ const clap_plugin_entry_t clapEntry = {
 
 clap_plugin_descriptor_t &clapRootage_getPluginDescriptor() {
   return pluginDescriptor;
+}
+
+void clapRootage_setPluginBasisCreatorFn(
+    const std::function<PlugBasis *()> fn) {
+  getClapFactoryGlobals().fnCreatePlugBasisInstance = std::move(fn);
 }
 
 const clap_plugin_entry_t &clapRootage_getClapPluginEntry() {
