@@ -2,9 +2,11 @@
 #include "../synthesizer_base.h"
 #include "./clap_rootage.h"
 #include "clap/entry.h"
+#include "clap/events.h"
 #include "clap/plugin.h"
 #include "clap/process.h"
 #include "sonic_common/general/mac_web_view.h"
+#include "sonic_common/general/spsc_queue.h"
 #include <assert.h>
 #include <cstring>
 #include <memory>
@@ -47,10 +49,51 @@ public:
 
 #define GUI_API CLAP_WINDOW_API_COCOA
 
+enum class UpStreamEventType {
+  parameterBeginEdit,
+  parameterApplyEdit,
+  parameterEndEdit,
+  noteOnRequest,
+  noteOffRequest,
+};
+
+struct UpstreamEvent {
+  UpStreamEventType type;
+  union {
+    struct {
+      clap_id paramId;
+      double value;
+    } param;
+    struct {
+      int noteNumber;
+      double velocity;
+    } note;
+  };
+};
+
+static clap_event_param_value_t
+mapDownstreamEventToClapEvent(UpstreamEvent upstreamEvent) {
+  clap_event_param_value_t event;
+  event.header.size = sizeof(event);
+  event.header.time = 0;
+  event.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+  event.header.type = CLAP_EVENT_PARAM_VALUE;
+  event.header.flags = 0;
+  event.param_id = upstreamEvent.param.paramId;
+  event.cookie = NULL;
+  event.note_id = -1;
+  event.port_index = -1;
+  event.channel = -1;
+  event.key = -1;
+  event.value = upstreamEvent.param.value;
+  return event;
+}
+
 class PlugBasisImpl : public PlugBasis {
 private:
   PlugDriver plugDriver;
   sonic_common::MacWebView *webView = nullptr;
+  sonic_common::SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
 
 public:
   PlugBasisImpl(SynthesizerBase &synth) : plugDriver(&synth) {}
@@ -71,6 +114,16 @@ public:
     if (!out.data32 || out.channel_count < 2 || !out.data32[0] ||
         !out.data32[1])
       return CLAP_PROCESS_ERROR;
+
+    UpstreamEvent item;
+    while (upstreamEventQueue.pop(item)) {
+      if (item.type == UpStreamEventType::parameterApplyEdit) {
+        plugDriver.synth->setParameterValue(item.param.paramId,
+                                            item.param.value);
+        auto clapEvent = mapDownstreamEventToClapEvent(item);
+        process->out_events->try_push(process->out_events, &clapEvent.header);
+      }
+    }
 
     const uint32_t frameCount = process->frames_count;
     const uint32_t inputEventCount =
@@ -125,12 +178,6 @@ public:
     plugDriver.synth->setParameterValue(id, value);
   }
 
-  // todo: UIでのパラメタ変更時にイベントをローカルなイベントキューに積む,
-  // flushParametersでホストに送る
-  bool paramChangedFromUi = false;
-  clap_id paramChangedId = 0;
-  double paramChangedValue = 0.;
-
   void flushParameters(const clap_input_events_t *in,
                        const clap_output_events_t *out) override {
     printf("flushParameters\n");
@@ -148,27 +195,14 @@ public:
       }
     }
 
-    if (paramChangedFromUi) {
-      paramChangedFromUi = false;
-
-      auto paramId = paramChangedId;
-      auto paramValue = paramChangedValue;
-
-      clap_event_param_value_t event = {};
-      event.header.size = sizeof(event);
-      event.header.time = 0;
-      event.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-      event.header.type = CLAP_EVENT_PARAM_VALUE;
-      event.header.flags = 0;
-      event.param_id = paramId;
-      event.cookie = NULL;
-      event.note_id = -1;
-      event.port_index = -1;
-      event.channel = -1;
-      event.key = -1;
-      event.value = paramValue;
-      out->try_push(out, &event.header);
-      printf("flush, param out %d %f\n", paramId, paramValue);
+    UpstreamEvent item;
+    while (upstreamEventQueue.pop(item)) {
+      if (item.type == UpStreamEventType::parameterApplyEdit) {
+        plugDriver.synth->setParameterValue(item.param.paramId,
+                                            item.param.value);
+        auto clapEvent = mapDownstreamEventToClapEvent(item);
+        out->try_push(out, &clapEvent.header);
+      }
     }
   }
 
@@ -179,11 +213,15 @@ public:
     // todo: delegate event handing to messaging hub
     webView->setMessageReceiver([this](const std::string &message) {
       printf("message: %s\n", message.c_str());
-      // request_flash, flush outputでホストに送る
+      clap_id paramId = 0;
+      double paramValue = rand() / (double)RAND_MAX; // debug;
+      this->upstreamEventQueue.push(
+          {.type = UpStreamEventType::parameterApplyEdit,
+           .param = {
+               .paramId = paramId,
+               .value = paramValue,
+           }});
       if (this->hostParams) {
-        paramChangedFromUi = true;
-        paramChangedId = 0;
-        paramChangedValue = rand() / (double)RAND_MAX; // debug
         this->hostParams->request_flush(this->host);
         printf("request_flush\n");
       }
