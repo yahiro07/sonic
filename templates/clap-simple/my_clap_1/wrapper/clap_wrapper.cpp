@@ -1,6 +1,6 @@
 #include "./clap_wrapper.h"
+#include "../rootage/clap_rootage.h"
 #include "../synthesizer_base.h"
-#include "./clap_rootage.h"
 #include "clap/entry.h"
 #include "clap/events.h"
 #include "clap/plugin.h"
@@ -25,26 +25,6 @@ public:
   void renderAudio(uint32_t start, uint32_t end, float *outputL,
                    float *outputR) {
     synth->processAudio(outputL + start, outputR + start, end - start);
-  }
-
-  void processEvent(const clap_event_header_t *event) {
-    if (event->space_id == CLAP_CORE_EVENT_SPACE_ID) {
-      if (event->type == CLAP_EVENT_NOTE_ON ||
-          event->type == CLAP_EVENT_NOTE_OFF) {
-        const clap_event_note_t *noteEvent = (const clap_event_note_t *)event;
-        if (event->type == CLAP_EVENT_NOTE_ON) {
-          synth->noteOn(noteEvent->key, noteEvent->velocity);
-        } else if (event->type == CLAP_EVENT_NOTE_OFF) {
-          synth->noteOff(noteEvent->key);
-        }
-      }
-      if (event->type == CLAP_EVENT_PARAM_VALUE) {
-        auto *paramEvent = (const clap_event_param_value_t *)event;
-        printf("processEvent, param in %d %f\n", paramEvent->param_id,
-               paramEvent->value);
-        synth->setParameterValue(paramEvent->param_id, paramEvent->value);
-      }
-    }
   }
 };
 
@@ -88,11 +68,63 @@ static void mapUpstreamEventToClapEvent(UpstreamEvent &upstreamEvent,
   clapEvent.value = upstreamEvent.param.value;
 }
 
+enum class DownStreamEventType {
+  parameterChange,
+  hostNoteOn,
+  hostNoteOff,
+};
+
+struct DownstreamEvent {
+  DownStreamEventType type;
+  union {
+    struct {
+      clap_id paramId;
+      double value;
+    } param;
+    struct {
+      int noteNumber;
+      double velocity;
+    } note;
+  };
+};
+
 class PlugBasisImpl : public PlugBasis {
 private:
   PlugDriver plugDriver;
   sonic_common::MacWebView *webView = nullptr;
   sonic_common::SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
+  sonic_common::SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
+
+private:
+  void processInputEvent(const clap_event_header_t *event) {
+    if (event->space_id == CLAP_CORE_EVENT_SPACE_ID) {
+      if (event->type == CLAP_EVENT_NOTE_ON ||
+          event->type == CLAP_EVENT_NOTE_OFF) {
+        const clap_event_note_t *noteEvent = (const clap_event_note_t *)event;
+        if (event->type == CLAP_EVENT_NOTE_ON) {
+          plugDriver.synth->noteOn(noteEvent->key, noteEvent->velocity);
+          downstreamEventQueue.push(
+              {.type = DownStreamEventType::hostNoteOn,
+               .note = {.noteNumber = noteEvent->key,
+                        .velocity = noteEvent->velocity}});
+        } else if (event->type == CLAP_EVENT_NOTE_OFF) {
+          plugDriver.synth->noteOff(noteEvent->key);
+          downstreamEventQueue.push({.type = DownStreamEventType::hostNoteOff,
+                                     .note = {.noteNumber = noteEvent->key}});
+        }
+      }
+      if (event->type == CLAP_EVENT_PARAM_VALUE) {
+        auto *paramEvent = (const clap_event_param_value_t *)event;
+        printf("processEvent, param in %d %f\n", paramEvent->param_id,
+               paramEvent->value);
+        plugDriver.synth->setParameterValue(paramEvent->param_id,
+                                            paramEvent->value);
+        downstreamEventQueue.push({.type = DownStreamEventType::parameterChange,
+                                   .param = {.paramId = paramEvent->param_id,
+                                             .value = paramEvent->value}});
+      }
+    }
+  }
 
 public:
   PlugBasisImpl(SynthesizerBase &synth) : plugDriver(&synth) {}
@@ -145,7 +177,7 @@ public:
           break;
         }
 
-        plugDriver.processEvent(event);
+        this->processInputEvent(event);
         eventIndex++;
 
         if (eventIndex == inputEventCount) {
@@ -184,15 +216,7 @@ public:
 
     for (uint32_t i = 0; i < in->size(in); i++) {
       const clap_event_header_t *event = in->get(in, i);
-      if (true) {
-        if (event->type == CLAP_EVENT_PARAM_VALUE) {
-          auto *ev = (const clap_event_param_value_t *)event;
-          printf("flush, param in %d %f\n", ev->param_id, ev->value);
-          plugDriver.synth->setParameterValue(ev->param_id, ev->value);
-        }
-      } else {
-        plugDriver.processEvent(event);
-      }
+      this->processInputEvent(event);
     }
 
     UpstreamEvent item;
@@ -224,6 +248,23 @@ public:
              }});
         if (this->hostParams) {
           this->hostParams->request_flush(this->host);
+        }
+
+        {
+          // debug pulling downstream events
+          // this is originally supposed to be in timer loop
+          DownstreamEvent e;
+          while (downstreamEventQueue.pop(e)) {
+            if (e.type == DownStreamEventType::parameterChange) {
+              printf("downstream param %d %f\n", e.param.paramId,
+                     e.param.value);
+            } else if (e.type == DownStreamEventType::hostNoteOn) {
+              printf("downstream noteOn %d %f\n", e.note.noteNumber,
+                     e.note.velocity);
+            } else if (e.type == DownStreamEventType::hostNoteOff) {
+              printf("downstream noteOff %d\n", e.note.noteNumber);
+            }
+          }
         }
       };
       messagingHub_dev_handleMessageFromUi(message, performParameterEditFromUi);
