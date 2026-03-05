@@ -305,7 +305,7 @@ clap_plugin_descriptor_t &clapRootage_getPluginDescriptor() {
   return pluginDescriptor;
 }
 
-void clapRootage_setPluginBasisCreatorFn(
+void clapRootage_setPluginBasisInstantiateFn(
     const std::function<PlugBasis *()> fn) {
   getClapFactoryGlobals().fnCreatePlugBasisInstance = std::move(fn);
 }

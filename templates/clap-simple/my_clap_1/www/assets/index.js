@@ -14,14 +14,33 @@
 //   | { type: "hostNoteOff"; noteNumber: number };
 
 function pushLine(...args) {
-  const div = document.createElement("div");
-  div.innerText = args
+  let logArea = document.getElementById("logArea");
+  if (!logArea) {
+    logArea = document.createElement("div");
+    logArea.id = "logArea";
+    logArea.style.backgroundColor = "#0004";
+    logArea.style.padding = "10px";
+    logArea.style.maxHeight = "200px";
+    logArea.style.overflowY = "scroll";
+    document.body.appendChild(logArea);
+  }
+
+  const lineDiv = document.createElement("div");
+  lineDiv.innerText = args
     .map((it) => (typeof it === "object" ? JSON.stringify(it) : it))
     .join(" ");
-  document.body.appendChild(div);
+  logArea.appendChild(lineDiv);
+  logArea.scrollTop = logArea.scrollHeight;
 }
 
 function createCoreBridge() {
+  if (!window.webkit) {
+    pushLine("incompatible environment, window.webkit is not available");
+    return {
+      sendMessage: () => {},
+      subscribe: () => {},
+    };
+  }
   const listeners = new Set();
 
   function sendMessage(msg) {
@@ -106,7 +125,7 @@ function addSlider(
   div.style.display = "flex";
   div.appendChild(label);
   div.appendChild(slider);
-  document.body.appendChild(div);
+  document.body.insertBefore(div, document.body.firstChild);
 }
 
 function addNoteButton(label, noteNumber) {
@@ -125,14 +144,14 @@ function addNoteButton(label, noteNumber) {
       noteNumber,
     });
   };
-  document.body.appendChild(button);
+  document.body.insertBefore(button, document.body.firstChild);
 }
 
+addNoteButton("Note(60)", 60);
 addSlider("Gain", "gain", 0.5);
 addSlider("Wave", "waveType", 0, 0, 3, 1);
 addSlider("Pitch", "oscPitch", 0.5);
 addSlider("Volume", "oscVolume", 0.5);
-addNoteButton("Note(60)", 60);
 
 subscribe((msg) => {
   if (msg.type === "setParameter") {
