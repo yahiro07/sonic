@@ -71,22 +71,20 @@ struct UpstreamEvent {
   };
 };
 
-static clap_event_param_value_t
-mapDownstreamEventToClapEvent(UpstreamEvent upstreamEvent) {
-  clap_event_param_value_t event;
-  event.header.size = sizeof(event);
-  event.header.time = 0;
-  event.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-  event.header.type = CLAP_EVENT_PARAM_VALUE;
-  event.header.flags = 0;
-  event.param_id = upstreamEvent.param.paramId;
-  event.cookie = NULL;
-  event.note_id = -1;
-  event.port_index = -1;
-  event.channel = -1;
-  event.key = -1;
-  event.value = upstreamEvent.param.value;
-  return event;
+static void mapUpstreamEventToClapEvent(UpstreamEvent &upstreamEvent,
+                                        clap_event_param_value_t &clapEvent) {
+  clapEvent.header.size = sizeof(clapEvent);
+  clapEvent.header.time = 0;
+  clapEvent.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+  clapEvent.header.type = CLAP_EVENT_PARAM_VALUE;
+  clapEvent.header.flags = 0;
+  clapEvent.param_id = upstreamEvent.param.paramId;
+  clapEvent.cookie = NULL;
+  clapEvent.note_id = -1;
+  clapEvent.port_index = -1;
+  clapEvent.channel = -1;
+  clapEvent.key = -1;
+  clapEvent.value = upstreamEvent.param.value;
 }
 
 class PlugBasisImpl : public PlugBasis {
@@ -120,7 +118,8 @@ public:
       if (item.type == UpStreamEventType::parameterApplyEdit) {
         plugDriver.synth->setParameterValue(item.param.paramId,
                                             item.param.value);
-        auto clapEvent = mapDownstreamEventToClapEvent(item);
+        clap_event_param_value_t clapEvent{};
+        mapUpstreamEventToClapEvent(item, clapEvent);
         process->out_events->try_push(process->out_events, &clapEvent.header);
       }
     }
@@ -200,7 +199,8 @@ public:
       if (item.type == UpStreamEventType::parameterApplyEdit) {
         plugDriver.synth->setParameterValue(item.param.paramId,
                                             item.param.value);
-        auto clapEvent = mapDownstreamEventToClapEvent(item);
+        clap_event_param_value_t clapEvent{};
+        mapUpstreamEventToClapEvent(item, clapEvent);
         out->try_push(out, &clapEvent.header);
       }
     }
@@ -223,7 +223,6 @@ public:
            }});
       if (this->hostParams) {
         this->hostParams->request_flush(this->host);
-        printf("request_flush\n");
       }
     });
     return true;
