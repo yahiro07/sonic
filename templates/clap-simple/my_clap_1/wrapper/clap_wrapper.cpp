@@ -212,12 +212,14 @@ public:
     webView->loadUrl("http://localhost:3000");
 
     webView->setMessageReceiver([this](const std::string &message) {
-      auto setParameterFromUi = [this](uint32_t paramId, double paramValue) {
+      auto setParameterFromUi = [this](std::string &identifier, double value) {
+        printf("setParameterFromUi: %s %f\n", identifier.c_str(), value);
+        uint32_t paramId = 0; // todo: lookup paramId from identifier
         this->upstreamEventQueue.push(
             {.type = UpStreamEventType::parameterApplyEdit,
              .param = {
                  .paramId = paramId,
-                 .value = paramValue,
+                 .value = value,
              }});
         if (this->hostParams) {
           this->hostParams->request_flush(this->host);
