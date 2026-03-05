@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sonic_common/logic/parameter_definitions_provider.h"
 #include <functional>
 #include <glaze/glaze.hpp>
 #include <string>
@@ -169,22 +170,14 @@ inline void messagingHub_dev_handleMessageFromUi(
 }
 
 inline void messagingHub_dev_handleEventFromHost(
-    DownstreamEvent &e,
-    std::function<void(std::string &)> sendMessageToWebView) {
+    DownstreamEvent &e, std::function<void(std::string &)> sendMessageToWebView,
+    sonic_common::ParameterDefinitionsProvider parameterDefinitionsProvider) {
   if (e.type == DownStreamEventType::parameterChange) {
     printf("downstream param %d %f\n", e.param.paramId, e.param.value);
-    // todo: lookup identifier from paramId
-    //  std::string identifier = "";
-    // this->webView->sendMessage(JSON({paramChange,
-    // identifier,e.param.value}));
-  } else if (e.type == DownStreamEventType::hostNoteOn) {
-    printf("downstream noteOn %d %f\n", e.note.noteNumber, e.note.velocity);
-  } else if (e.type == DownStreamEventType::hostNoteOff) {
-    printf("downstream noteOff %d\n", e.note.noteNumber);
-  }
-
-  if (e.type == DownStreamEventType::parameterChange) {
-    auto identifier = "oscVolume"; // todo: lookup identifier from param id
+    auto identifier =
+        parameterDefinitionsProvider.getIdentifierByAddress(e.param.paramId);
+    if (identifier == "")
+      return;
     TxMsgSetParameter msg{
         .type = "setParameter",
         .identifier = identifier,
@@ -195,5 +188,9 @@ inline void messagingHub_dev_handleEventFromHost(
     if (ec)
       return;
     sendMessageToWebView(buffer);
+  } else if (e.type == DownStreamEventType::hostNoteOn) {
+    printf("downstream noteOn %d %f\n", e.note.noteNumber, e.note.velocity);
+  } else if (e.type == DownStreamEventType::hostNoteOff) {
+    printf("downstream noteOff %d\n", e.note.noteNumber);
   }
 }

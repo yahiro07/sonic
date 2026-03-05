@@ -226,9 +226,10 @@ public:
 
     DownstreamEvent e;
     while (downstreamEventQueue.pop(e)) {
-      messagingHub_dev_handleEventFromHost(e, [this](std::string &message) {
-        this->webView->sendMessage(message);
-      });
+      messagingHub_dev_handleEventFromHost(
+          e,
+          [this](std::string &message) { this->webView->sendMessage(message); },
+          parameterDefinitionsProvider);
     }
   }
 
@@ -240,7 +241,11 @@ public:
       auto performParameterEditFromUi = [this](std::string &identifier,
                                                double value) {
         printf("setParameterFromUi: %s %f\n", identifier.c_str(), value);
-        uint32_t paramId = 0; // todo: lookup paramId from identifier
+        auto _address =
+            parameterDefinitionsProvider.getAddressByIdentifier(identifier);
+        if (!_address)
+          return;
+        auto paramId = static_cast<uint32_t>(*_address);
         auto kv = parameterValuesInMainThread.find(paramId);
         if (kv != parameterValuesInMainThread.end()) {
           kv->second = value;
