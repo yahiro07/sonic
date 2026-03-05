@@ -1,6 +1,6 @@
 project(MyClap1)
 
-add_library(${PROJECT_NAME} SHARED main.cpp clap_wrapper.cpp)
+add_library(${PROJECT_NAME} SHARED plugin_entry.cpp clap_wrapper.cpp clap_rootage.cpp)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     PREFIX ""
