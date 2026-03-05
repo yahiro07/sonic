@@ -2,6 +2,7 @@
 
 #include "sonic_common/general/mac_web_view.h"
 #include <functional>
+#include <glaze/glaze.hpp>
 #include <string>
 
 class IDownStreamEventPort {};
@@ -35,6 +36,9 @@ inline void messagingHub_dev_handleMessageFromUi(
     const std::string &message,
     std::function<void(uint32_t, double)> setParameterFromUi) {
   printf("message: %s\n", message.c_str());
+
+  glz::generic json;
+
   if (true) {
     uint32_t paramId = 0;
     double paramValue = rand() / (double)RAND_MAX; // debug;
