@@ -1,6 +1,5 @@
 #include "./clap_wrapper.h"
 #include "../rootage/clap_rootage.h"
-#include "../synthesizer_base.h"
 #include "clap/entry.h"
 #include "clap/events.h"
 #include "clap/plugin.h"
@@ -9,6 +8,8 @@
 #include "sonic_common/general/mac_web_view.h"
 #include "sonic_common/general/polling_timer.h"
 #include "sonic_common/general/spsc_queue.h"
+#include "sonic_common/logic/parameter_builder_impl.h"
+#include "sonic_common/logic/parameter_definitions_provider.h"
 #include <assert.h>
 #include <cstring>
 #include <memory>
@@ -32,6 +33,20 @@ static void mapUpstreamEventToClapEvent(UpstreamEvent &upstreamEvent,
   clapEvent.value = upstreamEvent.param.value;
 }
 
+static clap_param_info_flags mapParameterFlags(ParameterFlags flags) {
+  clap_param_info_flags clapFlags = 0;
+  if (flags & ParameterFlags::IsReadOnly) {
+    clapFlags |= CLAP_PARAM_IS_READONLY;
+  }
+  if (flags & ParameterFlags::IsHidden) {
+    clapFlags |= CLAP_PARAM_IS_HIDDEN;
+  }
+  if (!(flags & ParameterFlags::NonAutomatable)) {
+    clapFlags |= CLAP_PARAM_IS_AUTOMATABLE;
+  }
+  return clapFlags;
+}
+
 class PlugBasisImpl : public PlugBasis {
 private:
   std::unique_ptr<SynthesizerBase> synth;
@@ -40,6 +55,9 @@ private:
   sonic_common::SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
   sonic_common::SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
   sonic_common::PollingTimer pollingTimer;
+  sonic_common::ParameterDefinitionsProvider parameterDefinitionsProvider;
+
+  std::unordered_map<uint32_t, double> parameterValuesInMainThread;
 
 private:
   void renderAudio(uint32_t start, uint32_t end, float *outputL,
@@ -66,18 +84,30 @@ private:
       }
       if (event->type == CLAP_EVENT_PARAM_VALUE) {
         auto *paramEvent = (const clap_event_param_value_t *)event;
-        printf("processEvent, param in %d %f\n", paramEvent->param_id,
-               paramEvent->value);
-        synth->setParameterValue(paramEvent->param_id, paramEvent->value);
-        downstreamEventQueue.push({.type = DownStreamEventType::parameterChange,
-                                   .param = {.paramId = paramEvent->param_id,
-                                             .value = paramEvent->value}});
+        // printf("processEvent, param in %d %f\n", paramEvent->param_id,
+        //        paramEvent->value);
+        auto paramId = paramEvent->param_id;
+        auto value = paramEvent->value;
+        synth->setParameter(paramId, value);
+        downstreamEventQueue.push(
+            {.type = DownStreamEventType::parameterChange,
+             .param = {.paramId = paramId, .value = value}});
       }
     }
   }
 
 public:
-  PlugBasisImpl(SynthesizerBase &synth) : synth(&synth) {}
+  PlugBasisImpl(SynthesizerBase &synth) : synth(&synth) {
+    auto parameterBuilder = sonic_common::ParameterBuilderImpl();
+    synth.setupParameters(parameterBuilder);
+    auto parameterItems = parameterBuilder.getItems();
+    uint64_t maxAddress = 0xFFFFFFFE; // for valid clap_id
+    parameterDefinitionsProvider.addParameters(parameterItems, maxAddress);
+    for (auto &item : parameterItems) {
+      synth.setParameter(item.address, item.defaultValue);
+      parameterValuesInMainThread[item.address] = item.defaultValue;
+    }
+  }
 
   void setSampleRate(double sampleRate) override {
     synth->setSampleRate(sampleRate);
@@ -96,10 +126,11 @@ public:
         !out.data32[1])
       return CLAP_PROCESS_ERROR;
 
+    // outgoing parameters, UI --> Host, DSP
     UpstreamEvent item;
     while (upstreamEventQueue.pop(item)) {
       if (item.type == UpStreamEventType::parameterApplyEdit) {
-        synth->setParameterValue(item.param.paramId, item.param.value);
+        synth->setParameter(item.param.paramId, item.param.value);
         clap_event_param_value_t clapEvent{};
         mapUpstreamEventToClapEvent(item, clapEvent);
         process->out_events->try_push(process->out_events, &clapEvent.header);
@@ -143,20 +174,31 @@ public:
   }
 
   uint32_t getParameterCount() const override {
-    return synth->getParameterCount();
+    return parameterDefinitionsProvider.getParameterItems().size();
   }
 
   void getParameterInfo(uint32_t index,
                         clap_param_info_t *info) const override {
-    synth->getParameterInfo(index, info);
+    auto kvs = parameterDefinitionsProvider.getParameterItems();
+    auto kv = kvs.find(index);
+    if (kv == kvs.end()) {
+      return;
+    }
+    auto &item = kv->second;
+    info->id = item.address;
+    info->flags = mapParameterFlags(item.flags);
+    info->min_value = item.minValue;
+    info->max_value = item.maxValue;
+    info->default_value = item.defaultValue;
+    snprintf(info->name, sizeof(info->name), "%s", item.label.c_str());
   }
 
   double getParameterValue(clap_id id) const override {
-    return synth->getParameterValue(id);
-  }
-
-  void setParameterValue(clap_id id, double value) override {
-    synth->setParameterValue(id, value);
+    auto kv = parameterValuesInMainThread.find(id);
+    if (kv == parameterValuesInMainThread.end()) {
+      return 0.0;
+    }
+    return kv->second;
   }
 
   void flushParameters(const clap_input_events_t *in,
@@ -168,10 +210,11 @@ public:
       this->processInputEvent(event);
     }
 
+    // outgoing parameters, UI --> Host, DSP
     UpstreamEvent item;
     while (upstreamEventQueue.pop(item)) {
       if (item.type == UpStreamEventType::parameterApplyEdit) {
-        synth->setParameterValue(item.param.paramId, item.param.value);
+        synth->setParameter(item.param.paramId, item.param.value);
         clap_event_param_value_t clapEvent{};
         mapUpstreamEventToClapEvent(item, clapEvent);
         out->try_push(out, &clapEvent.header);
@@ -198,6 +241,10 @@ public:
                                                double value) {
         printf("setParameterFromUi: %s %f\n", identifier.c_str(), value);
         uint32_t paramId = 0; // todo: lookup paramId from identifier
+        auto kv = parameterValuesInMainThread.find(paramId);
+        if (kv != parameterValuesInMainThread.end()) {
+          kv->second = value;
+        }
         this->upstreamEventQueue.push(
             {.type = UpStreamEventType::parameterApplyEdit,
              .param = {

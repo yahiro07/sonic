@@ -1,6 +1,5 @@
 #pragma once
 
-#include "sonic_common/general/mac_web_view.h"
 #include <functional>
 #include <glaze/glaze.hpp>
 #include <string>

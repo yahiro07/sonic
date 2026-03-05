@@ -6,9 +6,9 @@
 namespace sonic_common {
 
 void ParameterDefinitionsProvider::addParameters(
-    std::vector<ParameterItem> &parameterItems) {
+    std::vector<ParameterItem> &parameterItems, uint64_t maxAddress) {
   for (const auto &item : parameterItems) {
-    auto validInRange = item.address <= 0x7FFFFFFF;
+    auto validInRange = item.address <= maxAddress;
     if (!validInRange) {
       printf("ParametersManager: address out of range for ParamID: %llu "
              "(%s)\n",

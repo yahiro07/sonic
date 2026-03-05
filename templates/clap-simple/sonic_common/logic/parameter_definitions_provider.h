@@ -14,11 +14,13 @@ private:
   std::unordered_map<std::string, ParamAddress> identifierToAddressMap;
 
 public:
-  std::unordered_map<ParamAddress, ParameterItem> &getParameterItems() {
+  const std::unordered_map<ParamAddress, ParameterItem> &
+  getParameterItems() const {
     return parameterItems;
   }
 
-  void addParameters(std::vector<ParameterItem> &parameterItems);
+  void addParameters(std::vector<ParameterItem> &parameterItems,
+                     uint64_t maxAddress);
 
   std::optional<ParamAddress>
   getAddressByIdentifier(const std::string &identifier);
