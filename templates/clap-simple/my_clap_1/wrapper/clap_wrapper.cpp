@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <cstring>
 #include <memory>
+#include <string>
 
 class PlugDriver {
 
@@ -130,10 +131,16 @@ public:
 
   bool guiCreate() override {
     webView = new sonic_common::MacWebView();
+    webView->loadUrl("http://localhost:3000");
+    webView->setMessageReceiver([](const std::string &message) {
+      printf("message: %s\n", message.c_str());
+    });
     return true;
   }
 
   void guiDestroy() override {
+    webView->setMessageReceiver(nullptr);
+    webView->removeFromParent();
     if (webView) {
       delete webView;
       webView = nullptr;
@@ -158,10 +165,7 @@ public:
     return true;
   }
 
-  bool guiHide() override {
-    webView->removeFromParent();
-    return true;
-  }
+  bool guiHide() override { return true; }
 };
 
 static void overwriteDescriptor(clap_plugin_descriptor_t &desc,
