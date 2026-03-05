@@ -1,10 +1,13 @@
 #include "./clap_wrapper.h"
+#include "../synthesizer_base.h"
 #include "./clap_rootage.h"
+#include "clap/entry.h"
+#include "clap/plugin.h"
+#include "clap/process.h"
+#include "sonic_common/general/mac_web_view.h"
 #include <assert.h>
-#include <clap/process.h>
 #include <cstring>
 #include <memory>
-#include <sonic_common/general/mac_web_view.h>
 
 class PlugDriver {
 
@@ -161,31 +164,29 @@ public:
   }
 };
 
-PlugBasis *createPlugBasisInstance(SynthesizerBase *synth) {
-  return new PlugBasisImpl(*synth);
-}
-
-static void overwriteDescriptor(const PluginMeta &meta) {
-  auto &pluginDescriptor = clapRootage_getPluginDescriptor();
-  pluginDescriptor.id = meta.id;
-  pluginDescriptor.name = meta.name;
-  pluginDescriptor.vendor = meta.vendor;
-  pluginDescriptor.url = meta.url;
-  pluginDescriptor.manual_url = meta.manualUrl;
-  pluginDescriptor.support_url = meta.supportUrl;
-  pluginDescriptor.version = meta.version;
-  pluginDescriptor.description = meta.description;
+static void overwriteDescriptor(clap_plugin_descriptor_t &desc,
+                                const PluginMeta &meta) {
+  desc.id = meta.id;
+  desc.name = meta.name;
+  desc.vendor = meta.vendor;
+  desc.url = meta.url;
+  desc.manual_url = meta.manualUrl;
+  desc.support_url = meta.supportUrl;
+  desc.version = meta.version;
+  desc.description = meta.description;
 }
 
 const clap_plugin_entry_t &
 createClapPluginEntry(SynthesizerInitializerFn synthInitializer,
                       const PluginMeta &meta) {
-  clapRootage_setPlugBasisInstantiateFn([synthInitializer]() {
-    auto synth = synthInitializer();
-    return new PlugBasisImpl(*synth);
-  });
-
-  overwriteDescriptor(meta);
-
-  return clapRootage_getClapPluginEntry();
+  static const clap_plugin_entry_t clapPlugin = [synthInitializer, meta]() {
+    auto desc = clapRootage_getPluginDescriptor();
+    overwriteDescriptor(desc, meta);
+    clapRootage_setPluginBasisInstantiateFn([synthInitializer]() {
+      auto synth = synthInitializer();
+      return new PlugBasisImpl(*synth);
+    });
+    return clapRootage_getClapPluginEntry();
+  }();
+  return clapPlugin;
 }
