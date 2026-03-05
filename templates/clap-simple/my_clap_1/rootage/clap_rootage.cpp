@@ -245,7 +245,13 @@ static const clap_plugin_t pluginClass = {
       return nullptr;
     },
 
-    .on_main_thread = [](const clap_plugin *_plugin) {},
+    .on_main_thread =
+        [](const clap_plugin *_plugin) {
+          auto plug = getPluginData(_plugin);
+          if (plug) {
+            plug->onMainThread();
+          }
+        },
 
 };
 
