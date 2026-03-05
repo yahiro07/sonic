@@ -257,12 +257,17 @@ static const clap_plugin_t pluginClass = {
 
 };
 
-static struct {
+struct ClapFactoryGlobals {
   std::function<PlugBasis *()> fnCreatePlugBasisInstance;
-} clapFactoryGlobals;
+};
+
+static ClapFactoryGlobals &getClapFactoryGlobals() {
+  static ClapFactoryGlobals globals;
+  return globals;
+}
 
 void clapRootage_setPlugBasisInstantiateFn(std::function<PlugBasis *()> fn) {
-  clapFactoryGlobals.fnCreatePlugBasisInstance = fn;
+  getClapFactoryGlobals().fnCreatePlugBasisInstance = fn;
 }
 
 static const clap_plugin_factory_t pluginFactory = {
@@ -283,7 +288,12 @@ static const clap_plugin_factory_t pluginFactory = {
           strcmp(pluginID, pluginDescriptor.id)) {
         return nullptr;
       }
-      PlugBasis *plugBasis = clapFactoryGlobals.fnCreatePlugBasisInstance();
+      auto &globals = getClapFactoryGlobals();
+      if (!globals.fnCreatePlugBasisInstance) {
+        return nullptr;
+      }
+
+      PlugBasis *plugBasis = globals.fnCreatePlugBasisInstance();
       plugBasis->clapPlugin = pluginClass;
       plugBasis->clapPlugin.plugin_data = plugBasis;
       return &plugBasis->clapPlugin;
