@@ -171,7 +171,7 @@ inline void messagingHub_dev_handleMessageFromUi(
 
 inline void messagingHub_dev_handleEventFromHost(
     DownstreamEvent &e, std::function<void(std::string &)> sendMessageToWebView,
-    sonic_common::ParameterDefinitionsProvider parameterDefinitionsProvider) {
+    sonic_common::ParameterDefinitionsProvider &parameterDefinitionsProvider) {
   if (e.type == DownStreamEventType::parameterChange) {
     printf("downstream param %d %f\n", e.param.paramId, e.param.value);
     auto identifier =
