@@ -8,4 +8,4 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     POSITION_INDEPENDENT_CODE ON
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE sonic_common)
+target_link_libraries(${PROJECT_NAME} PRIVATE sonic_common glaze::glaze)
