@@ -212,7 +212,8 @@ public:
     webView->loadUrl("http://localhost:3000");
 
     webView->setMessageReceiver([this](const std::string &message) {
-      auto setParameterFromUi = [this](std::string &identifier, double value) {
+      auto performParameterEditFromUi = [this](std::string &identifier,
+                                               double value) {
         printf("setParameterFromUi: %s %f\n", identifier.c_str(), value);
         uint32_t paramId = 0; // todo: lookup paramId from identifier
         this->upstreamEventQueue.push(
@@ -225,7 +226,7 @@ public:
           this->hostParams->request_flush(this->host);
         }
       };
-      messagingHub_dev_handleMessageFromUi(message, setParameterFromUi);
+      messagingHub_dev_handleMessageFromUi(message, performParameterEditFromUi);
     });
     return true;
   }
