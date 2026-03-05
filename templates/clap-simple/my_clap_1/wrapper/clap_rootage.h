@@ -6,7 +6,9 @@
 
 class PlugBasis {
 public:
-  clap_plugin_t clapPlugin;
+  clap_plugin_t plugin;
+  const clap_host_t *host = nullptr;
+  const clap_host_params_t *hostParams = nullptr;
 
   virtual ~PlugBasis() = default;
   virtual void setSampleRate(double sampleRate) = 0;
@@ -17,6 +19,8 @@ public:
                                 clap_param_info_t *info) const = 0;
   virtual double getParameterValue(clap_id id) const = 0;
   virtual void setParameterValue(clap_id id, double value) = 0;
+  virtual void flushParameters(const clap_input_events_t *inputEvents,
+                               const clap_output_events_t *outputEvents) = 0;
 
   virtual bool guiCreate() = 0;
   virtual void guiDestroy() = 0;

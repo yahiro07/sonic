@@ -37,7 +37,8 @@ public:
       }
       if (event->type == CLAP_EVENT_PARAM_VALUE) {
         auto *paramEvent = (const clap_event_param_value_t *)event;
-        // printf("param %d %f\n", paramEvent->param_id, paramEvent->value);
+        printf("processEvent, param in %d %f\n", paramEvent->param_id,
+               paramEvent->value);
         synth->setParameterValue(paramEvent->param_id, paramEvent->value);
       }
     }
@@ -97,7 +98,6 @@ public:
 
 class PlugBasisImpl : public PlugBasis {
 private:
-  const clap_host_t *clapHost = nullptr;
   PlugDriver plugDriver;
   sonic_common::MacWebView *webView = nullptr;
 
@@ -129,13 +129,68 @@ public:
     plugDriver.synth->setParameterValue(id, value);
   }
 
+  // todo: UIでのパラメタ変更時にイベントをローカルなイベントキューに積む,
+  // flushParametersでホストに送る
+  bool paramChangedFromUi = false;
+  clap_id paramChangedId = 0;
+  double paramChangedValue = 0.;
+
+  void flushParameters(const clap_input_events_t *in,
+                       const clap_output_events_t *out) override {
+    printf("flushParameters\n");
+
+    for (uint32_t i = 0; i < in->size(in); i++) {
+      const clap_event_header_t *event = in->get(in, i);
+      if (true) {
+        if (event->type == CLAP_EVENT_PARAM_VALUE) {
+          auto *ev = (const clap_event_param_value_t *)event;
+          printf("flush, param in %d %f\n", ev->param_id, ev->value);
+          plugDriver.synth->setParameterValue(ev->param_id, ev->value);
+        }
+      } else {
+        plugDriver.processEvent(event);
+      }
+    }
+
+    if (paramChangedFromUi) {
+      paramChangedFromUi = false;
+
+      auto paramId = paramChangedId;
+      auto paramValue = paramChangedValue;
+
+      clap_event_param_value_t event = {};
+      event.header.size = sizeof(event);
+      event.header.time = 0;
+      event.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+      event.header.type = CLAP_EVENT_PARAM_VALUE;
+      event.header.flags = 0;
+      event.param_id = paramId;
+      event.cookie = NULL;
+      event.note_id = -1;
+      event.port_index = -1;
+      event.channel = -1;
+      event.key = -1;
+      event.value = paramValue;
+      out->try_push(out, &event.header);
+      printf("flush, param out %d %f\n", paramId, paramValue);
+    }
+  }
+
   bool guiCreate() override {
     webView = new sonic_common::MacWebView();
     webView->loadUrl("http://localhost:3000");
 
     // todo: delegate event handing to messaging hub
-    webView->setMessageReceiver([](const std::string &message) {
+    webView->setMessageReceiver([this](const std::string &message) {
       printf("message: %s\n", message.c_str());
+      // request_flash, flush outputでホストに送る
+      if (this->hostParams) {
+        paramChangedFromUi = true;
+        paramChangedId = 0;
+        paramChangedValue = rand() / (double)RAND_MAX; // debug
+        this->hostParams->request_flush(this->host);
+        printf("request_flush\n");
+      }
     });
     return true;
   }

@@ -51,16 +51,7 @@ static const clap_plugin_params_t extensionParams = {
         [](const clap_plugin_t *plugin, const clap_input_events_t *in,
            const clap_output_events_t *out) {
           auto plug = getPluginData(plugin);
-
-          const uint32_t n = in->size(in);
-          for (uint32_t i = 0; i < n; ++i) {
-            const clap_event_header_t *hdr = in->get(in, i);
-            if (hdr->type == CLAP_EVENT_PARAM_VALUE) {
-              auto *ev = (const clap_event_param_value_t *)hdr;
-              // printf("flush, param %d %f\n", ev->param_id, ev->value);
-              plug->setParameterValue(ev->param_id, ev->value);
-            }
-          }
+          plug->flushParameters(in, out);
         }};
 
 #define GUI_API CLAP_WINDOW_API_COCOA
@@ -207,7 +198,8 @@ static const clap_plugin_t pluginClass = {
 
     .init = [](const clap_plugin *_plugin) -> bool {
       auto plug = getPluginData(_plugin);
-      (void)plug;
+      plug->hostParams = (const clap_host_params_t *)plug->host->get_extension(
+          plug->host, CLAP_EXT_PARAMS);
       return true;
     },
 
@@ -285,9 +277,10 @@ static const clap_plugin_factory_t pluginFactory = {
       }
       PlugBasis *plugBasis =
           getClapFactoryGlobals().fnCreatePlugBasisInstance();
-      plugBasis->clapPlugin = pluginClass;
-      plugBasis->clapPlugin.plugin_data = plugBasis;
-      return &plugBasis->clapPlugin;
+      plugBasis->plugin = pluginClass;
+      plugBasis->host = host;
+      plugBasis->plugin.plugin_data = plugBasis;
+      return &plugBasis->plugin;
     },
 };
 
