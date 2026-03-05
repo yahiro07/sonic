@@ -132,6 +132,8 @@ public:
   bool guiCreate() override {
     webView = new sonic_common::MacWebView();
     webView->loadUrl("http://localhost:3000");
+
+    // todo: delegate event handing to messaging hub
     webView->setMessageReceiver([](const std::string &message) {
       printf("message: %s\n", message.c_str());
     });
