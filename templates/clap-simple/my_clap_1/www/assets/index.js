@@ -1,9 +1,9 @@
 // type MessageFromUi =
 //   | { type: "uiLoaded" }
 //   | { type: "beginEdit"; identifier: string }
-//   | { type: "applyEdit"; identifier: string; value: number }
+//   | { type: "performEdit"; identifier: string; value: number }
 //   | { type: "endEdit"; identifier: string }
-//   | { type: "applyInstantEdit"; identifier: string; value: number }
+//   | { type: "instantEdit"; identifier: string; value: number }
 //   | { type: "noteOnRequest"; noteNumber: number }
 //   | { type: "noteOffRequest"; noteNumber: number };
 
@@ -69,7 +69,7 @@ const { sendMessage, subscribe } = createCoreBridge();
 
 function sendParameter(identifier, value) {
   sendMessage({
-    type: "applyEdit",
+    type: "performEdit",
     identifier,
     value,
   });

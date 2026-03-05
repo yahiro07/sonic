@@ -46,7 +46,7 @@ struct RxMsgBeginEdit {
   std::string identifier;
 };
 struct RxMsgPerformEdit {
-  std::string type = "applyEdit";
+  std::string type = "performEdit";
   std::string identifier;
   double value;
 };
@@ -76,7 +76,7 @@ namespace glz {
 template <> struct meta<RxMessageVariant> {
   static constexpr std::string_view tag = "type";
   static constexpr auto ids = std::array{
-      "log",     "uiLoaded",    "beginEdit",     "applyEdit",
+      "log",     "uiLoaded",    "beginEdit",     "performEdit",
       "endEdit", "instantEdit", "noteOnRequest", "noteOffRequest",
   };
 };
@@ -84,7 +84,7 @@ template <> struct meta<RxMessageVariant> {
 
 inline void messagingHub_dev_handleMessageFromUi(
     const std::string &jsonStr,
-    std::function<void(std::string &, double)> setParameterFromUi) {
+    std::function<void(std::string &, double)> performParameterEditFromUi) {
   printf("message: %s\n", jsonStr.c_str());
 
   RxMessageVariant rxMessage;
@@ -92,6 +92,6 @@ inline void messagingHub_dev_handleMessageFromUi(
   if (ec)
     return;
   if (auto *m = std::get_if<RxMsgPerformEdit>(&rxMessage)) {
-    setParameterFromUi(m->identifier, m->value);
+    performParameterEditFromUi(m->identifier, m->value);
   }
 }
