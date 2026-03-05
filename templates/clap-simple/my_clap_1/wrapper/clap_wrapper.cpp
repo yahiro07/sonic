@@ -13,21 +13,6 @@
 #include <memory>
 #include <string>
 
-class PlugDriver {
-
-public:
-  std::unique_ptr<SynthesizerBase> synth;
-
-  PlugDriver(SynthesizerBase *synth) : synth(synth) {}
-
-  void setSampleRate(double sampleRate) { synth->setSampleRate(sampleRate); }
-
-  void renderAudio(uint32_t start, uint32_t end, float *outputL,
-                   float *outputR) {
-    synth->processAudio(outputL + start, outputR + start, end - start);
-  }
-};
-
 #define GUI_API CLAP_WINDOW_API_COCOA
 
 static void mapUpstreamEventToClapEvent(UpstreamEvent &upstreamEvent,
@@ -48,25 +33,31 @@ static void mapUpstreamEventToClapEvent(UpstreamEvent &upstreamEvent,
 
 class PlugBasisImpl : public PlugBasis {
 private:
-  PlugDriver plugDriver;
+  std::unique_ptr<SynthesizerBase> synth;
+
   sonic_common::MacWebView *webView = nullptr;
   sonic_common::SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
   sonic_common::SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
 
 private:
+  void renderAudio(uint32_t start, uint32_t end, float *outputL,
+                   float *outputR) {
+    synth->processAudio(outputL + start, outputR + start, end - start);
+  }
+
   void processInputEvent(const clap_event_header_t *event) {
     if (event->space_id == CLAP_CORE_EVENT_SPACE_ID) {
       if (event->type == CLAP_EVENT_NOTE_ON ||
           event->type == CLAP_EVENT_NOTE_OFF) {
         const clap_event_note_t *noteEvent = (const clap_event_note_t *)event;
         if (event->type == CLAP_EVENT_NOTE_ON) {
-          plugDriver.synth->noteOn(noteEvent->key, noteEvent->velocity);
+          synth->noteOn(noteEvent->key, noteEvent->velocity);
           downstreamEventQueue.push(
               {.type = DownStreamEventType::hostNoteOn,
                .note = {.noteNumber = noteEvent->key,
                         .velocity = noteEvent->velocity}});
         } else if (event->type == CLAP_EVENT_NOTE_OFF) {
-          plugDriver.synth->noteOff(noteEvent->key);
+          synth->noteOff(noteEvent->key);
           downstreamEventQueue.push({.type = DownStreamEventType::hostNoteOff,
                                      .note = {.noteNumber = noteEvent->key}});
         }
@@ -75,8 +66,7 @@ private:
         auto *paramEvent = (const clap_event_param_value_t *)event;
         printf("processEvent, param in %d %f\n", paramEvent->param_id,
                paramEvent->value);
-        plugDriver.synth->setParameterValue(paramEvent->param_id,
-                                            paramEvent->value);
+        synth->setParameterValue(paramEvent->param_id, paramEvent->value);
         downstreamEventQueue.push({.type = DownStreamEventType::parameterChange,
                                    .param = {.paramId = paramEvent->param_id,
                                              .value = paramEvent->value}});
@@ -85,10 +75,10 @@ private:
   }
 
 public:
-  PlugBasisImpl(SynthesizerBase &synth) : plugDriver(&synth) {}
+  PlugBasisImpl(SynthesizerBase &synth) : synth(&synth) {}
 
   void setSampleRate(double sampleRate) override {
-    plugDriver.setSampleRate(sampleRate);
+    synth->setSampleRate(sampleRate);
   }
 
   clap_process_status process(const clap_process_t *process) override {
@@ -107,8 +97,7 @@ public:
     UpstreamEvent item;
     while (upstreamEventQueue.pop(item)) {
       if (item.type == UpStreamEventType::parameterApplyEdit) {
-        plugDriver.synth->setParameterValue(item.param.paramId,
-                                            item.param.value);
+        synth->setParameterValue(item.param.paramId, item.param.value);
         clap_event_param_value_t clapEvent{};
         mapUpstreamEventToClapEvent(item, clapEvent);
         process->out_events->try_push(process->out_events, &clapEvent.header);
@@ -144,7 +133,7 @@ public:
         }
       }
 
-      plugDriver.renderAudio(i, nextEventFrame, out.data32[0], out.data32[1]);
+      this->renderAudio(i, nextEventFrame, out.data32[0], out.data32[1]);
       i = nextEventFrame;
     }
 
@@ -152,20 +141,20 @@ public:
   }
 
   uint32_t getParameterCount() const override {
-    return plugDriver.synth->getParameterCount();
+    return synth->getParameterCount();
   }
 
   void getParameterInfo(uint32_t index,
                         clap_param_info_t *info) const override {
-    plugDriver.synth->getParameterInfo(index, info);
+    synth->getParameterInfo(index, info);
   }
 
   double getParameterValue(clap_id id) const override {
-    return plugDriver.synth->getParameterValue(id);
+    return synth->getParameterValue(id);
   }
 
   void setParameterValue(clap_id id, double value) override {
-    plugDriver.synth->setParameterValue(id, value);
+    synth->setParameterValue(id, value);
   }
 
   void flushParameters(const clap_input_events_t *in,
@@ -180,8 +169,7 @@ public:
     UpstreamEvent item;
     while (upstreamEventQueue.pop(item)) {
       if (item.type == UpStreamEventType::parameterApplyEdit) {
-        plugDriver.synth->setParameterValue(item.param.paramId,
-                                            item.param.value);
+        synth->setParameterValue(item.param.paramId, item.param.value);
         clap_event_param_value_t clapEvent{};
         mapUpstreamEventToClapEvent(item, clapEvent);
         out->try_push(out, &clapEvent.header);
