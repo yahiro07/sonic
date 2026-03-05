@@ -27,6 +27,8 @@ public:
   virtual bool guiSetSize(uint32_t width, uint32_t height) = 0;
   virtual bool guiShow() = 0;
   virtual bool guiHide() = 0;
+
+  virtual void onMainThread() {}
 };
 
 void clapRootage_setPluginBasisInstantiateFn(

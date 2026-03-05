@@ -6,14 +6,16 @@
 #include "clap/process.h"
 #include "messaging_hub.h"
 #include "sonic_common/general/mac_web_view.h"
-#include "sonic_common/general/polling_timer.h"
 #include "sonic_common/general/spsc_queue.h"
 #include "sonic_common/logic/parameter_builder_impl.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
 #include <assert.h>
+#include <atomic>
 #include <cstring>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <unordered_map>
 
 #define GUI_API CLAP_WINDOW_API_COCOA
 
@@ -54,10 +56,37 @@ private:
   sonic_common::MacWebView *webView = nullptr;
   sonic_common::SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
   sonic_common::SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
-  sonic_common::PollingTimer pollingTimer;
   sonic_common::ParameterDefinitionsProvider parameterDefinitionsProvider;
 
   std::unordered_map<uint32_t, double> parameterValuesInMainThread;
+  mutable std::mutex parameterValuesMutex;
+
+  std::atomic<bool> downstreamDrainRequested{false};
+
+  void requestDownstreamDrainOnMainThread() noexcept {
+    if (!this->host || !this->host->request_callback) {
+      return;
+    }
+    bool expected = false;
+    if (downstreamDrainRequested.compare_exchange_strong(
+            expected, true, std::memory_order_acq_rel)) {
+      this->host->request_callback(this->host);
+    }
+  }
+
+  void setParameterInMainThread(uint32_t paramId, double value) {
+    std::scoped_lock lock(parameterValuesMutex);
+    parameterValuesInMainThread[paramId] = value;
+  }
+
+  double getParameterInMainThread(uint32_t paramId) const {
+    std::scoped_lock lock(parameterValuesMutex);
+    auto it = parameterValuesInMainThread.find(paramId);
+    if (it == parameterValuesInMainThread.end()) {
+      return 0.0;
+    }
+    return it->second;
+  }
 
 private:
   void renderAudio(uint32_t start, uint32_t end, float *outputL,
@@ -76,10 +105,12 @@ private:
               {.type = DownStreamEventType::hostNoteOn,
                .note = {.noteNumber = noteEvent->key,
                         .velocity = noteEvent->velocity}});
+          requestDownstreamDrainOnMainThread();
         } else if (event->type == CLAP_EVENT_NOTE_OFF) {
           synth->noteOff(noteEvent->key);
           downstreamEventQueue.push({.type = DownStreamEventType::hostNoteOff,
                                      .note = {.noteNumber = noteEvent->key}});
+          requestDownstreamDrainOnMainThread();
         }
       }
       if (event->type == CLAP_EVENT_PARAM_VALUE) {
@@ -92,6 +123,7 @@ private:
         downstreamEventQueue.push(
             {.type = DownStreamEventType::parameterChange,
              .param = {.paramId = paramId, .value = value}});
+        requestDownstreamDrainOnMainThread();
       }
     }
   }
@@ -105,9 +137,11 @@ public:
     parameterDefinitionsProvider.addParameters(parameterItems, maxAddress);
     for (auto &item : parameterItems) {
       synth.setParameter(item.address, item.defaultValue);
-      parameterValuesInMainThread[item.address] = item.defaultValue;
+      setParameterInMainThread(item.address, item.defaultValue);
     }
   }
+
+  ~PlugBasisImpl() override { guiDestroy(); }
 
   void setSampleRate(double sampleRate) override {
     synth->setSampleRate(sampleRate);
@@ -190,11 +224,7 @@ public:
   }
 
   double getParameterValue(clap_id id) const override {
-    auto kv = parameterValuesInMainThread.find(id);
-    if (kv == parameterValuesInMainThread.end()) {
-      return 0.0;
-    }
-    return kv->second;
+    return getParameterInMainThread(id);
   }
 
   void flushParameters(const clap_input_events_t *in,
@@ -218,18 +248,26 @@ public:
     }
   }
 
-  void drainDownstreamEvents() {
-
+  void drainDownstreamEventsOnMainThread() {
     DownstreamEvent e;
     while (downstreamEventQueue.pop(e)) {
       if (e.type == DownStreamEventType::parameterChange) {
-        parameterValuesInMainThread[e.param.paramId] = e.param.value;
+        setParameterInMainThread(e.param.paramId, e.param.value);
       }
-      messagingHub_dev_handleEventFromHost(
-          e,
-          [this](std::string &message) { this->webView->sendMessage(message); },
-          parameterDefinitionsProvider);
+      if (webView) {
+        messagingHub_dev_handleEventFromHost(
+            e,
+            [this](std::string &message) {
+              this->webView->sendMessage(message);
+            },
+            parameterDefinitionsProvider);
+      }
     }
+  }
+
+  void onMainThread() override {
+    downstreamDrainRequested.store(false, std::memory_order_release);
+    drainDownstreamEventsOnMainThread();
   }
 
   bool guiCreate() override {
@@ -245,10 +283,7 @@ public:
         if (!_address)
           return;
         auto paramId = static_cast<uint32_t>(*_address);
-        auto kv = parameterValuesInMainThread.find(paramId);
-        if (kv != parameterValuesInMainThread.end()) {
-          kv->second = value;
-        }
+        setParameterInMainThread(paramId, value);
         this->upstreamEventQueue.push(
             {.type = UpStreamEventType::parameterApplyEdit,
              .param = {
@@ -268,12 +303,10 @@ public:
       messagingHub_dev_handleMessageFromUi(message, performParameterEditFromUi,
                                            emitUpstreamEvent);
     });
-    pollingTimer.start([this]() { this->drainDownstreamEvents(); }, 50);
     return true;
   }
 
   void guiDestroy() override {
-    pollingTimer.stop();
     if (webView) {
       webView->setMessageReceiver(nullptr);
       webView->removeFromParent();
