@@ -30,28 +30,6 @@ public:
 
 #define GUI_API CLAP_WINDOW_API_COCOA
 
-enum class UpStreamEventType {
-  parameterBeginEdit,
-  parameterApplyEdit,
-  parameterEndEdit,
-  noteOnRequest,
-  noteOffRequest,
-};
-
-struct UpstreamEvent {
-  UpStreamEventType type;
-  union {
-    struct {
-      clap_id paramId;
-      double value;
-    } param;
-    struct {
-      int noteNumber;
-      double velocity;
-    } note;
-  };
-};
-
 static void mapUpstreamEventToClapEvent(UpstreamEvent &upstreamEvent,
                                         clap_event_param_value_t &clapEvent) {
   clapEvent.header.size = sizeof(clapEvent);
@@ -67,26 +45,6 @@ static void mapUpstreamEventToClapEvent(UpstreamEvent &upstreamEvent,
   clapEvent.key = -1;
   clapEvent.value = upstreamEvent.param.value;
 }
-
-enum class DownStreamEventType {
-  parameterChange,
-  hostNoteOn,
-  hostNoteOff,
-};
-
-struct DownstreamEvent {
-  DownStreamEventType type;
-  union {
-    struct {
-      clap_id paramId;
-      double value;
-    } param;
-    struct {
-      int noteNumber;
-      double velocity;
-    } note;
-  };
-};
 
 class PlugBasisImpl : public PlugBasis {
 private:
@@ -231,11 +189,25 @@ public:
     }
   }
 
+  void drainDownstreamEvents() {
+
+    DownstreamEvent e;
+    while (downstreamEventQueue.pop(e)) {
+      messagingHub_dev_handleEventFromHost(e, [this](std::string &message) {
+        this->webView->sendMessage(message);
+      });
+    }
+  }
+
   bool guiCreate() override {
     webView = new sonic_common::MacWebView();
     webView->loadUrl("http://localhost:3000");
 
     webView->setMessageReceiver([this](const std::string &message) {
+      // debug pulling downstream events
+      // this is originally supposed to be handled in timer loop
+      this->drainDownstreamEvents();
+
       auto performParameterEditFromUi = [this](std::string &identifier,
                                                double value) {
         printf("setParameterFromUi: %s %f\n", identifier.c_str(), value);
@@ -249,25 +221,15 @@ public:
         if (this->hostParams) {
           this->hostParams->request_flush(this->host);
         }
-
-        {
-          // debug pulling downstream events
-          // this is originally supposed to be in timer loop
-          DownstreamEvent e;
-          while (downstreamEventQueue.pop(e)) {
-            if (e.type == DownStreamEventType::parameterChange) {
-              printf("downstream param %d %f\n", e.param.paramId,
-                     e.param.value);
-            } else if (e.type == DownStreamEventType::hostNoteOn) {
-              printf("downstream noteOn %d %f\n", e.note.noteNumber,
-                     e.note.velocity);
-            } else if (e.type == DownStreamEventType::hostNoteOff) {
-              printf("downstream noteOff %d\n", e.note.noteNumber);
-            }
-          }
+      };
+      auto emitUpstreamEvent = [this](UpstreamEvent &event) {
+        this->upstreamEventQueue.push(event);
+        if (this->hostParams) {
+          this->hostParams->request_flush(this->host);
         }
       };
-      messagingHub_dev_handleMessageFromUi(message, performParameterEditFromUi);
+      messagingHub_dev_handleMessageFromUi(message, performParameterEditFromUi,
+                                           emitUpstreamEvent);
     });
     return true;
   }
