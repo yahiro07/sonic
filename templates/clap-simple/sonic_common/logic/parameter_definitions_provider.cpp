@@ -7,6 +7,9 @@ namespace sonic_common {
 
 void ParameterDefinitionsProvider::addParameters(
     std::vector<ParameterItem> &parameterItems, uint64_t maxAddress) {
+  this->parameterItems.clear();
+  this->parameterItemsMap.clear();
+  this->identifierToAddressMap.clear();
   for (const auto &item : parameterItems) {
     auto validInRange = item.address <= maxAddress;
     if (!validInRange) {
@@ -17,8 +20,11 @@ void ParameterDefinitionsProvider::addParameters(
       continue;
     }
     auto address = item.address;
-    this->parameterItems[address] = item;
-    this->identifierToAddressMap[item.identifier] = address;
+    this->parameterItems.push_back(item);
+  }
+  for (auto &item : this->parameterItems) {
+    this->parameterItemsMap[item.address] = &item;
+    this->identifierToAddressMap[item.identifier] = item.address;
   }
 }
 
@@ -34,23 +40,23 @@ ParameterDefinitionsProvider::getAddressByIdentifier(
 
 std::string
 ParameterDefinitionsProvider::getIdentifierByAddress(ParamAddress address) {
-  auto val = parameterItems.find(address);
-  if (val == parameterItems.end()) {
+  auto val = parameterItemsMap.find(address);
+  if (val == parameterItemsMap.end()) {
     return "";
   }
-  return val->second.identifier;
+  return val->second->identifier;
 }
 
-ParameterItem *
+const ParameterItem *
 ParameterDefinitionsProvider::getParameterItemByAddress(ParamAddress address) {
-  auto val = parameterItems.find(address);
-  if (val == parameterItems.end()) {
+  auto val = parameterItemsMap.find(address);
+  if (val == parameterItemsMap.end()) {
     return nullptr;
   }
-  return &val->second;
+  return val->second;
 }
 
-ParameterItem *ParameterDefinitionsProvider::getParameterItemByIdentifier(
+const ParameterItem *ParameterDefinitionsProvider::getParameterItemByIdentifier(
     std::string identifier) {
   auto val = identifierToAddressMap.find(identifier);
   if (val == identifierToAddressMap.end()) {

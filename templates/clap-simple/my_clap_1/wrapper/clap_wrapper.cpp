@@ -179,12 +179,8 @@ public:
 
   void getParameterInfo(uint32_t index,
                         clap_param_info_t *info) const override {
-    auto kvs = parameterDefinitionsProvider.getParameterItems();
-    auto kv = kvs.find(index);
-    if (kv == kvs.end()) {
-      return;
-    }
-    auto &item = kv->second;
+    auto parameterItems = parameterDefinitionsProvider.getParameterItems();
+    auto &item = parameterItems[index];
     info->id = item.address;
     info->flags = mapParameterFlags(item.flags);
     info->min_value = item.minValue;
@@ -226,6 +222,9 @@ public:
 
     DownstreamEvent e;
     while (downstreamEventQueue.pop(e)) {
+      if (e.type == DownStreamEventType::parameterChange) {
+        parameterValuesInMainThread[e.param.paramId] = e.param.value;
+      }
       messagingHub_dev_handleEventFromHost(
           e,
           [this](std::string &message) { this->webView->sendMessage(message); },
@@ -275,9 +274,9 @@ public:
 
   void guiDestroy() override {
     pollingTimer.stop();
-    webView->setMessageReceiver(nullptr);
-    webView->removeFromParent();
     if (webView) {
+      webView->setMessageReceiver(nullptr);
+      webView->removeFromParent();
       delete webView;
       webView = nullptr;
     }
