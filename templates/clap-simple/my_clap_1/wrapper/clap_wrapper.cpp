@@ -5,6 +5,7 @@
 #include "clap/events.h"
 #include "clap/plugin.h"
 #include "clap/process.h"
+#include "messaging_hub.h"
 #include "sonic_common/general/mac_web_view.h"
 #include "sonic_common/general/spsc_queue.h"
 #include <assert.h>
@@ -210,20 +211,19 @@ public:
     webView = new sonic_common::MacWebView();
     webView->loadUrl("http://localhost:3000");
 
-    // todo: delegate event handing to messaging hub
     webView->setMessageReceiver([this](const std::string &message) {
-      printf("message: %s\n", message.c_str());
-      clap_id paramId = 0;
-      double paramValue = rand() / (double)RAND_MAX; // debug;
-      this->upstreamEventQueue.push(
-          {.type = UpStreamEventType::parameterApplyEdit,
-           .param = {
-               .paramId = paramId,
-               .value = paramValue,
-           }});
-      if (this->hostParams) {
-        this->hostParams->request_flush(this->host);
-      }
+      auto setParameterFromUi = [this](uint32_t paramId, double paramValue) {
+        this->upstreamEventQueue.push(
+            {.type = UpStreamEventType::parameterApplyEdit,
+             .param = {
+                 .paramId = paramId,
+                 .value = paramValue,
+             }});
+        if (this->hostParams) {
+          this->hostParams->request_flush(this->host);
+        }
+      };
+      messagingHub_dev_handleMessageFromUi(message, setParameterFromUi);
     });
     return true;
   }
