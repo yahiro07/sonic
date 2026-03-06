@@ -29,8 +29,9 @@ static void assignParameterInfo(clap_param_info_t *info,
   snprintf(info->name, sizeof(info->name), "%s", item.label.c_str());
 }
 
-static void mapUpstreamEventToClapEvent(UpstreamEvent &upstreamEvent,
-                                        clap_event_param_value_t &clapEvent) {
+static void
+mapUpstreamParamChangeEventToClapEvent(UpstreamEvent &upstreamEvent,
+                                       clap_event_param_value_t &clapEvent) {
   clapEvent.header.size = sizeof(clapEvent);
   clapEvent.header.time = 0;
   clapEvent.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
@@ -43,4 +44,18 @@ static void mapUpstreamEventToClapEvent(UpstreamEvent &upstreamEvent,
   clapEvent.channel = -1;
   clapEvent.key = -1;
   clapEvent.value = upstreamEvent.param.value;
+}
+
+static void
+mapUpstreamParamGestureEventToClapEvent(UpstreamEvent &upstreamEvent,
+                                        clap_event_param_gesture_t &clapEvent) {
+  clapEvent.header.size = sizeof(clapEvent);
+  clapEvent.header.time = 0;
+  clapEvent.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+  clapEvent.header.type =
+      upstreamEvent.type == UpstreamEventType::ParameterBeginEdit
+          ? CLAP_EVENT_PARAM_GESTURE_BEGIN
+          : CLAP_EVENT_PARAM_GESTURE_END;
+  clapEvent.header.flags = 0;
+  clapEvent.param_id = upstreamEvent.param.paramId;
 }

@@ -67,14 +67,6 @@ function createCoreBridge() {
 }
 const { sendMessage, subscribe } = createCoreBridge();
 
-function sendParameter(identifier, value) {
-  sendMessage({
-    type: "performEdit",
-    identifier,
-    value,
-  });
-}
-
 pushLine("hello from js 1235");
 
 pushLine("href:" + location.href);
@@ -114,8 +106,19 @@ function addSlider(
   slider.step = step;
   slider.value = defaultValue;
   slider.id = identifier;
+  slider.onpointerdown = () => {
+    //pointer capture would needed for more robust handling
+    sendMessage({ type: "beginEdit", identifier });
+  };
   slider.oninput = () => {
-    sendParameter(identifier, parseFloat(slider.value));
+    sendMessage({
+      type: "performEdit",
+      identifier,
+      value: parseFloat(slider.value),
+    });
+  };
+  slider.onpointerup = () => {
+    sendMessage({ type: "endEdit", identifier });
   };
 
   const label = document.createElement("label");
