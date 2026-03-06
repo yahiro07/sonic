@@ -190,7 +190,26 @@ inline void messagingHub_dev_handleEventFromHost(
     sendMessageToWebView(buffer);
   } else if (e.type == DownStreamEventType::hostNoteOn) {
     printf("downstream noteOn %d %f\n", e.note.noteNumber, e.note.velocity);
+    TxMsgHostNoteOn msg{
+        .type = "hostNoteOn",
+        .noteNumber = e.note.noteNumber,
+        .velocity = e.note.velocity,
+    };
+    std::string buffer;
+    auto ec = glz::write_json(msg, buffer);
+    if (ec)
+      return;
+    sendMessageToWebView(buffer);
   } else if (e.type == DownStreamEventType::hostNoteOff) {
     printf("downstream noteOff %d\n", e.note.noteNumber);
+    TxMsgHostNoteOff msg{
+        .type = "hostNoteOff",
+        .noteNumber = e.note.noteNumber,
+    };
+    std::string buffer;
+    auto ec = glz::write_json(msg, buffer);
+    if (ec)
+      return;
+    sendMessageToWebView(buffer);
   }
 }
