@@ -13,7 +13,7 @@
 //   | { type: "hostNoteOn"; noteNumber: number }
 //   | { type: "hostNoteOff"; noteNumber: number };
 
-function pushLine(...args) {
+function pushLogLine(...args) {
   let logArea = document.getElementById("logArea");
   if (!logArea) {
     logArea = document.createElement("div");
@@ -33,63 +33,21 @@ function pushLine(...args) {
   logArea.scrollTop = logArea.scrollHeight;
 }
 
-function createCoreBridge() {
-  if (!window.webkit) {
-    pushLine("incompatible environment, window.webkit is not available");
-    return {
-      sendMessage: () => {},
-      subscribe: () => {},
-    };
-  }
-  const listeners = new Set();
+if (!window.webkit) {
+  pushLogLine("incompatible environment, window.webkit is not available");
+}
 
-  function sendMessage(msg) {
-    pushLine("⇠ui", msg);
+function sendMessage(msg) {
+  if (window.webkit) {
+    pushLogLine("⇠ui", msg);
     window.webkit.messageHandlers.pluginEditor.postMessage(msg);
   }
-
-  function subscribe(listener) {
-    listeners.add(listener);
-    return () => {
-      listeners.delete(listener);
-    };
-  }
-
-  window.pluginEditorCallback = (msg) => {
-    pushLine("⇢ui", msg);
-    listeners.forEach((l) => l(msg));
-  };
-
-  return {
-    sendMessage,
-    subscribe,
-  };
 }
-const { sendMessage, subscribe } = createCoreBridge();
 
-pushLine("hello from js 1235");
-
-pushLine("href:" + location.href);
+pushLogLine("hello from js");
+pushLogLine("href:" + location.href);
 
 sendMessage({ type: "uiLoaded" });
-
-// window.webkit.messageHandlers.native.postMessage(
-//   JSON.stringify({ data: "A" })
-// );
-
-// setTimeout(() => {
-//   window.webkit.messageHandlers.native.postMessage(
-//     JSON.stringify({ data: "B" })
-//   );
-//   pushLine("B")
-// }, 2000)
-
-// setTimeout(() => {
-//   window.webkit.messageHandlers.native.postMessage(
-//     "ON"
-//   );
-//   pushLine("C ON")
-// }, 3000)
 
 function addSlider(
   name,
@@ -155,7 +113,8 @@ addSlider("Wave", "waveType", 0, 0, 3, 1);
 addSlider("Pitch", "oscPitch", 0.5);
 addSlider("Volume", "oscVolume", 0.5);
 
-subscribe((msg) => {
+window.pluginEditorCallback = (msg) => {
+  pushLogLine("⇢ui", msg);
   if (msg.type === "setParameter") {
     const slider = document.getElementById(msg.identifier);
     if (slider) {
@@ -173,4 +132,4 @@ subscribe((msg) => {
   } else if (msg.type === "hostNoteOff") {
     pushLine(`host note off: ${msg.noteNumber}`);
   }
-});
+};
