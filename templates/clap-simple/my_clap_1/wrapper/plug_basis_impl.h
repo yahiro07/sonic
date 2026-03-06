@@ -1,12 +1,16 @@
 #pragma once
 
-#include "messaging_hub.h"
+#include "interfaces.h"
 #include "my_clap_1/rootage/plug_basis.h"
+#include "my_clap_1/wrapper/parameter_manager.h"
 #include "processor_adapter.h"
 #include "sonic_common/general/mac_web_view.h"
 #include "sonic_common/logic/parameter_builder_impl.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
-#include <mutex>
+#include "webview_bridge.h"
+#include <CoreFoundation/CFNotificationCenter.h>
+#include <cstddef>
+#include <optional>
 
 #define GUI_API CLAP_WINDOW_API_COCOA
 
@@ -34,6 +38,77 @@ static void assignParameterInfo(clap_param_info_t *info,
   snprintf(info->name, sizeof(info->name), "%s", item.label.c_str());
 }
 
+class DownstreamEventPort : public IDownstreamEventPort {
+private:
+  std::map<int, std::function<void(DownstreamEvent &)>>
+      downstreamEventListeners;
+
+public:
+  int subscribeDownstreamEvent(
+      std::function<void(DownstreamEvent &)> callback) override {
+    auto id = downstreamEventListeners.size() + 1;
+    downstreamEventListeners[id] = callback;
+    return id;
+  }
+  void unsubscribeDownstreamEvent(int subscriptionId) override {
+    downstreamEventListeners.erase(subscriptionId);
+  }
+
+  void emitDownstreamEvent(DownstreamEvent &e) {
+    for (auto &[id, listener] : downstreamEventListeners) {
+      listener(e);
+    }
+  }
+};
+
+class UpstreamEventPort : public IUpStreamEventPort {
+  sonic_common::ParameterDefinitionsProvider &parameterDefinitionsProvider;
+  ParameterManager &parameterManager;
+  ProcessorAdapter &processorAdapter;
+
+  void pushUpstreamEvent(UpstreamEvent &event) {
+    processorAdapter.pushUpstreamEvent(event);
+  }
+
+public:
+  UpstreamEventPort(
+      sonic_common::ParameterDefinitionsProvider &parameterDefinitionsProvider,
+      ParameterManager &parameterManager, ProcessorAdapter &processorAdapter)
+      : parameterDefinitionsProvider(parameterDefinitionsProvider),
+        parameterManager(parameterManager), processorAdapter(processorAdapter) {
+  }
+
+  void applyParameterEditFromUi(std::string identifier, double value,
+                                ParameterEditState editState) override {
+    printf("setParameterFromUi: %s %f\n", identifier.c_str(), value);
+    auto _address =
+        parameterDefinitionsProvider.getAddressByIdentifier(identifier);
+    if (!_address)
+      return;
+    auto paramId = static_cast<uint32_t>(*_address);
+    parameterManager.setParameter(paramId, value, false);
+    UpstreamEvent e{
+        .type = UpstreamEventType::parameterApplyEdit,
+        .param = {.paramId = paramId, .value = value},
+    };
+    pushUpstreamEvent(e);
+  }
+  void requestNoteOn(int noteNumber, double velocity) override {
+    UpstreamEvent e{
+        .type = UpstreamEventType::noteOnRequest,
+        .note = {.noteNumber = noteNumber, .velocity = velocity},
+    };
+    pushUpstreamEvent(e);
+  }
+  void requestNoteOff(int noteNumber) override {
+    UpstreamEvent e{
+        .type = UpstreamEventType::noteOffRequest,
+        .note = {.noteNumber = noteNumber, .velocity = 0.0},
+    };
+    pushUpstreamEvent(e);
+  }
+};
+
 class PlugBasisImpl : public PlugBasis {
 private:
   std::unique_ptr<SynthesizerBase> synth;
@@ -43,22 +118,12 @@ private:
 
   sonic_common::ParameterDefinitionsProvider parameterDefinitionsProvider;
 
-  std::unordered_map<uint32_t, double> parameterValuesInMainThread;
-  mutable std::mutex parameterValuesMutex;
-
-  void setParameterInMainThread(uint32_t paramId, double value) {
-    std::scoped_lock lock(parameterValuesMutex);
-    parameterValuesInMainThread[paramId] = value;
-  }
-
-  double getParameterInMainThread(uint32_t paramId) const {
-    std::scoped_lock lock(parameterValuesMutex);
-    auto it = parameterValuesInMainThread.find(paramId);
-    if (it == parameterValuesInMainThread.end()) {
-      return 0.0;
-    }
-    return it->second;
-  }
+  ParameterManager parameterManager{parameterDefinitionsProvider};
+  UpstreamEventPort upstreamEventPort{parameterDefinitionsProvider,
+                                      parameterManager, processorAdapter};
+  DownstreamEventPort downstreamEventPort;
+  WebViewBridge webViewBridge{parameterManager, upstreamEventPort,
+                              downstreamEventPort};
 
 public:
   PlugBasisImpl(SynthesizerBase &synth)
@@ -72,7 +137,7 @@ public:
     parameterDefinitionsProvider.addParameters(parameterItems, maxAddress);
     for (auto &item : parameterItems) {
       synth->setParameter(item.address, item.defaultValue);
-      setParameterInMainThread(item.address, item.defaultValue);
+      parameterManager.setParameter(item.address, item.defaultValue, false);
     }
     processorAdapter.initialize(this->host, this->hostParams);
   }
@@ -104,23 +169,16 @@ public:
   }
 
   double getParameterValue(clap_id id) const override {
-    return getParameterInMainThread(id);
+    return parameterManager.getParameter(id);
   }
 
   void onMainThread() override {
     DownstreamEvent e;
     while (processorAdapter.popDownstreamEvent(e)) {
-      if (e.type == DownStreamEventType::parameterChange) {
-        setParameterInMainThread(e.param.paramId, e.param.value);
+      if (e.type == DownstreamEventType::ParameterChange) {
+        parameterManager.setParameter(e.param.paramId, e.param.value, true);
       }
-      if (webView) {
-        messagingHub_dev_handleEventFromHost(
-            e,
-            [this](std::string &message) {
-              this->webView->sendMessage(message);
-            },
-            parameterDefinitionsProvider);
-      }
+      downstreamEventPort.emitDownstreamEvent(e);
     }
   }
 
@@ -129,28 +187,7 @@ public:
     std::string url = synth->getEditorPageUrl();
     webView->loadUrl(url);
 
-    webView->setMessageReceiver([this](const std::string &message) {
-      auto performParameterEditFromUi = [this](std::string &identifier,
-                                               double value) {
-        printf("setParameterFromUi: %s %f\n", identifier.c_str(), value);
-        auto _address =
-            parameterDefinitionsProvider.getAddressByIdentifier(identifier);
-        if (!_address)
-          return;
-        auto paramId = static_cast<uint32_t>(*_address);
-        setParameterInMainThread(paramId, value);
-        UpstreamEvent e{
-            .type = UpStreamEventType::parameterApplyEdit,
-            .param = {.paramId = paramId, .value = value},
-        };
-        processorAdapter.pushUpstreamEvent(e);
-      };
-      auto emitUpstreamEvent = [this](UpstreamEvent &event) {
-        processorAdapter.pushUpstreamEvent(event);
-      };
-      messagingHub_dev_handleMessageFromUi(message, performParameterEditFromUi,
-                                           emitUpstreamEvent);
-    });
+    webViewBridge.onWebViewOpen(*webView);
     return true;
   }
 
@@ -174,8 +211,8 @@ public:
     return true;
   }
 
-  // bool guiSetTransient(const clap_window_t *window) override { return false;
-  // } void guiSuggestTitle(const char *title) override {}
+  // bool guiSetTransient(const clap_window_t *window) override { return
+  // false; } void guiSuggestTitle(const char *title) override {}
   bool guiShow() override {
     // webView->show();
     return true;
