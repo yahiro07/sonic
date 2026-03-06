@@ -1,22 +1,22 @@
 #pragma once
 
 #include "../portable/events.h"
+#include "./clap_data_helper.h"
 #include "clap/clap.h"
-#include "my_clap_1/wrapper/clap_parameter_helper.h"
 #include "sonic_common/general/spsc_queue.h"
 #include "sonic_common/synthesizer_base.h"
 
 class ProcessorAdapter {
 private:
-  SynthesizerBase *synth;
-  const clap_host_t *host;
+  SynthesizerBase &synth;
+  const clap_host_t *host = nullptr;
   const clap_host_params_t *hostParams = nullptr;
-  std::atomic<bool> downstreamDrainRequested{false};
+  std::atomic<bool> downstreamDrainRequested = false;
   sonic_common::SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
   sonic_common::SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
 
 public:
-  ProcessorAdapter(SynthesizerBase *synth) : synth(synth) {}
+  ProcessorAdapter(SynthesizerBase &synth) : synth(synth) {}
 
   void initialize(const clap_host_t *host,
                   const clap_host_params_t *hostParams) {
@@ -24,11 +24,11 @@ public:
     this->hostParams = hostParams;
   }
 
-  void setSampleRate(double sampleRate) { synth->setSampleRate(sampleRate); }
+  void setSampleRate(double sampleRate) { synth.setSampleRate(sampleRate); }
 
   void renderAudio(uint32_t start, uint32_t end, float *outputL,
                    float *outputR) {
-    synth->processAudio(outputL + start, outputR + start, end - start);
+    synth.processAudio(outputL + start, outputR + start, end - start);
   }
 
   void requestDownstreamDrainOnMainThread() noexcept {
@@ -53,12 +53,12 @@ public:
           event->type == CLAP_EVENT_NOTE_OFF) {
         const clap_event_note_t *noteEvent = (const clap_event_note_t *)event;
         if (event->type == CLAP_EVENT_NOTE_ON) {
-          synth->noteOn(noteEvent->key, noteEvent->velocity);
+          synth.noteOn(noteEvent->key, noteEvent->velocity);
           pushDownstreamEvent({.type = DownstreamEventType::HostNoteOn,
                                .note = {.noteNumber = noteEvent->key,
                                         .velocity = noteEvent->velocity}});
         } else if (event->type == CLAP_EVENT_NOTE_OFF) {
-          synth->noteOff(noteEvent->key);
+          synth.noteOff(noteEvent->key);
           pushDownstreamEvent({.type = DownstreamEventType::HostNoteOff,
                                .note = {.noteNumber = noteEvent->key}});
         }
@@ -69,7 +69,7 @@ public:
         //        paramEvent->value);
         auto paramId = paramEvent->param_id;
         auto value = paramEvent->value;
-        synth->setParameter(paramId, value);
+        synth.setParameter(paramId, value);
         pushDownstreamEvent({.type = DownstreamEventType::ParameterChange,
                              .param = {.paramId = paramId, .value = value}});
       }
@@ -85,7 +85,7 @@ public:
         mapUpstreamParamGestureEventToClapEvent(item, clapEvent);
         out->try_push(out, &clapEvent.header);
       } else if (item.type == UpstreamEventType::ParameterApplyEdit) {
-        synth->setParameter(item.param.paramId, item.param.value);
+        synth.setParameter(item.param.paramId, item.param.value);
         clap_event_param_value_t clapEvent{};
         mapUpstreamParamChangeEventToClapEvent(item, clapEvent);
         out->try_push(out, &clapEvent.header);
@@ -94,12 +94,12 @@ public:
         mapUpstreamParamGestureEventToClapEvent(item, clapEvent);
         out->try_push(out, &clapEvent.header);
       } else if (item.type == UpstreamEventType::NoteOnRequest) {
-        synth->noteOn(item.note.noteNumber, item.note.velocity);
+        synth.noteOn(item.note.noteNumber, item.note.velocity);
         pushDownstreamEvent({.type = DownstreamEventType::HostNoteOn,
                              .note = {.noteNumber = item.note.noteNumber,
                                       .velocity = item.note.velocity}});
       } else if (item.type == UpstreamEventType::NoteOffRequest) {
-        synth->noteOff(item.note.noteNumber);
+        synth.noteOff(item.note.noteNumber);
         pushDownstreamEvent({.type = DownstreamEventType::HostNoteOff,
                              .note = {.noteNumber = item.note.noteNumber}});
       }
