@@ -23,7 +23,7 @@ public:
 
   std::optional<ParamAddress>
   getAddressByIdentifier(const std::string &identifier);
-  std::string getIdentifierByAddress(ParamAddress address);
+  std::optional<std::string> getIdentifierByAddress(ParamAddress address);
   const ParameterItem *getParameterItemByAddress(ParamAddress address);
   const ParameterItem *getParameterItemByIdentifier(std::string identifier);
 };

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "./messaging_hub.h"
 #include "clap/clap.h"
+#include "events.h"
 #include "sonic_common/general/spsc_queue.h"
 #include "sonic_common/synthesizer_base.h"
 
@@ -69,12 +69,12 @@ public:
         const clap_event_note_t *noteEvent = (const clap_event_note_t *)event;
         if (event->type == CLAP_EVENT_NOTE_ON) {
           synth->noteOn(noteEvent->key, noteEvent->velocity);
-          pushDownstreamEvent({.type = DownStreamEventType::hostNoteOn,
+          pushDownstreamEvent({.type = DownstreamEventType::HostNoteOn,
                                .note = {.noteNumber = noteEvent->key,
                                         .velocity = noteEvent->velocity}});
         } else if (event->type == CLAP_EVENT_NOTE_OFF) {
           synth->noteOff(noteEvent->key);
-          pushDownstreamEvent({.type = DownStreamEventType::hostNoteOff,
+          pushDownstreamEvent({.type = DownstreamEventType::HostNoteOff,
                                .note = {.noteNumber = noteEvent->key}});
         }
       }
@@ -85,7 +85,7 @@ public:
         auto paramId = paramEvent->param_id;
         auto value = paramEvent->value;
         synth->setParameter(paramId, value);
-        pushDownstreamEvent({.type = DownStreamEventType::parameterChange,
+        pushDownstreamEvent({.type = DownstreamEventType::ParameterChange,
                              .param = {.paramId = paramId, .value = value}});
       }
     }
@@ -95,14 +95,14 @@ public:
     // outgoing parameters, UI --> Host, DSP
     UpstreamEvent item;
     while (upstreamEventQueue.pop(item)) {
-      if (item.type == UpStreamEventType::parameterApplyEdit) {
+      if (item.type == UpstreamEventType::parameterApplyEdit) {
         synth->setParameter(item.param.paramId, item.param.value);
         clap_event_param_value_t clapEvent{};
         mapUpstreamEventToClapEvent(item, clapEvent);
         out->try_push(out, &clapEvent.header);
-      } else if (item.type == UpStreamEventType::noteOnRequest) {
+      } else if (item.type == UpstreamEventType::noteOnRequest) {
         synth->noteOn(item.note.noteNumber, item.note.velocity);
-      } else if (item.type == UpStreamEventType::noteOffRequest) {
+      } else if (item.type == UpstreamEventType::noteOffRequest) {
         synth->noteOff(item.note.noteNumber);
       }
     }

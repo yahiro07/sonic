@@ -38,11 +38,11 @@ ParameterDefinitionsProvider::getAddressByIdentifier(
   return val->second;
 }
 
-std::string
+std::optional<std::string>
 ParameterDefinitionsProvider::getIdentifierByAddress(ParamAddress address) {
   auto val = parameterItemsMap.find(address);
   if (val == parameterItemsMap.end()) {
-    return "";
+    return std::nullopt;
   }
   return val->second->identifier;
 }
