@@ -27,9 +27,10 @@ public:
   }
 
   void pushUpstreamEvent(UpstreamEvent &e) override {
-    upstreamEventQueue.push(e);
-    if (upstreamEventPushCallback) {
-      upstreamEventPushCallback();
+    if (upstreamEventQueue.push(e)) {
+      if (upstreamEventPushCallback) {
+        upstreamEventPushCallback();
+      }
     }
   }
   bool popUpstreamEvent(UpstreamEvent &e) override {
@@ -37,9 +38,10 @@ public:
   }
 
   void pushDownstreamEvent(DownstreamEvent &e) override {
-    downstreamEventQueue.push(e);
-    if (downstreamEventPushCallback) {
-      downstreamEventPushCallback();
+    if (downstreamEventQueue.push(e)) {
+      if (downstreamEventPushCallback) {
+        downstreamEventPushCallback();
+      }
     }
   }
   bool popDownstreamEvent(DownstreamEvent &e) override {

@@ -1,8 +1,10 @@
+#pragma once
 
 #include "./events.h"
 #include "./interfaces.h"
 #include "./parameter_manager.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
+#include <string>
 
 class UpstreamEventPort : public IUpStreamEventPort {
   sonic_common::ParameterDefinitionsProvider &parameterDefinitionsProvider;
@@ -20,7 +22,6 @@ public:
 
   void applyParameterEditFromUi(std::string identifier, double value,
                                 ParameterEditState editState) override {
-    printf("setParameterFromUi: %s %f\n", identifier.c_str(), value);
     auto _address =
         parameterDefinitionsProvider.getAddressByIdentifier(identifier);
     if (!_address)

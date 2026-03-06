@@ -11,7 +11,6 @@ public:
   virtual ~IEntryController() = default;
 
   virtual void initialize() = 0; // called after host and hostParams are set
-  virtual void terminate() = 0;
 
   virtual void prepareProcessing(double sampleRate, uint32_t maxFrameCount) = 0;
   virtual clap_process_status process(const clap_process_t *processData) = 0;
