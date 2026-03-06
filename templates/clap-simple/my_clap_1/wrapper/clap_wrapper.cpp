@@ -88,7 +88,6 @@ private:
     return it->second;
   }
 
-private:
   void renderAudio(uint32_t start, uint32_t end, float *outputL,
                    float *outputR) {
     synth->processAudio(outputL + start, outputR + start, end - start);
@@ -128,6 +127,23 @@ private:
     }
   }
 
+  void drainUpstreamEvents(const clap_output_events_t *out) {
+    // outgoing parameters, UI --> Host, DSP
+    UpstreamEvent item;
+    while (upstreamEventQueue.pop(item)) {
+      if (item.type == UpStreamEventType::parameterApplyEdit) {
+        synth->setParameter(item.param.paramId, item.param.value);
+        clap_event_param_value_t clapEvent{};
+        mapUpstreamEventToClapEvent(item, clapEvent);
+        out->try_push(out, &clapEvent.header);
+      } else if (item.type == UpStreamEventType::noteOnRequest) {
+        synth->noteOn(item.note.noteNumber, item.note.velocity);
+      } else if (item.type == UpStreamEventType::noteOffRequest) {
+        synth->noteOff(item.note.noteNumber);
+      }
+    }
+  }
+
 public:
   PlugBasisImpl(SynthesizerBase &synth) : synth(&synth) {
     auto parameterBuilder = sonic_common::ParameterBuilderImpl();
@@ -160,16 +176,7 @@ public:
         !out.data32[1])
       return CLAP_PROCESS_ERROR;
 
-    // outgoing parameters, UI --> Host, DSP
-    UpstreamEvent item;
-    while (upstreamEventQueue.pop(item)) {
-      if (item.type == UpStreamEventType::parameterApplyEdit) {
-        synth->setParameter(item.param.paramId, item.param.value);
-        clap_event_param_value_t clapEvent{};
-        mapUpstreamEventToClapEvent(item, clapEvent);
-        process->out_events->try_push(process->out_events, &clapEvent.header);
-      }
-    }
+    drainUpstreamEvents(process->out_events);
 
     const uint32_t frameCount = process->frames_count;
     const uint32_t inputEventCount =
@@ -236,16 +243,7 @@ public:
       this->processInputEvent(event);
     }
 
-    // outgoing parameters, UI --> Host, DSP
-    UpstreamEvent item;
-    while (upstreamEventQueue.pop(item)) {
-      if (item.type == UpStreamEventType::parameterApplyEdit) {
-        synth->setParameter(item.param.paramId, item.param.value);
-        clap_event_param_value_t clapEvent{};
-        mapUpstreamEventToClapEvent(item, clapEvent);
-        out->try_push(out, &clapEvent.header);
-      }
-    }
+    drainUpstreamEvents(out);
   }
 
   void drainDownstreamEventsOnMainThread() {

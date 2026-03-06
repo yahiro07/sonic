@@ -135,7 +135,6 @@ function addNoteButton(label, noteNumber) {
     sendMessage({
       type: "noteOnRequest",
       noteNumber,
-      velocity: 1.0,
     });
   };
   button.onpointerup = () => {
