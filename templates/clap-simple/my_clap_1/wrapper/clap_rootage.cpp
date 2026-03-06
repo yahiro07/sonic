@@ -1,8 +1,11 @@
 #include "./clap_rootage.h"
+#include "entry_controller_interface.h"
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <string.h>
+
+using PlugBasis = IEntryController;
 
 static PlugBasis *getPluginData(const clap_plugin_t *plugin) {
   return (PlugBasis *)plugin->plugin_data;
@@ -305,7 +308,7 @@ clap_plugin_descriptor_t &clapRootage_getPluginDescriptor() {
   return pluginDescriptor;
 }
 
-void clapRootage_setPluginBasisInstantiateFn(
+void clapRootage_setEntryControllerInstantiateFn(
     const std::function<PlugBasis *()> fn) {
   getClapFactoryGlobals().fnCreatePlugBasisInstance = std::move(fn);
 }

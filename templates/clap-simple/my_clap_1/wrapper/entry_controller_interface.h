@@ -2,13 +2,13 @@
 
 #include "clap/clap.h"
 
-class PlugBasis {
+class IEntryController {
 public:
   clap_plugin_t plugin;
   const clap_host_t *host = nullptr;
   const clap_host_params_t *hostParams = nullptr;
 
-  virtual ~PlugBasis() = default;
+  virtual ~IEntryController() = default;
 
   virtual void initialize() = 0; // called after host and hostParams are set
 
