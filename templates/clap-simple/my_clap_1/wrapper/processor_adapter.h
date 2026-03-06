@@ -3,48 +3,16 @@
 #include "../portable/events.h"
 #include "./clap_data_helper.h"
 #include "clap/clap.h"
-#include "sonic_common/general/spsc_queue.h"
+#include "my_clap_1/portable/interfaces.h"
 #include "sonic_common/synthesizer_base.h"
 
 class ProcessorAdapter {
 private:
   SynthesizerBase &synth;
-  const clap_host_t *host = nullptr;
-  const clap_host_params_t *hostParams = nullptr;
-  std::atomic<bool> downstreamDrainRequested = false;
-  sonic_common::SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
-  sonic_common::SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
-
-public:
-  ProcessorAdapter(SynthesizerBase &synth) : synth(synth) {}
-
-  void initialize(const clap_host_t *host,
-                  const clap_host_params_t *hostParams) {
-    this->host = host;
-    this->hostParams = hostParams;
-  }
-
-  void setSampleRate(double sampleRate) { synth.setSampleRate(sampleRate); }
-
-  void renderAudio(uint32_t start, uint32_t end, float *outputL,
-                   float *outputR) {
-    synth.processAudio(outputL + start, outputR + start, end - start);
-  }
-
-  void requestDownstreamDrainOnMainThread() noexcept {
-    if (!this->host || !this->host->request_callback) {
-      return;
-    }
-    bool expected = false;
-    if (downstreamDrainRequested.compare_exchange_strong(
-            expected, true, std::memory_order_acq_rel)) {
-      this->host->request_callback(this->host);
-    }
-  }
+  IEventBridge &eventBridge;
 
   void pushDownstreamEvent(DownstreamEvent e) {
-    downstreamEventQueue.push(e);
-    requestDownstreamDrainOnMainThread();
+    eventBridge.pushDownstreamEvent(e);
   }
 
   void processInputEvent(const clap_event_header_t *event) {
@@ -79,7 +47,7 @@ public:
   void drainUpstreamEvents(const clap_output_events_t *out) {
     // outgoing parameters, UI --> Host, DSP
     UpstreamEvent item;
-    while (upstreamEventQueue.pop(item)) {
+    while (eventBridge.popUpstreamEvent(item)) {
       if (item.type == UpstreamEventType::ParameterBeginEdit) {
         clap_event_param_gesture_t clapEvent{};
         mapUpstreamParamGestureEventToClapEvent(item, clapEvent);
@@ -104,6 +72,17 @@ public:
                              .note = {.noteNumber = item.note.noteNumber}});
       }
     }
+  }
+
+public:
+  ProcessorAdapter(SynthesizerBase &synth, IEventBridge &eventBridge)
+      : synth(synth), eventBridge(eventBridge) {}
+
+  void setSampleRate(double sampleRate) { synth.setSampleRate(sampleRate); }
+
+  void renderAudio(uint32_t start, uint32_t end, float *outputL,
+                   float *outputR) {
+    synth.processAudio(outputL + start, outputR + start, end - start);
   }
 
   clap_process_status process(const clap_process_t *process) {
@@ -167,19 +146,5 @@ public:
     }
 
     drainUpstreamEvents(out);
-  }
-
-  void pushUpstreamEvent(UpstreamEvent &e) {
-    this->upstreamEventQueue.push(e);
-    if (this->hostParams) {
-      this->hostParams->request_flush(this->host);
-    }
-  }
-
-  bool popDownstreamEvent(DownstreamEvent &e) {
-    if (downstreamDrainRequested) {
-      downstreamDrainRequested.store(false, std::memory_order_release);
-    }
-    return downstreamEventQueue.pop(e);
   }
 };

@@ -3,53 +3,20 @@
 #include "./interfaces.h"
 #include "./parameter_manager.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
-#include <functional>
-#include <map>
-
-class DownstreamEventPort : public IDownstreamEventPort {
-private:
-  std::map<int, std::function<void(DownstreamEvent &)>>
-      downstreamEventListeners;
-
-public:
-  int subscribeDownstreamEvent(
-      std::function<void(DownstreamEvent &)> callback) override {
-    auto id = downstreamEventListeners.size() + 1;
-    downstreamEventListeners[id] = callback;
-    return id;
-  }
-  void unsubscribeDownstreamEvent(int subscriptionId) override {
-    downstreamEventListeners.erase(subscriptionId);
-  }
-
-  void emitDownstreamEvent(DownstreamEvent &e) {
-    for (auto &[id, listener] : downstreamEventListeners) {
-      listener(e);
-    }
-  }
-};
 
 class UpstreamEventPort : public IUpStreamEventPort {
   sonic_common::ParameterDefinitionsProvider &parameterDefinitionsProvider;
   ParameterManager &parameterManager;
-  std::function<void(UpstreamEvent &)> pushUpstreamEventFn;
+  IEventBridge &eventBridge;
 
-  void pushUpstreamEvent(UpstreamEvent e) {
-    if (pushUpstreamEventFn) {
-      pushUpstreamEventFn(e);
-    }
-  }
+  void pushUpstreamEvent(UpstreamEvent e) { eventBridge.pushUpstreamEvent(e); }
 
 public:
   UpstreamEventPort(
       sonic_common::ParameterDefinitionsProvider &parameterDefinitionsProvider,
-      ParameterManager &parameterManager)
+      ParameterManager &parameterManager, IEventBridge &eventBridge)
       : parameterDefinitionsProvider(parameterDefinitionsProvider),
-        parameterManager(parameterManager) {}
-
-  void setDestinationFn(std::function<void(UpstreamEvent &)> fn) {
-    this->pushUpstreamEventFn = fn;
-  }
+        parameterManager(parameterManager), eventBridge(eventBridge) {}
 
   void applyParameterEditFromUi(std::string identifier, double value,
                                 ParameterEditState editState) override {
