@@ -95,8 +95,13 @@ public:
         out->try_push(out, &clapEvent.header);
       } else if (item.type == UpstreamEventType::NoteOnRequest) {
         synth->noteOn(item.note.noteNumber, item.note.velocity);
+        pushDownstreamEvent({.type = DownstreamEventType::HostNoteOn,
+                             .note = {.noteNumber = item.note.noteNumber,
+                                      .velocity = item.note.velocity}});
       } else if (item.type == UpstreamEventType::NoteOffRequest) {
         synth->noteOff(item.note.noteNumber);
+        pushDownstreamEvent({.type = DownstreamEventType::HostNoteOff,
+                             .note = {.noteNumber = item.note.noteNumber}});
       }
     }
   }
