@@ -110,6 +110,13 @@ private:
              m->message.c_str());
     } else if (auto *m = std::get_if<RxMsgUiLoaded>(&rxMessage)) {
       printf("ui loaded\n");
+      std::map<std::string, double> parameters;
+      parameterManager.getAllParameters(parameters);
+      TxMsgBulkSendParameters msg{
+          .type = "bulkSendParameters",
+          .parameters = parameters,
+      };
+      sendMessageToWebView(msg);
     } else if (auto *m = std::get_if<RxMsgBeginEdit>(&rxMessage)) {
       upstreamEventPort.applyParameterEditFromUi(m->identifier, 0.0,
                                                  ParameterEditState::Begin);

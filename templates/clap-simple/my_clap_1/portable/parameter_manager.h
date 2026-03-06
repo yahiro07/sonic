@@ -62,8 +62,7 @@ public:
     parameterChangeListeners.erase(subscriptionId);
   }
 
-  void getAllParameters(
-      std::unordered_map<std::string, double> &parameters) override {
+  void getAllParameters(std::map<std::string, double> &parameters) override {
     std::scoped_lock lock(parameterValuesMutex);
     for (const auto item : parameterDefinitionsProvider.getParameterItems()) {
       auto paramId = item.address;
