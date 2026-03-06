@@ -8,7 +8,7 @@
 
 class ProcessorAdapter {
 private:
-  SynthesizerBase &synth;
+  IPluginSynthesizer &synth;
   IEventBridge &eventBridge;
 
   void pushDownstreamEvent(DownstreamEvent e) {
@@ -75,7 +75,7 @@ private:
   }
 
 public:
-  ProcessorAdapter(SynthesizerBase &synth, IEventBridge &eventBridge)
+  ProcessorAdapter(IPluginSynthesizer &synth, IEventBridge &eventBridge)
       : synth(synth), eventBridge(eventBridge) {}
 
   void prepareProcessing(double sampleRate, uint32_t maxFrameCount) {

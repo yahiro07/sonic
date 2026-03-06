@@ -1,5 +1,5 @@
 #pragma once
-#include "sonic_common/synthesizer_base.h"
+#include "../portable/interfaces.h"
 #include <clap/clap.h>
 
 struct PluginMeta {
@@ -13,7 +13,7 @@ struct PluginMeta {
   const char *description;
 };
 
-typedef SynthesizerBase *(*SynthesizerInitializerFn)();
+typedef IPluginSynthesizer *(*SynthesizerInitializerFn)();
 
 const clap_plugin_entry_t &
 createClapPluginEntry(SynthesizerInitializerFn synthInitializer,

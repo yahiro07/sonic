@@ -3,7 +3,6 @@
 #include "clap/ext/params.h"
 #include "my_clap_1/portable/events.h"
 #include "sonic_common/logic/parameter_item.h"
-#include "sonic_common/synthesizer_base.h"
 
 static clap_param_info_flags mapParameterFlags(ParameterFlags flags) {
   clap_param_info_flags clapFlags = 0;

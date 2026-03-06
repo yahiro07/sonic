@@ -1,7 +1,8 @@
+#include "sonic_common/advanced_synthesizer.h"
 #include "sonic_common/synthesizer_base.h"
 #include <math.h>
 
-class MySynthesizer : public SynthesizerBase {
+class MySynthesizer : public AdvancedSynthesizer {
 private:
   float sampleRate = 0.;
   float phase = 0.f;
@@ -69,6 +70,6 @@ public:
   std::string getEditorPageUrl() override { return "http://localhost:3000"; }
 };
 
-inline SynthesizerBase *createSynthesizerInstance() {
+inline AdvancedSynthesizer *createSynthesizerInstance() {
   return new MySynthesizer();
 }
