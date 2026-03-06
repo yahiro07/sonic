@@ -200,6 +200,7 @@ static const clap_plugin_t pluginClass = {
       auto plug = getPluginData(_plugin);
       plug->hostParams = (const clap_host_params_t *)plug->host->get_extension(
           plug->host, CLAP_EXT_PARAMS);
+      plug->initialize();
       return true;
     },
 

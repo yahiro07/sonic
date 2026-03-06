@@ -49,19 +49,40 @@ static clap_param_info_flags mapParameterFlags(ParameterFlags flags) {
   return clapFlags;
 }
 
-class PlugBasisImpl : public PlugBasis {
-private:
-  std::unique_ptr<SynthesizerBase> synth;
+static void assignParameterInfo(clap_param_info_t *info,
+                                const sonic_common::ParameterItem &item) {
+  info->id = item.address;
+  info->flags = mapParameterFlags(item.flags);
+  info->min_value = item.minValue;
+  info->max_value = item.maxValue;
+  info->default_value = item.defaultValue;
+  snprintf(info->name, sizeof(info->name), "%s", item.label.c_str());
+}
 
-  sonic_common::MacWebView *webView = nullptr;
+class ProcessorAdapter {
+private:
+  SynthesizerBase *synth;
+  const clap_host_t *host;
+  const clap_host_params_t *hostParams = nullptr;
+  std::atomic<bool> downstreamDrainRequested{false};
   sonic_common::SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
   sonic_common::SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
-  sonic_common::ParameterDefinitionsProvider parameterDefinitionsProvider;
 
-  std::unordered_map<uint32_t, double> parameterValuesInMainThread;
-  mutable std::mutex parameterValuesMutex;
+public:
+  ProcessorAdapter(SynthesizerBase *synth) : synth(synth) {}
 
-  std::atomic<bool> downstreamDrainRequested{false};
+  void initialize(const clap_host_t *host,
+                  const clap_host_params_t *hostParams) {
+    this->host = host;
+    this->hostParams = hostParams;
+  }
+
+  void setSampleRate(double sampleRate) { synth->setSampleRate(sampleRate); }
+
+  void renderAudio(uint32_t start, uint32_t end, float *outputL,
+                   float *outputR) {
+    synth->processAudio(outputL + start, outputR + start, end - start);
+  }
 
   void requestDownstreamDrainOnMainThread() noexcept {
     if (!this->host || !this->host->request_callback) {
@@ -72,25 +93,6 @@ private:
             expected, true, std::memory_order_acq_rel)) {
       this->host->request_callback(this->host);
     }
-  }
-
-  void setParameterInMainThread(uint32_t paramId, double value) {
-    std::scoped_lock lock(parameterValuesMutex);
-    parameterValuesInMainThread[paramId] = value;
-  }
-
-  double getParameterInMainThread(uint32_t paramId) const {
-    std::scoped_lock lock(parameterValuesMutex);
-    auto it = parameterValuesInMainThread.find(paramId);
-    if (it == parameterValuesInMainThread.end()) {
-      return 0.0;
-    }
-    return it->second;
-  }
-
-  void renderAudio(uint32_t start, uint32_t end, float *outputL,
-                   float *outputR) {
-    synth->processAudio(outputL + start, outputR + start, end - start);
   }
 
   void pushDownstreamEvent(DownstreamEvent e) {
@@ -144,26 +146,7 @@ private:
     }
   }
 
-public:
-  PlugBasisImpl(SynthesizerBase &synth) : synth(&synth) {
-    auto parameterBuilder = sonic_common::ParameterBuilderImpl();
-    synth.setupParameters(parameterBuilder);
-    auto parameterItems = parameterBuilder.getItems();
-    uint64_t maxAddress = 0xFFFFFFFE; // for valid clap_id
-    parameterDefinitionsProvider.addParameters(parameterItems, maxAddress);
-    for (auto &item : parameterItems) {
-      synth.setParameter(item.address, item.defaultValue);
-      setParameterInMainThread(item.address, item.defaultValue);
-    }
-  }
-
-  ~PlugBasisImpl() override { guiDestroy(); }
-
-  void setSampleRate(double sampleRate) override {
-    synth->setSampleRate(sampleRate);
-  }
-
-  clap_process_status process(const clap_process_t *process) override {
+  clap_process_status process(const clap_process_t *process) {
     if (!process)
       return CLAP_PROCESS_ERROR;
     if (process->audio_outputs_count != 1)
@@ -214,28 +197,8 @@ public:
     return CLAP_PROCESS_CONTINUE;
   }
 
-  uint32_t getParameterCount() const override {
-    return parameterDefinitionsProvider.getParameterItems().size();
-  }
-
-  void getParameterInfo(uint32_t index,
-                        clap_param_info_t *info) const override {
-    auto parameterItems = parameterDefinitionsProvider.getParameterItems();
-    auto &item = parameterItems[index];
-    info->id = item.address;
-    info->flags = mapParameterFlags(item.flags);
-    info->min_value = item.minValue;
-    info->max_value = item.maxValue;
-    info->default_value = item.defaultValue;
-    snprintf(info->name, sizeof(info->name), "%s", item.label.c_str());
-  }
-
-  double getParameterValue(clap_id id) const override {
-    return getParameterInMainThread(id);
-  }
-
   void flushParameters(const clap_input_events_t *in,
-                       const clap_output_events_t *out) override {
+                       const clap_output_events_t *out) {
     printf("flushParameters\n");
 
     for (uint32_t i = 0; i < in->size(in); i++) {
@@ -246,9 +209,97 @@ public:
     drainUpstreamEvents(out);
   }
 
-  void drainDownstreamEventsOnMainThread() {
+  void pushUpstreamEvent(UpstreamEvent &e) {
+    this->upstreamEventQueue.push(e);
+    if (this->hostParams) {
+      this->hostParams->request_flush(this->host);
+    }
+  }
+
+  bool popDownstreamEvent(DownstreamEvent &e) {
+    if (downstreamDrainRequested) {
+      downstreamDrainRequested.store(false, std::memory_order_release);
+    }
+    return downstreamEventQueue.pop(e);
+  }
+};
+
+class PlugBasisImpl : public PlugBasis {
+private:
+  std::unique_ptr<SynthesizerBase> synth;
+  ProcessorAdapter processorAdapter;
+
+  sonic_common::MacWebView *webView = nullptr;
+
+  sonic_common::ParameterDefinitionsProvider parameterDefinitionsProvider;
+
+  std::unordered_map<uint32_t, double> parameterValuesInMainThread;
+  mutable std::mutex parameterValuesMutex;
+
+  void setParameterInMainThread(uint32_t paramId, double value) {
+    std::scoped_lock lock(parameterValuesMutex);
+    parameterValuesInMainThread[paramId] = value;
+  }
+
+  double getParameterInMainThread(uint32_t paramId) const {
+    std::scoped_lock lock(parameterValuesMutex);
+    auto it = parameterValuesInMainThread.find(paramId);
+    if (it == parameterValuesInMainThread.end()) {
+      return 0.0;
+    }
+    return it->second;
+  }
+
+public:
+  PlugBasisImpl(SynthesizerBase &synth)
+      : synth(&synth), processorAdapter(this->synth.get()) {}
+
+  void initialize() override {
+    auto parameterBuilder = sonic_common::ParameterBuilderImpl();
+    synth->setupParameters(parameterBuilder);
+    auto parameterItems = parameterBuilder.getItems();
+    uint64_t maxAddress = 0xFFFFFFFE; // for valid clap_id
+    parameterDefinitionsProvider.addParameters(parameterItems, maxAddress);
+    for (auto &item : parameterItems) {
+      synth->setParameter(item.address, item.defaultValue);
+      setParameterInMainThread(item.address, item.defaultValue);
+    }
+    processorAdapter.initialize(this->host, this->hostParams);
+  }
+
+  ~PlugBasisImpl() override { guiDestroy(); }
+
+  void setSampleRate(double sampleRate) override {
+    processorAdapter.setSampleRate(sampleRate);
+  }
+
+  clap_process_status process(const clap_process_t *process) override {
+    return processorAdapter.process(process);
+  }
+
+  void flushParameters(const clap_input_events_t *in,
+                       const clap_output_events_t *out) override {
+    processorAdapter.flushParameters(in, out);
+  }
+
+  uint32_t getParameterCount() const override {
+    return parameterDefinitionsProvider.getParameterItems().size();
+  }
+
+  void getParameterInfo(uint32_t index,
+                        clap_param_info_t *info) const override {
+    auto parameterItems = parameterDefinitionsProvider.getParameterItems();
+    auto &item = parameterItems[index];
+    assignParameterInfo(info, item);
+  }
+
+  double getParameterValue(clap_id id) const override {
+    return getParameterInMainThread(id);
+  }
+
+  void onMainThread() override {
     DownstreamEvent e;
-    while (downstreamEventQueue.pop(e)) {
+    while (processorAdapter.popDownstreamEvent(e)) {
       if (e.type == DownStreamEventType::parameterChange) {
         setParameterInMainThread(e.param.paramId, e.param.value);
       }
@@ -261,11 +312,6 @@ public:
             parameterDefinitionsProvider);
       }
     }
-  }
-
-  void onMainThread() override {
-    downstreamDrainRequested.store(false, std::memory_order_release);
-    drainDownstreamEventsOnMainThread();
   }
 
   bool guiCreate() override {
@@ -283,21 +329,14 @@ public:
           return;
         auto paramId = static_cast<uint32_t>(*_address);
         setParameterInMainThread(paramId, value);
-        this->upstreamEventQueue.push(
-            {.type = UpStreamEventType::parameterApplyEdit,
-             .param = {
-                 .paramId = paramId,
-                 .value = value,
-             }});
-        if (this->hostParams) {
-          this->hostParams->request_flush(this->host);
-        }
+        UpstreamEvent e{
+            .type = UpStreamEventType::parameterApplyEdit,
+            .param = {.paramId = paramId, .value = value},
+        };
+        processorAdapter.pushUpstreamEvent(e);
       };
       auto emitUpstreamEvent = [this](UpstreamEvent &event) {
-        this->upstreamEventQueue.push(event);
-        if (this->hostParams) {
-          this->hostParams->request_flush(this->host);
-        }
+        processorAdapter.pushUpstreamEvent(event);
       };
       messagingHub_dev_handleMessageFromUi(message, performParameterEditFromUi,
                                            emitUpstreamEvent);
