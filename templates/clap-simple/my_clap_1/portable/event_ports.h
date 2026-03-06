@@ -34,7 +34,7 @@ class UpstreamEventPort : public IUpStreamEventPort {
   ParameterManager &parameterManager;
   std::function<void(UpstreamEvent &)> pushUpstreamEventFn;
 
-  void pushUpstreamEvent(UpstreamEvent &e) {
+  void pushUpstreamEvent(UpstreamEvent e) {
     if (pushUpstreamEventFn) {
       pushUpstreamEventFn(e);
     }
@@ -59,23 +59,40 @@ public:
     if (!_address)
       return;
     auto paramId = static_cast<uint32_t>(*_address);
-    parameterManager.setParameter(paramId, value, false);
-    UpstreamEvent e{
-        .type = UpstreamEventType::parameterApplyEdit,
-        .param = {.paramId = paramId, .value = value},
-    };
-    pushUpstreamEvent(e);
+    if (editState == ParameterEditState::Begin) {
+      pushUpstreamEvent({
+          .type = UpstreamEventType::ParameterBeginEdit,
+          .param = {.paramId = paramId, .value = .0},
+      });
+    } else if (editState == ParameterEditState::Perform) {
+      parameterManager.setParameter(paramId, value, false);
+      pushUpstreamEvent({
+          .type = UpstreamEventType::ParameterApplyEdit,
+          .param = {.paramId = paramId, .value = value},
+      });
+    } else if (editState == ParameterEditState::End) {
+      pushUpstreamEvent({
+          .type = UpstreamEventType::ParameterEndEdit,
+          .param = {.paramId = paramId, .value = .0},
+      });
+    } else if (editState == ParameterEditState::InstantChange) {
+      parameterManager.setParameter(paramId, value, false);
+      pushUpstreamEvent({
+          .type = UpstreamEventType::ParameterApplyEdit,
+          .param = {.paramId = paramId, .value = value},
+      });
+    }
   }
   void requestNoteOn(int noteNumber, double velocity) override {
     UpstreamEvent e{
-        .type = UpstreamEventType::noteOnRequest,
+        .type = UpstreamEventType::NoteOnRequest,
         .note = {.noteNumber = noteNumber, .velocity = velocity},
     };
     pushUpstreamEvent(e);
   }
   void requestNoteOff(int noteNumber) override {
     UpstreamEvent e{
-        .type = UpstreamEventType::noteOffRequest,
+        .type = UpstreamEventType::NoteOffRequest,
         .note = {.noteNumber = noteNumber, .velocity = 0.0},
     };
     pushUpstreamEvent(e);

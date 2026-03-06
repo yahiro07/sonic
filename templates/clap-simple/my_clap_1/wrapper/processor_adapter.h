@@ -80,14 +80,22 @@ public:
     // outgoing parameters, UI --> Host, DSP
     UpstreamEvent item;
     while (upstreamEventQueue.pop(item)) {
-      if (item.type == UpstreamEventType::parameterApplyEdit) {
+      if (item.type == UpstreamEventType::ParameterBeginEdit) {
+        clap_event_param_gesture_t clapEvent{};
+        mapUpstreamParamGestureEventToClapEvent(item, clapEvent);
+        out->try_push(out, &clapEvent.header);
+      } else if (item.type == UpstreamEventType::ParameterApplyEdit) {
         synth->setParameter(item.param.paramId, item.param.value);
         clap_event_param_value_t clapEvent{};
-        mapUpstreamEventToClapEvent(item, clapEvent);
+        mapUpstreamParamChangeEventToClapEvent(item, clapEvent);
         out->try_push(out, &clapEvent.header);
-      } else if (item.type == UpstreamEventType::noteOnRequest) {
+      } else if (item.type == UpstreamEventType::ParameterEndEdit) {
+        clap_event_param_gesture_t clapEvent{};
+        mapUpstreamParamGestureEventToClapEvent(item, clapEvent);
+        out->try_push(out, &clapEvent.header);
+      } else if (item.type == UpstreamEventType::NoteOnRequest) {
         synth->noteOn(item.note.noteNumber, item.note.velocity);
-      } else if (item.type == UpstreamEventType::noteOffRequest) {
+      } else if (item.type == UpstreamEventType::NoteOffRequest) {
         synth->noteOff(item.note.noteNumber);
       }
     }

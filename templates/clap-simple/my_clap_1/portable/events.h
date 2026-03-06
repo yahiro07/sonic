@@ -24,11 +24,11 @@ struct DownstreamEvent {
 };
 
 enum class UpstreamEventType {
-  parameterBeginEdit,
-  parameterApplyEdit,
-  parameterEndEdit,
-  noteOnRequest,
-  noteOffRequest,
+  ParameterBeginEdit,
+  ParameterApplyEdit,
+  ParameterEndEdit,
+  NoteOnRequest,
+  NoteOffRequest,
 };
 
 struct UpstreamEvent {
