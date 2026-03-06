@@ -20,7 +20,7 @@ function pushLogLine(...args) {
     logArea.id = "logArea";
     logArea.style.backgroundColor = "#0004";
     logArea.style.padding = "10px";
-    logArea.style.maxHeight = "200px";
+    logArea.style.height = "100px";
     logArea.style.overflowY = "scroll";
     document.body.appendChild(logArea);
   }
@@ -45,9 +45,7 @@ function sendMessage(msg) {
 }
 
 pushLogLine("hello from js");
-pushLogLine("href:" + location.href);
-
-sendMessage({ type: "uiLoaded" });
+pushLogLine("href: " + location.href);
 
 function addSlider(
   name,
@@ -86,7 +84,7 @@ function addSlider(
   div.style.display = "flex";
   div.appendChild(label);
   div.appendChild(slider);
-  document.body.insertBefore(div, document.body.firstChild);
+  document.body.appendChild(div);
 }
 
 function addNoteButton(label, noteNumber) {
@@ -104,14 +102,23 @@ function addNoteButton(label, noteNumber) {
       noteNumber,
     });
   };
-  document.body.insertBefore(button, document.body.firstChild);
+  document.body.appendChild(button);
 }
 
-addNoteButton("Note(60)", 60);
+function addIndicator() {
+  const div = document.createElement("div");
+  div.id = "indicator";
+  document.body.appendChild(div);
+}
+
 addSlider("Gain", "gain", 0.5);
 addSlider("Wave", "waveType", 0, 0, 3, 1);
 addSlider("Pitch", "oscPitch", 0.5);
 addSlider("Volume", "oscVolume", 0.5);
+addNoteButton("Note(60)", 60);
+addIndicator();
+
+sendMessage({ type: "uiLoaded" });
 
 window.pluginEditorCallback = (msg) => {
   pushLogLine("⇢ui", msg);
@@ -128,8 +135,12 @@ window.pluginEditorCallback = (msg) => {
       }
     }
   } else if (msg.type === "hostNoteOn") {
-    pushLine(`host note on: ${msg.noteNumber}, ${msg.velocity}`);
+    pushLogLine(`host note on: ${msg.noteNumber}, ${msg.velocity}`);
+    const indicator = document.getElementById("indicator");
+    indicator.innerText = "⭐️";
   } else if (msg.type === "hostNoteOff") {
-    pushLine(`host note off: ${msg.noteNumber}`);
+    pushLogLine(`host note off: ${msg.noteNumber}`);
+    const indicator = document.getElementById("indicator");
+    indicator.innerText = "";
   }
 };
