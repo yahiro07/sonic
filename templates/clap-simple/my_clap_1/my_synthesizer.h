@@ -34,10 +34,11 @@ public:
     }
   }
 
-  void setSampleRate(double sampleRate) override {
+  void prepareProcessing(double sampleRate, uint32_t maxFrameCount) override {
     this->sampleRate = (float)sampleRate;
   }
-  void processAudio(float *bufferL, float *bufferR, int32_t frames) override {
+
+  void processAudio(float *bufferL, float *bufferR, uint32_t frames) override {
     if (sampleRate == 0.f)
       return;
     auto freq = exp2f((noteNumber - 57.f) / 12.f) * 440.f;

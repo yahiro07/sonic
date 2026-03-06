@@ -77,8 +77,8 @@ public:
     guiDestroy();
   }
 
-  void setSampleRate(double sampleRate) override {
-    processorAdapter.setSampleRate(sampleRate);
+  void prepareProcessing(double sampleRate, uint32_t maxFrameCount) override {
+    processorAdapter.prepareProcessing(sampleRate, maxFrameCount);
   }
 
   clap_process_status process(const clap_process_t *process) override {
@@ -144,12 +144,7 @@ public:
     return true;
   }
 
-  // bool guiSetTransient(const clap_window_t *window) override { return
-  // false; } void guiSuggestTitle(const char *title) override {}
-  bool guiShow() override {
-    // webView->show();
-    return true;
-  }
+  bool guiShow() override { return true; }
 
   bool guiHide() override { return true; }
 };

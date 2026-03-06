@@ -218,7 +218,7 @@ static const clap_plugin_t pluginClass = {
                    uint32_t minimumFramesCount,
                    uint32_t maximumFramesCount) -> bool {
       auto plug = getPluginData(_plugin);
-      plug->setSampleRate(sampleRate);
+      plug->prepareProcessing(sampleRate, maximumFramesCount);
       return true;
     },
 

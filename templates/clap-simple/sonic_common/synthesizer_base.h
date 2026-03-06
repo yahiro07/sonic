@@ -36,9 +36,9 @@ public:
   virtual ~SynthesizerBase() = default;
   virtual void setupParameters(ParameterBuilder &builder) = 0;
   virtual void setParameter(uint64_t address, double value) = 0;
-  virtual void setSampleRate(double sampleRate) = 0;
-  // virtual void prepare(double sampleRate, int32_t maxFrameCount) = 0;
-  virtual void processAudio(float *bufferL, float *bufferR, int32_t frames) = 0;
+  virtual void prepareProcessing(double sampleRate, uint32_t maxFrameCount) = 0;
+  virtual void processAudio(float *bufferL, float *bufferR,
+                            uint32_t frames) = 0;
   virtual void noteOn(int noteNumber, double velocity) = 0;
   virtual void noteOff(int noteNumber) = 0;
   virtual std::string getEditorPageUrl() = 0;
