@@ -15,8 +15,8 @@ public:
 
   virtual void prepareProcessing(double sampleRate, uint32_t maxFrameCount) = 0;
   virtual clap_process_status process(const clap_process_t *processData) = 0;
-  virtual void flushParameters(const clap_input_events_t *inputEvents,
-                               const clap_output_events_t *outputEvents) = 0;
+  virtual void flush(const clap_input_events_t *inputEvents,
+                     const clap_output_events_t *outputEvents) = 0;
 
   virtual uint32_t getParameterCount() const = 0;
   virtual void getParameterInfo(uint32_t index,
