@@ -1,5 +1,5 @@
 #include "./my_synthesizer.h"
-#include "./wrapper/clap_wrapper.h"
+#include "./wrapper/clap_entry_wrapper.h"
 #include <math.h>
 
 PluginMeta meta = {
