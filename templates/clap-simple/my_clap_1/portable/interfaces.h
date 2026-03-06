@@ -3,7 +3,7 @@
 
 #include "events.h"
 #include <functional>
-#include <unordered_map>
+#include <map>
 
 class IParameterManager {
 public:
@@ -12,8 +12,7 @@ public:
           callback) = 0;
   virtual void unsubscribeParameterChange(int subscriptionId) = 0;
 
-  virtual void
-  getAllParameters(std::unordered_map<std::string, double> &parameters) = 0;
+  virtual void getAllParameters(std::map<std::string, double> &parameters) = 0;
 };
 
 class IDownstreamEventPort {
