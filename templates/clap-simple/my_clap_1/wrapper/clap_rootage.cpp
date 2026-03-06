@@ -54,7 +54,7 @@ static const clap_plugin_params_t extensionParams = {
         [](const clap_plugin_t *plugin, const clap_input_events_t *in,
            const clap_output_events_t *out) {
           auto plug = getPluginData(plugin);
-          plug->flushParameters(in, out);
+          plug->flush(in, out);
         }};
 
 #define GUI_API CLAP_WINDOW_API_COCOA

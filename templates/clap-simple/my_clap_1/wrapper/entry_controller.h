@@ -85,8 +85,8 @@ public:
     return processorAdapter.process(process);
   }
 
-  void flushParameters(const clap_input_events_t *in,
-                       const clap_output_events_t *out) override {
+  void flush(const clap_input_events_t *in,
+             const clap_output_events_t *out) override {
     processorAdapter.flushParameters(in, out);
   }
 
