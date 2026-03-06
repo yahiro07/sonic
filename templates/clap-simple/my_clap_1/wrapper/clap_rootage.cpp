@@ -210,6 +210,7 @@ static const clap_plugin_t pluginClass = {
     .destroy =
         [](const clap_plugin *_plugin) {
           auto plug = getPluginData(_plugin);
+          plug->terminate();
           delete plug;
         },
 

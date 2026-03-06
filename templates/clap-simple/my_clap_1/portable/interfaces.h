@@ -36,3 +36,12 @@ public:
   virtual void requestNoteOn(int noteNumber, double velocity) = 0;
   virtual void requestNoteOff(int noteNumber) = 0;
 };
+
+class IEventBridge {
+public:
+  virtual void pushUpstreamEvent(UpstreamEvent &e) = 0;
+  virtual bool popUpstreamEvent(UpstreamEvent &e) = 0;
+
+  virtual void pushDownstreamEvent(DownstreamEvent &e) = 0;
+  virtual bool popDownstreamEvent(DownstreamEvent &e) = 0;
+};

@@ -1,10 +1,12 @@
 #pragma once
 
-#include "../portable/event_ports.h"
+#include "../portable/downstream_event_port.h"
 #include "../portable/parameter_manager.h"
+#include "../portable/upstream_event_port.h"
 #include "./clap_data_helper.h"
 #include "./entry_controller_interface.h"
 #include "./processor_adapter.h"
+#include "my_clap_1/portable/event_bridge.h"
 #include "my_clap_1/portable/webview_bridge.h"
 #include "sonic_common/general/mac_web_view.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
@@ -18,6 +20,7 @@ class EntryController : public IEntryController {
 private:
   std::unique_ptr<SynthesizerBase> synth;
   ProcessorAdapter processorAdapter;
+  Eventbridge eventBridge;
 
   std::unique_ptr<sonic_common::MacWebView> webView;
 
@@ -25,24 +28,54 @@ private:
 
   ParameterManager parameterManager{parameterDefinitionsProvider};
   UpstreamEventPort upstreamEventPort{parameterDefinitionsProvider,
-                                      parameterManager};
+                                      parameterManager, eventBridge};
   DownstreamEventPort downstreamEventPort;
   WebViewBridge webViewBridge{parameterManager, upstreamEventPort,
                               downstreamEventPort};
 
+  std::atomic<bool> mainThreadRequestedFlag = false;
+
+  void setupEventBridgeCallbacks() {
+    eventBridge.setUpstreamEventPushCallback([this]() {
+      // after pushed an upstream event (from main thread),
+      // request host to call flush() for emitting events
+      if (this->hostParams) {
+        this->hostParams->request_flush(this->host);
+      }
+    });
+    eventBridge.setDownstreamEventPushCallback([this]() {
+      // after pushed a downstream event (from audio thread),
+      // request host to call on_main_thread() for polling events
+      if (this->host && this->host->request_callback) {
+        bool expected = false;
+        if (mainThreadRequestedFlag.compare_exchange_strong(
+                expected, true, std::memory_order_acq_rel)) {
+          this->host->request_callback(this->host);
+        }
+      }
+    });
+  }
+
+  void clearMainThreadRequestedFlag() {
+    mainThreadRequestedFlag.store(false, std::memory_order_release);
+  }
+
 public:
   EntryController(SynthesizerBase &synth)
-      : synth(&synth), processorAdapter(*this->synth) {}
+      : synth(&synth), processorAdapter(*this->synth, eventBridge) {}
 
   void initialize() override {
     uint64_t maxAddress = 0xFFFFFFFE; // for valid clap_id
     parameterManager.setupParameters(*synth, maxAddress);
-    processorAdapter.initialize(this->host, this->hostParams);
-    upstreamEventPort.setDestinationFn(
-        [this](UpstreamEvent &e) { processorAdapter.pushUpstreamEvent(e); });
+    setupEventBridgeCallbacks();
   }
 
-  ~EntryController() override { guiDestroy(); }
+  void terminate() override {}
+
+  ~EntryController() override {
+    eventBridge.clearDownstreamEventPushCallback();
+    guiDestroy();
+  }
 
   void setSampleRate(double sampleRate) override {
     processorAdapter.setSampleRate(sampleRate);
@@ -73,8 +106,9 @@ public:
   }
 
   void onMainThread() override {
+    clearMainThreadRequestedFlag();
     DownstreamEvent e;
-    while (processorAdapter.popDownstreamEvent(e)) {
+    while (eventBridge.popDownstreamEvent(e)) {
       if (e.type == DownstreamEventType::ParameterChange) {
         parameterManager.setParameter(e.param.paramId, e.param.value, true);
       }
