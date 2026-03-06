@@ -166,6 +166,18 @@ inline void messagingHub_dev_handleMessageFromUi(
     return;
   if (auto *m = std::get_if<RxMsgPerformEdit>(&rxMessage)) {
     performParameterEditFromUi(m->identifier, m->value);
+  } else if (auto *m = std::get_if<RxMsgNoteOnRequest>(&rxMessage)) {
+    UpstreamEvent e{
+        .type = UpStreamEventType::noteOnRequest,
+        .note = {.noteNumber = m->noteNumber},
+    };
+    emitUpstreamEvent(e);
+  } else if (auto *m = std::get_if<RxMsgNoteOffRequest>(&rxMessage)) {
+    UpstreamEvent e{
+        .type = UpStreamEventType::noteOffRequest,
+        .note = {.noteNumber = m->noteNumber},
+    };
+    emitUpstreamEvent(e);
   }
 }
 
