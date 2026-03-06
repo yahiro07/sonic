@@ -140,13 +140,15 @@ public:
 
   void flushParameters(const clap_input_events_t *in,
                        const clap_output_events_t *out) {
-    printf("flushParameters\n");
-
-    for (uint32_t i = 0; i < in->size(in); i++) {
-      const clap_event_header_t *event = in->get(in, i);
-      this->processInputEvent(event);
+    if (in) {
+      for (uint32_t i = 0; i < in->size(in); i++) {
+        const clap_event_header_t *event = in->get(in, i);
+        this->processInputEvent(event);
+      }
     }
 
-    drainUpstreamEvents(out);
+    if (out) {
+      drainUpstreamEvents(out);
+    }
   }
 };

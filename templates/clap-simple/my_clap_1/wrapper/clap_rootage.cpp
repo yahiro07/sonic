@@ -77,8 +77,7 @@ static const clap_plugin_gui_t extensionGUI = {
       if (!extensionGUI.is_api_supported(_plugin, api, isFloating))
         return false;
       auto plug = getPluginData(_plugin);
-      plug->guiCreate();
-      return true;
+      return plug->guiCreate();
     },
 
     .destroy =
@@ -111,14 +110,16 @@ static const clap_plugin_gui_t extensionGUI = {
     },
 
     .set_size = [](const clap_plugin_t *plugin, uint32_t width,
-                   uint32_t height) -> bool { return true; },
+                   uint32_t height) -> bool {
+      auto plug = getPluginData(plugin);
+      return plug->guiSetSize(width, height);
+    },
 
     .set_parent = [](const clap_plugin_t *_plugin,
                      const clap_window_t *window) -> bool {
       assert(0 == strcmp(window->api, GUI_API));
       auto plug = getPluginData(_plugin);
-      plug->guiSetParent(window);
-      return true;
+      return plug->guiSetParent(window);
     },
 
     .set_transient = [](const clap_plugin_t *plugin,
@@ -128,14 +129,12 @@ static const clap_plugin_gui_t extensionGUI = {
 
     .show = [](const clap_plugin_t *_plugin) -> bool {
       auto plug = getPluginData(_plugin);
-      plug->guiShow();
-      return true;
+      return plug->guiShow();
     },
 
     .hide = [](const clap_plugin_t *_plugin) -> bool {
       auto plug = getPluginData(_plugin);
-      plug->guiHide();
-      return true;
+      return plug->guiHide();
     },
 };
 
@@ -210,7 +209,6 @@ static const clap_plugin_t pluginClass = {
     .destroy =
         [](const clap_plugin *_plugin) {
           auto plug = getPluginData(_plugin);
-          plug->terminate();
           delete plug;
         },
 
@@ -286,8 +284,14 @@ static const clap_plugin_factory_t pluginFactory = {
           strcmp(pluginID, pluginDescriptor.id)) {
         return nullptr;
       }
-      PlugBasis *plugBasis =
-          getClapFactoryGlobals().fnCreatePlugBasisInstance();
+      auto creatorFn = getClapFactoryGlobals().fnCreatePlugBasisInstance;
+      if (!creatorFn) {
+        return nullptr;
+      }
+      PlugBasis *plugBasis = creatorFn();
+      if (!plugBasis) {
+        return nullptr;
+      }
       plugBasis->plugin = pluginClass;
       plugBasis->host = host;
       plugBasis->plugin.plugin_data = plugBasis;

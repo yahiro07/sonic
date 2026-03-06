@@ -11,16 +11,20 @@
 #include "sonic_common/general/mac_web_view.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
 #include <CoreFoundation/CFNotificationCenter.h>
+#include <atomic>
+#include <cassert>
 #include <cstddef>
+#include <cstring>
 #include <memory>
+#include <string>
 
 #define GUI_API CLAP_WINDOW_API_COCOA
 
 class EntryController : public IEntryController {
 private:
   std::unique_ptr<SynthesizerBase> synth;
-  ProcessorAdapter processorAdapter;
   Eventbridge eventBridge;
+  ProcessorAdapter processorAdapter;
 
   std::unique_ptr<sonic_common::MacWebView> webView;
 
@@ -70,9 +74,8 @@ public:
     setupEventBridgeCallbacks();
   }
 
-  void terminate() override {}
-
   ~EntryController() override {
+    eventBridge.clearUpstreamEventPushCallback();
     eventBridge.clearDownstreamEventPushCallback();
     guiDestroy();
   }
@@ -134,12 +137,18 @@ public:
   }
 
   bool guiSetParent(const clap_window_t *window) override {
-    assert(0 == strcmp(window->api, GUI_API));
+    if (!webView) {
+      return false;
+    }
+    assert(0 == std::strcmp(window->api, GUI_API));
     webView->attachToParent(window->cocoa);
     return true;
   }
 
   bool guiSetSize(uint32_t width, uint32_t height) override {
+    if (!webView) {
+      return false;
+    }
     webView->setFrame(0, 0, width, height);
     return true;
   }

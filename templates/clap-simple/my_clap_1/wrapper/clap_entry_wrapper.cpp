@@ -18,10 +18,14 @@ const clap_plugin_entry_t &
 createClapPluginEntry(SynthesizerInitializerFn synthInitializer,
                       const PluginMeta &meta) {
   static const clap_plugin_entry_t clapPlugin = [synthInitializer, meta]() {
-    auto desc = clapRootage_getPluginDescriptor();
+    auto &desc = clapRootage_getPluginDescriptor();
     overwriteDescriptor(desc, meta);
-    clapRootage_setEntryControllerInstantiateFn([synthInitializer]() {
+    clapRootage_setEntryControllerInstantiateFn(
+        [synthInitializer]() -> IEntryController * {
       auto synth = synthInitializer();
+      if (!synth) {
+        return nullptr;
+      }
       return new EntryController(*synth);
     });
     return clapRootage_getClapPluginEntry();

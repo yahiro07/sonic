@@ -4,6 +4,7 @@
 #include "events.h"
 #include <functional>
 #include <map>
+#include <string>
 
 class IParameterManager {
 public:
