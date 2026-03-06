@@ -68,6 +68,22 @@ public:
   }
 
   std::string getEditorPageUrl() override { return "http://localhost:3000"; }
+
+  void setupTelemetries(TelemetryBuilder &builder) override {
+    builder.defineFloatArray(0, 8);
+  }
+  bool readTelemetry(int id, float *buffer, uint32_t count) override {
+    if (id == 0) {
+      // fill buffer with telemetry data, for example, FFT magnitudes
+      for (uint32_t i = 0; i < count; i++) {
+        buffer[i] =
+            rand() /
+            (float)RAND_MAX; // dummy data, replace with actual telemetry
+      }
+      return true;
+    }
+    return false;
+  }
 };
 
 inline AdvancedSynthesizer *createSynthesizerInstance() {
