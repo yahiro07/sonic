@@ -3,7 +3,6 @@
 #include "interfaces.h"
 #include "sonic_common/logic/parameter_builder_impl.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
-#include "sonic_common/synthesizer_base.h"
 #include <map>
 #include <mutex>
 #include <string>
@@ -30,7 +29,7 @@ public:
       sonic_common::ParameterDefinitionsProvider &parameterDefinitionsProvider)
       : parameterDefinitionsProvider(parameterDefinitionsProvider) {}
 
-  void setupParameters(SynthesizerBase &synth, uint64_t maxAddress) {
+  void setupParameters(IPluginSynthesizer &synth, uint64_t maxAddress) {
     auto parameterBuilder = sonic_common::ParameterBuilderImpl();
     synth.setupParameters(parameterBuilder);
     auto parameterItems = parameterBuilder.getItems();

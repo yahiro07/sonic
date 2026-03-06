@@ -2,9 +2,12 @@
 #pragma once
 
 #include "events.h"
+#include "sonic_common/advanced_synthesizer.h"
 #include <functional>
 #include <map>
 #include <string>
+
+using IPluginSynthesizer = AdvancedSynthesizer;
 
 class IParameterManager {
 public:

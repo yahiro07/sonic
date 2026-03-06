@@ -7,6 +7,7 @@
 #include "./entry_controller_interface.h"
 #include "./processor_adapter.h"
 #include "my_clap_1/portable/event_bridge.h"
+#include "my_clap_1/portable/interfaces.h"
 #include "my_clap_1/portable/webview_bridge.h"
 #include "sonic_common/general/mac_web_view.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
@@ -22,7 +23,7 @@
 
 class EntryController : public IEntryController {
 private:
-  std::unique_ptr<SynthesizerBase> synth;
+  std::unique_ptr<IPluginSynthesizer> synth;
   Eventbridge eventBridge;
   ProcessorAdapter processorAdapter;
 
@@ -65,7 +66,7 @@ private:
   }
 
 public:
-  EntryController(SynthesizerBase &synth)
+  EntryController(IPluginSynthesizer &synth)
       : synth(&synth), processorAdapter(*this->synth, eventBridge) {}
 
   void initialize() override {
