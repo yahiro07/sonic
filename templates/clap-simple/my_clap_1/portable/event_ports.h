@@ -84,17 +84,15 @@ public:
     }
   }
   void requestNoteOn(int noteNumber, double velocity) override {
-    UpstreamEvent e{
+    pushUpstreamEvent({
         .type = UpstreamEventType::NoteOnRequest,
         .note = {.noteNumber = noteNumber, .velocity = velocity},
-    };
-    pushUpstreamEvent(e);
+    });
   }
   void requestNoteOff(int noteNumber) override {
-    UpstreamEvent e{
+    pushUpstreamEvent({
         .type = UpstreamEventType::NoteOffRequest,
         .note = {.noteNumber = noteNumber, .velocity = 0.0},
-    };
-    pushUpstreamEvent(e);
+    });
   }
 };

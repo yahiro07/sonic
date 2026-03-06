@@ -2,15 +2,15 @@
 
 #include "../portable/event_ports.h"
 #include "../portable/parameter_manager.h"
+#include "./clap_data_helper.h"
 #include "./entry_controller_interface.h"
 #include "./processor_adapter.h"
 #include "my_clap_1/portable/webview_bridge.h"
-#include "my_clap_1/wrapper/clap_parameter_helper.h"
 #include "sonic_common/general/mac_web_view.h"
-#include "sonic_common/logic/parameter_builder_impl.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
 #include <CoreFoundation/CFNotificationCenter.h>
 #include <cstddef>
+#include <memory>
 
 #define GUI_API CLAP_WINDOW_API_COCOA
 
@@ -19,7 +19,7 @@ private:
   std::unique_ptr<SynthesizerBase> synth;
   ProcessorAdapter processorAdapter;
 
-  sonic_common::MacWebView *webView = nullptr;
+  std::unique_ptr<sonic_common::MacWebView> webView;
 
   sonic_common::ParameterDefinitionsProvider parameterDefinitionsProvider;
 
@@ -32,20 +32,12 @@ private:
 
 public:
   EntryController(SynthesizerBase &synth)
-      : synth(&synth), processorAdapter(this->synth.get()) {}
+      : synth(&synth), processorAdapter(*this->synth) {}
 
   void initialize() override {
-    auto parameterBuilder = sonic_common::ParameterBuilderImpl();
-    synth->setupParameters(parameterBuilder);
-    auto parameterItems = parameterBuilder.getItems();
     uint64_t maxAddress = 0xFFFFFFFE; // for valid clap_id
-    parameterDefinitionsProvider.addParameters(parameterItems, maxAddress);
-    for (auto &item : parameterItems) {
-      synth->setParameter(item.address, item.defaultValue);
-      parameterManager.setParameter(item.address, item.defaultValue, false);
-    }
+    parameterManager.setupParameters(*synth, maxAddress);
     processorAdapter.initialize(this->host, this->hostParams);
-
     upstreamEventPort.setDestinationFn(
         [this](UpstreamEvent &e) { processorAdapter.pushUpstreamEvent(e); });
   }
@@ -91,20 +83,19 @@ public:
   }
 
   bool guiCreate() override {
-    webView = new sonic_common::MacWebView();
+    webView = std::make_unique<sonic_common::MacWebView>();
     std::string url = synth->getEditorPageUrl();
     webView->loadUrl(url);
-
-    webViewBridge.onWebViewOpen(*webView);
+    webViewBridge.onWebViewOpen(webView.get());
     return true;
   }
 
   void guiDestroy() override {
     if (webView) {
+      webViewBridge.onWebViewClose();
       webView->setMessageReceiver(nullptr);
       webView->removeFromParent();
-      delete webView;
-      webView = nullptr;
+      webView.reset();
     }
   }
 

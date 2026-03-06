@@ -1,7 +1,9 @@
 #pragma once
 
 #include "interfaces.h"
+#include "sonic_common/logic/parameter_builder_impl.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
+#include "sonic_common/synthesizer_base.h"
 #include <map>
 #include <mutex>
 #include <string>
@@ -27,6 +29,17 @@ public:
   ParameterManager(
       sonic_common::ParameterDefinitionsProvider &parameterDefinitionsProvider)
       : parameterDefinitionsProvider(parameterDefinitionsProvider) {}
+
+  void setupParameters(SynthesizerBase &synth, uint64_t maxAddress) {
+    auto parameterBuilder = sonic_common::ParameterBuilderImpl();
+    synth.setupParameters(parameterBuilder);
+    auto parameterItems = parameterBuilder.getItems();
+    parameterDefinitionsProvider.addParameters(parameterItems, maxAddress);
+    for (auto &item : parameterItems) {
+      synth.setParameter(item.address, item.defaultValue);
+      this->setParameter(item.address, item.defaultValue, false);
+    }
+  }
 
   void setParameter(uint32_t paramId, double value, bool notifyToUi) {
     std::scoped_lock lock(parameterValuesMutex);

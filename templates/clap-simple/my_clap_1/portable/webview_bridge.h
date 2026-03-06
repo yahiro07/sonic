@@ -92,8 +92,8 @@ private:
   IParameterManager &parameterManager;
   IUpStreamEventPort &upstreamEventPort;
   IDownstreamEventPort &downstreamEventPort;
-  sonic_common::IWebViewIo *webViewIo = nullptr;
 
+  sonic_common::IWebViewIo *webViewIo = nullptr;
   int parameterChangeSubscriptionId = -1;
   int downstreamEventSubscriptionId = -1;
 
@@ -183,10 +183,10 @@ public:
         upstreamEventPort(upstreamEventPort),
         downstreamEventPort(downstreamEventPort) {}
 
-  void onWebViewOpen(sonic_common::IWebViewIo &webViewIo) {
-    this->webViewIo = &webViewIo;
+  void onWebViewOpen(sonic_common::IWebViewIo *webViewIo) {
+    this->webViewIo = webViewIo;
 
-    webViewIo.setMessageReceiver([this](const std::string &message) {
+    webViewIo->setMessageReceiver([this](const std::string &message) {
       handleMessageFromWebView(message);
     });
     parameterChangeSubscriptionId = parameterManager.subscribeParameterChange(
