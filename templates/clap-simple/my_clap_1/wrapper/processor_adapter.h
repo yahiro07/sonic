@@ -78,7 +78,9 @@ public:
   ProcessorAdapter(SynthesizerBase &synth, IEventBridge &eventBridge)
       : synth(synth), eventBridge(eventBridge) {}
 
-  void setSampleRate(double sampleRate) { synth.setSampleRate(sampleRate); }
+  void prepareProcessing(double sampleRate, uint32_t maxFrameCount) {
+    synth.prepareProcessing(sampleRate, maxFrameCount);
+  }
 
   void renderAudio(uint32_t start, uint32_t end, float *outputL,
                    float *outputR) {
