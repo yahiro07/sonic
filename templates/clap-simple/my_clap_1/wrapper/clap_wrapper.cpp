@@ -93,6 +93,11 @@ private:
     synth->processAudio(outputL + start, outputR + start, end - start);
   }
 
+  void pushDownstreamEvent(DownstreamEvent e) {
+    downstreamEventQueue.push(e);
+    requestDownstreamDrainOnMainThread();
+  }
+
   void processInputEvent(const clap_event_header_t *event) {
     if (event->space_id == CLAP_CORE_EVENT_SPACE_ID) {
       if (event->type == CLAP_EVENT_NOTE_ON ||
@@ -100,16 +105,13 @@ private:
         const clap_event_note_t *noteEvent = (const clap_event_note_t *)event;
         if (event->type == CLAP_EVENT_NOTE_ON) {
           synth->noteOn(noteEvent->key, noteEvent->velocity);
-          downstreamEventQueue.push(
-              {.type = DownStreamEventType::hostNoteOn,
-               .note = {.noteNumber = noteEvent->key,
-                        .velocity = noteEvent->velocity}});
-          requestDownstreamDrainOnMainThread();
+          pushDownstreamEvent({.type = DownStreamEventType::hostNoteOn,
+                               .note = {.noteNumber = noteEvent->key,
+                                        .velocity = noteEvent->velocity}});
         } else if (event->type == CLAP_EVENT_NOTE_OFF) {
           synth->noteOff(noteEvent->key);
-          downstreamEventQueue.push({.type = DownStreamEventType::hostNoteOff,
-                                     .note = {.noteNumber = noteEvent->key}});
-          requestDownstreamDrainOnMainThread();
+          pushDownstreamEvent({.type = DownStreamEventType::hostNoteOff,
+                               .note = {.noteNumber = noteEvent->key}});
         }
       }
       if (event->type == CLAP_EVENT_PARAM_VALUE) {
@@ -119,10 +121,8 @@ private:
         auto paramId = paramEvent->param_id;
         auto value = paramEvent->value;
         synth->setParameter(paramId, value);
-        downstreamEventQueue.push(
-            {.type = DownStreamEventType::parameterChange,
-             .param = {.paramId = paramId, .value = value}});
-        requestDownstreamDrainOnMainThread();
+        pushDownstreamEvent({.type = DownStreamEventType::parameterChange,
+                             .param = {.paramId = paramId, .value = value}});
       }
     }
   }
