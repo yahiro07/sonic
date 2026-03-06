@@ -1,25 +1,10 @@
 #pragma once
 
+#include "../portable/events.h"
 #include "clap/clap.h"
-#include "events.h"
+#include "my_clap_1/wrapper/clap_parameter_helper.h"
 #include "sonic_common/general/spsc_queue.h"
 #include "sonic_common/synthesizer_base.h"
-
-static void mapUpstreamEventToClapEvent(UpstreamEvent &upstreamEvent,
-                                        clap_event_param_value_t &clapEvent) {
-  clapEvent.header.size = sizeof(clapEvent);
-  clapEvent.header.time = 0;
-  clapEvent.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-  clapEvent.header.type = CLAP_EVENT_PARAM_VALUE;
-  clapEvent.header.flags = 0;
-  clapEvent.param_id = upstreamEvent.param.paramId;
-  clapEvent.cookie = NULL;
-  clapEvent.note_id = -1;
-  clapEvent.port_index = -1;
-  clapEvent.channel = -1;
-  clapEvent.key = -1;
-  clapEvent.value = upstreamEvent.param.value;
-}
 
 class ProcessorAdapter {
 private:

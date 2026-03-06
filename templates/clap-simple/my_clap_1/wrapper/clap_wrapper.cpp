@@ -1,6 +1,6 @@
 #include "./clap_wrapper.h"
-#include "../rootage/clap_rootage.h"
-#include "./plug_basis_impl.h"
+#include "./clap_rootage.h"
+#include "./entry_controller.h"
 
 static void overwriteDescriptor(clap_plugin_descriptor_t &desc,
                                 const PluginMeta &meta) {
@@ -20,9 +20,9 @@ createClapPluginEntry(SynthesizerInitializerFn synthInitializer,
   static const clap_plugin_entry_t clapPlugin = [synthInitializer, meta]() {
     auto desc = clapRootage_getPluginDescriptor();
     overwriteDescriptor(desc, meta);
-    clapRootage_setPluginBasisInstantiateFn([synthInitializer]() {
+    clapRootage_setEntryControllerInstantiateFn([synthInitializer]() {
       auto synth = synthInitializer();
-      return new PlugBasisImpl(*synth);
+      return new EntryController(*synth);
     });
     return clapRootage_getClapPluginEntry();
   }();
