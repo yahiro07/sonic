@@ -41,5 +41,5 @@ public:
   virtual void processAudio(float *bufferL, float *bufferR, int32_t frames) = 0;
   virtual void noteOn(int noteNumber, double velocity) = 0;
   virtual void noteOff(int noteNumber) = 0;
-  virtual std::string_view getEditorPageUrl() = 0;
+  virtual std::string getEditorPageUrl() = 0;
 };

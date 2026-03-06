@@ -65,9 +65,7 @@ public:
     }
   }
 
-  std::string_view getEditorPageUrl() override {
-    return "http://localhost:3000";
-  }
+  std::string getEditorPageUrl() override { return "http://localhost:3000"; }
 };
 
 inline SynthesizerBase *createSynthesizerInstance() {

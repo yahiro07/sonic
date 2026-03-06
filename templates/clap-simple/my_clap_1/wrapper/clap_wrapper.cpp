@@ -272,7 +272,8 @@ public:
 
   bool guiCreate() override {
     webView = new sonic_common::MacWebView();
-    webView->loadUrl("http://localhost:3000");
+    std::string url = synth->getEditorPageUrl();
+    webView->loadUrl(url);
 
     webView->setMessageReceiver([this](const std::string &message) {
       auto performParameterEditFromUi = [this](std::string &identifier,
