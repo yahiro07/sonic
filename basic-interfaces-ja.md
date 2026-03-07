@@ -10,11 +10,11 @@ class SynthesizerBase {
 public:
   virtual ~SynthesizerBase() = default;
   virtual void setupParameters(ParameterBuilder &builder) = 0;
-  virtual void prepare(double sampleRate, int32_t maxFrameCount) = 0;
+  virtual void prepare(double sampleRate, uint32_t maxFrameCount) = 0;
   virtual void setParameter(uint64_t address, double value) = 0;
   virtual void noteOn(int32_t noteNumber, double velocity) = 0;
   virtual void noteOff(int32_t noteNumber) = 0;
-  virtual void process(float *bufferL, float *bufferR, int32_t frames) = 0;
+  virtual void process(float *bufferL, float *bufferR, uint32_t frames) = 0;
   virtual std::string getEditorPageUrl() = 0;
 };
 ```
@@ -52,7 +52,7 @@ void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
 ### prepare
 
 ```cpp
-virtual void prepare(double sampleRate, int32_t maxFrameCount) = 0;
+virtual void prepare(double sampleRate, uint32_t maxFrameCount) = 0;
 ```
 
 実際のオーディオフレーム処理が始まる前に、prepareメソッドが呼ばれます。サンプリングレートと最大バッファサイズが渡されます。プラグインの処理内部で使用するバッファがある場合にはここで確保を行います。prepareメソッドは環境によって複数回呼ばれることがあります。
@@ -86,7 +86,7 @@ virtual void noteOff(int32_t noteNumber) = 0;
 ### process
 
 ```cpp
-virtual void process(float *bufferL, float *bufferR, int32_t frames) = 0;
+virtual void process(float *bufferL, float *bufferR, uint32_t frames) = 0;
 ```
 
 実際のオーディオフレームの処理を行うメソッドです。bufferLとbufferRはそれぞれ左右のチャンネルのオーディオフレームを表します。framesで指定されたサンプル数分の処理を行ってください。
@@ -125,9 +125,9 @@ http://localhost:3000?debug=1
 viteなどのバンドラのdev serverで表示しているURLにアクセスして開発を行う想定です。
 これはローカルホストに限らずhttps://example.comのような任意のURLを指定して表示できます。
 
-## パラメーターの定義の詳細
+## パラメータの定義の詳細
 
-プラグインのパラメタセットの構築は以下のbuilderクラスのインスタンスを介して行われます。
+プラグインのパラメータセットの構築は以下のbuilderクラスのインスタンスを介して行われます。
 setupParametersメソッドでこのビルダーが渡されるので、メソッドを呼び出してパラメタの登録を行ってください。
 
 ```cpp
@@ -149,6 +149,16 @@ public:
                        bool defaultValue, Str group = "",
                        ParameterFlags flags = ParameterFlags::None) = 0;
 };
+```
+
+```cpp
+//呼び出し例(再掲)
+void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
+  builder.addBool(kOscEnabled, "oscEnabled", "Osc Enabled", true);
+  builder.addEnum(kOscWave, "oscWave", "Wave Type", "Saw",
+                  {"Saw", "Square", "Triangle", "Sine"});
+  builder.addUnary(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
+  builder.addUnary(kOscVolume, "oscVolume", "OSC Volume", 0.5);
 ```
 
 各パラメータはアドレス、識別子、ラベル、デフォルト値、グループ、フラグを持っています。
@@ -174,24 +184,24 @@ ON/OFFのような二値のパラメータです。
 ### identifier
 
 identifierは文字列で、パラメータを永続化する際の識別に使用されます。またプラグイン本体とWebViewのUIの間で値を送る際にはこのidentifierがキーとして使用されます。
-プラグインラッパーの実装では,パラメタの整数のaddress値ではなく文字列のidentifierをキーにしてパラメタセットを保存/復元します。
+プラグインラッパーの実装では,パラメータの整数のaddress値ではなく文字列のidentifierをキーにしてパラメータセットを保存/復元します。
 このキーは、プラグインのバージョンの更新などでも変更を行わず、固定の値としてください。
 
 ### label
 
-ホスト側で表示されるパラメタの表示名です。
+ホスト側で表示されるパラメータの表示名です。
 
 ### default value
 
-パラメタの初期値です。パラメタの種類によって型が異なります。
+パラメタの初期値です。パラメータの種類によって型が異なります。
 
 ### group
 
-パラメタセットをグループ化する際のキーです。このキーが同じパラメタがホストのUI上でグループとして扱われます。実装はホスト側に依存します。
+パラメータセットをグループ化する際のキーです。このキーが同じパラメータがホストのUI上でグループとして扱われます。実装はホスト側に依存します。
 
 ### パラメータの値の扱いについて
 
 アプリケーション側ではパラメータを常に非正規化された値で扱います。VST3のホスト側では
-各パラメータは常に0~1の範囲に正規化した値で扱われます。。Enumのパラメータの場合、ユーザーアプリケーション側では例えばSaw=0,Square=1,Triangle=2,Sine=3のような整数値で扱います。これがVST3のホスト側ではSaw=0.0,Square=0.333...,Triangle=0.666...,Sine=1.0のように正規化された値で扱われます。
-プラグインラッパーのパラメタ管理のレイヤで値の変換を行っており、ユーザーコード側では正規化値を扱う必要がないようにしています。パラメタのやり取りで値はdouble型で扱われるため、受け渡しの際にはSaw=0.0,Square=1.0,Triangle=2.0,Sine=3.0のような実数値でのやりとりになります。
-Boolean形式のパラメタは、falseが0.0, trueが1.0として扱われます。
+各パラメータは常に0~1の範囲に正規化した値で扱われます。Enumのパラメータの場合、ユーザーアプリケーション側では例えばSaw=0,Square=1,Triangle=2,Sine=3のような整数値で扱います。これがVST3のホスト側ではSaw=0.0,Square=0.333...,Triangle=0.666...,Sine=1.0のように正規化された値で扱われます。
+プラグインラッパーのパラメータ管理のレイヤで値の変換を行っており、ユーザーコード側では正規化値を扱う必要がないようにしています。パラメータのやり取りで値はdouble型で扱われるため、受け渡しの際にはSaw=0.0,Square=1.0,Triangle=2.0,Sine=3.0のような実数値でのやりとりになります。
+Boolean形式のパラメータは、falseが0.0, trueが1.0として扱われます。
