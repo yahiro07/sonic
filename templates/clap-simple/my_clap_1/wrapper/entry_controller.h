@@ -39,9 +39,12 @@ private:
                                       parameterManager, eventBridge};
   DownstreamEventPort downstreamEventPort;
   WebViewBridge webViewBridge{parameterManager, upstreamEventPort,
-                              downstreamEventPort};
+                              downstreamEventPort, telemetrySupport};
 
   std::atomic<bool> mainThreadRequestedFlag = false;
+
+  clap_id telemetryUpdateTimerId = -1;
+  int telemetryTimerRegisteredIntervalMs = 0;
 
   void setupEventBridgeCallbacks() {
     eventBridge.setUpstreamEventPushCallback([this]() {
@@ -68,6 +71,29 @@ private:
     mainThreadRequestedFlag.store(false, std::memory_order_release);
   }
 
+  void setupTelemetryUpdateTimer(bool enabled, int intervalMs) {
+    if (!(hostTimerSupport && hostTimerSupport->register_timer &&
+          hostTimerSupport->unregister_timer))
+      return;
+    if (enabled) {
+      if (telemetryUpdateTimerId != -1) {
+        if (telemetryTimerRegisteredIntervalMs == intervalMs) {
+          // already registered with the same interval, no need to re-register
+          return;
+        }
+        hostTimerSupport->unregister_timer(host, telemetryUpdateTimerId);
+      }
+      hostTimerSupport->register_timer(host, intervalMs,
+                                       &telemetryUpdateTimerId);
+      telemetryTimerRegisteredIntervalMs = intervalMs;
+      printf("registered timer id: %d\n", telemetryUpdateTimerId);
+    } else {
+      hostTimerSupport->unregister_timer(host, telemetryUpdateTimerId);
+      telemetryUpdateTimerId = -1;
+      telemetryTimerRegisteredIntervalMs = 0;
+    }
+  }
+
 public:
   EntryController(IPluginSynthesizer &synth) : synth(&synth) {}
 
@@ -80,9 +106,15 @@ public:
     parameterManager.setupParameters(*synth, maxAddress);
     setupEventBridgeCallbacks();
     telemetrySupport.setup();
+    telemetrySupport.setTelemetryTimerRequestCallback(
+        [this](bool enabled, int intervalMs) {
+          this->setupTelemetryUpdateTimer(enabled, intervalMs);
+        });
   }
 
   ~EntryController() override {
+    setupTelemetryUpdateTimer(false, 0);
+    telemetrySupport.setTelemetryTimerRequestCallback(nullptr);
     eventBridge.clearUpstreamEventPushCallback();
     eventBridge.clearDownstreamEventPushCallback();
     guiDestroy();
@@ -128,6 +160,13 @@ public:
     return parameterManager.getParameter(id);
   }
 
+  void onTimer(clap_id timerId) override {
+    // printf("onTimer called, timerId: %d\n", timerId);
+    if (timerId == telemetryUpdateTimerId) {
+      telemetrySupport.updateTelemetries();
+    }
+  }
+
   void onMainThread() override {
     // auto thereadId = std::this_thread::get_id();
     // printf("main thread thread id: %d\n",
@@ -141,7 +180,6 @@ public:
       }
       downstreamEventPort.emitDownstreamEvent(e);
     }
-    telemetrySupport.updateTelemetries();
   }
 
   bool guiCreate() override {

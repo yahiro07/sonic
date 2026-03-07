@@ -120,6 +120,13 @@ addIndicator();
 
 sendMessage({ type: "uiLoaded" });
 
+sendMessage({
+  type: "setupPollingTelemetries",
+  targetBitFlags: 1,
+  timerIntervalMs: 1000,
+});
+// sendMessage({ type: "stopPollingTelemetries" });
+
 window.pluginEditorCallback = (msg) => {
   pushLogLine("⇢ui", msg);
   if (msg.type === "setParameter") {

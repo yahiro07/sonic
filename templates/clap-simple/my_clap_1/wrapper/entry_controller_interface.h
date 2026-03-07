@@ -7,6 +7,7 @@ public:
   clap_plugin_t plugin;
   const clap_host_t *host = nullptr;
   const clap_host_params_t *hostParams = nullptr;
+  const clap_host_timer_support_t *hostTimerSupport = nullptr;
 
   virtual ~IEntryController() = default;
 
@@ -29,5 +30,6 @@ public:
   virtual bool guiShow() = 0;
   virtual bool guiHide() = 0;
 
+  virtual void onTimer(clap_id timerId) {}
   virtual void onMainThread() {}
 };

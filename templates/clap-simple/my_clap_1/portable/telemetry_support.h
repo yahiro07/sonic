@@ -102,7 +102,7 @@ public:
     const uint8_t idx = published.load(std::memory_order_acquire);
 
     reading.store(idx, std::memory_order_release);
-    consumer(buffers[idx].data(), count);
+    consumer(buffers[idx]);
     reading.store(kNone, std::memory_order_release);
   }
 };
@@ -114,7 +114,7 @@ private:
 
   std::vector<TelementryItem> telementryItems;
 
-  std::map<int, std::function<void(int id, float *buffer, uint32_t count)>>
+  std::map<int, std::function<void(int id, std::vector<float> &buffer)>>
       telemetryDataListeners;
 
   bool activeTelemetryBitFlags = 0;
@@ -122,11 +122,13 @@ private:
   std::atomic<int> requestedTelemetryBitFlags{0};
   std::atomic<int> responseTelemetryBitFlags{0};
 
-  void emitTelemetryData(int id, float *buffer, uint32_t count) {
+  void emitTelemetryData(int id, std::vector<float> &buffer) {
     for (auto listener : telemetryDataListeners) {
-      listener.second(id, buffer, count);
+      listener.second(id, buffer);
     }
   }
+
+  std::function<void(bool, int)> telemetryTimerRequestCallback = nullptr;
 
 public:
   TelemetrySupport(AdvancedSynthesizer &synth,
@@ -134,7 +136,7 @@ public:
       : synth(synth), processorAdapter(processorAdapter) {}
 
   int subscribeTelemetryData(
-      std::function<void(int id, float *buffer, uint32_t count)> callback)
+      std::function<void(int id, std::vector<float> &buffer)> callback)
       override {
     auto id = telemetryDataListeners.size() + 1;
     telemetryDataListeners[id] = callback;
@@ -142,6 +144,11 @@ public:
   }
   void unsubscribeTelemetryData(int subscriptionId) override {
     telemetryDataListeners.erase(subscriptionId);
+  }
+
+  void
+  setTelemetryTimerRequestCallback(std::function<void(bool, int)> callback) {
+    telemetryTimerRequestCallback = callback;
   }
 
   void setup() {
@@ -177,8 +184,19 @@ public:
   }
 
   // called in main thread
-  void setTelemetryActiveState(int idBitFlags) override {
-    activeTelemetryBitFlags = idBitFlags;
+  void setupPollingTelemetries(int targetBitFlags,
+                               int timerIntervalMs) override {
+    activeTelemetryBitFlags = targetBitFlags;
+    if (telemetryTimerRequestCallback) {
+      telemetryTimerRequestCallback(true, timerIntervalMs);
+    }
+  }
+
+  void stopPollingTelemetries() override {
+    activeTelemetryBitFlags = 0;
+    if (telemetryTimerRequestCallback) {
+      telemetryTimerRequestCallback(false, 0);
+    }
   }
 
   // called in main thread, expected in the loop of 30~60fps
@@ -187,8 +205,8 @@ public:
     auto bitFlags = responseTelemetryBitFlags.load(std::memory_order_acquire);
     for (auto &item : telementryItems) {
       if ((bitFlags & (1 << item.id)) > 0) {
-        item.consume([&](float *buffer, uint32_t count) {
-          emitTelemetryData(item.id, buffer, count);
+        item.consume([&](std::vector<float> &buffer) {
+          emitTelemetryData(item.id, buffer);
         });
       }
     }

@@ -6,6 +6,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <vector>
 
 using IPluginSynthesizer = AdvancedSynthesizer;
 
@@ -53,8 +54,10 @@ public:
 class ITelemetrySupport {
 public:
   virtual int subscribeTelemetryData(
-      std::function<void(int id, float *buffer, uint32_t count)> callback) = 0;
+      std::function<void(int id, std::vector<float> &buffer)> callback) = 0;
   virtual void unsubscribeTelemetryData(int subscriptionId) = 0;
 
-  virtual void setTelemetryActiveState(int idBitFlags) = 0;
+  virtual void setupPollingTelemetries(int targetBitFlags,
+                                       int timerIntervalMs) = 0;
+  virtual void stopPollingTelemetries() = 0;
 };
