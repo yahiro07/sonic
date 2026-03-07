@@ -174,6 +174,16 @@ static const clap_plugin_audio_ports_t extensionAudioPorts = {
     },
 };
 
+static const clap_plugin_timer_support_t extensionTimerSupport = {
+    .on_timer =
+        [](const clap_plugin_t *plugin, clap_id timerId) {
+          auto plug = getPluginData(plugin);
+          if (plug) {
+            plug->onTimer(timerId);
+          }
+        },
+};
+
 static const char *const pluginFeatures[] = {
     CLAP_PLUGIN_FEATURE_INSTRUMENT,
     CLAP_PLUGIN_FEATURE_SYNTHESIZER,
@@ -202,6 +212,9 @@ static const clap_plugin_t pluginClass = {
       auto plug = getPluginData(_plugin);
       plug->hostParams = (const clap_host_params_t *)plug->host->get_extension(
           plug->host, CLAP_EXT_PARAMS);
+      plug->hostTimerSupport =
+          (const clap_host_timer_support_t *)plug->host->get_extension(
+              plug->host, CLAP_EXT_TIMER_SUPPORT);
       plug->initialize();
       return true;
     },
@@ -245,6 +258,8 @@ static const clap_plugin_t pluginClass = {
         return &extensionParams;
       if (!strcmp(id, CLAP_EXT_GUI))
         return &extensionGUI;
+      if (0 == strcmp(id, CLAP_EXT_TIMER_SUPPORT))
+        return &extensionTimerSupport;
       return nullptr;
     },
 

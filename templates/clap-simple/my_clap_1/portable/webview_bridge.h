@@ -44,17 +44,34 @@ struct RxMsgNoteOffRequest {
   std::string type = "noteOffRequest";
   int noteNumber;
 };
+struct RxMsgSetupPollingTelemetries {
+  std::string type = "setupPollingTelemetries";
+  int targetBitFlags;
+  int timerIntervalMs;
+};
+struct RxMsgStopPollingTelemetries {
+  std::string type = "stopPollingTelemetries";
+};
 
 using RxMessageVariant =
     std::variant<RxMsgLog, RxMsgUiLoaded, RxMsgBeginEdit, RxMsgPerformEdit,
                  RxMsgEndEdit, RxMsgInstantEdit, RxMsgNoteOnRequest,
-                 RxMsgNoteOffRequest>;
+                 RxMsgNoteOffRequest, RxMsgSetupPollingTelemetries,
+                 RxMsgStopPollingTelemetries>;
 namespace glz {
 template <> struct meta<RxMessageVariant> {
   static constexpr std::string_view tag = "type";
   static constexpr auto ids = std::array{
-      "log",     "uiLoaded",    "beginEdit",     "performEdit",
-      "endEdit", "instantEdit", "noteOnRequest", "noteOffRequest",
+      "log",
+      "uiLoaded",
+      "beginEdit",
+      "performEdit",
+      "endEdit",
+      "instantEdit",
+      "noteOnRequest",
+      "noteOffRequest",
+      "setupPollingTelemetries",
+      "stopPollingTelemetries",
   };
 };
 } // namespace glz
@@ -77,6 +94,10 @@ struct TxMsgHostNoteOff {
   std::string type = "hostNoteOff";
   int noteNumber;
 };
+struct TxMsgTelemetryData {
+  std::string type = "telemetryData";
+  std::vector<float> buffer;
+};
 
 inline void messagingHub_dev_handleMessageFromUi(
     const std::string &jsonStr,
@@ -93,10 +114,12 @@ private:
   IParameterManager &parameterManager;
   IUpStreamEventPort &upstreamEventPort;
   IDownstreamEventPort &downstreamEventPort;
+  ITelemetrySupport &telemetrySupport;
 
   sonic_common::IWebViewIo *webViewIo = nullptr;
   int parameterChangeSubscriptionId = -1;
   int downstreamEventSubscriptionId = -1;
+  int telemetryDataSubscriptionId = -1;
 
   void handleMessageFromWebView(const std::string &jsonStr) {
     printf("message: %s\n", jsonStr.c_str());
@@ -138,6 +161,12 @@ private:
       upstreamEventPort.requestNoteOn(m->noteNumber, 1.0);
     } else if (auto *m = std::get_if<RxMsgNoteOffRequest>(&rxMessage)) {
       upstreamEventPort.requestNoteOff(m->noteNumber);
+    } else if (auto *m =
+                   std::get_if<RxMsgSetupPollingTelemetries>(&rxMessage)) {
+      telemetrySupport.setupPollingTelemetries(m->targetBitFlags,
+                                               m->timerIntervalMs);
+    } else if (auto *m = std::get_if<RxMsgStopPollingTelemetries>(&rxMessage)) {
+      telemetrySupport.stopPollingTelemetries();
     }
   }
 
@@ -180,13 +209,24 @@ private:
     }
   }
 
+  void handleReceiveTelemetryData(int id, std::vector<float> &buffer) {
+    // printf("received telemetry data, id: %d, count: %d\n", id, count);
+    TxMsgTelemetryData msg{
+        .type = "telemetryData",
+        .buffer = buffer,
+    };
+    sendMessageToWebView(msg);
+  }
+
 public:
   WebViewBridge(IParameterManager &parameterManager,
                 IUpStreamEventPort &upstreamEventPort,
-                IDownstreamEventPort &downstreamEventPort)
+                IDownstreamEventPort &downstreamEventPort,
+                ITelemetrySupport &telemetrySupport)
       : parameterManager(parameterManager),
         upstreamEventPort(upstreamEventPort),
-        downstreamEventPort(downstreamEventPort) {}
+        downstreamEventPort(downstreamEventPort),
+        telemetrySupport(telemetrySupport) {}
 
   void onWebViewOpen(sonic_common::IWebViewIo *webViewIo) {
     this->webViewIo = webViewIo;
@@ -202,6 +242,11 @@ public:
     downstreamEventSubscriptionId =
         downstreamEventPort.subscribeDownstreamEvent(
             [this](DownstreamEvent &e) { handleDownstreamEventFromHost(e); });
+
+    telemetryDataSubscriptionId = telemetrySupport.subscribeTelemetryData(
+        [this](int id, std::vector<float> &buffer) {
+          handleReceiveTelemetryData(id, buffer);
+        });
   }
   void onWebViewClose() {
     if (parameterChangeSubscriptionId != -1) {
@@ -213,6 +258,10 @@ public:
       downstreamEventPort.unsubscribeDownstreamEvent(
           downstreamEventSubscriptionId);
       downstreamEventSubscriptionId = -1;
+    }
+    if (telemetryDataSubscriptionId != -1) {
+      telemetrySupport.unsubscribeTelemetryData(telemetryDataSubscriptionId);
+      telemetryDataSubscriptionId = -1;
     }
     if (webViewIo) {
       webViewIo->setMessageReceiver(nullptr);
