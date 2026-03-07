@@ -6,8 +6,10 @@
 #include "./clap_data_helper.h"
 #include "./entry_controller_interface.h"
 #include "./processor_adapter.h"
+#include "clap/process.h"
 #include "my_clap_1/portable/event_bridge.h"
 #include "my_clap_1/portable/interfaces.h"
+#include "my_clap_1/portable/telemetry_support.h"
 #include "my_clap_1/portable/webview_bridge.h"
 #include "sonic_common/general/mac_web_view.h"
 #include "sonic_common/logic/parameter_definitions_provider.h"
@@ -25,7 +27,8 @@ class EntryController : public IEntryController {
 private:
   std::unique_ptr<IPluginSynthesizer> synth;
   Eventbridge eventBridge;
-  ProcessorAdapter processorAdapter;
+  ProcessorAdapter processorAdapter{*synth, eventBridge};
+  TelemetrySupport telemetrySupport{*synth, processorAdapter};
 
   std::unique_ptr<sonic_common::MacWebView> webView;
 
@@ -66,13 +69,17 @@ private:
   }
 
 public:
-  EntryController(IPluginSynthesizer &synth)
-      : synth(&synth), processorAdapter(*this->synth, eventBridge) {}
+  EntryController(IPluginSynthesizer &synth) : synth(&synth) {}
 
   void initialize() override {
+    // auto thereadId = std::this_thread::get_id();
+    // printf("initialize thread id: %d\n",
+    //        std::hash<std::thread::id>{}(thereadId));
+
     uint64_t maxAddress = 0xFFFFFFFE; // for valid clap_id
     parameterManager.setupParameters(*synth, maxAddress);
     setupEventBridgeCallbacks();
+    telemetrySupport.setup();
   }
 
   ~EntryController() override {
@@ -85,8 +92,20 @@ public:
     processorAdapter.prepareProcessing(sampleRate, maxFrameCount);
   }
 
+  // bool first = true;
+
   clap_process_status process(const clap_process_t *process) override {
-    return processorAdapter.process(process);
+    // if (first) {
+    //   auto thereadId = std::this_thread::get_id();
+    //   printf("audio thread thread id: %d\n",
+    //          std::hash<std::thread::id>{}(thereadId));
+    //   first = false;
+    // }
+    auto res = processorAdapter.process(process);
+    if (res == CLAP_PROCESS_CONTINUE) {
+      telemetrySupport.process();
+    }
+    return res;
   }
 
   void flush(const clap_input_events_t *in,
@@ -110,6 +129,10 @@ public:
   }
 
   void onMainThread() override {
+    // auto thereadId = std::this_thread::get_id();
+    // printf("main thread thread id: %d\n",
+    //        std::hash<std::thread::id>{}(thereadId));
+
     clearMainThreadRequestedFlag();
     DownstreamEvent e;
     while (eventBridge.popDownstreamEvent(e)) {
@@ -118,6 +141,7 @@ public:
       }
       downstreamEventPort.emitDownstreamEvent(e);
     }
+    telemetrySupport.updateTelemetries();
   }
 
   bool guiCreate() override {

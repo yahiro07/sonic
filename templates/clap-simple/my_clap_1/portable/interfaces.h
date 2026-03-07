@@ -49,3 +49,12 @@ public:
   virtual void pushDownstreamEvent(DownstreamEvent &e) = 0;
   virtual bool popDownstreamEvent(DownstreamEvent &e) = 0;
 };
+
+class ITelemetrySupport {
+public:
+  virtual int subscribeTelemetryData(
+      std::function<void(int id, float *buffer, uint32_t count)> callback) = 0;
+  virtual void unsubscribeTelemetryData(int subscriptionId) = 0;
+
+  virtual void setTelemetryActiveState(int idBitFlags) = 0;
+};
