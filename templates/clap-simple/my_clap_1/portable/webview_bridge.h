@@ -7,6 +7,7 @@
 #include <functional>
 #include <glaze/glaze.hpp>
 #include <string>
+#include <thread>
 
 struct RxMsgLog {
   std::string type = "log";
@@ -99,6 +100,10 @@ private:
 
   void handleMessageFromWebView(const std::string &jsonStr) {
     printf("message: %s\n", jsonStr.c_str());
+
+    // auto thereadId = std::this_thread::get_id();
+    // printf("webview receiver thread id: %d\n",
+    //        std::hash<std::thread::id>{}(thereadId));
 
     RxMessageVariant rxMessage;
     auto ec = glz::read_json<RxMessageVariant>(rxMessage, jsonStr);
