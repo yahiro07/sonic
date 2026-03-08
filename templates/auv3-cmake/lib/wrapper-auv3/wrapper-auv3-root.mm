@@ -41,7 +41,7 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
     initWithComponentDescription:(AudioComponentDescription)componentDescription
                          options:(AudioComponentInstantiationOptions)options
                            error:(NSError **)outError {
-  printf("initWithComponentDescription 0247\n");
+  printf("initWithComponentDescription 0341\n");
   self = [super initWithComponentDescription:componentDescription
                                      options:options
                                        error:outError];
@@ -113,17 +113,34 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
       AudioUnitRenderActionFlags *actionFlags, const AudioTimeStamp *timestamp,
       AUAudioFrameCount frameCount, NSInteger outputBusNumber,
       AudioBufferList *outputData, const AURenderEvent *realtimeEventListHead,
-      AURenderPullInputBlock __unsafe_unretained pullInputBlock) {
+      AURenderPullInputBlock pullInputBlock) {
     (void)actionFlags;
     (void)timestamp;
     (void)outputBusNumber;
     (void)realtimeEventListHead;
     (void)pullInputBlock;
 
-    if (frameCount > self.maximumFramesToRender) {
-      return kAudioUnitErr_TooManyFramesToProcess;
+    // Handle MIDI and Parameter events
+    const AURenderEvent *event = realtimeEventListHead;
+    while (event != nullptr) {
+      if (event->head.eventType == AURenderEventMIDI) {
+        uint8_t status = event->MIDI.data[0] & 0xF0;
+        uint8_t data1 = event->MIDI.data[1];
+        uint8_t data2 = event->MIDI.data[2];
+
+        if (status == 0x90 && data2 > 0) {
+          synthPtr->noteOn(data1, (double)data2 / 127.0);
+        } else if (status == 0x80 || (status == 0x90 && data2 == 0)) {
+          synthPtr->noteOff(data1);
+        }
+      } else if (event->head.eventType == AURenderEventParameter) {
+        synthPtr->setParameter(event->parameter.parameterAddress,
+                               event->parameter.value);
+      }
+      event = event->head.next;
     }
 
+    // process audio
     float *left = (float *)outputData->mBuffers[0].mData;
     float *right = (float *)outputData->mBuffers[1].mData;
     // debugFillNoise(left, right, frameCount);

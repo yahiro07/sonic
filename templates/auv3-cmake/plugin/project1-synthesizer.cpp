@@ -1,7 +1,8 @@
 #include "project1-synthesizer.h"
+#include <stdio.h>
 
 void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
-  builder.addUnary(0, "gain", "Gain", 0.5);
+  builder.addUnary(0, "gain", "Gain", 0.1);
   builder.addEnum(1, "waveType", "Wave Type", "saw",
                   {"saw", "square", "triangle", "sine"});
   builder.addUnary(2, "oscPitch", "Pitch", 0.5);
@@ -32,14 +33,14 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
   auto freq = exp2f((noteNumber - 57.f) / 12.f) * 440.f;
   auto phaseInc = freq / sampleRate;
 
-  // auto gain = gateOn ? paramGain : 0.f;
-  auto gain = .1f;
+  auto gain = gateOn ? paramGain : 0.f;
+  // auto gain = .1f;
 
   for (uint32_t index = 0; index < frames; index++) {
     phase += phaseInc;
     phase -= floorf(phase);
-    auto y = rand() / (float)RAND_MAX * 2.f - 1.f;
-    // auto y = (phase * 2.f - 1.f);
+    // auto y = rand() / (float)RAND_MAX * 2.f - 1.f;
+    auto y = (phase * 2.f - 1.f);
     // auto y = sinf(phase * 2.f * M_PI);
     y *= gain;
     bufferL[index] = y;
@@ -59,5 +60,6 @@ void Project1Synthesizer::noteOff(int noteNumber) {
 }
 
 SynthesizerBase *createSynthesizerInstance() {
+  printf("project1-synthesizer: createSynthesizerInstance 0340\n");
   return new Project1Synthesizer();
 }
