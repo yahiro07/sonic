@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		3CAA198C2F5DFCC200363E1C /* Project1Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3CAA198B2F5DFCC200363E1C /* Project1Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3CAA19DB2F5DFDE700363E1C /* libplugin.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CAA19D52F5DFDBC00363E1C /* libplugin.a */; platformFilters = (macos, ); };
+		3CAA19DC2F5DFDEC00363E1C /* libwrapper-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CAA19CB2F5DFDA500363E1C /* libwrapper-auv3.a */; platformFilters = (macos, ); };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -17,6 +19,34 @@
 			proxyType = 1;
 			remoteGlobalIDString = 3CAA198A2F5DFCC200363E1C;
 			remoteInfo = Project1Extension;
+		};
+		3CAA19CA2F5DFDA500363E1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3CAA19C22F5DFDA500363E1C /* wrapper-auv3.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0EB698FA62084B29A10FB122;
+			remoteInfo = "wrapper-auv3";
+		};
+		3CAA19D42F5DFDBC00363E1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3CAA19CC2F5DFDBC00363E1C /* plugin.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = BDF78179C0D54B2895AD6BA2;
+			remoteInfo = plugin;
+		};
+		3CAA19D62F5DFDDB00363E1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3CAA19CC2F5DFDBC00363E1C /* plugin.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 4B9967246D50EEC3BC8BBCCD;
+			remoteInfo = plugin;
+		};
+		3CAA19D82F5DFDDF00363E1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3CAA19C22F5DFDA500363E1C /* wrapper-auv3.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 08FB9456FED30F030BB3C3BE;
+			remoteInfo = "wrapper-auv3";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -37,6 +67,8 @@
 /* Begin PBXFileReference section */
 		3CAA19652F5DFCC100363E1C /* Project1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Project1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CAA198B2F5DFCC200363E1C /* Project1Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Project1Extension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3CAA19C22F5DFDA500363E1C /* wrapper-auv3.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "wrapper-auv3.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/auv3-cmake/build-xcode/lib/wrapper-auv3/wrapper-auv3.xcodeproj"; sourceTree = "<absolute>"; };
+		3CAA19CC2F5DFDBC00363E1C /* plugin.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = plugin.xcodeproj; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/auv3-cmake/build-xcode/plugin/plugin.xcodeproj"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -89,6 +121,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3CAA19DC2F5DFDEC00363E1C /* libwrapper-auv3.a in Frameworks */,
+				3CAA19DB2F5DFDE700363E1C /* libplugin.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,8 +132,11 @@
 		3CAA195C2F5DFCC100363E1C = {
 			isa = PBXGroup;
 			children = (
+				3CAA19CC2F5DFDBC00363E1C /* plugin.xcodeproj */,
+				3CAA19C22F5DFDA500363E1C /* wrapper-auv3.xcodeproj */,
 				3CAA19672F5DFCC100363E1C /* Project1 */,
 				3CAA198F2F5DFCC200363E1C /* Project1Extension */,
+				3CAA19DA2F5DFDE700363E1C /* Frameworks */,
 				3CAA19662F5DFCC100363E1C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -111,6 +148,29 @@
 				3CAA198B2F5DFCC200363E1C /* Project1Extension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		3CAA19C52F5DFDA500363E1C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3CAA19CB2F5DFDA500363E1C /* libwrapper-auv3.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3CAA19CF2F5DFDBC00363E1C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3CAA19D52F5DFDBC00363E1C /* libplugin.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3CAA19DA2F5DFDE700363E1C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -151,6 +211,8 @@
 			buildRules = (
 			);
 			dependencies = (
+				3CAA19D92F5DFDDF00363E1C /* PBXTargetDependency */,
+				3CAA19D72F5DFDDB00363E1C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3CAA198F2F5DFCC200363E1C /* Project1Extension */,
@@ -192,6 +254,16 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3CAA19662F5DFCC100363E1C /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 3CAA19CF2F5DFDBC00363E1C /* Products */;
+					ProjectRef = 3CAA19CC2F5DFDBC00363E1C /* plugin.xcodeproj */;
+				},
+				{
+					ProductGroup = 3CAA19C52F5DFDA500363E1C /* Products */;
+					ProjectRef = 3CAA19C22F5DFDA500363E1C /* wrapper-auv3.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				3CAA19642F5DFCC100363E1C /* Project1 */,
@@ -199,6 +271,23 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		3CAA19CB2F5DFDA500363E1C /* libwrapper-auv3.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libwrapper-auv3.a";
+			remoteRef = 3CAA19CA2F5DFDA500363E1C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		3CAA19D52F5DFDBC00363E1C /* libplugin.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libplugin.a;
+			remoteRef = 3CAA19D42F5DFDBC00363E1C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		3CAA19632F5DFCC100363E1C /* Resources */ = {
@@ -240,6 +329,16 @@
 			target = 3CAA198A2F5DFCC200363E1C /* Project1Extension */;
 			targetProxy = 3CAA198D2F5DFCC200363E1C /* PBXContainerItemProxy */;
 		};
+		3CAA19D72F5DFDDB00363E1C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = plugin;
+			targetProxy = 3CAA19D62F5DFDDB00363E1C /* PBXContainerItemProxy */;
+		};
+		3CAA19D92F5DFDDF00363E1C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "wrapper-auv3";
+			targetProxy = 3CAA19D82F5DFDDF00363E1C /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -252,6 +351,16 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = QY6QQBZFX6;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Project1Extension/Info.plist;
@@ -296,6 +405,16 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = QY6QQBZFX6;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Project1Extension/Info.plist;
