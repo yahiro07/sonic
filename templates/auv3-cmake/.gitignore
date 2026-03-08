@@ -1,2 +1,8 @@
 build/
 build-xcode/
+
+project.xcworkspace/
+xcuserdata/
+xcshareddata/
+buildServer.json
+
