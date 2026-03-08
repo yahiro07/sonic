@@ -1,0 +1,33 @@
+# cmake_minimum_required(VERSION 3.20)
+
+project(wrapper-auv3
+	LANGUAGES OBJCXX CXX
+)
+
+add_library(wrapper-auv3 STATIC)
+
+# set(PLUGIN_DIR ${CMAKE_CURRENT_LIST_DIR}/../../plugin)
+
+# add_subdirectory(${PLUGIN_DIR} ${CMAKE_CURRENT_BINARY_DIR}/plugin) 
+
+target_sources(wrapper-auv3
+	PRIVATE
+		wrapper-auv3-root.mm
+		# $<TARGET_OBJECTS:${PLUGIN_PROJECT_NAME}>
+)
+
+target_include_directories(wrapper-auv3
+	PUBLIC
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+		$<INSTALL_INTERFACE:include>
+	PRIVATE
+		${PLUGIN_DIR}
+)
+
+set_target_properties(wrapper-auv3 PROPERTIES
+	PUBLIC_HEADER wrapper-auv3-root.h
+)
+
+target_link_libraries(wrapper-auv3
+  plugin
+)
