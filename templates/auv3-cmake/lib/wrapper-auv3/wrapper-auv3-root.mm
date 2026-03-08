@@ -2,15 +2,19 @@
 #include "../common/parameter_builder_impl.h"
 #include "../common/synthesizer_base.h"
 #include <AudioToolbox/AudioToolbox.h>
+#include <cstdio>
 #include <cstdlib>
 #include <memory>
 
-@implementation WrapperAuv3AudioUnit {
+@interface WrapperAuv3AudioUnit () {
   AUAudioUnitBus *_outputBus;
   AUAudioUnitBusArray *_outputBusArray;
   AUAudioUnitBusArray *_inputBusArray;
   std::unique_ptr<SynthesizerBase> synth;
 }
+@end
+
+@implementation WrapperAuv3AudioUnit
 
 static AUParameter *
 createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
@@ -150,6 +154,69 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   };
 
   return [block copy];
+}
+
+@end
+
+//------------------------------------------------------------
+
+@interface WrapperAuv3ViewController () {
+  NSTextField *_label;
+}
+@end
+
+@implementation WrapperAuv3ViewController
+
+- (void)viewDidLoad {
+  printf("WrapperAuv3ViewController viewDidLoad\n");
+  [super viewDidLoad];
+  if (!_audioUnit) {
+    return;
+  }
+  // for second or later generated view(?)
+  [self setupUiView];
+}
+
+- (void)dealloc {
+  [self cleanupUiView];
+}
+
+- (WrapperAuv3AudioUnit *)getAudioUnit {
+  return _audioUnit;
+}
+- (void)setAudioUnit:(WrapperAuv3AudioUnit *)audioUnit {
+  printf("WrapperAuv3ViewController setAudioUnit\n");
+  _audioUnit = audioUnit;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if ([self isViewLoaded]) {
+      // for initial generated view(?)
+      [self setupUiView];
+    }
+  });
+}
+#pragma mark -
+
+- (void)setupUiView {
+  printf("WrapperAuv3ViewController setupUiView\n");
+  NSView *root = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
+  root.wantsLayer = YES;
+
+  _label = [NSTextField labelWithString:@"(waiting for audio unit...)"];
+  _label.translatesAutoresizingMaskIntoConstraints = NO;
+  _label.font = [NSFont systemFontOfSize:20 weight:NSFontWeightSemibold];
+
+  [root addSubview:_label];
+
+  [NSLayoutConstraint activateConstraints:@[
+    [_label.centerXAnchor constraintEqualToAnchor:root.centerXAnchor],
+    [_label.centerYAnchor constraintEqualToAnchor:root.centerYAnchor],
+  ]];
+
+  self.view = root;
+}
+
+- (void)cleanupUiView {
+  _label = nil;
 }
 
 @end
