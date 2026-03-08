@@ -45,7 +45,7 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
     initWithComponentDescription:(AudioComponentDescription)componentDescription
                          options:(AudioComponentInstantiationOptions)options
                            error:(NSError **)outError {
-  printf("initWithComponentDescription 0341\n");
+  printf("initWithComponentDescription 0757\n");
   self = [super initWithComponentDescription:componentDescription
                                      options:options
                                        error:outError];
@@ -91,6 +91,18 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
 
 - (AUAudioUnitBusArray *)inputBusses {
   return _inputBusArray;
+}
+
+- (void)requestViewControllerWithCompletionHandler:
+    (void (^)(AUViewControllerBase *_Nullable viewController))
+        completionHandler {
+  printf("requestViewControllerWithCompletionHandler\n");
+  dispatch_async(dispatch_get_main_queue(), ^{
+    WrapperAuv3ViewController *viewController =
+        [[WrapperAuv3ViewController alloc] init];
+    viewController.audioUnit = (WrapperAuv3AudioUnit *)self;
+    completionHandler(viewController);
+  });
 }
 
 - (BOOL)allocateRenderResourcesAndReturnError:(NSError *_Nullable *)outError {

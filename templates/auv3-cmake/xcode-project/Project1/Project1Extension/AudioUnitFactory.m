@@ -8,22 +8,21 @@
 // @property(nonatomic, strong, nullable) AUAudioUnit *auAudioUnit;
 // @end
 
-@implementation WrapperAuv3ViewController (AUAudioUnitFactory)
+@implementation AudioUnitFactory
 
-// - (void)beginRequestWithExtensionContext:(NSExtensionContext *)context {
-//   (void)context;
-// }
+- (void)beginRequestWithExtensionContext:(NSExtensionContext *)context {
+  (void)context;
+}
 
 - (nullable AUAudioUnit *)
     createAudioUnitWithComponentDescription:
         (AudioComponentDescription)componentDescription
                                       error:(NSError *_Nullable *_Nullable)
                                                 outError {
-  self.audioUnit = [[WrapperAuv3AudioUnit alloc]
+  return [[WrapperAuv3AudioUnit alloc]
       initWithComponentDescription:componentDescription
                            options:0
                              error:outError];
-  return self.audioUnit;
 }
 
 @end

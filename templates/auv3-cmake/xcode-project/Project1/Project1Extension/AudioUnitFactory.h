@@ -9,5 +9,5 @@
 //     : NSObject <AUAudioUnitFactory, NSExtensionRequestHandling>
 // @end
 
-@interface WrapperAuv3ViewController (AUAudioUnitFactory) <AUAudioUnitFactory>
+@interface AudioUnitFactory : NSObject <AUAudioUnitFactory>
 @end

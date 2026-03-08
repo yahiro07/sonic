@@ -11,8 +11,8 @@
 				<dict>
 					<key>description</key>
 					<string>Project1Extension</string>
-          <key>factoryFunction</key>
-					<string>WrapperAuv3ViewController</string>
+					<key>factoryFunction</key>
+					<string>AudioUnitFactory</string>
 					<key>manufacturer</key>
 					<string>Sonx</string>
 					<key>name</key>
@@ -33,9 +33,9 @@
 			</array>
 		</dict>
 		<key>NSExtensionPointIdentifier</key>
-		<string>com.apple.AudioUnit-UI</string>
+		<string>com.apple.AudioUnit</string>
 		<key>NSExtensionPrincipalClass</key>
-		<string>WrapperAuv3ViewController</string>
+		<string>AudioUnitFactory</string>
 	</dict>
 </dict>
 </plist>
