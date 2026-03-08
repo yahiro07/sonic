@@ -8,6 +8,6 @@
 #import "Project1ExtensionParameterAddresses.h"
 #import "Project1ExtensionAUProcessHelper.hpp"
 
-#import "../../../../lib/wrapper-auv3/wrapper-auv3-root.h"
+#import "../../../lib/wrapper-auv3/wrapper-auv3-root.h"
 
 
