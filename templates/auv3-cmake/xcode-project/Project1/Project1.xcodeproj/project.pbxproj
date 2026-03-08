@@ -81,17 +81,6 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		3CAA19382F5D89B800363E1C /* Exceptions for "Project1Extension" folder in "Copy Bundle Resources" phase from "Project1Extension" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 3CAA190F2F5D89B800363E1C /* Resources */;
-			membershipExceptions = (
-				Common/DSP/Project1ExtensionAUProcessHelper.hpp,
-				DSP/Project1ExtensionDSPKernel.hpp,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3CAA18ED2F5D89B700363E1C /* Project1 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -102,7 +91,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				3CAA19342F5D89B800363E1C /* Exceptions for "Project1Extension" folder in "Project1Extension" target */,
-				3CAA19382F5D89B800363E1C /* Exceptions for "Project1Extension" folder in "Copy Bundle Resources" phase from "Project1Extension" target */,
 			);
 			path = Project1Extension;
 			sourceTree = "<group>";
