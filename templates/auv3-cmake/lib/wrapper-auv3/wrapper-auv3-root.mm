@@ -1,12 +1,17 @@
 #import "./wrapper-auv3-root.h"
 #include "../common/parameter_builder_impl.h"
 #include "../common/synthesizer_base.h"
+#include <AudioToolbox/AudioToolbox.h>
 #include <cstdlib>
+#include <memory>
 
 @implementation WrapperAuv3AudioUnit {
   AUAudioUnitBus *_outputBus;
   AUAudioUnitBusArray *_outputBusArray;
   AUAudioUnitBusArray *_inputBusArray;
+  AUAudioFrameCount mMaxFramesToRender;
+
+  std::unique_ptr<SynthesizerBase> synth;
 }
 
 static AUParameter *
@@ -38,7 +43,7 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
     initWithComponentDescription:(AudioComponentDescription)componentDescription
                          options:(AudioComponentInstantiationOptions)options
                            error:(NSError **)outError {
-  printf("initWithComponentDescription\n");
+  printf("initWithComponentDescription 0233\n");
   self = [super initWithComponentDescription:componentDescription
                                      options:options
                                        error:outError];
@@ -46,7 +51,7 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
     return nil;
   }
 
-  auto synth = createSynthesizerInstance();
+  synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
   auto parameterBuilder = sonic_common::ParameterBuilderImpl();
   synth->setupParameters(parameterBuilder);
   auto parameterItems = parameterBuilder.getItems();
@@ -64,6 +69,7 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
   if (!_outputBus) {
     return nil;
   }
+  _outputBus.maximumChannelCount = 2;
 
   _outputBusArray =
       [[AUAudioUnitBusArray alloc] initWithAudioUnit:self
@@ -73,6 +79,8 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
       [[AUAudioUnitBusArray alloc] initWithAudioUnit:self
                                              busType:AUAudioUnitBusTypeInput
                                               busses:@[]];
+
+  mMaxFramesToRender = 1024;
 
   return self;
 }
@@ -85,8 +93,25 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
   return _inputBusArray;
 }
 
+- (AUAudioFrameCount)getMaximumFramesToRender {
+  return mMaxFramesToRender;
+}
+
+- (void)setMaximumFramesToRender:(AUAudioFrameCount)maximumFramesToRender {
+  mMaxFramesToRender = maximumFramesToRender;
+}
+
+- (BOOL)allocateRenderResourcesAndReturnError:(NSError *_Nullable *)outError {
+  auto sampleRate = self.outputBusses[0].format.sampleRate;
+  auto maxFrameLength = mMaxFramesToRender;
+  printf("call prepareProcessing, sampleRate: %f, maxFrameLength: %u\n",
+         sampleRate, maxFrameLength);
+  synth->prepareProcessing(sampleRate, maxFrameLength);
+  return [super allocateRenderResourcesAndReturnError:outError];
+}
+
 - (AUInternalRenderBlock)internalRenderBlock {
-  return ^AUAudioUnitStatus(
+  return [^AUAudioUnitStatus(
       AudioUnitRenderActionFlags *actionFlags, const AudioTimeStamp *timestamp,
       AUAudioFrameCount frameCount, NSInteger outputBusNumber,
       AudioBufferList *outputData, const AURenderEvent *realtimeEventListHead,
@@ -99,13 +124,10 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
 
     float *left = (float *)outputData->mBuffers[0].mData;
     float *right = (float *)outputData->mBuffers[1].mData;
-    for (auto i = 0; i < frameCount; i++) {
-      auto y = (((float)rand() / RAND_MAX) * 2.f - 1.f) * .1f;
-      left[i] = y;
-      right[i] = y;
-    }
+    synth->processAudio(left, right, frameCount);
+
     return noErr;
-  };
+  } copy];
 }
 
 @end

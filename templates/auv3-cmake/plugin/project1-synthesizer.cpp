@@ -30,14 +30,16 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
   if (sampleRate == 0.f)
     return;
   auto freq = exp2f((noteNumber - 57.f) / 12.f) * 440.f;
-  auto gain = gateOn ? paramGain : 0.f;
   auto phaseInc = freq / sampleRate;
+
+  // auto gain = gateOn ? paramGain : 0.f;
+  auto gain = .1f;
 
   for (uint32_t index = 0; index < frames; index++) {
     phase += phaseInc;
     phase -= floorf(phase);
-    // auto y = rand() / (float)RAND_MAX * 2.f - 1.f;
-    auto y = (phase * 2.f - 1.f);
+    auto y = rand() / (float)RAND_MAX * 2.f - 1.f;
+    // auto y = (phase * 2.f - 1.f);
     // auto y = sinf(phase * 2.f * M_PI);
     y *= gain;
     bufferL[index] = y;
