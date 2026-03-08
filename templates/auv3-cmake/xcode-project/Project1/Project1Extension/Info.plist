@@ -33,7 +33,7 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.AudioUnit</string>
 		<key>NSExtensionPrincipalClass</key>
-		<string>$(PRODUCT_MODULE_NAME).AudioUnitFactory</string>
+		<string>AudioUnitFactory</string>
 	</dict>
 </dict>
 </plist>
