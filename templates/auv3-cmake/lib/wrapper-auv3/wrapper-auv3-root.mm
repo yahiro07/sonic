@@ -38,6 +38,7 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
     initWithComponentDescription:(AudioComponentDescription)componentDescription
                          options:(AudioComponentInstantiationOptions)options
                            error:(NSError **)outError {
+  printf("initWithComponentDescription\n");
   self = [super initWithComponentDescription:componentDescription
                                      options:options
                                        error:outError];
