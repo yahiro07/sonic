@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		3CAA19122F5D89B800363E1C /* Project1Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3CAA19112F5D89B800363E1C /* Project1Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3CAA194E2F5DD6E700363E1C /* libwrapper-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CAA194A2F5DD6C500363E1C /* libwrapper-auv3.a */; platformFilters = (macos, ); };
+		3CAA195B2F5DDEE200363E1C /* libplugin.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CAA19582F5DDECC00363E1C /* libplugin.a */; platformFilters = (macos, ); };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,6 +34,20 @@
 			remoteGlobalIDString = 08FB9456FED30F030BB3C3BE;
 			remoteInfo = "wrapper-auv3";
 		};
+		3CAA19572F5DDECC00363E1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3CAA194F2F5DDECC00363E1C /* plugin.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 760402B2EB4049D099FB90D4;
+			remoteInfo = plugin;
+		};
+		3CAA19592F5DDED700363E1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3CAA194F2F5DDECC00363E1C /* plugin.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 4B9967246D50EEC3BC8BBCCD;
+			remoteInfo = plugin;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -53,6 +68,7 @@
 		3CAA18EB2F5D89B700363E1C /* Project1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Project1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CAA19112F5D89B800363E1C /* Project1Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Project1Extension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CAA19412F5DD6C500363E1C /* wrapper-auv3.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "wrapper-auv3.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/auv3-cmake/build-xcode/lib/wrapper-auv3/wrapper-auv3.xcodeproj"; sourceTree = "<absolute>"; };
+		3CAA194F2F5DDECC00363E1C /* plugin.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = plugin.xcodeproj; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/auv3-cmake/build-xcode/plugin/plugin.xcodeproj"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -105,6 +121,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3CAA195B2F5DDEE200363E1C /* libplugin.a in Frameworks */,
 				3CAA194E2F5DD6E700363E1C /* libwrapper-auv3.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -115,6 +132,7 @@
 		3CAA18E22F5D89B700363E1C = {
 			isa = PBXGroup;
 			children = (
+				3CAA194F2F5DDECC00363E1C /* plugin.xcodeproj */,
 				3CAA19412F5DD6C500363E1C /* wrapper-auv3.xcodeproj */,
 				3CAA18ED2F5D89B700363E1C /* Project1 */,
 				3CAA19152F5D89B800363E1C /* Project1Extension */,
@@ -145,6 +163,14 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3CAA19522F5DDECC00363E1C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3CAA19582F5DDECC00363E1C /* libplugin.a */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -185,6 +211,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				3CAA195A2F5DDED700363E1C /* PBXTargetDependency */,
 				3CAA194C2F5DD6DB00363E1C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
@@ -229,6 +256,10 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
+					ProductGroup = 3CAA19522F5DDECC00363E1C /* Products */;
+					ProjectRef = 3CAA194F2F5DDECC00363E1C /* plugin.xcodeproj */;
+				},
+				{
 					ProductGroup = 3CAA19442F5DD6C500363E1C /* Products */;
 					ProjectRef = 3CAA19412F5DD6C500363E1C /* wrapper-auv3.xcodeproj */;
 				},
@@ -247,6 +278,13 @@
 			fileType = archive.ar;
 			path = "libwrapper-auv3.a";
 			remoteRef = 3CAA19492F5DD6C500363E1C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		3CAA19582F5DDECC00363E1C /* libplugin.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libplugin.a;
+			remoteRef = 3CAA19572F5DDECC00363E1C /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -295,6 +333,11 @@
 			isa = PBXTargetDependency;
 			name = "wrapper-auv3";
 			targetProxy = 3CAA194B2F5DD6DB00363E1C /* PBXContainerItemProxy */;
+		};
+		3CAA195A2F5DDED700363E1C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = plugin;
+			targetProxy = 3CAA19592F5DDED700363E1C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

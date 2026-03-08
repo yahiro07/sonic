@@ -1,10 +1,37 @@
 #import "./wrapper-auv3-root.h"
+#include "../common/parameter_builder_impl.h"
+#include "../common/synthesizer_base.h"
 #include <cstdlib>
 
 @implementation WrapperAuv3AudioUnit {
   AUAudioUnitBus *_outputBus;
   AUAudioUnitBusArray *_outputBusArray;
   AUAudioUnitBusArray *_inputBusArray;
+}
+
+static AUParameter *
+createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
+  AudioUnitParameterOptions paramOptions =
+      kAudioUnitParameterFlag_IsWritable | kAudioUnitParameterFlag_IsReadable;
+  if (entry.type == sonic_common::ParameterType::Enum) {
+    paramOptions |= kAudioUnitParameterFlag_ValuesHaveStrings;
+  }
+  AUParameter *param = [AUParameterTree
+      createParameterWithIdentifier:[NSString
+                                        stringWithUTF8String:entry.identifier
+                                                                 .c_str()]
+                               name:[NSString stringWithUTF8String:entry.label
+                                                                       .c_str()]
+                            address:entry.address
+                                min:(float)entry.minValue
+                                max:(float)entry.maxValue
+                               unit:kAudioUnitParameterUnit_Generic
+                           unitName:nil
+                              flags:paramOptions
+                       valueStrings:nil
+                dependentParameters:nil];
+  param.value = (float)entry.defaultValue;
+  return param;
 }
 
 - (instancetype)
@@ -17,6 +44,17 @@
   if (!self) {
     return nil;
   }
+
+  auto synth = createSynthesizerInstance();
+  auto parameterBuilder = sonic_common::ParameterBuilderImpl();
+  synth->setupParameters(parameterBuilder);
+  auto parameterItems = parameterBuilder.getItems();
+
+  NSMutableArray *auParams = [NSMutableArray array];
+  for (const auto &entry : parameterItems) {
+    [auParams addObject:createAUParameterFromItem(entry)];
+  }
+  self.parameterTree = [AUParameterTree createTreeWithChildren:auParams];
 
   AVAudioFormat *format =
       [[AVAudioFormat alloc] initStandardFormatWithSampleRate:44100.0

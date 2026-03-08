@@ -12,14 +12,16 @@ add_library(wrapper-auv3 STATIC)
 
 target_sources(wrapper-auv3
 	PRIVATE
+    ../common/parameter_builder_impl.cpp
 		wrapper-auv3-root.mm
 		# $<TARGET_OBJECTS:${PLUGIN_PROJECT_NAME}>
 )
 
 target_include_directories(wrapper-auv3
 	PUBLIC
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-		$<INSTALL_INTERFACE:include>
+    ${CMAKE_CURRENT_LIST_DIR}
+		# $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+		# $<INSTALL_INTERFACE:include>
 	PRIVATE
 		${PLUGIN_DIR}
 )
@@ -28,6 +30,6 @@ set_target_properties(wrapper-auv3 PROPERTIES
 	PUBLIC_HEADER wrapper-auv3-root.h
 )
 
-target_link_libraries(wrapper-auv3
-  plugin
-)
+# target_link_libraries(wrapper-auv3
+#   plugin
+# )

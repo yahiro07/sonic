@@ -1,3 +1,7 @@
+project(plugin
+	LANGUAGES CXX
+)
+
 add_library(plugin STATIC)
 
 target_sources(plugin
