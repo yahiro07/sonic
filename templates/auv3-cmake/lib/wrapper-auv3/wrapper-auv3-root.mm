@@ -9,8 +9,6 @@
   AUAudioUnitBus *_outputBus;
   AUAudioUnitBusArray *_outputBusArray;
   AUAudioUnitBusArray *_inputBusArray;
-  AUAudioFrameCount mMaxFramesToRender;
-
   std::unique_ptr<SynthesizerBase> synth;
 }
 
@@ -43,7 +41,7 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
     initWithComponentDescription:(AudioComponentDescription)componentDescription
                          options:(AudioComponentInstantiationOptions)options
                            error:(NSError **)outError {
-  printf("initWithComponentDescription 0233\n");
+  printf("initWithComponentDescription 0247\n");
   self = [super initWithComponentDescription:componentDescription
                                      options:options
                                        error:outError];
@@ -80,8 +78,6 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
                                              busType:AUAudioUnitBusTypeInput
                                               busses:@[]];
 
-  mMaxFramesToRender = 1024;
-
   return self;
 }
 
@@ -93,41 +89,50 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
   return _inputBusArray;
 }
 
-- (AUAudioFrameCount)getMaximumFramesToRender {
-  return mMaxFramesToRender;
-}
-
-- (void)setMaximumFramesToRender:(AUAudioFrameCount)maximumFramesToRender {
-  mMaxFramesToRender = maximumFramesToRender;
-}
-
 - (BOOL)allocateRenderResourcesAndReturnError:(NSError *_Nullable *)outError {
   auto sampleRate = self.outputBusses[0].format.sampleRate;
-  auto maxFrameLength = mMaxFramesToRender;
+  auto maxFrameLength = self.maximumFramesToRender;
   printf("call prepareProcessing, sampleRate: %f, maxFrameLength: %u\n",
          sampleRate, maxFrameLength);
   synth->prepareProcessing(sampleRate, maxFrameLength);
   return [super allocateRenderResourcesAndReturnError:outError];
 }
 
+static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
+  for (uint32_t i = 0; i < frames; i++) {
+    float y = (((float)rand() / RAND_MAX) * 2.f - 1.f) * .1f;
+    bufferL[i] = y;
+    bufferR[i] = y;
+  }
+}
+
 - (AUInternalRenderBlock)internalRenderBlock {
-  return [^AUAudioUnitStatus(
+  SynthesizerBase *synthPtr = synth.get();
+
+  AUInternalRenderBlock block = ^AUAudioUnitStatus(
       AudioUnitRenderActionFlags *actionFlags, const AudioTimeStamp *timestamp,
       AUAudioFrameCount frameCount, NSInteger outputBusNumber,
       AudioBufferList *outputData, const AURenderEvent *realtimeEventListHead,
-      AURenderPullInputBlock pullInputBlock) {
+      AURenderPullInputBlock __unsafe_unretained pullInputBlock) {
     (void)actionFlags;
     (void)timestamp;
     (void)outputBusNumber;
     (void)realtimeEventListHead;
     (void)pullInputBlock;
 
+    if (frameCount > self.maximumFramesToRender) {
+      return kAudioUnitErr_TooManyFramesToProcess;
+    }
+
     float *left = (float *)outputData->mBuffers[0].mData;
     float *right = (float *)outputData->mBuffers[1].mData;
-    synth->processAudio(left, right, frameCount);
+    // debugFillNoise(left, right, frameCount);
+    synthPtr->processAudio(left, right, frameCount);
 
     return noErr;
-  } copy];
+  };
+
+  return [block copy];
 }
 
 @end
