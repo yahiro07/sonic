@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3CAA19122F5D89B800363E1C /* Project1Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3CAA19112F5D89B800363E1C /* Project1Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3CAA194E2F5DD6E700363E1C /* libwrapper-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CAA194A2F5DD6C500363E1C /* libwrapper-auv3.a */; platformFilters = (macos, ); };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -17,6 +18,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = 3CAA19102F5D89B800363E1C;
 			remoteInfo = Project1Extension;
+		};
+		3CAA19492F5DD6C500363E1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3CAA19412F5DD6C500363E1C /* wrapper-auv3.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8F99A3BBA740484FA18ECB57;
+			remoteInfo = "wrapper-auv3";
+		};
+		3CAA194B2F5DD6DB00363E1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3CAA19412F5DD6C500363E1C /* wrapper-auv3.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 08FB9456FED30F030BB3C3BE;
+			remoteInfo = "wrapper-auv3";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -37,6 +52,7 @@
 /* Begin PBXFileReference section */
 		3CAA18EB2F5D89B700363E1C /* Project1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Project1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CAA19112F5D89B800363E1C /* Project1Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Project1Extension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3CAA19412F5DD6C500363E1C /* wrapper-auv3.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "wrapper-auv3.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/auv3-cmake/build-xcode/lib/wrapper-auv3/wrapper-auv3.xcodeproj"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -89,6 +105,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3CAA194E2F5DD6E700363E1C /* libwrapper-auv3.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,8 +115,10 @@
 		3CAA18E22F5D89B700363E1C = {
 			isa = PBXGroup;
 			children = (
+				3CAA19412F5DD6C500363E1C /* wrapper-auv3.xcodeproj */,
 				3CAA18ED2F5D89B700363E1C /* Project1 */,
 				3CAA19152F5D89B800363E1C /* Project1Extension */,
+				3CAA194D2F5DD6E700363E1C /* Frameworks */,
 				3CAA18EC2F5D89B700363E1C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -111,6 +130,21 @@
 				3CAA19112F5D89B800363E1C /* Project1Extension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		3CAA19442F5DD6C500363E1C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3CAA194A2F5DD6C500363E1C /* libwrapper-auv3.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3CAA194D2F5DD6E700363E1C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -151,6 +185,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				3CAA194C2F5DD6DB00363E1C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3CAA19152F5D89B800363E1C /* Project1Extension */,
@@ -192,6 +227,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3CAA18EC2F5D89B700363E1C /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 3CAA19442F5DD6C500363E1C /* Products */;
+					ProjectRef = 3CAA19412F5DD6C500363E1C /* wrapper-auv3.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				3CAA18EA2F5D89B700363E1C /* Project1 */,
@@ -199,6 +240,16 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		3CAA194A2F5DD6C500363E1C /* libwrapper-auv3.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libwrapper-auv3.a";
+			remoteRef = 3CAA19492F5DD6C500363E1C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		3CAA18E92F5D89B700363E1C /* Resources */ = {
@@ -239,6 +290,11 @@
 			isa = PBXTargetDependency;
 			target = 3CAA19102F5D89B800363E1C /* Project1Extension */;
 			targetProxy = 3CAA19132F5D89B800363E1C /* PBXContainerItemProxy */;
+		};
+		3CAA194C2F5DD6DB00363E1C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "wrapper-auv3";
+			targetProxy = 3CAA194B2F5DD6DB00363E1C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
