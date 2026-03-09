@@ -59,4 +59,8 @@ public:
   }
 
   void noteOff(int noteNumber) { synth.noteOff(noteNumber); }
+
+  void getDesiredEditorSize(uint32_t &width, uint32_t &height) {
+    synth.getDesiredEditorSize(width, height);
+  }
 };

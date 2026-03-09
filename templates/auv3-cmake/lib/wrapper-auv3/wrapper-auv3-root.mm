@@ -1,5 +1,6 @@
 #import "./wrapper-auv3-root.h"
 #include "../common/parameter_builder_impl.h"
+#include "../common/plugin_domain.h"
 #include "../common/synthesizer_base.h"
 #include "./mac_web_view.h"
 #include <AudioToolbox/AudioToolbox.h>
@@ -10,16 +11,6 @@
 #include <memory>
 #include <objc/NSObject.h>
 #include <vector>
-
-@interface WrapperAuv3AudioUnit () {
-  AUAudioUnitBus *_outputBus;
-  AUAudioUnitBusArray *_outputBusArray;
-  AUAudioUnitBusArray *_inputBusArray;
-  std::unique_ptr<SynthesizerBase> synth;
-}
-@end
-
-@implementation WrapperAuv3AudioUnit
 
 static AUParameter *
 createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
@@ -46,6 +37,70 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
   return param;
 }
 
+// --- AUv3ParameterManager Implementation ---
+class AUv3ParameterIo : public IPlatformParameterIo {
+public:
+  AUv3ParameterIo(WrapperAuv3AudioUnit *wrapper) : _wrapper(wrapper) {}
+
+  void setParameterChangeCallback(
+      std::function<void(uint64_t, double)> fn) override {
+    _onParameterChange = fn;
+  }
+
+  void registerParameters(
+      std::vector<sonic_common::ParameterItem> &params) override {
+    NSMutableArray *auParams = [NSMutableArray array];
+    for (const auto &entry : params) {
+      [auParams addObject:createAUParameterFromItem(entry)];
+    }
+
+    _parameterTree = [AUParameterTree createTreeWithChildren:auParams];
+
+    AUv3ParameterIo *selfPtr = this;
+    _parameterTree.implementorValueObserver =
+        ^(AUParameter *param, AUValue value) {
+          if (selfPtr->_onParameterChange) {
+            selfPtr->_onParameterChange(param.address, (double)value);
+          }
+        };
+
+    //    _parameterTree.implementorValueProvider = ^(AUParameter *param) {
+    //      return param.value;
+    //    };
+  }
+
+  double getParameter(uint64_t address) override {
+    AUParameter *param = [_parameterTree parameterWithAddress:address];
+    return param ? (double)param.value : 0.0;
+  }
+
+  void setParameter(uint64_t address, double value) override {
+    AUParameter *param = [_parameterTree parameterWithAddress:address];
+    if (param) {
+      param.value = (float)value;
+    }
+  }
+
+  AUParameterTree *getParameterTree() const { return _parameterTree; }
+
+private:
+  __unsafe_unretained WrapperAuv3AudioUnit *_wrapper;
+  AUParameterTree *_parameterTree = nil;
+  std::function<void(uint64_t, double)> _onParameterChange = nullptr;
+};
+
+@interface WrapperAuv3AudioUnit () {
+  AUAudioUnitBus *_outputBus;
+  AUAudioUnitBusArray *_outputBusArray;
+  AUAudioUnitBusArray *_inputBusArray;
+  std::unique_ptr<SynthesizerBase> _synth;
+  std::unique_ptr<AUv3ParameterIo> _parameterIo;
+  std::unique_ptr<PluginDomain> _pluginDomain;
+}
+@end
+
+@implementation WrapperAuv3AudioUnit
+
 - (instancetype)
     initWithComponentDescription:(AudioComponentDescription)componentDescription
                          options:(AudioComponentInstantiationOptions)options
@@ -58,21 +113,16 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
     return nil;
   }
 
-  synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
-  auto parameterBuilder = sonic_common::ParameterBuilderImpl();
-  synth->setupParameters(parameterBuilder);
-  auto parameterItems = parameterBuilder.getItems();
+  _synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
+  _parameterIo = std::make_unique<AUv3ParameterIo>(self);
+  _pluginDomain = std::make_unique<PluginDomain>(*_synth, *_parameterIo);
+  _pluginDomain->initialize();
 
-  NSMutableArray *auParams = [NSMutableArray array];
-  for (const auto &entry : parameterItems) {
-    [auParams addObject:createAUParameterFromItem(entry)];
-  }
-  self.parameterTree = [AUParameterTree createTreeWithChildren:auParams];
-
-  AVAudioFormat *format =
+  AVAudioFormat *defaultFormat =
       [[AVAudioFormat alloc] initStandardFormatWithSampleRate:44100.0
                                                      channels:2];
-  _outputBus = [[AUAudioUnitBus alloc] initWithFormat:format error:outError];
+  _outputBus = [[AUAudioUnitBus alloc] initWithFormat:defaultFormat
+                                                error:outError];
   if (!_outputBus) {
     return nil;
   }
@@ -91,8 +141,8 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
 }
 
 - (void)getDesiredEditorSize:(uint32_t *)width height:(uint32_t *)height {
-  if (synth) {
-    synth->getDesiredEditorSize(*width, *height);
+  if (_pluginDomain) {
+    _pluginDomain->getDesiredEditorSize(*width, *height);
   }
 }
 
@@ -109,7 +159,7 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
   auto maxFrameLength = self.maximumFramesToRender;
   printf("call prepareProcessing, sampleRate: %f, maxFrameLength: %u\n",
          sampleRate, maxFrameLength);
-  synth->prepareProcessing(sampleRate, maxFrameLength);
+  _pluginDomain->prepareProcessing(sampleRate, maxFrameLength);
   return [super allocateRenderResourcesAndReturnError:outError];
 }
 
@@ -122,7 +172,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 }
 
 - (AUInternalRenderBlock)internalRenderBlock {
-  SynthesizerBase *synthPtr = synth.get();
+  PluginDomain *pluginDomainPtr = _pluginDomain.get();
   AUAudioFrameCount maxFramesToRender = self.maximumFramesToRender;
 
   AUInternalRenderBlock block = ^AUAudioUnitStatus(
@@ -144,13 +194,13 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
         uint8_t data2 = event->MIDI.data[2];
 
         if (status == 0x90 && data2 > 0) {
-          synthPtr->noteOn(data1, (double)data2 / 127.0);
+          pluginDomainPtr->noteOn(data1, (double)data2 / 127.0);
         } else if (status == 0x80 || (status == 0x90 && data2 == 0)) {
-          synthPtr->noteOff(data1);
+          pluginDomainPtr->noteOff(data1);
         }
       } else if (event->head.eventType == AURenderEventParameter) {
-        synthPtr->setParameter(event->parameter.parameterAddress,
-                               event->parameter.value);
+        pluginDomainPtr->setParameter(event->parameter.parameterAddress,
+                                      event->parameter.value);
       }
       event = event->head.next;
     }
@@ -165,7 +215,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
     float *left = (float *)bufferL->mData;
     float *right = (float *)bufferR->mData;
     // debugFillNoise(left, right, frameCount);
-    synthPtr->processAudio(left, right, frameCount);
+    pluginDomainPtr->processAudio(left, right, frameCount);
 
     return noErr;
   };
