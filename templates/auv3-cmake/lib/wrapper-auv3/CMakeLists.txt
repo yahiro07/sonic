@@ -27,3 +27,5 @@ target_include_directories(wrapper-auv3
 set_target_properties(wrapper-auv3 PROPERTIES
 	PUBLIC_HEADER wrapper-auv3-root.h
 )
+
+target_link_libraries(wrapper-auv3 PRIVATE glaze::glaze)

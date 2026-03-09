@@ -5,6 +5,8 @@
 #include <string_view>
 #include <vector>
 
+namespace sonic_common {
+
 enum ParameterFlags : int {
   None = 0,
   IsReadOnly = 1,
@@ -45,4 +47,6 @@ public:
   virtual void getDesiredEditorSize(uint32_t &width, uint32_t &height) = 0;
 };
 
-SynthesizerBase *createSynthesizerInstance();
+} // namespace sonic_common
+
+sonic_common::SynthesizerBase *createSynthesizerInstance();

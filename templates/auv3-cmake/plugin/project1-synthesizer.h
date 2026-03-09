@@ -1,7 +1,7 @@
 #include "../lib/common/synthesizer_base.h"
 #include <math.h>
 
-class Project1Synthesizer : public SynthesizerBase {
+class Project1Synthesizer : public sonic_common::SynthesizerBase {
 private:
   float sampleRate = 0.;
   float phase = 0.f;
@@ -14,7 +14,7 @@ private:
   float paramOscVolume = 0.5f;
 
 public:
-  void setupParameters(ParameterBuilder &builder) override;
+  void setupParameters(sonic_common::ParameterBuilder &builder) override;
   void setParameter(uint64_t address, double value) override;
   void prepareProcessing(double sampleRate, uint32_t maxFrameCount) override;
   void processAudio(float *bufferL, float *bufferR, uint32_t frames) override;

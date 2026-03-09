@@ -1,7 +1,8 @@
 #include "project1-synthesizer.h"
 #include <stdio.h>
 
-void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
+void Project1Synthesizer::setupParameters(
+    sonic_common::ParameterBuilder &builder) {
   builder.addUnary(0, "gain", "Gain", 0.1);
   builder.addEnum(1, "waveType", "Wave Type", "saw",
                   {"saw", "square", "triangle", "sine"});
@@ -65,7 +66,7 @@ void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
   height = 600;
 }
 
-SynthesizerBase *createSynthesizerInstance() {
+sonic_common::SynthesizerBase *createSynthesizerInstance() {
   printf("project1-synthesizer: createSynthesizerInstance 0340\n");
   return new Project1Synthesizer();
 }
