@@ -23,4 +23,16 @@ public:
   setParameterChangeCallback(std::function<void(uint64_t, double)> fn) = 0;
 };
 
+class IPluginDomain {
+public:
+  virtual void initialize() = 0;
+  virtual void prepareProcessing(double sampleRate, uint32_t maxFrameCount) = 0;
+  virtual void processAudio(float *bufferL, float *bufferR,
+                            uint32_t frames) = 0;
+  virtual void setParameter(uint64_t address, double value) = 0;
+  virtual void noteOn(int noteNumber, double velocity) = 0;
+  virtual void noteOff(int noteNumber) = 0;
+  virtual void getDesiredEditorSize(uint32_t &width, uint32_t &height) = 0;
+};
+
 } // namespace sonic_common
