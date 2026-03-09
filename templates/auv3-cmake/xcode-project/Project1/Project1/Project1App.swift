@@ -13,7 +13,7 @@ struct Project1App: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(hostModel: hostModel)
+            ContentView2(hostModel: hostModel)
         }
     }
 }
