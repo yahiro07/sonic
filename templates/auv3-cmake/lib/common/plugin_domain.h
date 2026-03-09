@@ -1,22 +1,13 @@
 #pragma once
 
+#include "interfaces.h"
 #include "parameter_builder_impl.h"
 #include "parameter_item.h"
 #include "synthesizer_base.h"
 #include <cstdint>
 #include <functional>
 
-class IPlatformParameterIo {
-public:
-  virtual ~IPlatformParameterIo() = default;
-  virtual void
-  registerParameters(std::vector<sonic_common::ParameterItem> &params) = 0;
-  virtual double getParameter(uint64_t address) = 0;
-  virtual void setParameter(uint64_t address, double value) = 0;
-
-  virtual void
-  setParameterChangeCallback(std::function<void(uint64_t, double)> fn) = 0;
-};
+namespace sonic_common {
 
 class PluginDomain {
 private:
@@ -64,3 +55,4 @@ public:
     synth.getDesiredEditorSize(width, height);
   }
 };
+} // namespace sonic_common

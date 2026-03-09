@@ -1,4 +1,5 @@
 #import "./wrapper-auv3-root.h"
+#include "../common/interfaces.h"
 #include "../common/parameter_builder_impl.h"
 #include "../common/plugin_domain.h"
 #include "../common/synthesizer_base.h"
@@ -12,11 +13,12 @@
 #include <objc/NSObject.h>
 #include <vector>
 
-static AUParameter *
-createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
+using namespace sonic_common;
+
+static AUParameter *createAUParameterFromItem(const ParameterItem &entry) {
   AudioUnitParameterOptions paramOptions =
       kAudioUnitParameterFlag_IsWritable | kAudioUnitParameterFlag_IsReadable;
-  if (entry.type == sonic_common::ParameterType::Enum) {
+  if (entry.type == ParameterType::Enum) {
     paramOptions |= kAudioUnitParameterFlag_ValuesHaveStrings;
   }
   AUParameter *param = [AUParameterTree
@@ -47,8 +49,7 @@ public:
     _onParameterChange = fn;
   }
 
-  void registerParameters(
-      std::vector<sonic_common::ParameterItem> &params) override {
+  void registerParameters(std::vector<ParameterItem> &params) override {
     NSMutableArray *auParams = [NSMutableArray array];
     for (const auto &entry : params) {
       [auParams addObject:createAUParameterFromItem(entry)];
@@ -228,7 +229,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 //------------------------------------------------------------
 
 @interface WrapperAuv3ViewFrame () {
-  std::unique_ptr<sonic_common::MacWebView> _webView;
+  std::unique_ptr<MacWebView> _webView;
 }
 @end
 
@@ -246,7 +247,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   root.autoresizesSubviews = YES;
 
   if (!_webView) {
-    _webView = std::make_unique<sonic_common::MacWebView>();
+    _webView = std::make_unique<MacWebView>();
     _webView->attachToParent((__bridge void *)root);
     _webView->loadUrl("http://localhost:3000");
   }

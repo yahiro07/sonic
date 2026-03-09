@@ -7,10 +7,6 @@
 - (void)getDesiredEditorSize:(uint32_t *)width height:(uint32_t *)height;
 @end
 
-// @interface WrapperAuv3ViewController : AUViewController
-// @property(nonatomic, strong) WrapperAuv3AudioUnit *audioUnit;
-// @end
-
 @interface WrapperAuv3ViewFrame : NSObject
 - (void)connectViewToAudioUnit:(WrapperAuv3AudioUnit *)audioUnit
                 viewController:(AUViewController *)viewController;
