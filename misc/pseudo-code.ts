@@ -155,39 +155,73 @@ namespace pseudo_framework_design {
     }
   }
 
+  interface IEditorPortal {
+    getAllParameters(): Record<Int32, Float>;
+    beginEdit(id: Int32): void;
+    performEdit(id: Int32, value: Float): void;
+    endEdit(id: Int32): void;
+    subscribeParameterChange(fn: (id: Int32, value: Float) => void): Int32;
+    unsubscribeParameterChange(token: Int32): void;
+  }
+
+  class EditorPortal implements IEditorPortal {
+    constructor(
+      private parameterManager: IMainThreadParameterManager,
+      private parameterOutputPort: IPlatformControllerOutgoingParameterPort,
+    ) {
+      this.parameterManager = parameterManager;
+    }
+    getAllParameters(): Record<Int32, Float> {
+      return this.parameterManager.getAllParameters();
+    }
+    beginEdit(id: Int32): void {
+      this.parameterOutputPort.beginEdit(id);
+    }
+    performEdit(id: Int32, value: Float): void {
+      this.parameterOutputPort.performEdit(id, value);
+    }
+    endEdit(id: Int32): void {
+      this.parameterOutputPort.endEdit(id);
+    }
+    subscribeParameterChange(fn: (id: Int32, value: Float) => void): Int32 {
+      return this.parameterManager.subscribe(fn);
+    }
+    unsubscribeParameterChange(token: Int32): void {
+      this.parameterManager.unsubscribe(token);
+    }
+  }
+
   class WebViewBridge {
     webViewIo: IWebViewIo | null = null;
     parameterSubscriptionToken: Int32 | null = null;
-    constructor(
-      private parameterOutputPort: IPlatformControllerOutgoingParameterPort,
-      private parameterManager: IMainThreadParameterManager,
-    ) {}
+    constructor(private editorPortal: IEditorPortal) {}
     setup(webViewIo: IWebViewIo) {
       webViewIo.subscribeMessage((msg) => {
         let e = d.decodeMessage(msg);
         if (e.type === "uiLoaded") {
-          const allParams = this.parameterManager.getAllParameters();
+          const allParams = this.editorPortal.getAllParameters();
           webViewIo.sendMessage(d.json(allParams));
         } else if (e.type === "beginEdit") {
-          this.parameterOutputPort.beginEdit(e.id);
+          this.editorPortal.beginEdit(e.id);
         } else if (e.type === "performEdit") {
-          this.parameterOutputPort.performEdit(e.id, e.value);
+          this.editorPortal.performEdit(e.id, e.value);
         } else if (e.type === "endEdit") {
-          this.parameterOutputPort.endEdit(e.id);
+          this.editorPortal.endEdit(e.id);
         }
       });
-      this.parameterSubscriptionToken = this.parameterManager.subscribe(
-        (id, value) => {
+      this.parameterSubscriptionToken =
+        this.editorPortal.subscribeParameterChange((id, value) => {
           webViewIo.sendMessage(d.json({ type: "setParameter", id, value }));
-        },
-      );
+        });
       this.webViewIo = webViewIo;
     }
     cleanup() {
       if (this.webViewIo) {
         this.webViewIo.unsubscribeMessage();
         if (this.parameterSubscriptionToken !== null) {
-          this.parameterManager.unsubscribe(this.parameterSubscriptionToken);
+          this.editorPortal.unsubscribeParameterChange(
+            this.parameterSubscriptionToken,
+          );
           this.parameterSubscriptionToken = null;
         }
         this.webViewIo = null;
@@ -383,6 +417,7 @@ namespace pseudo_framework_design {
     parameterManager: IMainThreadParameterManager;
     parameterInputPort: ClapParametersInputPort;
     parameterOutputPort: ClapParametersOutputPort;
+    editorPortal: EditorPortal;
     initialParameterQueue: SPSCQueue<{ id: Int32; value: Float }, 1024> =
       d1.createSPSCQueue();
     constructor() {
@@ -392,6 +427,10 @@ namespace pseudo_framework_design {
       this.parameterManager.setup(parameterEntries);
       this.parameterInputPort = new ClapParametersInputPort();
       this.parameterOutputPort = new ClapParametersOutputPort();
+      this.editorPortal = new EditorPortal(
+        this.parameterManager,
+        this.parameterOutputPort,
+      );
       this.parameterInputPort.subscribeHostOriginatedParameterChange(
         (id, value) => {
           this.parameterManager.setParameter(id, value, true);
@@ -529,7 +568,7 @@ namespace pseudo_framework_design {
     }
 
     createWebViewBridge() {
-      return new WebViewBridge(this.parameterOutputPort, this.parameterManager);
+      return new WebViewBridge(this.editorPortal);
     }
   }
 
@@ -576,6 +615,7 @@ namespace pseudo_framework_design {
 
     uiParameterDestPort: Auv3UiOriginatedParameterDestinationPort;
     parameterManager: MainThreadParameterManager;
+    editorPortal: EditorPortal;
     constructor() {
       this.synth = createSynthesizerInstance();
       const parameterEntries = this.synth.getParameterEntries();
@@ -592,6 +632,11 @@ namespace pseudo_framework_design {
       }
       this.parameterManager = new MainThreadParameterManager();
       this.parameterManager.setup(parameterEntries);
+
+      this.editorPortal = new EditorPortal(
+        this.parameterManager,
+        this.uiParameterDestPort,
+      );
 
       parameterTree.implementorValueObserver((param: any, value: Float) => {
         //parameter flow: Host/UI --> DSP
@@ -636,7 +681,7 @@ namespace pseudo_framework_design {
     }
 
     createWebViewBridge() {
-      return new WebViewBridge(this.uiParameterDestPort, this.parameterManager);
+      return new WebViewBridge(this.editorPortal);
     }
   }
   class AudioUnitViewController {
