@@ -271,7 +271,6 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 //------------------------------------------------------------
 
 @interface WrapperAuv3ViewFrame () {
-  // NSTextField *_label;
   std::unique_ptr<sonic_common::MacWebView> _webView;
 }
 @end
@@ -289,20 +288,6 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   root.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   root.autoresizesSubviews = YES;
 
-  // _label =
-  //     [NSTextField labelWithString:@"Hello from Wrapper AUv3 static
-  //     library"];
-  // _label.translatesAutoresizingMaskIntoConstraints = NO;
-  // _label.font = [NSFont systemFontOfSize:20 weight:NSFontWeightSemibold];
-  // _label.textColor = [NSColor whiteColor];
-
-  // [root addSubview:_label];
-
-  // [NSLayoutConstraint activateConstraints:@[
-  //   [_label.centerXAnchor constraintEqualToAnchor:root.centerXAnchor],
-  //   [_label.centerYAnchor constraintEqualToAnchor:root.centerYAnchor],
-  // ]];
-
   if (!_webView) {
     _webView = std::make_unique<sonic_common::MacWebView>();
     _webView->attachToParent((__bridge void *)root);
@@ -319,7 +304,6 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 
 - (void)disconnectViewFromAudioUnit {
   printf("WrapperAuv3ViewFrame disconnectViewFromAudioUnit\n");
-  // _label = nil;
   if (_webView) {
     _webView->removeFromParent();
     _webView.reset();
@@ -327,62 +311,3 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 }
 
 @end
-
-//------------------------------------------------------------
-
-// @interface WrapperAuv3ViewController () {
-
-//   WrapperAuv3ViewFrame *_viewFrame;
-// }
-// @end
-
-// @implementation WrapperAuv3ViewController
-
-// - (void)loadView {
-//   self.view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
-// }
-
-// - (void)viewDidLoad {
-//   printf("WrapperAuv3ViewController viewDidLoad\n");
-//   [super viewDidLoad];
-//   [self setupUiView];
-//   [self refreshUiState];
-// }
-
-// - (void)dealloc {
-//   [self cleanupUiView];
-// }
-
-// - (WrapperAuv3AudioUnit *)getAudioUnit {
-//   return _audioUnit;
-// }
-// - (void)setAudioUnit:(WrapperAuv3AudioUnit *)audioUnit {
-//   printf("WrapperAuv3ViewController setAudioUnit\n");
-//   _audioUnit = audioUnit;
-//   dispatch_async(dispatch_get_main_queue(), ^{
-//     if ([self isViewLoaded]) {
-//       [self refreshUiState];
-//     }
-//   });
-// }
-// #pragma mark -
-
-// - (void)setupUiView {
-//   printf("WrapperAuv3ViewController setupUiView\n");
-//   if (_label != nil) {
-//     return;
-//   }
-
-// }
-
-// - (void)refreshUiState {
-//   [self setupUiView];
-//   _label.stringValue = self.audioUnit != nil
-//                            ? @"Hello from Wrapper AUv3 static library"
-//                            : @"Loading Wrapper AUv3 UI...";
-// }
-
-// - (void)cleanupUiView {
-// }
-
-// @end

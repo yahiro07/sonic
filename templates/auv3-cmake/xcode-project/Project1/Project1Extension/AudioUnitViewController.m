@@ -1,10 +1,5 @@
 #import "./AudioUnitViewController.h"
 #include <Foundation/Foundation.h>
-// #import <AppKit/AppKit.h>
-// #import <AudioToolbox/AudioToolbox.h>
-// #import <Cocoa/Cocoa.h>
-// #import <CoreAudioKit/AUViewController.h>
-// #import <Foundation/Foundation.h>
 #import <WebKit/WebKit.h>
 
 @interface AudioUnitViewController ()
@@ -37,15 +32,8 @@
   self.view = [[NSView alloc]
       initWithFrame:NSMakeRect(0, 0, 480, 240)]; // temporal size
   self.view.wantsLayer = YES;
-  // self.view.layer.backgroundColor =
-  //     [[NSColor yellowColor] colorWithAlphaComponent:0.3].CGColor;
   self.view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 }
-
-// - (void)setFrame:(CGRect)newSize {
-//   printf("AudioUnitViewController setFrame %f %f\n", newSize.size.width,
-//          newSize.size.height);
-// }
 
 - (void)viewDidLoad {
   printf("AudioUnitViewController viewDidLoad\n");
@@ -70,45 +58,5 @@
   }
   self.audioUnit = nil;
 }
-
-// - (void)connectUIToAudioUnitIfPossible {
-//   if (self.audioUnit == nil || self.viewFrame == nil) {
-//     return;
-//   }
-
-//   // self.embeddedViewController.audioUnit = self.audioUnit;
-// }
-
-// - (void)loadView {
-//   self.view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
-// }
-
-// - (void)ensureEmbeddedViewController {
-// if (self.embeddedViewController != nil) {
-//   return;
-// }
-// if (self.viewFrame != nil) {
-//   return;
-// }
-
-// WrapperAuv3ViewController *viewController =
-//     [[WrapperAuv3ViewController alloc] init];
-// self.embeddedViewController = viewController;
-
-// [self addChildViewController:viewController];
-// viewController.view.translatesAutoresizingMaskIntoConstraints = NO;
-// [self.view addSubview:viewController.view];
-
-// [NSLayoutConstraint activateConstraints:@[
-//   [viewController.view.leadingAnchor
-//       constraintEqualToAnchor:self.view.leadingAnchor],
-//   [viewController.view.trailingAnchor
-//       constraintEqualToAnchor:self.view.trailingAnchor],
-//   [viewController.view.topAnchor
-//   constraintEqualToAnchor:self.view.topAnchor],
-//   [viewController.view.bottomAnchor
-//       constraintEqualToAnchor:self.view.bottomAnchor],
-// ]];
-// }
 
 @end
