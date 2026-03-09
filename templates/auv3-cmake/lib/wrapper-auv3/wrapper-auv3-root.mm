@@ -286,6 +286,8 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   root.wantsLayer = YES;
   root.layer.backgroundColor = [[NSColor colorWithCalibratedWhite:0.1
                                                             alpha:1.0] CGColor];
+  root.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+  root.autoresizesSubviews = YES;
 
   // _label =
   //     [NSTextField labelWithString:@"Hello from Wrapper AUv3 static

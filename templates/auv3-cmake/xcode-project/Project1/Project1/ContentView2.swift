@@ -14,8 +14,8 @@ struct ContentView2: View {
       //Adding a border to the parent of a view spanning process boundaries seems to break hit testing
       //Occurs on macOS but not on iPad. Compatibility or compatibility issue between NSView and View?
       //Backgrounds and such are fine
-      //.border(Color.red, width: 2) //BAD!!
-      .background(Color.blue)
+      // .border(Color.red, width: 2) //BAD!!
+      // .background(Color.blue)  //OK
     } else {
       Text(hostModel.viewModel.message)
         .frame(minWidth: 400, minHeight: 200)

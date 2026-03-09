@@ -175,6 +175,7 @@ void MacWebView::attachToParent(void *parent) {
   }
   [parentView addSubview:impl->webView];
   [impl->webView setFrame:parentView.bounds];
+  impl->webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 }
 
 void MacWebView::removeFromParent() {

@@ -1,4 +1,5 @@
 #import "./AudioUnitViewController.h"
+#include <Foundation/Foundation.h>
 // #import <AppKit/AppKit.h>
 // #import <AudioToolbox/AudioToolbox.h>
 // #import <Cocoa/Cocoa.h>
@@ -35,6 +36,10 @@
   printf("AudioUnitViewController loadView\n");
   self.view = [[NSView alloc]
       initWithFrame:NSMakeRect(0, 0, 480, 240)]; // temporal size
+  self.view.wantsLayer = YES;
+  // self.view.layer.backgroundColor =
+  //     [[NSColor yellowColor] colorWithAlphaComponent:0.3].CGColor;
+  self.view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 }
 
 // - (void)setFrame:(CGRect)newSize {
