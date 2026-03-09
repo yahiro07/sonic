@@ -115,7 +115,7 @@ namespace pseudo_framework_design {
 
     setup(entries: ParameterEntry[]): void {
       const maxId = Math.max(...entries.map((e) => e.id));
-      if (maxId + 1 <= entries.length * 2) {
+      if (maxId + 1 > entries.length * 2) {
         this.parameterStore = new UnorderedMapParameterStore();
       } else {
         const parameterStore = new VectorParameterStore();
@@ -161,7 +161,7 @@ namespace pseudo_framework_design {
     setup(webViewIo: IWebViewIo) {
       webViewIo.subscribeMessage((msg) => {
         let e = d.decodeMessage(msg);
-        if (e.typ === "uiLoaded") {
+        if (e.type === "uiLoaded") {
           const allParams = this.parameterManager.getAllParameters();
           webViewIo.sendMessage(d.json(allParams));
         } else if (e.type === "beginEdit") {
@@ -291,6 +291,17 @@ namespace pseudo_framework_design {
       IPlatformControllerOutgoingParameterPort,
       IPlatformControllerIncomingParameterPort
   {
+    host: AnyTypeOf["clap_host_t"];
+    hostParams: AnyTypeOf["clap_host_params_t"];
+
+    setHosts(
+      host: AnyTypeOf["clap_host_t"],
+      hostParams: AnyTypeOf["clap_host_params_t"],
+    ) {
+      this.host = host;
+      this.hostParams = hostParams;
+    }
+
     listener: ((id: Int32, value: Float) => void) | null = null;
 
     inputEventQueue: SPSCQueue<
@@ -314,11 +325,6 @@ namespace pseudo_framework_design {
         mo: "memory_order_acq_rel",
       ): boolean;
     } = { value: false } as any;
-
-    constructor(
-      private host: AnyTypeOf["clap_host_t"],
-      private hostParams: AnyTypeOf["clap_host_params_t"],
-    ) {}
 
     subscribeParameterChangeFromHost(
       fn: (id: Int32, value: Float) => void,
@@ -363,13 +369,13 @@ namespace pseudo_framework_design {
     }
 
     mainThreadCallback() {
+      this.mainThreadRequestedFlag.store(false, "memory_order_release");
       let e;
       while ((e = this.inputEventQueue.pop()) !== null) {
         if (e.type === "parameter" && this.listener) {
           this.listener(e.id, e.value);
         }
       }
-      this.mainThreadRequestedFlag.store(false, "memory_order_release");
     }
   }
 
@@ -386,12 +392,13 @@ namespace pseudo_framework_design {
     constructor() {
       this.synth = createSynthesizerInstance();
       const parameterEntries = this.synth.getParameterEntries();
-      this.parametersPort = new ClapParametersPort(this.host, this.hostParams);
+      this.parametersPort = new ClapParametersPort();
       this.domainController = new DomainController(
         parameterEntries,
         this.parametersPort,
         this.parametersPort,
       );
+      this.domainController.initialize();
       for (const entry of parameterEntries) {
         this.initialParameterQueue.push({
           id: entry.id,
@@ -400,7 +407,9 @@ namespace pseudo_framework_design {
       }
     }
 
-    initialize() {}
+    initialize() {
+      this.parametersPort.setHosts(this.host, this.hostParams);
+    }
 
     processInternal(
       processData: AnyTypeOf["clap_audio_process_t"] | null,
