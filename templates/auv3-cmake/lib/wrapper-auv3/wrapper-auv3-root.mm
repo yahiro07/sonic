@@ -1,4 +1,6 @@
 #import "./wrapper-auv3-root.h"
+#include <CoreAudioKit/CoreAudioKit.h>
+#include <objc/NSObject.h>
 // #include "../common/parameter_builder_impl.h"
 // #include "../common/synthesizer_base.h"
 #include <AudioToolbox/AudioToolbox.h>
@@ -261,58 +263,27 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 
 //------------------------------------------------------------
 
-@interface WrapperAuv3ViewController () {
+@interface WrapperAuv3ViewFrame () {
   NSTextField *_label;
 }
 @end
 
-@implementation WrapperAuv3ViewController
+@implementation WrapperAuv3ViewFrame
 
-- (void)loadView {
-  self.view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
-}
+- (void)connectViewToAudioUnit:(WrapperAuv3AudioUnit *)audioUnit
+                viewController:(AUViewController *)viewController {
+  printf("WrapperAuv3ViewFrame connectViewToAudioUnit\n");
 
-- (void)viewDidLoad {
-  printf("WrapperAuv3ViewController viewDidLoad\n");
-  [super viewDidLoad];
-  [self setupUiView];
-  [self refreshUiState];
-}
-
-- (void)dealloc {
-  [self cleanupUiView];
-#if !__has_feature(objc_arc)
-  [super dealloc];
-#endif
-}
-
-- (WrapperAuv3AudioUnit *)getAudioUnit {
-  return _audioUnit;
-}
-- (void)setAudioUnit:(WrapperAuv3AudioUnit *)audioUnit {
-  printf("WrapperAuv3ViewController setAudioUnit\n");
-  _audioUnit = audioUnit;
-  dispatch_async(dispatch_get_main_queue(), ^{
-    if ([self isViewLoaded]) {
-      [self refreshUiState];
-    }
-  });
-}
-#pragma mark -
-
-- (void)setupUiView {
-  printf("WrapperAuv3ViewController setupUiView\n");
-  if (_label != nil) {
-    return;
-  }
-
-  NSView *root = self.view;
+  NSView *root = viewController.view;
   root.wantsLayer = YES;
+  root.layer.backgroundColor =
+      [[NSColor colorWithCalibratedWhite:0.1 alpha:1.0] CGColor];
 
   _label =
       [NSTextField labelWithString:@"Hello from Wrapper AUv3 static library"];
   _label.translatesAutoresizingMaskIntoConstraints = NO;
   _label.font = [NSFont systemFontOfSize:20 weight:NSFontWeightSemibold];
+  _label.textColor = [NSColor whiteColor];
 
   [root addSubview:_label];
 
@@ -322,15 +293,68 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   ]];
 }
 
-- (void)refreshUiState {
-  [self setupUiView];
-  _label.stringValue = self.audioUnit != nil
-                           ? @"Hello from Wrapper AUv3 static library"
-                           : @"Loading Wrapper AUv3 UI...";
-}
-
-- (void)cleanupUiView {
+- (void)disconnectViewFromAudioUnit {
+  printf("WrapperAuv3ViewFrame disconnectViewFromAudioUnit\n");
   _label = nil;
 }
 
 @end
+
+//------------------------------------------------------------
+
+// @interface WrapperAuv3ViewController () {
+
+//   WrapperAuv3ViewFrame *_viewFrame;
+// }
+// @end
+
+// @implementation WrapperAuv3ViewController
+
+// - (void)loadView {
+//   self.view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
+// }
+
+// - (void)viewDidLoad {
+//   printf("WrapperAuv3ViewController viewDidLoad\n");
+//   [super viewDidLoad];
+//   [self setupUiView];
+//   [self refreshUiState];
+// }
+
+// - (void)dealloc {
+//   [self cleanupUiView];
+// }
+
+// - (WrapperAuv3AudioUnit *)getAudioUnit {
+//   return _audioUnit;
+// }
+// - (void)setAudioUnit:(WrapperAuv3AudioUnit *)audioUnit {
+//   printf("WrapperAuv3ViewController setAudioUnit\n");
+//   _audioUnit = audioUnit;
+//   dispatch_async(dispatch_get_main_queue(), ^{
+//     if ([self isViewLoaded]) {
+//       [self refreshUiState];
+//     }
+//   });
+// }
+// #pragma mark -
+
+// - (void)setupUiView {
+//   printf("WrapperAuv3ViewController setupUiView\n");
+//   if (_label != nil) {
+//     return;
+//   }
+
+// }
+
+// - (void)refreshUiState {
+//   [self setupUiView];
+//   _label.stringValue = self.audioUnit != nil
+//                            ? @"Hello from Wrapper AUv3 static library"
+//                            : @"Loading Wrapper AUv3 UI...";
+// }
+
+// - (void)cleanupUiView {
+// }
+
+// @end
