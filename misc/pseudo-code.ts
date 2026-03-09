@@ -3,6 +3,7 @@ namespace pseudo_framework_design {
   //📁core
 
   type Int32 = number;
+  type Int64 = number;
   type Float = number;
 
   interface IPlatformControllerOutgoingParameterPort {
@@ -12,10 +13,10 @@ namespace pseudo_framework_design {
   }
 
   interface IPlatformControllerIncomingParameterPort {
-    subscribeParameterChangeFromHost(
+    subscribeHostOriginatedParameterChange(
       fn: (id: Int32, value: Float) => void,
     ): void;
-    unsubscribeParameterChangeFromHost(): void;
+    unsubscribeHostOriginatedParameterChange(): void;
   }
 
   enum ParameterEntryFlags {
@@ -134,6 +135,9 @@ namespace pseudo_framework_design {
         Object.values(this.listeners).forEach((fn) => fn(id, value));
       }
     }
+    getParameter(id: Int32): Float {
+      return this.parameterStore.get(id);
+    }
     getAllParameters(): Record<Int32, Float> {
       const allParams: Record<Int32, Float> = {};
       for (const id of this.parameterIds) {
@@ -157,6 +161,7 @@ namespace pseudo_framework_design {
     constructor(
       private parameterOutputPort: IPlatformControllerOutgoingParameterPort,
       private parameterManager: IMainThreadParameterManager,
+      private options: { updateInternalParameterOnPerformEdit: boolean },
     ) {}
     setup(webViewIo: IWebViewIo) {
       webViewIo.subscribeMessage((msg) => {
@@ -168,7 +173,9 @@ namespace pseudo_framework_design {
           this.parameterOutputPort.beginEdit(e.id);
         } else if (e.type === "performEdit") {
           this.parameterOutputPort.performEdit(e.id, e.value);
-          this.parameterManager.setParameter(e.id, e.value, false);
+          if (this.options?.updateInternalParameterOnPerformEdit) {
+            this.parameterManager.setParameter(e.id, e.value, false);
+          }
         } else if (e.type === "endEdit") {
           this.parameterOutputPort.endEdit(e.id);
         }
@@ -204,17 +211,25 @@ namespace pseudo_framework_design {
     }
 
     initialize() {
-      this.parameterInputPort.subscribeParameterChangeFromHost((id, value) => {
-        this.parameterManager.setParameter(id, value, true);
-      });
+      this.parameterInputPort.subscribeHostOriginatedParameterChange(
+        (id, value) => {
+          this.parameterManager.setParameter(id, value, true);
+        },
+      );
     }
 
     terminate() {
-      this.parameterInputPort.unsubscribeParameterChangeFromHost();
+      this.parameterInputPort.unsubscribeHostOriginatedParameterChange();
     }
 
     createWebViewBridge() {
-      return new WebViewBridge(this.parameterOutputPort, this.parameterManager);
+      return new WebViewBridge(
+        this.parameterOutputPort,
+        this.parameterManager,
+        {
+          updateInternalParameterOnPerformEdit: true,
+        },
+      );
     }
   }
 
@@ -326,12 +341,12 @@ namespace pseudo_framework_design {
       ): boolean;
     } = { value: false } as any;
 
-    subscribeParameterChangeFromHost(
+    subscribeHostOriginatedParameterChange(
       fn: (id: Int32, value: Float) => void,
     ): void {
       this.listener = fn;
     }
-    unsubscribeParameterChangeFromHost(): void {
+    unsubscribeHostOriginatedParameterChange(): void {
       this.listener = null;
     }
 
@@ -529,30 +544,72 @@ namespace pseudo_framework_design {
   //📁adapters/auv3
   declare var d2: any;
 
+  class Auv3UiOriginatedParameterDestinationPort implements IPlatformControllerOutgoingParameterPort {
+    flatParameterTree: Record<Int32, AnyTypeOf["Auv3Parameter"]> = {};
+    token: Int32 = 0;
+
+    constructor(private parameterTree: AnyTypeOf["Auv3ParameterTree"]) {
+      const flatten = (node: any) => {
+        if (node.type === "parameter") {
+          this.flatParameterTree[node.id] = node;
+        } else if (node.type === "folder") {
+          node.children.forEach(flatten);
+        }
+      };
+      flatten(this.parameterTree);
+    }
+
+    beginEdit(address: Int32): void {
+      const parameter = this.flatParameterTree[address];
+      parameter.setValue({ evenType: ".began" });
+    }
+    performEdit(address: Int32, value: Float): void {
+      //parameter flow: Host,DSP <-- UI
+      //this triggers parameterTree.implementorValueObserver callback
+      // which then pushes the change to DSP via SPSCQueue
+      const parameter = this.flatParameterTree[address];
+      parameter.setValue({ value, originator: this.token });
+    }
+    endEdit(address: Int32): void {
+      const parameter = this.flatParameterTree[address];
+      parameter.setValue({ evenType: ".ended" });
+    }
+  }
+
   class AudioUnit {
     synth: ISynthesizerBase;
-    domainController: DomainController;
-    initialParameterQueue: SPSCQueue<{ id: Int32; value: Float }, 1024> =
+    dspParameterQueue: SPSCQueue<{ id: Int32; value: Float }, 1024> =
       d1.createSPSCQueue();
+
+    uiParameterDestPort: Auv3UiOriginatedParameterDestinationPort;
+    parameterManager: MainThreadParameterManager;
     constructor() {
       this.synth = createSynthesizerInstance();
       const parameterEntries = this.synth.getParameterEntries();
       const parameterTree = d2.createAuv3ParameterTree(parameterEntries);
-      const parameterInputPort = d2.createAuv3ParameterInputPort(parameterTree);
-      const parameterOutputPort =
-        d2.createAuv3ParameterOutputPort(parameterTree);
-      this.domainController = new DomainController(
-        parameterEntries,
-        parameterInputPort,
-        parameterOutputPort,
+
+      this.uiParameterDestPort = new Auv3UiOriginatedParameterDestinationPort(
+        parameterTree,
       );
-      this.domainController.initialize();
       for (const entry of parameterEntries) {
-        this.initialParameterQueue.push({
+        this.dspParameterQueue.push({
           id: entry.id,
           value: entry.defaultValue,
         });
       }
+      this.parameterManager = new MainThreadParameterManager();
+      this.parameterManager.setup(parameterEntries);
+
+      parameterTree.implementorValueObserver((param: any, value: Float) => {
+        //parameter flow: Host/UI --> DSP
+        this.dspParameterQueue.push({ id: param.address, value });
+        //parameter flow: Host/UI --> UI (including ui originated reflected value)
+        //cannot determine whether the change is originated from Host or UI here.
+        this.parameterManager.setParameter(param.address, value, true);
+      });
+      parameterTree.implementorValueProvider((param: any) => {
+        return this.parameterManager.getParameter(param.address);
+      });
     }
     internalRenderBlock() {
       return (buffers: any, sourceEvents: any) => {
@@ -560,7 +617,7 @@ namespace pseudo_framework_design {
           events: [],
         };
         let e: { id: Int32; value: Float } | null;
-        while ((e = this.initialParameterQueue.pop())) {
+        while ((e = this.dspParameterQueue.pop())) {
           data.events.push({
             type: "parameterChange",
             id: e.id,
@@ -584,6 +641,16 @@ namespace pseudo_framework_design {
         this.synth.processAudio(buffers[0], buffers[1], data);
       };
     }
+
+    createWebViewBridge() {
+      return new WebViewBridge(
+        this.uiParameterDestPort,
+        this.parameterManager,
+        {
+          updateInternalParameterOnPerformEdit: false,
+        },
+      );
+    }
   }
   class AudioUnitViewController {
     audioUnit: AudioUnit | null = null;
@@ -605,7 +672,7 @@ namespace pseudo_framework_design {
     connectViewToAudioUnit(audioUnit: AudioUnit) {
       this.webView = d.createWebView();
       this.webView.setParent(this.rootView);
-      this.webViewBridge = audioUnit.domainController.createWebViewBridge();
+      this.webViewBridge = audioUnit.createWebViewBridge();
       this.webViewBridge.setup(this.webView);
     }
     disconnectViewFromAudioUnit() {
