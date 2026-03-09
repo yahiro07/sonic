@@ -13,7 +13,8 @@
         (AudioComponentDescription)componentDescription
                                       error:(NSError *_Nullable *_Nullable)
                                                 outError {
-  printf("AudioUnitFactory createAudioUnitWithComponentDescription 0940\n");
+  printf(
+      "AudioUnitViewController createAudioUnitWithComponentDescription 0940\n");
   WrapperAuv3AudioUnit *audioUnit = [[WrapperAuv3AudioUnit alloc]
       initWithComponentDescription:componentDescription
                            options:0
@@ -26,12 +27,13 @@
 }
 
 - (void)loadView {
-  self.view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
-  self.preferredContentSize = NSMakeSize(480, 240);
+  printf("AudioUnitViewController loadView\n");
+  self.view = [[NSView alloc]
+      initWithFrame:NSMakeRect(0, 0, 480, 240)]; // temporal size
 }
 
 - (void)viewDidLoad {
-  printf("AudioUnitFactory viewDidLoad\n");
+  printf("AudioUnitViewController viewDidLoad\n");
   [super viewDidLoad];
   [self ensureInitialized];
 }
@@ -40,7 +42,7 @@
 
 - (void)ensureInitialized {
   if (self.audioUnit && !self.viewFrame) {
-    printf("AudioUnitFactory initialize\n");
+    printf("AudioUnitViewController initialize\n");
     self.viewFrame = [[WrapperAuv3ViewFrame alloc] init];
     [self.viewFrame connectViewToAudioUnit:self.audioUnit viewController:self];
   }

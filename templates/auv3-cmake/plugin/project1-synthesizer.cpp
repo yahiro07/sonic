@@ -59,6 +59,12 @@ void Project1Synthesizer::noteOff(int noteNumber) {
   }
 }
 
+void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
+                                               uint32_t &height) {
+  width = 800;
+  height = 600;
+}
+
 SynthesizerBase *createSynthesizerInstance() {
   printf("project1-synthesizer: createSynthesizerInstance 0340\n");
   return new Project1Synthesizer();

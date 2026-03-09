@@ -20,4 +20,5 @@ public:
   void processAudio(float *bufferL, float *bufferR, uint32_t frames) override;
   void noteOn(int noteNumber, double velocity) override;
   void noteOff(int noteNumber) override;
+  void getDesiredEditorSize(uint32_t &width, uint32_t &height) override;
 };

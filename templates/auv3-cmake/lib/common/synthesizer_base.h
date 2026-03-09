@@ -41,6 +41,8 @@ public:
                             uint32_t frames) = 0;
   virtual void noteOn(int noteNumber, double velocity) = 0;
   virtual void noteOff(int noteNumber) = 0;
+
+  virtual void getDesiredEditorSize(uint32_t &width, uint32_t &height) = 0;
 };
 
 SynthesizerBase *createSynthesizerInstance();

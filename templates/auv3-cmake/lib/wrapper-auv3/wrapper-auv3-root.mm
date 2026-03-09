@@ -2,7 +2,7 @@
 #include <CoreAudioKit/CoreAudioKit.h>
 #include <objc/NSObject.h>
 // #include "../common/parameter_builder_impl.h"
-// #include "../common/synthesizer_base.h"
+#include "../common/synthesizer_base.h"
 #include <AudioToolbox/AudioToolbox.h>
 #include <cstdio>
 #include <cstdlib>
@@ -14,7 +14,7 @@
   AUAudioUnitBus *_outputBus;
   AUAudioUnitBusArray *_outputBusArray;
   AUAudioUnitBusArray *_inputBusArray;
-  // std::unique_ptr<SynthesizerBase> synth;
+  std::unique_ptr<SynthesizerBase> synth;
 }
 @end
 
@@ -59,7 +59,7 @@
     return nil;
   }
 
-  // synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
+  synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
   // auto parameterBuilder = sonic_common::ParameterBuilderImpl();
   // synth->setupParameters(parameterBuilder);
   // auto parameterItems = parameterBuilder.getItems();
@@ -89,6 +89,12 @@
                                               busses:@[]];
 
   return self;
+}
+
+- (void)getDesiredEditorSize:(uint32_t *)width height:(uint32_t *)height {
+  if (synth) {
+    synth->getDesiredEditorSize(*width, *height);
+  }
 }
 
 - (AUAudioUnitBusArray *)outputBusses {
@@ -276,8 +282,8 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 
   NSView *root = viewController.view;
   root.wantsLayer = YES;
-  root.layer.backgroundColor =
-      [[NSColor colorWithCalibratedWhite:0.1 alpha:1.0] CGColor];
+  root.layer.backgroundColor = [[NSColor colorWithCalibratedWhite:0.1
+                                                            alpha:1.0] CGColor];
 
   _label =
       [NSTextField labelWithString:@"Hello from Wrapper AUv3 static library"];
@@ -291,6 +297,13 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
     [_label.centerXAnchor constraintEqualToAnchor:root.centerXAnchor],
     [_label.centerYAnchor constraintEqualToAnchor:root.centerYAnchor],
   ]];
+
+  uint32_t width = 0;
+  uint32_t height = 0;
+  [audioUnit getDesiredEditorSize:&width height:&height];
+  if (width && height) {
+    viewController.preferredContentSize = NSMakeSize(width, height);
+  }
 }
 
 - (void)disconnectViewFromAudioUnit {
