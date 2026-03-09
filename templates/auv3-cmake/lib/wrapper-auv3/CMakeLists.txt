@@ -13,7 +13,8 @@ add_library(wrapper-auv3 STATIC)
 target_sources(wrapper-auv3
 	PRIVATE
     ../common/parameter_builder_impl.cpp
-		wrapper-auv3-root.mm
+		./wrapper-auv3-root.mm
+    ./mac_web_view.mm
 		# $<TARGET_OBJECTS:${PLUGIN_PROJECT_NAME}>
 )
 

@@ -1,5 +1,10 @@
 #import "./AudioUnitViewController.h"
-#import <AppKit/AppKit.h>
+// #import <AppKit/AppKit.h>
+// #import <AudioToolbox/AudioToolbox.h>
+// #import <Cocoa/Cocoa.h>
+// #import <CoreAudioKit/AUViewController.h>
+// #import <Foundation/Foundation.h>
+#import <WebKit/WebKit.h>
 
 @interface AudioUnitViewController ()
 @property(nonatomic, strong, nullable) WrapperAuv3AudioUnit *audioUnit;
@@ -31,6 +36,11 @@
   self.view = [[NSView alloc]
       initWithFrame:NSMakeRect(0, 0, 480, 240)]; // temporal size
 }
+
+// - (void)setFrame:(CGRect)newSize {
+//   printf("AudioUnitViewController setFrame %f %f\n", newSize.size.width,
+//          newSize.size.height);
+// }
 
 - (void)viewDidLoad {
   printf("AudioUnitViewController viewDidLoad\n");

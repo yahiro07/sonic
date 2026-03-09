@@ -3,6 +3,7 @@
 #include <objc/NSObject.h>
 // #include "../common/parameter_builder_impl.h"
 #include "../common/synthesizer_base.h"
+#include "./mac_web_view.h"
 #include <AudioToolbox/AudioToolbox.h>
 #include <cstdio>
 #include <cstdlib>
@@ -270,7 +271,8 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 //------------------------------------------------------------
 
 @interface WrapperAuv3ViewFrame () {
-  NSTextField *_label;
+  // NSTextField *_label;
+  std::unique_ptr<sonic_common::MacWebView> _webView;
 }
 @end
 
@@ -285,18 +287,25 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   root.layer.backgroundColor = [[NSColor colorWithCalibratedWhite:0.1
                                                             alpha:1.0] CGColor];
 
-  _label =
-      [NSTextField labelWithString:@"Hello from Wrapper AUv3 static library"];
-  _label.translatesAutoresizingMaskIntoConstraints = NO;
-  _label.font = [NSFont systemFontOfSize:20 weight:NSFontWeightSemibold];
-  _label.textColor = [NSColor whiteColor];
+  // _label =
+  //     [NSTextField labelWithString:@"Hello from Wrapper AUv3 static
+  //     library"];
+  // _label.translatesAutoresizingMaskIntoConstraints = NO;
+  // _label.font = [NSFont systemFontOfSize:20 weight:NSFontWeightSemibold];
+  // _label.textColor = [NSColor whiteColor];
 
-  [root addSubview:_label];
+  // [root addSubview:_label];
 
-  [NSLayoutConstraint activateConstraints:@[
-    [_label.centerXAnchor constraintEqualToAnchor:root.centerXAnchor],
-    [_label.centerYAnchor constraintEqualToAnchor:root.centerYAnchor],
-  ]];
+  // [NSLayoutConstraint activateConstraints:@[
+  //   [_label.centerXAnchor constraintEqualToAnchor:root.centerXAnchor],
+  //   [_label.centerYAnchor constraintEqualToAnchor:root.centerYAnchor],
+  // ]];
+
+  if (!_webView) {
+    _webView = std::make_unique<sonic_common::MacWebView>();
+    _webView->attachToParent((__bridge void *)root);
+    _webView->loadUrl("http://localhost:3000");
+  }
 
   uint32_t width = 0;
   uint32_t height = 0;
@@ -308,7 +317,11 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 
 - (void)disconnectViewFromAudioUnit {
   printf("WrapperAuv3ViewFrame disconnectViewFromAudioUnit\n");
-  _label = nil;
+  // _label = nil;
+  if (_webView) {
+    _webView->removeFromParent();
+    _webView.reset();
+  }
 }
 
 @end
