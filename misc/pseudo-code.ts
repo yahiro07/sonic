@@ -301,11 +301,7 @@ namespace pseudo_framework_design {
     pop(): T | null;
   }
 
-  class ClapParametersPort
-    implements
-      IPlatformControllerOutgoingParameterPort,
-      IPlatformControllerIncomingParameterPort
-  {
+  class ClapParametersOutputPort implements IPlatformControllerOutgoingParameterPort {
     host: AnyTypeOf["clap_host_t"];
     hostParams: AnyTypeOf["clap_host_params_t"];
 
@@ -317,16 +313,44 @@ namespace pseudo_framework_design {
       this.hostParams = hostParams;
     }
 
+    outputEventQueue: SPSCQueue<
+      | { type: "performEdit"; id: Int32; value: Float }
+      | { type: "beginEdit" | "endEdit"; id: Int32 },
+      256
+    > = d1.createSPSCQueue();
+
+    beginEdit(id: Int32): void {
+      this.outputEventQueue.push({ type: "beginEdit", id });
+      this.hostParams.request_flush(this.host);
+    }
+    performEdit(id: Int32, value: Float): void {
+      this.outputEventQueue.push({ type: "performEdit", id, value });
+      this.hostParams.request_flush(this.host);
+    }
+    endEdit(id: Int32): void {
+      this.outputEventQueue.push({ type: "endEdit", id });
+      this.hostParams.request_flush(this.host);
+    }
+
+    popOutputEvent():
+      | { type: "performEdit"; id: Int32; value: Float }
+      | { type: "beginEdit" | "endEdit"; id: Int32 }
+      | null {
+      return this.outputEventQueue.pop();
+    }
+  }
+
+  class ClapParametersInputPort implements IPlatformControllerIncomingParameterPort {
+    host: AnyTypeOf["clap_host_t"];
+
+    setHosts(host: AnyTypeOf["clap_host_t"]) {
+      this.host = host;
+    }
+
     listener: ((id: Int32, value: Float) => void) | null = null;
 
     inputEventQueue: SPSCQueue<
       { type: "parameter"; id: Int32; value: Float },
-      256
-    > = d1.createSPSCQueue();
-
-    outputEventQueue: SPSCQueue<
-      | { type: "performEdit"; id: Int32; value: Float }
-      | { type: "beginEdit" | "endEdit"; id: Int32 },
       256
     > = d1.createSPSCQueue();
 
@@ -350,19 +374,6 @@ namespace pseudo_framework_design {
       this.listener = null;
     }
 
-    beginEdit(id: Int32): void {
-      this.outputEventQueue.push({ type: "beginEdit", id });
-      this.hostParams.request_flush(this.host);
-    }
-    performEdit(id: Int32, value: Float): void {
-      this.outputEventQueue.push({ type: "performEdit", id, value });
-      this.hostParams.request_flush(this.host);
-    }
-    endEdit(id: Int32): void {
-      this.outputEventQueue.push({ type: "endEdit", id });
-      this.hostParams.request_flush(this.host);
-    }
-
     pushInputEventFromAudioThread(id: Int32, value: Float) {
       this.inputEventQueue.push({ type: "parameter", id, value });
       if (
@@ -374,13 +385,6 @@ namespace pseudo_framework_design {
       ) {
         this.host.request_callback(this.host);
       }
-    }
-
-    popOutputEvent():
-      | { type: "performEdit"; id: Int32; value: Float }
-      | { type: "beginEdit" | "endEdit"; id: Int32 }
-      | null {
-      return this.outputEventQueue.pop();
     }
 
     mainThreadCallback() {
@@ -401,17 +405,19 @@ namespace pseudo_framework_design {
 
     synth: ISynthesizerBase;
     domainController: DomainController;
-    parametersPort: ClapParametersPort;
+    parameterInputPort: ClapParametersInputPort;
+    parameterOutputPort: ClapParametersOutputPort;
     initialParameterQueue: SPSCQueue<{ id: Int32; value: Float }, 1024> =
       d1.createSPSCQueue();
     constructor() {
       this.synth = createSynthesizerInstance();
       const parameterEntries = this.synth.getParameterEntries();
-      this.parametersPort = new ClapParametersPort();
+      this.parameterInputPort = new ClapParametersInputPort();
+      this.parameterOutputPort = new ClapParametersOutputPort();
       this.domainController = new DomainController(
         parameterEntries,
-        this.parametersPort,
-        this.parametersPort,
+        this.parameterInputPort,
+        this.parameterOutputPort,
       );
       this.domainController.initialize();
       for (const entry of parameterEntries) {
@@ -423,7 +429,8 @@ namespace pseudo_framework_design {
     }
 
     initialize() {
-      this.parametersPort.setHosts(this.host, this.hostParams);
+      this.parameterInputPort.setHosts(this.host);
+      this.parameterOutputPort.setHosts(this.host, this.hostParams);
     }
 
     processInternal(
@@ -475,7 +482,7 @@ namespace pseudo_framework_design {
             sampleOffset: e.sample_offset,
           });
           //parameter flow: Host --> UI
-          this.parametersPort.pushInputEventFromAudioThread(
+          this.parameterInputPort.pushInputEventFromAudioThread(
             e.param_id,
             e.value,
           );
@@ -485,7 +492,7 @@ namespace pseudo_framework_design {
       {
         //flush output events to host
         let e;
-        while ((e = this.parametersPort.popOutputEvent()) !== null) {
+        while ((e = this.parameterOutputPort.popOutputEvent()) !== null) {
           if (e.type === "beginEdit") {
             outEvents.try_push({ type: "beginEdit", id: e.id });
           } else if (e.type === "performEdit") {
@@ -536,7 +543,7 @@ namespace pseudo_framework_design {
       this.processInternal(null, inEvents, outEvents);
     }
     onMainThread() {
-      this.parametersPort.mainThreadCallback();
+      this.parameterInputPort.mainThreadCallback();
     }
   }
 
