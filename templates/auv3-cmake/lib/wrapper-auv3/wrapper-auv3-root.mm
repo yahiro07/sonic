@@ -217,4 +217,11 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   }
 }
 
+- (void)dealloc {
+  [self disconnectViewFromAudioUnit];
+#if !__has_feature(objc_arc)
+  [super dealloc];
+#endif
+}
+
 @end
