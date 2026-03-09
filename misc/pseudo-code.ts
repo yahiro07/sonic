@@ -161,7 +161,6 @@ namespace pseudo_framework_design {
     constructor(
       private parameterOutputPort: IPlatformControllerOutgoingParameterPort,
       private parameterManager: IMainThreadParameterManager,
-      private options: { updateInternalParameterOnPerformEdit: boolean },
     ) {}
     setup(webViewIo: IWebViewIo) {
       webViewIo.subscribeMessage((msg) => {
@@ -173,9 +172,6 @@ namespace pseudo_framework_design {
           this.parameterOutputPort.beginEdit(e.id);
         } else if (e.type === "performEdit") {
           this.parameterOutputPort.performEdit(e.id, e.value);
-          if (this.options?.updateInternalParameterOnPerformEdit) {
-            this.parameterManager.setParameter(e.id, e.value, false);
-          }
         } else if (e.type === "endEdit") {
           this.parameterOutputPort.endEdit(e.id);
         }
@@ -196,40 +192,6 @@ namespace pseudo_framework_design {
         }
         this.webViewIo = null;
       }
-    }
-  }
-
-  class DomainController {
-    parameterManager: IMainThreadParameterManager;
-    constructor(
-      parameterEntries: ParameterEntry[],
-      private parameterInputPort: IPlatformControllerIncomingParameterPort,
-      private parameterOutputPort: IPlatformControllerOutgoingParameterPort,
-    ) {
-      this.parameterManager = new MainThreadParameterManager();
-      this.parameterManager.setup(parameterEntries);
-    }
-
-    initialize() {
-      this.parameterInputPort.subscribeHostOriginatedParameterChange(
-        (id, value) => {
-          this.parameterManager.setParameter(id, value, true);
-        },
-      );
-    }
-
-    terminate() {
-      this.parameterInputPort.unsubscribeHostOriginatedParameterChange();
-    }
-
-    createWebViewBridge() {
-      return new WebViewBridge(
-        this.parameterOutputPort,
-        this.parameterManager,
-        {
-          updateInternalParameterOnPerformEdit: true,
-        },
-      );
     }
   }
 
@@ -319,6 +281,17 @@ namespace pseudo_framework_design {
       256
     > = d1.createSPSCQueue();
 
+    listener: ((id: Int32, value: Float) => void) | null = null;
+
+    subscribeUiOriginatedParameterChange(
+      fn: (id: Int32, value: Float) => void,
+    ): void {
+      this.listener = fn;
+    }
+    unsubscribeUiOriginatedParameterChange(): void {
+      this.listener = null;
+    }
+
     beginEdit(id: Int32): void {
       this.outputEventQueue.push({ type: "beginEdit", id });
       this.hostParams.request_flush(this.host);
@@ -326,6 +299,9 @@ namespace pseudo_framework_design {
     performEdit(id: Int32, value: Float): void {
       this.outputEventQueue.push({ type: "performEdit", id, value });
       this.hostParams.request_flush(this.host);
+      if (this.listener) {
+        this.listener(id, value);
+      }
     }
     endEdit(id: Int32): void {
       this.outputEventQueue.push({ type: "endEdit", id });
@@ -347,13 +323,6 @@ namespace pseudo_framework_design {
       this.host = host;
     }
 
-    listener: ((id: Int32, value: Float) => void) | null = null;
-
-    inputEventQueue: SPSCQueue<
-      { type: "parameter"; id: Int32; value: Float },
-      256
-    > = d1.createSPSCQueue();
-
     mainThreadRequestedFlag: {
       //atomic
       value: boolean;
@@ -364,6 +333,13 @@ namespace pseudo_framework_design {
         mo: "memory_order_acq_rel",
       ): boolean;
     } = { value: false } as any;
+
+    inputEventQueue: SPSCQueue<
+      { type: "parameter"; id: Int32; value: Float },
+      256
+    > = d1.createSPSCQueue();
+
+    listener: ((id: Int32, value: Float) => void) | null = null;
 
     subscribeHostOriginatedParameterChange(
       fn: (id: Int32, value: Float) => void,
@@ -404,7 +380,7 @@ namespace pseudo_framework_design {
     hostParams: AnyTypeOf["clap_host_params_t"];
 
     synth: ISynthesizerBase;
-    domainController: DomainController;
+    parameterManager: IMainThreadParameterManager;
     parameterInputPort: ClapParametersInputPort;
     parameterOutputPort: ClapParametersOutputPort;
     initialParameterQueue: SPSCQueue<{ id: Int32; value: Float }, 1024> =
@@ -412,14 +388,20 @@ namespace pseudo_framework_design {
     constructor() {
       this.synth = createSynthesizerInstance();
       const parameterEntries = this.synth.getParameterEntries();
+      this.parameterManager = new MainThreadParameterManager();
+      this.parameterManager.setup(parameterEntries);
       this.parameterInputPort = new ClapParametersInputPort();
       this.parameterOutputPort = new ClapParametersOutputPort();
-      this.domainController = new DomainController(
-        parameterEntries,
-        this.parameterInputPort,
-        this.parameterOutputPort,
+      this.parameterInputPort.subscribeHostOriginatedParameterChange(
+        (id, value) => {
+          this.parameterManager.setParameter(id, value, true);
+        },
       );
-      this.domainController.initialize();
+      this.parameterOutputPort.subscribeUiOriginatedParameterChange(
+        (id, value) => {
+          this.parameterManager.setParameter(id, value, false);
+        },
+      );
       for (const entry of parameterEntries) {
         this.initialParameterQueue.push({
           id: entry.id,
@@ -545,6 +527,10 @@ namespace pseudo_framework_design {
     onMainThread() {
       this.parameterInputPort.mainThreadCallback();
     }
+
+    createWebViewBridge() {
+      return new WebViewBridge(this.parameterOutputPort, this.parameterManager);
+    }
   }
 
   //----------
@@ -611,7 +597,7 @@ namespace pseudo_framework_design {
         //parameter flow: Host/UI --> DSP
         this.dspParameterQueue.push({ id: param.address, value });
         //parameter flow: Host/UI --> UI (including ui originated reflected value)
-        //cannot determine whether the change is originated from Host or UI here.
+        //cannot determine whether the change is originated from Host or UI here
         this.parameterManager.setParameter(param.address, value, true);
       });
       parameterTree.implementorValueProvider((param: any) => {
@@ -650,13 +636,7 @@ namespace pseudo_framework_design {
     }
 
     createWebViewBridge() {
-      return new WebViewBridge(
-        this.uiParameterDestPort,
-        this.parameterManager,
-        {
-          updateInternalParameterOnPerformEdit: false,
-        },
-      );
+      return new WebViewBridge(this.uiParameterDestPort, this.parameterManager);
     }
   }
   class AudioUnitViewController {
