@@ -1,51 +1,55 @@
 #import "./wrapper-auv3-root.h"
-#include "../common/parameter_builder_impl.h"
-#include "../common/synthesizer_base.h"
+// #include "../common/parameter_builder_impl.h"
+// #include "../common/synthesizer_base.h"
 #include <AudioToolbox/AudioToolbox.h>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <memory>
+#include <vector>
 
 @interface WrapperAuv3AudioUnit () {
   AUAudioUnitBus *_outputBus;
   AUAudioUnitBusArray *_outputBusArray;
   AUAudioUnitBusArray *_inputBusArray;
-  std::unique_ptr<SynthesizerBase> synth;
+  // std::unique_ptr<SynthesizerBase> synth;
 }
 @end
 
 @implementation WrapperAuv3AudioUnit
 
-static AUParameter *
-createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
-  AudioUnitParameterOptions paramOptions =
-      kAudioUnitParameterFlag_IsWritable | kAudioUnitParameterFlag_IsReadable;
-  if (entry.type == sonic_common::ParameterType::Enum) {
-    paramOptions |= kAudioUnitParameterFlag_ValuesHaveStrings;
-  }
-  AUParameter *param = [AUParameterTree
-      createParameterWithIdentifier:[NSString
-                                        stringWithUTF8String:entry.identifier
-                                                                 .c_str()]
-                               name:[NSString stringWithUTF8String:entry.label
-                                                                       .c_str()]
-                            address:entry.address
-                                min:(float)entry.minValue
-                                max:(float)entry.maxValue
-                               unit:kAudioUnitParameterUnit_Generic
-                           unitName:nil
-                              flags:paramOptions
-                       valueStrings:nil
-                dependentParameters:nil];
-  param.value = (float)entry.defaultValue;
-  return param;
-}
+// static AUParameter *
+// createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
+//   AudioUnitParameterOptions paramOptions =
+//       kAudioUnitParameterFlag_IsWritable |
+//       kAudioUnitParameterFlag_IsReadable;
+//   if (entry.type == sonic_common::ParameterType::Enum) {
+//     paramOptions |= kAudioUnitParameterFlag_ValuesHaveStrings;
+//   }
+//   AUParameter *param = [AUParameterTree
+//       createParameterWithIdentifier:[NSString
+//                                         stringWithUTF8String:entry.identifier
+//                                                                  .c_str()]
+//                                name:[NSString
+//                                stringWithUTF8String:entry.label
+//                                                                        .c_str()]
+//                             address:entry.address
+//                                 min:(float)entry.minValue
+//                                 max:(float)entry.maxValue
+//                                unit:kAudioUnitParameterUnit_Generic
+//                            unitName:nil
+//                               flags:paramOptions
+//                        valueStrings:nil
+//                 dependentParameters:nil];
+//   param.value = (float)entry.defaultValue;
+//   return param;
+// }
 
 - (instancetype)
     initWithComponentDescription:(AudioComponentDescription)componentDescription
                          options:(AudioComponentInstantiationOptions)options
                            error:(NSError **)outError {
-  printf("initWithComponentDescription 0757\n");
+  printf("initWithComponentDescription 0930\n");
   self = [super initWithComponentDescription:componentDescription
                                      options:options
                                        error:outError];
@@ -53,16 +57,16 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
     return nil;
   }
 
-  synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
-  auto parameterBuilder = sonic_common::ParameterBuilderImpl();
-  synth->setupParameters(parameterBuilder);
-  auto parameterItems = parameterBuilder.getItems();
+  // synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
+  // auto parameterBuilder = sonic_common::ParameterBuilderImpl();
+  // synth->setupParameters(parameterBuilder);
+  // auto parameterItems = parameterBuilder.getItems();
 
-  NSMutableArray *auParams = [NSMutableArray array];
-  for (const auto &entry : parameterItems) {
-    [auParams addObject:createAUParameterFromItem(entry)];
-  }
-  self.parameterTree = [AUParameterTree createTreeWithChildren:auParams];
+  // NSMutableArray *auParams = [NSMutableArray array];
+  // for (const auto &entry : parameterItems) {
+  //   [auParams addObject:createAUParameterFromItem(entry)];
+  // }
+  // self.parameterTree = [AUParameterTree createTreeWithChildren:auParams];
 
   AVAudioFormat *format =
       [[AVAudioFormat alloc] initStandardFormatWithSampleRate:44100.0
@@ -93,24 +97,12 @@ createAUParameterFromItem(const sonic_common::ParameterItem &entry) {
   return _inputBusArray;
 }
 
-- (void)requestViewControllerWithCompletionHandler:
-    (void (^)(AUViewControllerBase *_Nullable viewController))
-        completionHandler {
-  printf("requestViewControllerWithCompletionHandler\n");
-  dispatch_async(dispatch_get_main_queue(), ^{
-    WrapperAuv3ViewController *viewController =
-        [[WrapperAuv3ViewController alloc] init];
-    viewController.audioUnit = (WrapperAuv3AudioUnit *)self;
-    completionHandler(viewController);
-  });
-}
-
 - (BOOL)allocateRenderResourcesAndReturnError:(NSError *_Nullable *)outError {
   auto sampleRate = self.outputBusses[0].format.sampleRate;
   auto maxFrameLength = self.maximumFramesToRender;
   printf("call prepareProcessing, sampleRate: %f, maxFrameLength: %u\n",
          sampleRate, maxFrameLength);
-  synth->prepareProcessing(sampleRate, maxFrameLength);
+  // synth->prepareProcessing(sampleRate, maxFrameLength);
   return [super allocateRenderResourcesAndReturnError:outError];
 }
 
@@ -123,7 +115,8 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 }
 
 - (AUInternalRenderBlock)internalRenderBlock {
-  SynthesizerBase *synthPtr = synth.get();
+  // SynthesizerBase *synthPtr = synth.get();
+  AUAudioFrameCount maxFramesToRender = self.maximumFramesToRender;
 
   AUInternalRenderBlock block = ^AUAudioUnitStatus(
       AudioUnitRenderActionFlags *actionFlags, const AudioTimeStamp *timestamp,
@@ -133,34 +126,130 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
     (void)actionFlags;
     (void)timestamp;
     (void)outputBusNumber;
-    (void)realtimeEventListHead;
     (void)pullInputBlock;
 
     // Handle MIDI and Parameter events
-    const AURenderEvent *event = realtimeEventListHead;
-    while (event != nullptr) {
-      if (event->head.eventType == AURenderEventMIDI) {
-        uint8_t status = event->MIDI.data[0] & 0xF0;
-        uint8_t data1 = event->MIDI.data[1];
-        uint8_t data2 = event->MIDI.data[2];
+    // const AURenderEvent *event = realtimeEventListHead;
+    // while (event != nullptr) {
+    //   if (event->head.eventType == AURenderEventMIDI) {
+    //     uint8_t status = event->MIDI.data[0] & 0xF0;
+    //     uint8_t data1 = event->MIDI.data[1];
+    //     uint8_t data2 = event->MIDI.data[2];
 
-        if (status == 0x90 && data2 > 0) {
-          synthPtr->noteOn(data1, (double)data2 / 127.0);
-        } else if (status == 0x80 || (status == 0x90 && data2 == 0)) {
-          synthPtr->noteOff(data1);
-        }
-      } else if (event->head.eventType == AURenderEventParameter) {
-        synthPtr->setParameter(event->parameter.parameterAddress,
-                               event->parameter.value);
-      }
-      event = event->head.next;
-    }
+    //     if (status == 0x90 && data2 > 0) {
+    //       synthPtr->noteOn(data1, (double)data2 / 127.0);
+    //     } else if (status == 0x80 || (status == 0x90 && data2 == 0)) {
+    //       synthPtr->noteOff(data1);
+    //     }
+    //   } else if (event->head.eventType == AURenderEventParameter) {
+    //     synthPtr->setParameter(event->parameter.parameterAddress,
+    //                            event->parameter.value);
+    //   }
+    //   event = event->head.next;
+    // }
 
-    // process audio
-    float *left = (float *)outputData->mBuffers[0].mData;
-    float *right = (float *)outputData->mBuffers[1].mData;
-    // debugFillNoise(left, right, frameCount);
-    synthPtr->processAudio(left, right, frameCount);
+    // // process audio
+    // if (outputData == nullptr || outputData->mNumberBuffers == 0) {
+    //   return noErr;
+    // }
+
+    // auto clearOutput = [&]() {
+    //   if (outputData == nullptr) {
+    //     return;
+    //   }
+    //   for (UInt32 i = 0; i < outputData->mNumberBuffers; i++) {
+    //     AudioBuffer *b = &outputData->mBuffers[i];
+    //     if (b->mData != nullptr && b->mDataByteSize > 0) {
+    //       std::memset(b->mData, 0, (size_t)b->mDataByteSize);
+    //     }
+    //   }
+    //   if (actionFlags != nullptr) {
+    //     *actionFlags |= kAudioUnitRenderAction_OutputIsSilence;
+    //   }
+    // };
+
+    // if (frameCount > maxFramesToRender) {
+    //   clearOutput();
+    //   return kAudioUnitErr_TooManyFramesToProcess;
+    // }
+
+    // Many hosts will provide either:
+    // - non-interleaved stereo: mNumberBuffers == 2 (L/R)
+    // - interleaved stereo: mNumberBuffers == 1 (LRLR...)
+    // if (outputData->mNumberBuffers >= 2) {
+    //   AudioBuffer *bufferL = &outputData->mBuffers[0];
+    //   AudioBuffer *bufferR = &outputData->mBuffers[1];
+    //   if (bufferL->mData == nullptr || bufferR->mData == nullptr) {
+    //     clearOutput();
+    //     return noErr;
+    //   }
+
+    //   auto neededBytes = (UInt32)(frameCount * sizeof(float));
+    //   if (bufferL->mDataByteSize < neededBytes ||
+    //       bufferR->mDataByteSize < neededBytes) {
+    //     clearOutput();
+    //     return noErr;
+    //   }
+
+    //   float *left = (float *)bufferL->mData;
+    //   float *right = (float *)bufferR->mData;
+    //   // debugFillNoise(left, right, frameCount);
+    //   synthPtr->processAudio(left, right, frameCount);
+    // } else {
+    //   // interleaved
+    //   AudioBuffer *buffer = &outputData->mBuffers[0];
+    //   if (buffer->mData == nullptr) {
+    //     clearOutput();
+    //     return noErr;
+    //   }
+
+    //   UInt32 channels = buffer->mNumberChannels;
+    //   if (channels == 0) {
+    //     clearOutput();
+    //     return noErr;
+    //   }
+
+    //   auto neededSamples = (size_t)frameCount * (size_t)channels;
+    //   auto availableSamples = (size_t)(buffer->mDataByteSize /
+    //   sizeof(float)); if (availableSamples < neededSamples) {
+    //     clearOutput();
+    //     return noErr;
+    //   }
+
+    //   static thread_local std::vector<float> tmpL;
+    //   static thread_local std::vector<float> tmpR;
+    //   if (tmpL.size() < (size_t)frameCount) {
+    //     tmpL.resize((size_t)frameCount);
+    //     tmpR.resize((size_t)frameCount);
+    //   }
+
+    //   float *interleaved = (float *)buffer->mData;
+
+    //   if (channels == 1) {
+    //     for (AUAudioFrameCount i = 0; i < frameCount; i++) {
+    //       tmpL[(size_t)i] = interleaved[(size_t)i];
+    //     }
+    //     synthPtr->processAudio(tmpL.data(), tmpL.data(), frameCount);
+    //     for (AUAudioFrameCount i = 0; i < frameCount; i++) {
+    //       interleaved[(size_t)i] = tmpL[(size_t)i];
+    //     }
+    //   } else {
+    //     // Use the first two channels as L/R; preserve any additional
+    //     channels. for (AUAudioFrameCount i = 0; i < frameCount; i++) {
+    //       size_t base = (size_t)i * (size_t)channels;
+    //       tmpL[(size_t)i] = interleaved[base + 0];
+    //       tmpR[(size_t)i] = interleaved[base + 1];
+    //     }
+
+    //     synthPtr->processAudio(tmpL.data(), tmpR.data(), frameCount);
+
+    //     for (AUAudioFrameCount i = 0; i < frameCount; i++) {
+    //       size_t base = (size_t)i * (size_t)channels;
+    //       interleaved[base + 0] = tmpL[(size_t)i];
+    //       interleaved[base + 1] = tmpR[(size_t)i];
+    //     }
+    //   }
+    // }
 
     return noErr;
   };
@@ -179,18 +268,22 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 
 @implementation WrapperAuv3ViewController
 
+- (void)loadView {
+  self.view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
+}
+
 - (void)viewDidLoad {
   printf("WrapperAuv3ViewController viewDidLoad\n");
   [super viewDidLoad];
-  if (!_audioUnit) {
-    return;
-  }
-  // for second or later generated view(?)
   [self setupUiView];
+  [self refreshUiState];
 }
 
 - (void)dealloc {
   [self cleanupUiView];
+#if !__has_feature(objc_arc)
+  [super dealloc];
+#endif
 }
 
 - (WrapperAuv3AudioUnit *)getAudioUnit {
@@ -201,8 +294,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   _audioUnit = audioUnit;
   dispatch_async(dispatch_get_main_queue(), ^{
     if ([self isViewLoaded]) {
-      // for initial generated view(?)
-      [self setupUiView];
+      [self refreshUiState];
     }
   });
 }
@@ -210,10 +302,15 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 
 - (void)setupUiView {
   printf("WrapperAuv3ViewController setupUiView\n");
-  NSView *root = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
+  if (_label != nil) {
+    return;
+  }
+
+  NSView *root = self.view;
   root.wantsLayer = YES;
 
-  _label = [NSTextField labelWithString:@"(waiting for audio unit...)"];
+  _label =
+      [NSTextField labelWithString:@"Hello from Wrapper AUv3 static library"];
   _label.translatesAutoresizingMaskIntoConstraints = NO;
   _label.font = [NSFont systemFontOfSize:20 weight:NSFontWeightSemibold];
 
@@ -223,8 +320,13 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
     [_label.centerXAnchor constraintEqualToAnchor:root.centerXAnchor],
     [_label.centerYAnchor constraintEqualToAnchor:root.centerYAnchor],
   ]];
+}
 
-  self.view = root;
+- (void)refreshUiState {
+  [self setupUiView];
+  _label.stringValue = self.audioUnit != nil
+                           ? @"Hello from Wrapper AUv3 static library"
+                           : @"Loading Wrapper AUv3 UI...";
 }
 
 - (void)cleanupUiView {

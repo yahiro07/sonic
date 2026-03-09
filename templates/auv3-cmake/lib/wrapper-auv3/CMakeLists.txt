@@ -17,6 +17,12 @@ target_sources(wrapper-auv3
 		# $<TARGET_OBJECTS:${PLUGIN_PROJECT_NAME}>
 )
 
+target_compile_options(wrapper-auv3
+	PRIVATE
+		$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>
+		$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-weak>
+)
+
 target_include_directories(wrapper-auv3
 	PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
