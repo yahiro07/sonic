@@ -1,16 +1,12 @@
-#import "./AudioUnitFactory.h"
+#import "./AudioUnitViewController.h"
 #import <AppKit/AppKit.h>
 
-@interface AudioUnitFactory ()
+@interface AudioUnitViewController ()
 @property(nonatomic, strong, nullable) WrapperAuv3AudioUnit *audioUnit;
 @property(nonatomic, strong, nullable) WrapperAuv3ViewFrame *viewFrame;
 @end
 
-@implementation AudioUnitFactory
-
-- (void)beginRequestWithExtensionContext:(NSExtensionContext *)context {
-  (void)context;
-}
+@implementation AudioUnitViewController
 
 - (nullable AUAudioUnit *)
     createAudioUnitWithComponentDescription:

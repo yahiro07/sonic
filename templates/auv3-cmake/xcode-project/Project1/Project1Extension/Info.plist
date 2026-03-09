@@ -12,7 +12,7 @@
 					<key>description</key>
 					<string>Project1Extension</string>
 					<key>factoryFunction</key>
-					<string>AudioUnitFactory</string>
+					<string>AudioUnitViewController</string>
 					<key>manufacturer</key>
 					<string>Sonx</string>
 					<key>name</key>
@@ -35,7 +35,7 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.AudioUnit-UI</string>
 		<key>NSExtensionPrincipalClass</key>
-		<string>AudioUnitFactory</string>
+		<string>AudioUnitViewController</string>
 	</dict>
 </dict>
 </plist>

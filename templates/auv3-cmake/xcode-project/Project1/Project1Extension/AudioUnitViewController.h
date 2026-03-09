@@ -9,6 +9,5 @@
 // Keep the principal AUv3 UI entry point in the extension target and delegate
 // the actual AU/UI implementation to the static library.
 
-@interface AudioUnitFactory
-    : AUViewController <AUAudioUnitFactory, NSExtensionRequestHandling>
+@interface AudioUnitViewController : AUViewController <AUAudioUnitFactory>
 @end
