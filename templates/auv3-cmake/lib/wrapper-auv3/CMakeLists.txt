@@ -1,21 +1,14 @@
-# cmake_minimum_required(VERSION 3.20)
-
 project(wrapper-auv3
 	LANGUAGES OBJCXX CXX
 )
 
 add_library(wrapper-auv3 STATIC)
 
-# set(PLUGIN_DIR ${CMAKE_CURRENT_LIST_DIR}/../../plugin)
-
-# add_subdirectory(${PLUGIN_DIR} ${CMAKE_CURRENT_BINARY_DIR}/plugin) 
-
 target_sources(wrapper-auv3
 	PRIVATE
     ../common/parameter_builder_impl.cpp
 		./wrapper-auv3-root.mm
     ./mac_web_view.mm
-		# $<TARGET_OBJECTS:${PLUGIN_PROJECT_NAME}>
 )
 
 target_compile_options(wrapper-auv3
@@ -27,8 +20,6 @@ target_compile_options(wrapper-auv3
 target_include_directories(wrapper-auv3
 	PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
-		# $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-		# $<INSTALL_INTERFACE:include>
 	PRIVATE
 		${PLUGIN_DIR}
 )
@@ -36,7 +27,3 @@ target_include_directories(wrapper-auv3
 set_target_properties(wrapper-auv3 PROPERTIES
 	PUBLIC_HEADER wrapper-auv3-root.h
 )
-
-# target_link_libraries(wrapper-auv3
-#   plugin
-# )
