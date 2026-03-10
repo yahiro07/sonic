@@ -1,8 +1,11 @@
 #import "./wrapper-auv3-root.h"
 #include "../api/synthesizer-base.h"
 #include "../core/parameter-builder-impl.h"
+#include "../core/parameter-definitions-provider.h"
 #include "../domain/interfaces.h"
+#include "../domain/parameters-store.h"
 #include "./mac-web-view.h"
+#include <AudioToolbox/AUParameters.h>
 #include <AudioToolbox/AudioToolbox.h>
 #include <CoreAudioKit/CoreAudioKit.h>
 #include <cstdio>
@@ -14,7 +17,8 @@
 
 using namespace sonic;
 
-static AUParameter *createAUParameterFromItem(const ParameterItem &entry) {
+static AUParameter *
+createAUParameterFromParameterItem(const ParameterItem &entry) {
   AudioUnitParameterOptions paramOptions =
       kAudioUnitParameterFlag_IsWritable | kAudioUnitParameterFlag_IsReadable;
   if (entry.type == ParameterType::Enum) {
@@ -38,76 +42,187 @@ static AUParameter *createAUParameterFromItem(const ParameterItem &entry) {
   return param;
 }
 
-class IPlatformParameterIo {
-public:
-  virtual ~IPlatformParameterIo() = default;
-  virtual void registerParameters(std::vector<ParameterItem> &params) = 0;
-  virtual double getParameter(uint32_t id) = 0;
-  virtual void setParameter(uint32_t id, double value) = 0;
+static AUParameterTree *createAUParameterTreeFromParameterItems(
+    const std::vector<ParameterItem> &items) {
+  NSMutableArray *auParams = [NSMutableArray array];
+  for (const auto &entry : items) {
+    [auParams addObject:createAUParameterFromParameterItem(entry)];
+  }
+  return [AUParameterTree createTreeWithChildren:auParams];
+}
 
-  virtual void
-  setParameterChangeCallback(std::function<void(uint32_t, double)> fn) = 0;
+static int getMaxIdFromParameterItems(const std::vector<ParameterItem> &items) {
+  int maxId = 0;
+  for (const auto &item : items) {
+    if (item.id > maxId) {
+      maxId = item.id;
+    }
+  }
+  return maxId;
+}
+
+class ControllerParameterPort {
+private:
+  ParameterDefinitionsProvider &_parametersDefinitionProvider;
+  AUParameterTree *parameterTree;
+  AUParameterObserverToken observerToken = 0;
+
+  std::map<int, std::function<void(std::string, double)>> listeners;
+  int nextListenerToken = 0;
+
+public:
+  ControllerParameterPort(
+      AUParameterTree *parameterTree,
+      ParameterDefinitionsProvider &parametersDefinitionProvider)
+      : parameterTree(parameterTree),
+        _parametersDefinitionProvider(parametersDefinitionProvider) {}
+
+  void startObserve() {
+    observerToken = [parameterTree
+        tokenByAddingParameterObserver:^(AUParameterAddress address,
+                                         AUValue value) {
+          auto param = [parameterTree parameterWithAddress:address];
+          if (!param) {
+            return;
+          }
+          auto paramKey = [param.identifier UTF8String];
+          for (const auto &[token, listener] : listeners) {
+            listener(paramKey, (double)value);
+          }
+        }];
+  }
+
+  void stopObserve() {
+    if (observerToken) {
+      [parameterTree removeParameterObserver:observerToken];
+      observerToken = 0;
+    }
+  }
+
+  int subscribeToParameterChanges(
+      std::function<void(std::string, double)> listener) {
+    int token = nextListenerToken++;
+    listeners[token] = listener;
+    if (listeners.size() == 1) {
+      startObserve();
+    }
+    return token;
+  }
+
+  void unsubscribeFromParameterChanges(int token) {
+    listeners.erase(token);
+    if (listeners.empty()) {
+      stopObserve();
+    }
+  }
+
+  void applyParameterEditFromUi(std::string paramKey, double value,
+                                ParameterEditState editState) {
+    auto id = _parametersDefinitionProvider.getIdByParamKey(paramKey);
+    if (id == std::nullopt) {
+      return;
+    }
+    auto param = [parameterTree parameterWithAddress:*id];
+    if (!param) {
+      return;
+    }
+    if (editState == ParameterEditState::Begin) {
+      [param setValue:value
+           originator:observerToken
+           atHostTime:0
+            eventType:AUParameterAutomationEventTypeTouch];
+    } else if (editState == ParameterEditState::End) {
+      [param setValue:value
+           originator:observerToken
+           atHostTime:0
+            eventType:AUParameterAutomationEventTypeRelease];
+    } else if (editState == ParameterEditState::Perform) {
+      [param setValue:value];
+    } else if (editState == ParameterEditState::InstantChange) {
+      [param setValue:value];
+    }
+  }
+
+  void getAllParameters(std::map<std::string, double> &parameters) {
+    auto parameterItems = _parametersDefinitionProvider.getParameterItems();
+    for (const auto &item : parameterItems) {
+      AUParameter *param = [parameterTree parameterWithAddress:item.id];
+      if (param) {
+        parameters[item.paramKey] = param.value;
+      }
+    }
+  }
 };
 
-class AUv3ParameterIo : public IPlatformParameterIo {
-public:
-  AUv3ParameterIo() {}
-
-  void setParameterChangeCallback(
-      std::function<void(uint32_t, double)> fn) override {
-    _onParameterChange = fn;
-  }
-
-  void registerParameters(std::vector<ParameterItem> &params) override {
-    NSMutableArray *auParams = [NSMutableArray array];
-    for (const auto &entry : params) {
-      [auParams addObject:createAUParameterFromItem(entry)];
-    }
-
-    _parameterTree = [AUParameterTree createTreeWithChildren:auParams];
-
-    AUv3ParameterIo *selfPtr = this;
-    _parameterTree.implementorValueObserver =
-        ^(AUParameter *param, AUValue value) {
-          if (selfPtr->_onParameterChange) {
-            selfPtr->_onParameterChange(param.address, (double)value);
-          }
-        };
-
-    //    _parameterTree.implementorValueProvider = ^(AUParameter *param) {
-    //      return param.value;
-    //    };
-  }
-
-  double getParameter(uint32_t id) override {
-    AUParameter *param = [_parameterTree parameterWithAddress:id];
-    return param ? (double)param.value : 0.0;
-  }
-
-  void setParameter(uint32_t id, double value) override {
-    AUParameter *param = [_parameterTree parameterWithAddress:id];
-    if (param) {
-      param.value = (float)value;
-    }
-  }
-
-  AUParameterTree *getParameterTree() const { return _parameterTree; }
-
+class ControllerFacade : IControllerFacade {
 private:
-  AUParameterTree *_parameterTree = nil;
-  std::function<void(uint32_t, double)> _onParameterChange = nullptr;
+  ControllerParameterPort &_parameterPort;
+
+public:
+  ControllerFacade(ControllerParameterPort &parameterPort)
+      : _parameterPort(parameterPort) {}
+
+  int subscribeParameterChange(
+      std::function<void(const std::string, double)> callback) override {
+    return _parameterPort.subscribeToParameterChanges(callback);
+  }
+
+  void unsubscribeParameterChange(int token) override {
+    _parameterPort.unsubscribeFromParameterChanges(token);
+  }
+
+  void applyParameterEditFromUi(std::string paramKey, double value,
+                                ParameterEditState editState) override {
+    _parameterPort.applyParameterEditFromUi(paramKey, value, editState);
+  }
+
+  void getAllParameters(std::map<std::string, double> &parameters) override {
+    _parameterPort.getAllParameters(parameters);
+  }
+
+  void requestNoteOn(int noteNumber, double velocity) override {}
+  void requestNoteOff(int noteNumber) override {}
 };
 
 @interface WrapperAuv3AudioUnit () {
   AUAudioUnitBus *_outputBus;
   AUAudioUnitBusArray *_outputBusArray;
   AUAudioUnitBusArray *_inputBusArray;
-  std::unique_ptr<SynthesizerBase> _synth;
-  std::unique_ptr<AUv3ParameterIo> _parameterIo;
+  SynthesizerBase *_synth;
 }
 @end
 
 @implementation WrapperAuv3AudioUnit
+
+- (void)setupSynth {
+  printf("setupSynth\n");
+  _synth = createSynthesizerInstance();
+  ParameterBuilderImpl builder;
+  _synth->setupParameters(builder);
+  auto parameterItems = builder.getItems();
+  auto parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
+  auto parametersDefinitionProvider = new ParameterDefinitionsProvider();
+  parametersDefinitionProvider->addParameters(parameterItems, 0xFFFFFFFF);
+  auto parametersStore = new ParametersStore();
+  auto maxId = getMaxIdFromParameterItems(parameterItems);
+  parametersStore->setup(maxId);
+  for (const auto &item : parameterItems) {
+    parametersStore->set(item.id, item.defaultValue);
+  }
+  [parameterTree
+      setImplementorValueObserver:^(AUParameter *param, AUValue value) {
+        parametersStore->set(param.address, value);
+        _synth->setParameter(param.address, (double)value);
+      }];
+  [parameterTree setImplementorValueProvider:^(AUParameter *param) {
+    return (float)parametersStore->get(param.address);
+  }];
+  auto controllerParameterPort = std::make_unique<ControllerParameterPort>(
+      parameterTree, *parametersDefinitionProvider);
+  auto controllerFacade = new ControllerFacade(*controllerParameterPort);
+
+  printf("setupSynth, done\n");
+}
 
 - (instancetype)
     initWithComponentDescription:(AudioComponentDescription)componentDescription
@@ -135,23 +250,6 @@ private:
   [self setupSynth];
 
   return self;
-}
-
-- (void)setupSynth {
-  _synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
-  _parameterIo = std::make_unique<AUv3ParameterIo>();
-
-  ParameterBuilderImpl builder;
-  _synth->setupParameters(builder);
-  auto parameterItems = builder.getItems();
-  _parameterIo->registerParameters(parameterItems);
-  for (auto &item : parameterItems) {
-    _synth->setParameter(item.id, item.defaultValue);
-  }
-  _parameterIo->setParameterChangeCallback(
-      [synth = _synth.get()](uint32_t id, double value) {
-        synth->setParameter(id, value);
-      });
 }
 
 - (void)setupBuses {
@@ -199,7 +297,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 }
 
 - (AUInternalRenderBlock)internalRenderBlock {
-  SynthesizerBase *synthPtr = _synth.get();
+  SynthesizerBase *synthPtr = _synth;
   AUAudioFrameCount maxFramesToRender = self.maximumFramesToRender;
 
   AUInternalRenderBlock block = ^AUAudioUnitStatus(
