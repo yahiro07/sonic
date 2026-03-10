@@ -1,18 +1,15 @@
 #include "./logger.h"
-#include "./spsc_queue.h"
-#include <algorithm>
+#include "./spsc-queue.h"
 #include <arpa/inet.h>
 #include <atomic>
 #include <cstring>
 #include <memory>
-#include <stdint.h>
-#include <string.h>
 #include <string>
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
 
-namespace sonic_common {
+namespace sonic {
 
 enum class LogKind {
   Mark,
@@ -256,4 +253,4 @@ void Logger::directLogNonRT(const char *message) {}
 
 Logger logger;
 
-} // namespace sonic_common
+} // namespace sonic

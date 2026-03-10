@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-namespace sonic_common {
+namespace sonic {
 
 class Logger {
 public:
@@ -26,4 +26,4 @@ private:
 
 extern Logger logger;
 
-} // namespace sonic_common
+} // namespace sonic

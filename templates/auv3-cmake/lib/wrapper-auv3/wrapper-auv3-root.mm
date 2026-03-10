@@ -1,5 +1,6 @@
 #import "./wrapper-auv3-root.h"
 #import "../api/synthesizer-base.h"
+#import "../common/logger.h"
 #import "../common/mac-web-view.h"
 #import "../core/parameter-builder-impl.h"
 #import "../core/parameter-definitions-provider.h"
@@ -228,7 +229,8 @@ public:
 @synthesize parameterTree = _parameterTree;
 
 - (void)setupSynth {
-  printf("setupSynth 0221\n");
+  logger.start();
+  logger.mark("setupSynth 0238");
   _synth = createSynthesizerInstance();
   ParameterBuilderImpl builder;
   _synth->setupParameters(builder);
@@ -291,6 +293,10 @@ public:
   [self setupSynth];
 
   return self;
+}
+
+- (void)dealloc {
+  logger.stop();
 }
 
 - (void)setupBuses {

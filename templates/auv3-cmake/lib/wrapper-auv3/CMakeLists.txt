@@ -10,6 +10,7 @@ target_sources(wrapper-auv3
     ../core/parameter-definitions-provider.cpp
 		./wrapper-auv3-root.mm
     ../common/mac-web-view.mm
+    ../common/logger.cpp
 )
 
 target_compile_options(wrapper-auv3

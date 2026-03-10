@@ -2,7 +2,7 @@
 #include <atomic>
 #include <stdint.h>
 
-namespace sonic_common {
+namespace sonic {
 
 template <typename T, size_t Capacity>
 
@@ -49,4 +49,4 @@ public:
   }
 };
 
-} // namespace sonic_common
+} // namespace sonic
