@@ -69,6 +69,7 @@ namespace pseudo_framework_design {
       bufferR: Float[],
       data: IProcessingData,
     ): void;
+    setParameter(id: Int32, value: Float): void;
   }
 
   declare var d: any;
@@ -108,24 +109,36 @@ namespace pseudo_framework_design {
       this.parameters[id] = value;
     }
   }
+  class SwitchingParameterStore {
+    private internalStore: ParametersStore = new VectorParameterStore();
+    setup(maxId: Int32) {
+      if (maxId > 4096) {
+        //this is not preferred but we use unordered map for sparse and large parameter IDs
+        //it is recommended to define dense and small parameter IDs for better performance
+        this.internalStore = new UnorderedMapParameterStore();
+      } else {
+        const parameterStore = new VectorParameterStore();
+        parameterStore.setCapacity(maxId + 1);
+        this.internalStore = parameterStore;
+      }
+    }
+    get(id: Int32) {
+      return this.internalStore.get(id);
+    }
+    set(id: Int32, value: Float) {
+      this.internalStore.set(id, value);
+    }
+  }
 
   class MainThreadParameterManager {
     parameterIds: Int32[] = [];
-    parameterStore: ParametersStore = new VectorParameterStore();
+    parameterStore: SwitchingParameterStore = new SwitchingParameterStore();
     listeners: Record<Int32, (id: Int32, value: Float) => void> = {};
     nextToken: Int32 = 0;
 
     setup(entries: ParameterEntry[]): void {
       const maxId = Math.max(...entries.map((e) => e.id));
-      if (maxId + 1 > entries.length * 2 && maxId > 4096) {
-        //this is not preferred but we use unordered map for sparse and large parameter IDs
-        //it is recommended to define dense and small parameter IDs for better performance
-        this.parameterStore = new UnorderedMapParameterStore();
-      } else {
-        const parameterStore = new VectorParameterStore();
-        parameterStore.setCapacity(maxId + 1);
-        this.parameterStore = parameterStore;
-      }
+      this.parameterStore.setup(maxId);
       entries.forEach((entry) => {
         this.parameterStore.set(entry.id, entry.defaultValue);
       });
@@ -743,11 +756,7 @@ namespace pseudo_framework_design {
     flatParameterTree: Record<Int32, AnyTypeOf["Auv3Parameter"]> = {};
     token: Int32 = 0;
 
-    constructor(
-      private parameterTree: AnyTypeOf["Auv3ParameterTree"],
-      private parameterManager: MainThreadParameterManager,
-      private dspParameterQueue: SPSCQueue<any, any>,
-    ) {
+    constructor(private parameterTree: AnyTypeOf["Auv3ParameterTree"]) {
       const flatten = (node: any) => {
         if (node.type === "parameter") {
           this.flatParameterTree[node.id] = node;
@@ -756,23 +765,6 @@ namespace pseudo_framework_design {
         }
       };
       flatten(this.parameterTree);
-      this.setupParameterTreeCallbacks();
-    }
-
-    setupParameterTreeCallbacks() {
-      this.parameterTree.implementorValueObserver(
-        (param: any, value: Float) => {
-          // this.dspParameterQueue.push({ id: param.address, value });
-          //not routing parameters to DSP since it's supposed to be
-          //sent to renderBlock directly by host.
-
-          //parameter flow: Host --> UI
-          this.parameterManager.setParameter(param.address, value, true);
-        },
-      );
-      this.parameterTree.implementorValueProvider((param: any) => {
-        return this.parameterManager.getParameter(param.address);
-      });
     }
 
     beginEdit(address: Int32): void {
@@ -801,34 +793,67 @@ namespace pseudo_framework_design {
     synth: ISynthesizerBase;
     dspParameterQueue: SPSCQueue<{ id: Int32; value: Float }, 1024> =
       d1.createSPSCQueue();
-
     uiParameterDestPort: Auv3UiOriginatedParameterDestinationPort;
+    parameterTree: AnyTypeOf["Auv3ParameterTree"];
     parameterManager: MainThreadParameterManager;
     editorPortal: EditorPortal;
+    parameterObserverToken: AnyTypeOf["AUParameterObserverToken"] | null = null;
+    dspParameterStore: SwitchingParameterStore = new SwitchingParameterStore();
+
     constructor() {
       this.synth = createSynthesizerInstance();
       const parameterEntries = this.synth.getParameterEntries();
-      const parameterTree = d2.createAuv3ParameterTree(parameterEntries);
+      this.parameterTree = d2.createAuv3ParameterTree(parameterEntries);
+      const maxId = Math.max(...parameterEntries.map((it) => it.id)) + 1;
+      this.dspParameterStore.setup(maxId);
       this.parameterManager = new MainThreadParameterManager();
       this.parameterManager.setup(parameterEntries);
 
       this.uiParameterDestPort = new Auv3UiOriginatedParameterDestinationPort(
-        parameterTree,
-        this.parameterManager,
-        this.dspParameterQueue,
+        this.parameterTree,
       );
       for (const entry of parameterEntries) {
-        this.dspParameterQueue.push({
-          id: entry.id,
-          value: entry.defaultValue,
-        });
+        //here we are in main thread, but there are no running audio thread yet,
+        //so it's safe to set the initial parameters
+        this.synth.setParameter(entry.id, entry.defaultValue);
+        this.dspParameterStore.set(entry.id, entry.defaultValue);
       }
-
       this.editorPortal = new EditorPortal(
         this.parameterManager,
         this.uiParameterDestPort,
       );
+      this.setupParameterTreeCallbacks();
+      this.setupParameterObserver();
     }
+
+    setupParameterTreeCallbacks() {
+      this.parameterTree.implementorValueObserver(
+        (param: any, value: Float) => {
+          //this might not be safe
+          // this.synth.setParameter(param.address, value);
+          // this.dspParameterStore.set(param.address, value);
+
+          //pass parameter to the audio thread by queue
+          //since it might be called from other threads than audio thread.
+          this.dspParameterQueue.push({ id: param.address, value });
+        },
+      );
+      this.parameterTree.implementorValueProvider((param: any) => {
+        return this.dspParameterStore.get(param.id);
+      });
+    }
+    setupParameterObserver() {
+      this.parameterObserverToken =
+        this.parameterTree.tokenByAddingParameterObserver(
+          (address: Int32, value: Float) => {
+            //there is possibility to be called here from not a thread than
+            //main thread.
+            //add hopping by queue if it causes problems
+            this.parameterManager.setParameter(address, value, true);
+          },
+        );
+    }
+
     internalRenderBlock() {
       return (buffers: any, sourceEvents: any) => {
         const data: IProcessingData = {
