@@ -32,10 +32,12 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
                                        uint32_t frames) {
   if (sampleRate == 0.f)
     return;
-  auto freq = exp2f((noteNumber - 57.f) / 12.f) * 440.f;
+  auto relNote = (paramOscPitch * 2.f - 1.f) * 12.f;
+  auto note = noteNumber + relNote;
+  auto freq = exp2f((note - 57.f) / 12.f) * 440.f;
   auto phaseInc = freq / sampleRate;
 
-  auto gain = gateOn ? paramGain : 0.f;
+  auto gain = gateOn ? paramOscVolume : 0.f;
   // auto gain = .1f;
 
   for (uint32_t index = 0; index < frames; index++) {
@@ -74,6 +76,6 @@ std::string Project1Synthesizer::getEditorPageUrl() {
 } // namespace project1
 
 sonic::SynthesizerBase *createSynthesizerInstance() {
-  printf("project1-synthesizer: createSynthesizerInstance 0340\n");
+  printf("project1-synthesizer: createSynthesizerInstance 0655\n");
   return new project1::Project1Synthesizer();
 }
