@@ -7,6 +7,8 @@
 #import "../domain/interfaces.h"
 #import "../domain/parameters-store.h"
 #import "../domain/webview-bridge.h"
+#import "./controller-parameter-port.h"
+#import "./parameter-tree-wrapper.h"
 #import <AudioToolbox/AUParameters.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudioKit/CoreAudioKit.h>
@@ -65,185 +67,6 @@ static int getMaxIdFromParameterItems(const std::vector<ParameterItem> &items) {
   return maxId;
 }
 
-class IParameterTreeWrapper {
-public:
-  virtual ~IParameterTreeWrapper() = default;
-  virtual void setImplementorValueObserver(
-      std::function<void(uint64_t address, double value)> observer) = 0;
-  virtual void setImplementorValueProvider(
-      std::function<double(uint64_t address)> provider) = 0;
-
-  virtual void setParameterValue(uint64_t address, double value,
-                                 void *originator, int eventType) = 0;
-
-  virtual double getParameterValue(uint64_t address) = 0;
-
-  virtual void *tokenByAddingParameterObserver(
-      std::function<void(uint64_t address, double value)> observer) = 0;
-  virtual void removeParameterObserver(void *observerToken) = 0;
-};
-
-class ParameterTreeWrapper : public IParameterTreeWrapper {
-private:
-  AUParameterTree *_parameterTree;
-
-  bool hasValidParameterTree() const {
-    return _parameterTree &&
-           [_parameterTree isKindOfClass:[AUParameterTree class]];
-  }
-
-public:
-  ParameterTreeWrapper(AUParameterTree *parameterTree)
-      : _parameterTree(parameterTree) {
-    if (_parameterTree) {
-      CFRetain((__bridge CFTypeRef)_parameterTree);
-    }
-    if (!hasValidParameterTree()) {
-      const char *className =
-          _parameterTree ? object_getClassName(_parameterTree) : "(null)";
-      printf("invalid parameter tree: ptr=%p class=%s\n", _parameterTree,
-             className);
-      return;
-    }
-  }
-  ~ParameterTreeWrapper() {
-    if (_parameterTree) {
-      CFRelease((__bridge CFTypeRef)_parameterTree);
-      _parameterTree = nil;
-    }
-  }
-
-  void setImplementorValueObserver(
-      std::function<void(uint64_t address, double value)> observer) override {
-    _parameterTree.implementorValueObserver =
-        ^(AUParameter *param, AUValue value) {
-          observer(param.address, (double)value);
-        };
-  }
-  virtual void setImplementorValueProvider(
-      std::function<double(uint64_t address)> provider) override {
-    _parameterTree.implementorValueProvider = ^(AUParameter *param) {
-      return (float)provider(param.address);
-    };
-  }
-
-  virtual void setParameterValue(uint64_t address, double value,
-                                 void *originator, int eventType) override {
-    AUParameter *param = [_parameterTree parameterWithAddress:address];
-    if (param) {
-      [param setValue:(float)value
-           originator:originator
-           atHostTime:0
-            eventType:(AUParameterAutomationEventType)eventType];
-    }
-  }
-  virtual double getParameterValue(uint64_t address) override {
-    AUParameter *param = [_parameterTree parameterWithAddress:address];
-    return param ? [param value] : 0.0;
-  }
-
-  virtual void *tokenByAddingParameterObserver(
-      std::function<void(uint64_t address, double value)> observer) override {
-    return [_parameterTree tokenByAddingParameterObserver:^(
-                               AUParameterAddress address, AUValue value) {
-      observer(address, (double)value);
-    }];
-  }
-  virtual void removeParameterObserver(void *observerToken) override {
-    [_parameterTree removeParameterObserver:observerToken];
-  }
-};
-
-class ControllerParameterPort {
-private:
-  IParameterTreeWrapper &_parameterTreeWrapper;
-  ParameterDefinitionsProvider &_parametersDefinitionProvider;
-  void *ptObserverToken = nullptr;
-
-  std::map<int, std::function<void(std::string, double)>> listeners;
-  int nextListenerToken = 0;
-
-  void startObserve() {
-
-    ptObserverToken = _parameterTreeWrapper.tokenByAddingParameterObserver(
-        ^(AUParameterAddress address, AUValue value) {
-          auto id = (int32_t)address;
-          auto item = _parametersDefinitionProvider.getParameterItemById(id);
-          if (!item) {
-            return;
-          }
-          auto paramKey = item->paramKey;
-          for (const auto &[token, listener] : listeners) {
-            listener(paramKey, (double)value);
-          }
-        });
-    printf("startObserve, observerToken: %p\n", ptObserverToken);
-  }
-
-  void stopObserve() {
-    if (ptObserverToken) {
-      _parameterTreeWrapper.removeParameterObserver(ptObserverToken);
-      ptObserverToken = nullptr;
-    }
-  }
-
-public:
-  ControllerParameterPort(
-      IParameterTreeWrapper &parameterTreeWrapper,
-      ParameterDefinitionsProvider &parametersDefinitionProvider)
-      : _parameterTreeWrapper(parameterTreeWrapper),
-        _parametersDefinitionProvider(parametersDefinitionProvider) {}
-
-  ~ControllerParameterPort() { stopObserve(); }
-
-  int subscribeToParameterChanges(
-      std::function<void(std::string, double)> listener) {
-    int token = nextListenerToken++;
-    listeners[token] = listener;
-    if (listeners.size() == 1) {
-      startObserve();
-    }
-    return token;
-  }
-
-  void unsubscribeFromParameterChanges(int token) {
-    listeners.erase(token);
-    if (listeners.empty()) {
-      stopObserve();
-    }
-  }
-
-  void applyParameterEditFromUi(std::string paramKey, double value,
-                                ParameterEditState editState) {
-    auto idPtr = _parametersDefinitionProvider.getIdByParamKey(paramKey);
-    if (idPtr == std::nullopt) {
-      return;
-    }
-    auto id = *idPtr;
-    if (editState == ParameterEditState::Begin) {
-      _parameterTreeWrapper.setParameterValue(
-          id, value, ptObserverToken, AUParameterAutomationEventTypeTouch);
-    } else if (editState == ParameterEditState::End) {
-      _parameterTreeWrapper.setParameterValue(
-          id, value, ptObserverToken, AUParameterAutomationEventTypeRelease);
-    } else if (editState == ParameterEditState::Perform) {
-      _parameterTreeWrapper.setParameterValue(
-          id, value, ptObserverToken, AUParameterAutomationEventTypeValue);
-    } else if (editState == ParameterEditState::InstantChange) {
-      _parameterTreeWrapper.setParameterValue(
-          id, value, ptObserverToken, AUParameterAutomationEventTypeValue);
-    }
-  }
-
-  void getAllParameters(std::map<std::string, double> &parameters) {
-    auto parameterItems = _parametersDefinitionProvider.getParameterItems();
-    for (const auto &item : parameterItems) {
-      auto value = parameters[item.paramKey] =
-          _parameterTreeWrapper.getParameterValue(item.id);
-    }
-  }
-};
-
 class ControllerFacade : public IControllerFacade {
 private:
   ControllerParameterPort &parameterPort;
@@ -299,7 +122,8 @@ public:
   _synth->setupParameters(builder);
   auto parameterItems = builder.getItems();
   _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
-  _parameterTreeWrapper = new ParameterTreeWrapper(_parameterTree);
+  _parameterTreeWrapper =
+      createParameterTreeWrapper((__bridge void *)_parameterTree);
   _parametersDefinitionProvider = new ParameterDefinitionsProvider();
   _parametersDefinitionProvider->addParameters(parameterItems, 0xFFFFFFFF);
   _parametersStore = new ParametersStore();
@@ -348,9 +172,27 @@ public:
   return self;
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-missing-super-calls"
 - (void)dealloc {
+  delete _controllerFacade;
+  _controllerFacade = nullptr;
+  delete _controllerParameterPort;
+  _controllerParameterPort = nullptr;
+  destroyParameterTreeWrapper(_parameterTreeWrapper);
+  _parameterTreeWrapper = nullptr;
+  delete _parametersStore;
+  _parametersStore = nullptr;
+  delete _parametersDefinitionProvider;
+  _parametersDefinitionProvider = nullptr;
+  delete _synth;
+  _synth = nullptr;
   logger.stop();
+#if !__has_feature(objc_arc)
+  [super dealloc];
+#endif
 }
+#pragma clang diagnostic pop
 
 - (void)setupBuses {
   AVAudioFormat *defaultFormat =
@@ -498,16 +340,24 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   printf("WrapperAuv3ViewFrame disconnectViewFromAudioUnit\n");
   if (_webViewBridge) {
     _webViewBridge->teardown();
+    delete _webViewBridge;
     _webViewBridge = nullptr;
   }
   if (_webView) {
     _webView->removeFromParent();
+    delete _webView;
     _webView = nullptr;
   }
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-missing-super-calls"
 - (void)dealloc {
   [self disconnectViewFromAudioUnit];
+#if !__has_feature(objc_arc)
+  [super dealloc];
+#endif
 }
+#pragma clang diagnostic pop
 
 @end
