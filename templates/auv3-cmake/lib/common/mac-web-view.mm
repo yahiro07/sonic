@@ -8,6 +8,10 @@
 #include <mach-o/dyld.h>
 #include <string>
 
+#if !__has_feature(objc_arc)
+#error "mac-web-view.mm requires ARC. Enable -fobjc-arc for Objective-C++ sources."
+#endif
+
 using namespace sonic;
 
 @interface AppSchemeHandler : NSObject <WKURLSchemeHandler>

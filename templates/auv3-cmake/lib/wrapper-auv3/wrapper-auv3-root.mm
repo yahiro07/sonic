@@ -21,6 +21,11 @@
 #import <objc/runtime.h>
 #import <vector>
 
+#if !__has_feature(objc_arc)
+#error                                                                         \
+    "wrapper-auv3-root.mm requires ARC. Enable -fobjc-arc for Objective-C++ sources."
+#endif
+
 using namespace sonic;
 
 static AUParameter *
@@ -105,35 +110,37 @@ public:
 @end
 
 @implementation WrapperAuv3AudioUnit {
-  SynthesizerBase *_synth;
-  ParameterDefinitionsProvider *_parametersDefinitionProvider;
-  ParametersStore *_parametersStore;
-  IParameterTreeWrapper *_parameterTreeWrapper;
-  ControllerParameterPort *_controllerParameterPort;
-  ControllerFacade *_controllerFacade;
+  std::unique_ptr<SynthesizerBase> _synth;
+  std::unique_ptr<ParameterDefinitionsProvider> _parametersDefinitionProvider;
+  std::unique_ptr<ParametersStore> _parametersStore;
+  std::unique_ptr<IParameterTreeWrapper, ParameterTreeWrapperDeleter>
+      _parameterTreeWrapper;
+  std::unique_ptr<ControllerParameterPort> _controllerParameterPort;
+  std::unique_ptr<ControllerFacade> _controllerFacade;
 }
 @synthesize parameterTree = _parameterTree;
 
 - (void)setupSynth {
   logger.start();
   logger.mark("setupSynth 0238");
-  _synth = createSynthesizerInstance();
+  _synth.reset(createSynthesizerInstance());
   ParameterBuilderImpl builder;
   _synth->setupParameters(builder);
   auto parameterItems = builder.getItems();
   _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
-  _parameterTreeWrapper =
-      createParameterTreeWrapper((__bridge void *)_parameterTree);
-  _parametersDefinitionProvider = new ParameterDefinitionsProvider();
+  _parameterTreeWrapper.reset(
+      createParameterTreeWrapper((__bridge void *)_parameterTree));
+  _parametersDefinitionProvider =
+      std::make_unique<ParameterDefinitionsProvider>();
   _parametersDefinitionProvider->addParameters(parameterItems, 0xFFFFFFFF);
-  _parametersStore = new ParametersStore();
+  _parametersStore = std::make_unique<ParametersStore>();
   auto maxId = getMaxIdFromParameterItems(parameterItems);
   _parametersStore->setup(maxId);
   for (const auto &item : parameterItems) {
     _parametersStore->set(item.id, item.defaultValue);
   }
-  ParametersStore *parameterStorePtr = _parametersStore;
-  SynthesizerBase *synthPtr = _synth;
+  ParametersStore *parameterStorePtr = _parametersStore.get();
+  SynthesizerBase *synthPtr = _synth.get();
   [_parameterTree
       setImplementorValueObserver:^(AUParameter *param, AUValue value) {
         auto id = (int32_t)param.address;
@@ -144,15 +151,16 @@ public:
     auto id = (int32_t)param.address;
     return (float)parameterStorePtr->get(id);
   }];
-  _controllerParameterPort = new ControllerParameterPort(
+  _controllerParameterPort = std::make_unique<ControllerParameterPort>(
       *_parameterTreeWrapper, *_parametersDefinitionProvider);
-  _controllerFacade = new ControllerFacade(*_controllerParameterPort);
+  _controllerFacade =
+      std::make_unique<ControllerFacade>(*_controllerParameterPort);
 
   printf("setupSynth, done\n");
 }
 
 - (IControllerFacade *)getControllerFacade {
-  return (IControllerFacade *)_controllerFacade;
+  return (IControllerFacade *)_controllerFacade.get();
 }
 
 - (instancetype)
@@ -172,27 +180,15 @@ public:
   return self;
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wobjc-missing-super-calls"
 - (void)dealloc {
-  delete _controllerFacade;
-  _controllerFacade = nullptr;
-  delete _controllerParameterPort;
-  _controllerParameterPort = nullptr;
-  destroyParameterTreeWrapper(_parameterTreeWrapper);
-  _parameterTreeWrapper = nullptr;
-  delete _parametersStore;
-  _parametersStore = nullptr;
-  delete _parametersDefinitionProvider;
-  _parametersDefinitionProvider = nullptr;
-  delete _synth;
-  _synth = nullptr;
+  _controllerFacade.reset();
+  _controllerParameterPort.reset();
+  _parameterTreeWrapper.reset();
+  _parametersStore.reset();
+  _parametersDefinitionProvider.reset();
+  _synth.reset();
   logger.stop();
-#if !__has_feature(objc_arc)
-  [super dealloc];
-#endif
 }
-#pragma clang diagnostic pop
 
 - (void)setupBuses {
   AVAudioFormat *defaultFormat =
@@ -242,7 +238,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 }
 
 - (AUInternalRenderBlock)internalRenderBlock {
-  SynthesizerBase *synthPtr = _synth;
+  SynthesizerBase *synthPtr = _synth.get();
   AUAudioFrameCount maxFramesToRender = self.maximumFramesToRender;
 
   AUInternalRenderBlock block = ^AUAudioUnitStatus(
@@ -298,8 +294,8 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 //------------------------------------------------------------
 
 @interface WrapperAuv3ViewFrame () {
-  MacWebView *_webView;
-  WebViewBridge *_webViewBridge;
+  std::unique_ptr<MacWebView> _webView;
+  std::unique_ptr<WebViewBridge> _webViewBridge;
 }
 @end
 
@@ -317,14 +313,15 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   root.autoresizesSubviews = YES;
 
   if (!_webView) {
-    _webView = new MacWebView();
+    _webView = std::make_unique<MacWebView>();
     _webView->attachToParent((__bridge void *)root);
     _webView->loadUrl("http://localhost:3000");
   }
   if (!_webViewBridge) {
     auto controllerFacade = [audioUnit getControllerFacade];
-    auto webViewIo = (IWebViewIo *)_webView;
-    _webViewBridge = new WebViewBridge(*controllerFacade, *webViewIo);
+    auto webViewIo = (IWebViewIo *)_webView.get();
+    _webViewBridge =
+        std::make_unique<WebViewBridge>(*controllerFacade, *webViewIo);
     _webViewBridge->setup();
   }
 
@@ -340,24 +337,16 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   printf("WrapperAuv3ViewFrame disconnectViewFromAudioUnit\n");
   if (_webViewBridge) {
     _webViewBridge->teardown();
-    delete _webViewBridge;
-    _webViewBridge = nullptr;
+    _webViewBridge.reset();
   }
   if (_webView) {
     _webView->removeFromParent();
-    delete _webView;
-    _webView = nullptr;
+    _webView.reset();
   }
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wobjc-missing-super-calls"
 - (void)dealloc {
   [self disconnectViewFromAudioUnit];
-#if !__has_feature(objc_arc)
-  [super dealloc];
-#endif
 }
-#pragma clang diagnostic pop
 
 @end

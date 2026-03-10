@@ -31,4 +31,10 @@ public:
 IParameterTreeWrapper *createParameterTreeWrapper(void *parameterTree);
 void destroyParameterTreeWrapper(IParameterTreeWrapper *wrapper);
 
+struct ParameterTreeWrapperDeleter {
+  void operator()(IParameterTreeWrapper *wrapper) const {
+    destroyParameterTreeWrapper(wrapper);
+  }
+};
+
 } // namespace sonic
