@@ -52,7 +52,7 @@ public:
 // --- AUv3ParameterManager Implementation ---
 class AUv3ParameterIo : public IPlatformParameterIo {
 public:
-  AUv3ParameterIo(WrapperAuv3AudioUnit *wrapper) : _wrapper(wrapper) {}
+  AUv3ParameterIo() {}
 
   void setParameterChangeCallback(
       std::function<void(uint32_t, double)> fn) override {
@@ -95,7 +95,6 @@ public:
   AUParameterTree *getParameterTree() const { return _parameterTree; }
 
 private:
-  __unsafe_unretained WrapperAuv3AudioUnit *_wrapper;
   AUParameterTree *_parameterTree = nil;
   std::function<void(uint32_t, double)> _onParameterChange = nullptr;
 };
@@ -124,7 +123,7 @@ private:
   }
 
   _synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
-  _parameterIo = std::make_unique<AUv3ParameterIo>(self);
+  _parameterIo = std::make_unique<AUv3ParameterIo>();
 
   ParameterBuilderImpl builder;
   _synth->setupParameters(builder);
