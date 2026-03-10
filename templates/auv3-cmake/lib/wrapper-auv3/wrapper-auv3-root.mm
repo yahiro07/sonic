@@ -65,21 +65,39 @@ static int getMaxIdFromParameterItems(const std::vector<ParameterItem> &items) {
   return maxId;
 }
 
-class ControllerParameterPort {
-private:
-  ParameterDefinitionsProvider &_parametersDefinitionProvider;
-  AUParameterTree *_parameterTree;
-  AUParameterObserverToken observerToken = 0;
+class IParameterTreeWrapper {
+public:
+  virtual ~IParameterTreeWrapper() = default;
+  virtual void setImplementorValueObserver(
+      std::function<void(uint64_t address, double value)> observer) = 0;
+  virtual void setImplementorValueProvider(
+      std::function<double(uint64_t address)> provider) = 0;
 
-  std::map<int, std::function<void(std::string, double)>> listeners;
-  int nextListenerToken = 0;
+  virtual void setParameterValue(uint64_t address, double value,
+                                 void *originator, int eventType) = 0;
+
+  virtual double getParameterValue(uint64_t address) = 0;
+
+  virtual void *tokenByAddingParameterObserver(
+      std::function<void(uint64_t address, double value)> observer) = 0;
+  virtual void removeParameterObserver(void *observerToken) = 0;
+};
+
+class ParameterTreeWrapper : public IParameterTreeWrapper {
+private:
+  AUParameterTree *_parameterTree;
 
   bool hasValidParameterTree() const {
     return _parameterTree &&
            [_parameterTree isKindOfClass:[AUParameterTree class]];
   }
 
-  void startObserve() {
+public:
+  ParameterTreeWrapper(AUParameterTree *parameterTree)
+      : _parameterTree(parameterTree) {
+    if (_parameterTree) {
+      CFRetain((__bridge CFTypeRef)_parameterTree);
+    }
     if (!hasValidParameterTree()) {
       const char *className =
           _parameterTree ? object_getClassName(_parameterTree) : "(null)";
@@ -87,46 +105,96 @@ private:
              className);
       return;
     }
-    observerToken = [_parameterTree
-        tokenByAddingParameterObserver:^(AUParameterAddress address,
-                                         AUValue value) {
-          auto param = [_parameterTree parameterWithAddress:address];
-          if (!param) {
-            return;
-          }
-          auto paramKey = [param.identifier UTF8String];
-          for (const auto &[token, listener] : listeners) {
-            listener(paramKey, (double)value);
-          }
-        }];
-    printf("startObserve, observerToken: %p\n", observerToken);
   }
-
-  void stopObserve() {
-    if (observerToken) {
-      [_parameterTree removeParameterObserver:observerToken];
-      observerToken = 0;
-    }
-  }
-
-public:
-  ControllerParameterPort(
-      AUParameterTree *parameterTree,
-      ParameterDefinitionsProvider &parametersDefinitionProvider)
-      : _parameterTree(parameterTree),
-        _parametersDefinitionProvider(parametersDefinitionProvider) {
-    if (_parameterTree) {
-      CFRetain((__bridge CFTypeRef)_parameterTree);
-    }
-  }
-
-  ~ControllerParameterPort() {
-    stopObserve();
+  ~ParameterTreeWrapper() {
     if (_parameterTree) {
       CFRelease((__bridge CFTypeRef)_parameterTree);
       _parameterTree = nil;
     }
   }
+
+  void setImplementorValueObserver(
+      std::function<void(uint64_t address, double value)> observer) override {
+    _parameterTree.implementorValueObserver =
+        ^(AUParameter *param, AUValue value) {
+          observer(param.address, (double)value);
+        };
+  }
+  virtual void setImplementorValueProvider(
+      std::function<double(uint64_t address)> provider) override {
+    _parameterTree.implementorValueProvider = ^(AUParameter *param) {
+      return (float)provider(param.address);
+    };
+  }
+
+  virtual void setParameterValue(uint64_t address, double value,
+                                 void *originator, int eventType) override {
+    AUParameter *param = [_parameterTree parameterWithAddress:address];
+    if (param) {
+      [param setValue:(float)value
+           originator:originator
+           atHostTime:0
+            eventType:(AUParameterAutomationEventType)eventType];
+    }
+  }
+  virtual double getParameterValue(uint64_t address) override {
+    AUParameter *param = [_parameterTree parameterWithAddress:address];
+    return param ? [param value] : 0.0;
+  }
+
+  virtual void *tokenByAddingParameterObserver(
+      std::function<void(uint64_t address, double value)> observer) override {
+    return [_parameterTree tokenByAddingParameterObserver:^(
+                               AUParameterAddress address, AUValue value) {
+      observer(address, (double)value);
+    }];
+  }
+  virtual void removeParameterObserver(void *observerToken) override {
+    [_parameterTree removeParameterObserver:observerToken];
+  }
+};
+
+class ControllerParameterPort {
+private:
+  IParameterTreeWrapper &_parameterTreeWrapper;
+  ParameterDefinitionsProvider &_parametersDefinitionProvider;
+  void *ptObserverToken = nullptr;
+
+  std::map<int, std::function<void(std::string, double)>> listeners;
+  int nextListenerToken = 0;
+
+  void startObserve() {
+
+    ptObserverToken = _parameterTreeWrapper.tokenByAddingParameterObserver(
+        ^(AUParameterAddress address, AUValue value) {
+          auto id = (int32_t)address;
+          auto item = _parametersDefinitionProvider.getParameterItemById(id);
+          if (!item) {
+            return;
+          }
+          auto paramKey = item->paramKey;
+          for (const auto &[token, listener] : listeners) {
+            listener(paramKey, (double)value);
+          }
+        });
+    printf("startObserve, observerToken: %p\n", ptObserverToken);
+  }
+
+  void stopObserve() {
+    if (ptObserverToken) {
+      _parameterTreeWrapper.removeParameterObserver(ptObserverToken);
+      ptObserverToken = nullptr;
+    }
+  }
+
+public:
+  ControllerParameterPort(
+      IParameterTreeWrapper &parameterTreeWrapper,
+      ParameterDefinitionsProvider &parametersDefinitionProvider)
+      : _parameterTreeWrapper(parameterTreeWrapper),
+        _parametersDefinitionProvider(parametersDefinitionProvider) {}
+
+  ~ControllerParameterPort() { stopObserve(); }
 
   int subscribeToParameterChanges(
       std::function<void(std::string, double)> listener) {
@@ -147,38 +215,31 @@ public:
 
   void applyParameterEditFromUi(std::string paramKey, double value,
                                 ParameterEditState editState) {
-    auto id = _parametersDefinitionProvider.getIdByParamKey(paramKey);
-    if (id == std::nullopt) {
+    auto idPtr = _parametersDefinitionProvider.getIdByParamKey(paramKey);
+    if (idPtr == std::nullopt) {
       return;
     }
-    auto param = [_parameterTree parameterWithAddress:*id];
-    if (!param) {
-      return;
-    }
+    auto id = *idPtr;
     if (editState == ParameterEditState::Begin) {
-      [param setValue:value
-           originator:observerToken
-           atHostTime:0
-            eventType:AUParameterAutomationEventTypeTouch];
+      _parameterTreeWrapper.setParameterValue(
+          id, value, ptObserverToken, AUParameterAutomationEventTypeTouch);
     } else if (editState == ParameterEditState::End) {
-      [param setValue:value
-           originator:observerToken
-           atHostTime:0
-            eventType:AUParameterAutomationEventTypeRelease];
+      _parameterTreeWrapper.setParameterValue(
+          id, value, ptObserverToken, AUParameterAutomationEventTypeRelease);
     } else if (editState == ParameterEditState::Perform) {
-      [param setValue:value];
+      _parameterTreeWrapper.setParameterValue(
+          id, value, ptObserverToken, AUParameterAutomationEventTypeValue);
     } else if (editState == ParameterEditState::InstantChange) {
-      [param setValue:value];
+      _parameterTreeWrapper.setParameterValue(
+          id, value, ptObserverToken, AUParameterAutomationEventTypeValue);
     }
   }
 
   void getAllParameters(std::map<std::string, double> &parameters) {
     auto parameterItems = _parametersDefinitionProvider.getParameterItems();
     for (const auto &item : parameterItems) {
-      AUParameter *param = [_parameterTree parameterWithAddress:item.id];
-      if (param) {
-        parameters[item.paramKey] = param.value;
-      }
+      auto value = parameters[item.paramKey] =
+          _parameterTreeWrapper.getParameterValue(item.id);
     }
   }
 };
@@ -224,6 +285,7 @@ public:
   SynthesizerBase *_synth;
   ParameterDefinitionsProvider *_parametersDefinitionProvider;
   ParametersStore *_parametersStore;
+  IParameterTreeWrapper *_parameterTreeWrapper;
   ControllerParameterPort *_controllerParameterPort;
   ControllerFacade *_controllerFacade;
 }
@@ -237,6 +299,7 @@ public:
   _synth->setupParameters(builder);
   auto parameterItems = builder.getItems();
   _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
+  _parameterTreeWrapper = new ParameterTreeWrapper(_parameterTree);
   _parametersDefinitionProvider = new ParameterDefinitionsProvider();
   _parametersDefinitionProvider->addParameters(parameterItems, 0xFFFFFFFF);
   _parametersStore = new ParametersStore();
@@ -258,7 +321,7 @@ public:
     return (float)parameterStorePtr->get(id);
   }];
   _controllerParameterPort = new ControllerParameterPort(
-      _parameterTree, *_parametersDefinitionProvider);
+      *_parameterTreeWrapper, *_parametersDefinitionProvider);
   _controllerFacade = new ControllerFacade(*_controllerParameterPort);
 
   printf("setupSynth, done\n");
