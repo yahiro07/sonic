@@ -1,11 +1,11 @@
 #pragma once
-#include "./synthesizer_base.h"
+#include "../api/synthesizer-base.h"
 #include <string>
 #include <vector>
 
-namespace sonic_common {
+namespace sonic {
 
-typedef uint64_t ParamAddress;
+using ParamId = uint32_t;
 
 enum class ParameterType {
   Unary,
@@ -14,8 +14,8 @@ enum class ParameterType {
 };
 
 typedef struct _ParameterItem {
-  ParamAddress address;
-  std::string identifier;
+  ParamId id;
+  std::string paramKey;
   std::string label;
   double defaultValue;
   double minValue;
@@ -27,4 +27,4 @@ typedef struct _ParameterItem {
   // bool isInternal;
 } ParameterItem;
 
-} // namespace sonic_common
+} // namespace sonic

@@ -1,8 +1,9 @@
 #include "project1-synthesizer.h"
 #include <stdio.h>
 
-void Project1Synthesizer::setupParameters(
-    sonic_common::ParameterBuilder &builder) {
+namespace project1 {
+
+void Project1Synthesizer::setupParameters(sonic::ParameterBuilder &builder) {
   builder.addUnary(0, "gain", "Gain", 0.1);
   builder.addEnum(1, "waveType", "Wave Type", "saw",
                   {"saw", "square", "triangle", "sine"});
@@ -10,14 +11,14 @@ void Project1Synthesizer::setupParameters(
   builder.addUnary(3, "oscVolume", "Volume", 0.5);
 }
 
-void Project1Synthesizer::setParameter(uint64_t address, double value) {
-  if (address == 0) {
+void Project1Synthesizer::setParameter(uint32_t id, double value) {
+  if (id == 0) {
     paramGain = value;
-  } else if (address == 1) {
+  } else if (id == 1) {
     paramWaveType = value;
-  } else if (address == 2) {
+  } else if (id == 2) {
     paramOscPitch = value;
-  } else if (address == 3) {
+  } else if (id == 3) {
     paramOscVolume = value;
   }
 }
@@ -66,7 +67,13 @@ void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
   height = 600;
 }
 
-sonic_common::SynthesizerBase *createSynthesizerInstance() {
+std::string Project1Synthesizer::getEditorPageUrl() {
+  return "http://localhost:3000";
+}
+
+} // namespace project1
+
+sonic::SynthesizerBase *createSynthesizerInstance() {
   printf("project1-synthesizer: createSynthesizerInstance 0340\n");
-  return new Project1Synthesizer();
+  return new project1::Project1Synthesizer();
 }

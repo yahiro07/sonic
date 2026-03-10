@@ -1,13 +1,13 @@
-#include "./parameter_builder_impl.h"
+#include "./parameter-builder-impl.h"
 
-namespace sonic_common {
+namespace sonic {
 
-void ParameterBuilderImpl::addUnary(uint64_t address, Str identifier, Str label,
+void ParameterBuilderImpl::addUnary(uint32_t id, Str paramKey, Str label,
                                     double defaultValue, Str group,
                                     ParameterFlags flags) {
   parameters.push_back({
-      .address = address,
-      .identifier = std::string(identifier),
+      .id = id,
+      .paramKey = std::string(paramKey),
       .label = std::string(label),
       .defaultValue = defaultValue,
       .minValue = 0.0,
@@ -19,14 +19,14 @@ void ParameterBuilderImpl::addUnary(uint64_t address, Str identifier, Str label,
   });
 }
 
-void ParameterBuilderImpl::addEnum(uint64_t address, Str identifier, Str label,
+void ParameterBuilderImpl::addEnum(uint32_t id, Str paramKey, Str label,
                                    Str defaultValueString, StrVec valueStrings,
                                    Str group, ParameterFlags flags) {
   const double maxValue =
       valueStrings.empty() ? 0.0 : static_cast<double>(valueStrings.size() - 1);
   parameters.push_back({
-      .address = address,
-      .identifier = std::string(identifier),
+      .id = id,
+      .paramKey = std::string(paramKey),
       .label = std::string(label),
       .defaultValue =
           find(valueStrings.begin(), valueStrings.end(), defaultValueString) !=
@@ -46,12 +46,12 @@ void ParameterBuilderImpl::addEnum(uint64_t address, Str identifier, Str label,
   });
 }
 
-void ParameterBuilderImpl::addBool(uint64_t address, Str identifier, Str label,
+void ParameterBuilderImpl::addBool(uint32_t id, Str paramKey, Str label,
                                    bool defaultValue, Str group,
                                    ParameterFlags flags) {
   parameters.push_back({
-      .address = address,
-      .identifier = std::string(identifier),
+      .id = id,
+      .paramKey = std::string(paramKey),
       .label = std::string(label),
       .defaultValue = defaultValue ? 1.0 : 0.0,
       .minValue = 0.0,
@@ -63,4 +63,4 @@ void ParameterBuilderImpl::addBool(uint64_t address, Str identifier, Str label,
   });
 }
 
-} // namespace sonic_common
+} // namespace sonic

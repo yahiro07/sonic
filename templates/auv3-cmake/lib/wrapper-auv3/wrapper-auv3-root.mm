@@ -1,9 +1,9 @@
 #import "./wrapper-auv3-root.h"
-#include "../common/interfaces.h"
-#include "../common/parameter_builder_impl.h"
-#include "../common/plugin_domain.h"
-#include "../common/synthesizer_base.h"
-#include "./mac_web_view.h"
+#include "../api/synthesizer-base.h"
+#include "../core/parameter-builder-impl.h"
+#include "../domain/interfaces.h"
+#include "./mac-web-view.h"
+#include "./plugin-domain.h"
 #include <AudioToolbox/AudioToolbox.h>
 #include <CoreAudioKit/CoreAudioKit.h>
 #include <cstdio>
@@ -13,7 +13,7 @@
 #include <objc/NSObject.h>
 #include <vector>
 
-using namespace sonic_common;
+using namespace sonic;
 
 static AUParameter *createAUParameterFromItem(const ParameterItem &entry) {
   AudioUnitParameterOptions paramOptions =
@@ -23,11 +23,11 @@ static AUParameter *createAUParameterFromItem(const ParameterItem &entry) {
   }
   AUParameter *param = [AUParameterTree
       createParameterWithIdentifier:[NSString
-                                        stringWithUTF8String:entry.identifier
+                                        stringWithUTF8String:entry.paramKey
                                                                  .c_str()]
                                name:[NSString stringWithUTF8String:entry.label
                                                                        .c_str()]
-                            address:entry.address
+                            address:entry.id
                                 min:(float)entry.minValue
                                 max:(float)entry.maxValue
                                unit:kAudioUnitParameterUnit_Generic
@@ -45,7 +45,7 @@ public:
   AUv3ParameterIo(WrapperAuv3AudioUnit *wrapper) : _wrapper(wrapper) {}
 
   void setParameterChangeCallback(
-      std::function<void(uint64_t, double)> fn) override {
+      std::function<void(uint32_t, double)> fn) override {
     _onParameterChange = fn;
   }
 
@@ -70,13 +70,13 @@ public:
     //    };
   }
 
-  double getParameter(uint64_t address) override {
-    AUParameter *param = [_parameterTree parameterWithAddress:address];
+  double getParameter(uint32_t id) override {
+    AUParameter *param = [_parameterTree parameterWithAddress:id];
     return param ? (double)param.value : 0.0;
   }
 
-  void setParameter(uint64_t address, double value) override {
-    AUParameter *param = [_parameterTree parameterWithAddress:address];
+  void setParameter(uint32_t id, double value) override {
+    AUParameter *param = [_parameterTree parameterWithAddress:id];
     if (param) {
       param.value = (float)value;
     }
@@ -87,7 +87,7 @@ public:
 private:
   __unsafe_unretained WrapperAuv3AudioUnit *_wrapper;
   AUParameterTree *_parameterTree = nil;
-  std::function<void(uint64_t, double)> _onParameterChange = nullptr;
+  std::function<void(uint32_t, double)> _onParameterChange = nullptr;
 };
 
 @interface WrapperAuv3AudioUnit () {

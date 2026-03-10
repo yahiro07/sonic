@@ -1,13 +1,12 @@
 #pragma once
-#include "synthesizer_base.h"
+#include "synthesizer-base.h"
 
-namespace sonic_common {
+namespace sonic {
 
 class TelemetryBuilder {
 public:
   // id must be within 0~31
   virtual void defineFloatArray(int id, uint32_t count) = 0;
-  // virtual void defineByteArray(int id, uint32_t count) = 0;
 };
 
 class AdvancedSynthesizer : public SynthesizerBase {
@@ -21,4 +20,4 @@ public:
   }
 };
 
-} // namespace sonic_common
+} // namespace sonic

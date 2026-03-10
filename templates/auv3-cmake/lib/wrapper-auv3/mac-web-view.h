@@ -1,9 +1,9 @@
 #pragma once
-#include "../common/interfaces.h"
+#include "../domain/interfaces.h"
 #include <functional>
 #include <memory>
 
-namespace sonic_common {
+namespace sonic {
 
 class MacWebView : public IWebViewIo {
 private:
@@ -21,4 +21,4 @@ public:
   void setMessageReceiver(std::function<void(const std::string &)> receiver);
 };
 
-} // namespace sonic_common
+} // namespace sonic

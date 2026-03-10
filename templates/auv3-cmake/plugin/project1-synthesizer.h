@@ -1,7 +1,9 @@
-#include "../lib/common/synthesizer_base.h"
+#include "../lib/api/synthesizer-base.h"
 #include <math.h>
 
-class Project1Synthesizer : public sonic_common::SynthesizerBase {
+namespace project1 {
+
+class Project1Synthesizer : public sonic::SynthesizerBase {
 private:
   float sampleRate = 0.;
   float phase = 0.f;
@@ -14,11 +16,14 @@ private:
   float paramOscVolume = 0.5f;
 
 public:
-  void setupParameters(sonic_common::ParameterBuilder &builder) override;
-  void setParameter(uint64_t address, double value) override;
+  void setupParameters(sonic::ParameterBuilder &builder) override;
+  void setParameter(uint32_t id, double value) override;
   void prepareProcessing(double sampleRate, uint32_t maxFrameCount) override;
   void processAudio(float *bufferL, float *bufferR, uint32_t frames) override;
   void noteOn(int noteNumber, double velocity) override;
   void noteOff(int noteNumber) override;
   void getDesiredEditorSize(uint32_t &width, uint32_t &height) override;
+  std::string getEditorPageUrl() override;
 };
+
+} // namespace project1

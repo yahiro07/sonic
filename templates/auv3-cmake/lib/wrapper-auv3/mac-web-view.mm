@@ -1,4 +1,4 @@
-#import "./mac_web_view.h"
+#import "./mac-web-view.h"
 #include <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
 #include <Foundation/Foundation.h>
@@ -8,7 +8,7 @@
 #include <mach-o/dyld.h>
 #include <string>
 
-using namespace sonic_common;
+using namespace sonic;
 
 @interface AppSchemeHandler : NSObject <WKURLSchemeHandler>
 @property(nonatomic, strong) NSString *rootPath;
@@ -128,7 +128,7 @@ MacWebView::MacWebView() : impl(new Impl()) {
                                                          error:nil];
         if (data) {
           nsMessage = [[NSString alloc] initWithData:data
-                                             encoding:NSUTF8StringEncoding];
+                                            encoding:NSUTF8StringEncoding];
         }
       }
     }

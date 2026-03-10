@@ -6,9 +6,9 @@ add_library(wrapper-auv3 STATIC)
 
 target_sources(wrapper-auv3
 	PRIVATE
-    ../common/parameter_builder_impl.cpp
+    ../core/parameter-builder-impl.cpp
 		./wrapper-auv3-root.mm
-    ./mac_web_view.mm
+    ./mac-web-view.mm
 )
 
 target_compile_options(wrapper-auv3
