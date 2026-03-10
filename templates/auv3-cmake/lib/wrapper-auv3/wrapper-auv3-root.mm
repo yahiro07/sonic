@@ -1,19 +1,20 @@
 #import "./wrapper-auv3-root.h"
-#include "../api/synthesizer-base.h"
-#include "../common/mac-web-view.h"
-#include "../core/parameter-builder-impl.h"
-#include "../core/parameter-definitions-provider.h"
-#include "../domain/interfaces.h"
-#include "../domain/parameters-store.h"
-#include <AudioToolbox/AUParameters.h>
-#include <AudioToolbox/AudioToolbox.h>
-#include <CoreAudioKit/CoreAudioKit.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <memory>
-#include <objc/NSObject.h>
-#include <vector>
+#import "../api/synthesizer-base.h"
+#import "../common/mac-web-view.h"
+#import "../core/parameter-builder-impl.h"
+#import "../core/parameter-definitions-provider.h"
+#import "../domain/interfaces.h"
+#import "../domain/parameters-store.h"
+#import "../domain/webview-bridge.h"
+#import <AudioToolbox/AUParameters.h>
+#import <AudioToolbox/AudioToolbox.h>
+#import <CoreAudioKit/CoreAudioKit.h>
+#import <cstdio>
+#import <cstdlib>
+#import <cstring>
+#import <memory>
+#import <objc/NSObject.h>
+#import <vector>
 
 using namespace sonic;
 
@@ -154,7 +155,7 @@ public:
   }
 };
 
-class ControllerFacade : IControllerFacade {
+class ControllerFacade : public IControllerFacade {
 private:
   ControllerParameterPort &parameterPort;
 
@@ -184,20 +185,21 @@ public:
   void requestNoteOff(int noteNumber) override {}
 };
 
-// @interface WrapperAuv3AudioUnit: AUAudioUnit
-// - (ControllerFacade *)getControllerFacade;
-// @end
-
-@interface WrapperAuv3AudioUnit () {
-  AUAudioUnitBus *_outputBus;
-  AUAudioUnitBusArray *_outputBusArray;
-  AUAudioUnitBusArray *_inputBusArray;
-  SynthesizerBase *_synth;
-  ControllerFacade *_controllerFacade;
-}
+@interface WrapperAuv3AudioUnit ()
+@property AUAudioUnitBus *outputBus;
+@property AUAudioUnitBusArray *outputBusArray;
+@property AUAudioUnitBusArray *inputBusArray;
 @end
 
-@implementation WrapperAuv3AudioUnit
+@implementation WrapperAuv3AudioUnit {
+  SynthesizerBase *_synth;
+  // AUParameterTree *_parameterTree;
+  ParameterDefinitionsProvider *_parametersDefinitionProvider;
+  ParametersStore *_parametersStore;
+  ControllerParameterPort *_controllerParameterPort;
+  ControllerFacade *_controllerFacade;
+}
+@synthesize parameterTree = _parameterTree;
 
 - (void)setupSynth {
   printf("setupSynth\n");
@@ -205,28 +207,34 @@ public:
   ParameterBuilderImpl builder;
   _synth->setupParameters(builder);
   auto parameterItems = builder.getItems();
-  auto parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
-  auto parametersDefinitionProvider = new ParameterDefinitionsProvider();
-  parametersDefinitionProvider->addParameters(parameterItems, 0xFFFFFFFF);
-  auto parametersStore = new ParametersStore();
+  _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
+  _parametersDefinitionProvider = new ParameterDefinitionsProvider();
+  _parametersDefinitionProvider->addParameters(parameterItems, 0xFFFFFFFF);
+  _parametersStore = new ParametersStore();
   auto maxId = getMaxIdFromParameterItems(parameterItems);
-  parametersStore->setup(maxId);
+  _parametersStore->setup(maxId);
   for (const auto &item : parameterItems) {
-    parametersStore->set(item.id, item.defaultValue);
+    _parametersStore->set(item.id, item.defaultValue);
   }
-  [parameterTree
+  [_parameterTree
       setImplementorValueObserver:^(AUParameter *param, AUValue value) {
-        parametersStore->set(param.address, value);
-        _synth->setParameter(param.address, (double)value);
+        auto id = (int32_t)param.address;
+        _parametersStore->set(id, value);
+        _synth->setParameter(id, (double)value);
       }];
-  [parameterTree setImplementorValueProvider:^(AUParameter *param) {
-    return (float)parametersStore->get(param.address);
+  [_parameterTree setImplementorValueProvider:^(AUParameter *param) {
+    auto id = (int32_t)param.address;
+    return (float)_parametersStore->get(id);
   }];
-  auto controllerParameterPort = std::make_unique<ControllerParameterPort>(
-      parameterTree, *parametersDefinitionProvider);
-  _controllerFacade = new ControllerFacade(*controllerParameterPort);
+  _controllerParameterPort = new ControllerParameterPort(
+      _parameterTree, *_parametersDefinitionProvider);
+  _controllerFacade = new ControllerFacade(*_controllerParameterPort);
 
   printf("setupSynth, done\n");
+}
+
+- (IControllerFacade *)getControllerFacade {
+  return (IControllerFacade *)_controllerFacade;
 }
 
 - (instancetype)
@@ -329,8 +337,8 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
           synthPtr->noteOff(data1);
         }
       } else if (event->head.eventType == AURenderEventParameter) {
-        synthPtr->setParameter(event->parameter.parameterAddress,
-                               event->parameter.value);
+        auto id = (int32_t)event->parameter.parameterAddress;
+        synthPtr->setParameter(id, event->parameter.value);
       }
       event = event->head.next;
     }
@@ -359,6 +367,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 
 @interface WrapperAuv3ViewFrame () {
   MacWebView *_webView;
+  WebViewBridge *_webViewBridge;
 }
 @end
 
@@ -380,6 +389,12 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
     _webView->attachToParent((__bridge void *)root);
     _webView->loadUrl("http://localhost:3000");
   }
+  if (!_webViewBridge) {
+    auto controllerFacade = [audioUnit getControllerFacade];
+    auto webViewIo = (IWebViewIo *)_webView;
+    _webViewBridge = new WebViewBridge(*controllerFacade, *webViewIo);
+    _webViewBridge->setup();
+  }
 
   uint32_t width = 0;
   uint32_t height = 0;
@@ -391,6 +406,10 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 
 - (void)disconnectViewFromAudioUnit {
   printf("WrapperAuv3ViewFrame disconnectViewFromAudioUnit\n");
+  if (_webViewBridge) {
+    _webViewBridge->teardown();
+    _webViewBridge = nullptr;
+  }
   if (_webView) {
     _webView->removeFromParent();
     _webView = nullptr;

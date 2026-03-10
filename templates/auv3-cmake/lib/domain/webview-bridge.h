@@ -8,10 +8,14 @@ private:
   IWebViewIo &webViewIo;
   int parameterChangeSubscriptionToken = -1;
 
-  void handleMessageFromWebView(const std::string &message) {}
+  void handleMessageFromWebView(const std::string &message) {
+    printf("Received message from WebView: %s\n", message.c_str());
+  }
 
   void handleParameterChangeFromController(const std::string &identifier,
-                                           double value) {}
+                                           double value) {
+    printf("Parameter changed: %s = %f\n", identifier.c_str(), value);
+  }
 
 public:
   WebViewBridge(IControllerFacade &controllerFacade, IWebViewIo &webViewIo)
@@ -28,7 +32,7 @@ public:
             });
   }
 
-  void cleanup() {
+  void teardown() {
     if (parameterChangeSubscriptionToken != -1) {
       controllerFacade.unsubscribeParameterChange(
           parameterChangeSubscriptionToken);
