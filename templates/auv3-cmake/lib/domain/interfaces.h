@@ -1,7 +1,9 @@
 #pragma once
 
 #include "../api/synthesizer-base.h"
+#include "../core/parameter-item.h"
 #include <functional>
+#include <map>
 
 namespace sonic {
 
@@ -20,6 +22,21 @@ public:
   virtual ~IParametersStore() = default;
   virtual double get(uint32_t id) = 0;
   virtual void set(uint32_t id, double value) = 0;
+};
+
+class IParameterManager {
+public:
+  virtual ~IParameterManager() = default;
+
+  virtual void setParameter(ParamId id, double value, bool notifyToUi) = 0;
+  virtual double getParameter(ParamId id) = 0;
+
+  virtual void getAllParameters(std::map<std::string, double> &parameters) = 0;
+
+  virtual int subscribeParameterChange(
+      std::function<void(const std::string identifier, double value)>
+          callback) = 0;
+  virtual void unsubscribeParameterChange(int subscriptionId) = 0;
 };
 
 } // namespace sonic
