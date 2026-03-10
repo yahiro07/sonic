@@ -2,83 +2,19 @@
 #import "../api/synthesizer-base.h"
 #import "../common/logger.h"
 #import "../common/mac-web-view.h"
-#import "../core/parameter-builder-impl.h"
-#import "../core/parameter-definitions-provider.h"
-#import "../domain/interfaces.h"
-#import "../domain/parameters-store.h"
 #import "../domain/webview-bridge.h"
-#import "./controller-facade.h"
-#import "./controller-parameter-port.h"
+#import "./au-parameter-helper.h"
+#import "./entry-controller.h"
 #import "./parameter-tree-wrapper.h"
-#include "./parameters-helper.h"
 #import <AudioToolbox/AUParameters.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudioKit/CoreAudioKit.h>
 #import <CoreFoundation/CoreFoundation.h>
-#import <cstdio>
-#import <cstdlib>
-#import <cstring>
-#import <memory>
-#import <objc/NSObject.h>
-#import <objc/runtime.h>
-#import <vector>
 
 #if !__has_feature(objc_arc)
 #error                                                                         \
     "wrapper-auv3-root.mm requires ARC. Enable -fobjc-arc for Objective-C++ sources."
 #endif
-
-namespace sonic {
-
-class EntryController {
-private:
-  SynthesizerBase &synth;
-  ParameterTreeWrapper &parameterTreeWrapper;
-  ParameterDefinitionsProvider parametersDefinitionProvider;
-  ControllerParameterPort controllerParameterPort;
-  ControllerFacade controllerFacade;
-  ParametersStore parametersStore;
-
-public:
-  static std::vector<sonic::ParameterItem>
-  preGenerateParameterItems(SynthesizerBase &synth) {
-    ParameterBuilderImpl builder;
-    synth.setupParameters(builder);
-    return builder.getItems();
-  }
-  EntryController(SynthesizerBase &synth,
-                  ParameterTreeWrapper &parameterTreeWrapper)
-      : synth(synth), parameterTreeWrapper(parameterTreeWrapper),
-        controllerParameterPort(parameterTreeWrapper,
-                                parametersDefinitionProvider),
-        controllerFacade(controllerParameterPort) {}
-
-  void initialize() {
-    ParameterBuilderImpl builder;
-    synth.setupParameters(builder);
-    auto parameterItems = builder.getItems();
-    parametersDefinitionProvider.addParameters(parameterItems, 0xFFFFFFFF);
-
-    auto maxId = getMaxIdFromParameterItems(parameterItems);
-    parametersStore.setup(maxId);
-    for (const auto &item : parameterItems) {
-      parametersStore.set(item.id, item.defaultValue);
-    }
-    parameterTreeWrapper.setImplementorValueObserver(
-        [this](uint64_t address, float value) {
-          auto id = (int32_t)address;
-          this->parametersStore.set(id, value);
-          this->synth.setParameter(id, value);
-        });
-    parameterTreeWrapper.setImplementorValueProvider([this](uint64_t address) {
-      auto id = (int32_t)address;
-      return parametersStore.get(id);
-    });
-  }
-
-  IControllerFacade &getControllerFacade() { return controllerFacade; }
-};
-}; // namespace sonic
 
 using namespace sonic;
 
@@ -98,7 +34,7 @@ using namespace sonic;
 
 - (void)setupSynth {
   logger.start();
-  logger.mark("setupSynth 0647");
+  logger.mark("setupSynth 0837");
   _synth.reset(createSynthesizerInstance());
   auto parameterItems = EntryController::preGenerateParameterItems(*_synth);
   _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);

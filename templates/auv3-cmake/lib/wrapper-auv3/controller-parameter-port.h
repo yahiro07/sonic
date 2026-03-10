@@ -1,6 +1,6 @@
 #pragma once
 
-#import "../core/parameter-definitions-provider.h"
+#include "../core/parameter-definitions-provider.h"
 #include "../domain/interfaces.h"
 #include "./parameter-tree-wrapper.h"
 #include <map>
