@@ -117,7 +117,9 @@ namespace pseudo_framework_design {
 
     setup(entries: ParameterEntry[]): void {
       const maxId = Math.max(...entries.map((e) => e.id));
-      if (maxId + 1 > entries.length * 2) {
+      if (maxId + 1 > entries.length * 2 && maxId > 4096) {
+        //this is not preferred but we use unordered map for sparse and large parameter IDs
+        //it is recommended to define dense and small parameter IDs for better performance
         this.parameterStore = new UnorderedMapParameterStore();
       } else {
         const parameterStore = new VectorParameterStore();
@@ -670,11 +672,14 @@ namespace pseudo_framework_design {
         let e;
         while ((e = this.parameterOutputPort.popOutputEvent()) !== null) {
           if (e.type === "beginEdit") {
-            outEvents.try_push({ type: "beginEdit", id: e.id });
+            outEvents.try_push({
+              type: "CLAP_EVENT_PARAM_GESTURE_BEGIN",
+              id: e.id,
+            });
           } else if (e.type === "performEdit") {
             //parameter flow: UI --> Host
             outEvents.try_push({
-              type: "performEdit",
+              type: "CLAP_EVENT_PARAM_VALUE",
               id: e.id,
               value: e.value,
             });
@@ -686,7 +691,10 @@ namespace pseudo_framework_design {
               sampleOffset: 0,
             });
           } else if (e.type === "endEdit") {
-            outEvents.try_push({ type: "endEdit", id: e.id });
+            outEvents.try_push({
+              type: "CLAP_EVENT_PARAM_GESTURE_END",
+              id: e.id,
+            });
           }
         }
       }
