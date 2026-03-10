@@ -1,10 +1,10 @@
 #import "./wrapper-auv3-root.h"
 #include "../api/synthesizer-base.h"
+#include "../common/mac-web-view.h"
 #include "../core/parameter-builder-impl.h"
 #include "../core/parameter-definitions-provider.h"
 #include "../domain/interfaces.h"
 #include "../domain/parameters-store.h"
-#include "./mac-web-view.h"
 #include <AudioToolbox/AUParameters.h>
 #include <AudioToolbox/AudioToolbox.h>
 #include <CoreAudioKit/CoreAudioKit.h>
@@ -70,13 +70,6 @@ private:
   std::map<int, std::function<void(std::string, double)>> listeners;
   int nextListenerToken = 0;
 
-public:
-  ControllerParameterPort(
-      AUParameterTree *parameterTree,
-      ParameterDefinitionsProvider &parametersDefinitionProvider)
-      : parameterTree(parameterTree),
-        _parametersDefinitionProvider(parametersDefinitionProvider) {}
-
   void startObserve() {
     observerToken = [parameterTree
         tokenByAddingParameterObserver:^(AUParameterAddress address,
@@ -98,6 +91,13 @@ public:
       observerToken = 0;
     }
   }
+
+public:
+  ControllerParameterPort(
+      AUParameterTree *parameterTree,
+      ParameterDefinitionsProvider &parametersDefinitionProvider)
+      : parameterTree(parameterTree),
+        _parametersDefinitionProvider(parametersDefinitionProvider) {}
 
   int subscribeToParameterChanges(
       std::function<void(std::string, double)> listener) {
@@ -156,39 +156,44 @@ public:
 
 class ControllerFacade : IControllerFacade {
 private:
-  ControllerParameterPort &_parameterPort;
+  ControllerParameterPort &parameterPort;
 
 public:
   ControllerFacade(ControllerParameterPort &parameterPort)
-      : _parameterPort(parameterPort) {}
+      : parameterPort(parameterPort) {}
 
   int subscribeParameterChange(
       std::function<void(const std::string, double)> callback) override {
-    return _parameterPort.subscribeToParameterChanges(callback);
+    return parameterPort.subscribeToParameterChanges(callback);
   }
 
   void unsubscribeParameterChange(int token) override {
-    _parameterPort.unsubscribeFromParameterChanges(token);
+    parameterPort.unsubscribeFromParameterChanges(token);
   }
 
   void applyParameterEditFromUi(std::string paramKey, double value,
                                 ParameterEditState editState) override {
-    _parameterPort.applyParameterEditFromUi(paramKey, value, editState);
+    parameterPort.applyParameterEditFromUi(paramKey, value, editState);
   }
 
   void getAllParameters(std::map<std::string, double> &parameters) override {
-    _parameterPort.getAllParameters(parameters);
+    parameterPort.getAllParameters(parameters);
   }
 
   void requestNoteOn(int noteNumber, double velocity) override {}
   void requestNoteOff(int noteNumber) override {}
 };
 
+// @interface WrapperAuv3AudioUnit: AUAudioUnit
+// - (ControllerFacade *)getControllerFacade;
+// @end
+
 @interface WrapperAuv3AudioUnit () {
   AUAudioUnitBus *_outputBus;
   AUAudioUnitBusArray *_outputBusArray;
   AUAudioUnitBusArray *_inputBusArray;
   SynthesizerBase *_synth;
+  ControllerFacade *_controllerFacade;
 }
 @end
 
@@ -219,7 +224,7 @@ public:
   }];
   auto controllerParameterPort = std::make_unique<ControllerParameterPort>(
       parameterTree, *parametersDefinitionProvider);
-  auto controllerFacade = new ControllerFacade(*controllerParameterPort);
+  _controllerFacade = new ControllerFacade(*controllerParameterPort);
 
   printf("setupSynth, done\n");
 }
@@ -353,7 +358,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 //------------------------------------------------------------
 
 @interface WrapperAuv3ViewFrame () {
-  std::unique_ptr<MacWebView> _webView;
+  MacWebView *_webView;
 }
 @end
 
@@ -371,7 +376,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   root.autoresizesSubviews = YES;
 
   if (!_webView) {
-    _webView = std::make_unique<MacWebView>();
+    _webView = new MacWebView();
     _webView->attachToParent((__bridge void *)root);
     _webView->loadUrl("http://localhost:3000");
   }
@@ -388,15 +393,12 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   printf("WrapperAuv3ViewFrame disconnectViewFromAudioUnit\n");
   if (_webView) {
     _webView->removeFromParent();
-    _webView.reset();
+    _webView = nullptr;
   }
 }
 
 - (void)dealloc {
   [self disconnectViewFromAudioUnit];
-#if !__has_feature(objc_arc)
-  [super dealloc];
-#endif
 }
 
 @end
