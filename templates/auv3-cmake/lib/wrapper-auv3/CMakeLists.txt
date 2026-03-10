@@ -9,7 +9,7 @@ target_sources(wrapper-auv3
     ../core/parameter-builder-impl.cpp
     ../core/parameter-definitions-provider.cpp
 		./wrapper-auv3-root.mm
-    ./mac-web-view.mm
+    ../common/mac-web-view.mm
 )
 
 target_compile_options(wrapper-auv3
