@@ -7,8 +7,10 @@
 #import "../domain/interfaces.h"
 #import "../domain/parameters-store.h"
 #import "../domain/webview-bridge.h"
+#import "./controller-facade.h"
 #import "./controller-parameter-port.h"
 #import "./parameter-tree-wrapper.h"
+#include "./parameters-helper.h"
 #import <AudioToolbox/AUParameters.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudioKit/CoreAudioKit.h>
@@ -27,80 +29,6 @@
 #endif
 
 using namespace sonic;
-
-static AUParameter *
-createAUParameterFromParameterItem(const ParameterItem &entry) {
-  AudioUnitParameterOptions paramOptions =
-      kAudioUnitParameterFlag_IsWritable | kAudioUnitParameterFlag_IsReadable;
-  if (entry.type == ParameterType::Enum) {
-    paramOptions |= kAudioUnitParameterFlag_ValuesHaveStrings;
-  }
-  AUParameter *param = [AUParameterTree
-      createParameterWithIdentifier:[NSString
-                                        stringWithUTF8String:entry.paramKey
-                                                                 .c_str()]
-                               name:[NSString stringWithUTF8String:entry.label
-                                                                       .c_str()]
-                            address:entry.id
-                                min:(float)entry.minValue
-                                max:(float)entry.maxValue
-                               unit:kAudioUnitParameterUnit_Generic
-                           unitName:nil
-                              flags:paramOptions
-                       valueStrings:nil
-                dependentParameters:nil];
-  param.value = (float)entry.defaultValue;
-  return param;
-}
-
-static AUParameterTree *createAUParameterTreeFromParameterItems(
-    const std::vector<ParameterItem> &items) {
-  NSMutableArray *auParams = [NSMutableArray array];
-  for (const auto &entry : items) {
-    [auParams addObject:createAUParameterFromParameterItem(entry)];
-  }
-  return [AUParameterTree createTreeWithChildren:auParams];
-}
-
-static int getMaxIdFromParameterItems(const std::vector<ParameterItem> &items) {
-  int maxId = 0;
-  for (const auto &item : items) {
-    if (item.id > maxId) {
-      maxId = item.id;
-    }
-  }
-  return maxId;
-}
-
-class ControllerFacade : public IControllerFacade {
-private:
-  ControllerParameterPort &parameterPort;
-
-public:
-  ControllerFacade(ControllerParameterPort &parameterPort)
-      : parameterPort(parameterPort) {}
-
-  int subscribeParameterChange(
-      std::function<void(const std::string, double)> callback) override {
-    return parameterPort.subscribeToParameterChanges(callback);
-  }
-
-  void unsubscribeParameterChange(int token) override {
-    parameterPort.unsubscribeFromParameterChanges(token);
-  }
-
-  void applyParameterEditFromUi(std::string paramKey, double value,
-                                ParameterEditState editState) override {
-    parameterPort.applyParameterEditFromUi(paramKey, value, editState);
-  }
-
-  void getAllParameters(std::map<std::string, double> &parameters) override {
-    parameterPort.getAllParameters(parameters);
-  }
-
-  void requestNoteOn(int noteNumber, double velocity) override {}
-  void requestNoteOff(int noteNumber) override {}
-};
 
 @interface WrapperAuv3AudioUnit ()
 @property AUParameterTree *parameterTree;
