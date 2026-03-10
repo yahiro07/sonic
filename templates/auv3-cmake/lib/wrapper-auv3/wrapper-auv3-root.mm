@@ -9,11 +9,13 @@
 #import <AudioToolbox/AUParameters.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudioKit/CoreAudioKit.h>
+#import <CoreFoundation/CoreFoundation.h>
 #import <cstdio>
 #import <cstdlib>
 #import <cstring>
 #import <memory>
 #import <objc/NSObject.h>
+#import <objc/runtime.h>
 #import <vector>
 
 using namespace sonic;
@@ -65,17 +67,29 @@ static int getMaxIdFromParameterItems(const std::vector<ParameterItem> &items) {
 class ControllerParameterPort {
 private:
   ParameterDefinitionsProvider &_parametersDefinitionProvider;
-  AUParameterTree *parameterTree;
+  AUParameterTree *_parameterTree;
   AUParameterObserverToken observerToken = 0;
 
   std::map<int, std::function<void(std::string, double)>> listeners;
   int nextListenerToken = 0;
 
+  bool hasValidParameterTree() const {
+    return _parameterTree &&
+           [_parameterTree isKindOfClass:[AUParameterTree class]];
+  }
+
   void startObserve() {
-    observerToken = [parameterTree
+    if (!hasValidParameterTree()) {
+      const char *className =
+          _parameterTree ? object_getClassName(_parameterTree) : "(null)";
+      printf("invalid parameter tree: ptr=%p class=%s\n", _parameterTree,
+             className);
+      return;
+    }
+    observerToken = [_parameterTree
         tokenByAddingParameterObserver:^(AUParameterAddress address,
                                          AUValue value) {
-          auto param = [parameterTree parameterWithAddress:address];
+          auto param = [_parameterTree parameterWithAddress:address];
           if (!param) {
             return;
           }
@@ -84,11 +98,12 @@ private:
             listener(paramKey, (double)value);
           }
         }];
+    printf("startObserve, observerToken: %p\n", observerToken);
   }
 
   void stopObserve() {
     if (observerToken) {
-      [parameterTree removeParameterObserver:observerToken];
+      [_parameterTree removeParameterObserver:observerToken];
       observerToken = 0;
     }
   }
@@ -97,8 +112,20 @@ public:
   ControllerParameterPort(
       AUParameterTree *parameterTree,
       ParameterDefinitionsProvider &parametersDefinitionProvider)
-      : parameterTree(parameterTree),
-        _parametersDefinitionProvider(parametersDefinitionProvider) {}
+      : _parameterTree(parameterTree),
+        _parametersDefinitionProvider(parametersDefinitionProvider) {
+    if (_parameterTree) {
+      CFRetain((__bridge CFTypeRef)_parameterTree);
+    }
+  }
+
+  ~ControllerParameterPort() {
+    stopObserve();
+    if (_parameterTree) {
+      CFRelease((__bridge CFTypeRef)_parameterTree);
+      _parameterTree = nil;
+    }
+  }
 
   int subscribeToParameterChanges(
       std::function<void(std::string, double)> listener) {
@@ -123,7 +150,7 @@ public:
     if (id == std::nullopt) {
       return;
     }
-    auto param = [parameterTree parameterWithAddress:*id];
+    auto param = [_parameterTree parameterWithAddress:*id];
     if (!param) {
       return;
     }
@@ -147,7 +174,7 @@ public:
   void getAllParameters(std::map<std::string, double> &parameters) {
     auto parameterItems = _parametersDefinitionProvider.getParameterItems();
     for (const auto &item : parameterItems) {
-      AUParameter *param = [parameterTree parameterWithAddress:item.id];
+      AUParameter *param = [_parameterTree parameterWithAddress:item.id];
       if (param) {
         parameters[item.paramKey] = param.value;
       }
@@ -193,7 +220,6 @@ public:
 
 @implementation WrapperAuv3AudioUnit {
   SynthesizerBase *_synth;
-  // AUParameterTree *_parameterTree;
   ParameterDefinitionsProvider *_parametersDefinitionProvider;
   ParametersStore *_parametersStore;
   ControllerParameterPort *_controllerParameterPort;
@@ -202,7 +228,7 @@ public:
 @synthesize parameterTree = _parameterTree;
 
 - (void)setupSynth {
-  printf("setupSynth\n");
+  printf("setupSynth 0221\n");
   _synth = createSynthesizerInstance();
   ParameterBuilderImpl builder;
   _synth->setupParameters(builder);
@@ -216,15 +242,17 @@ public:
   for (const auto &item : parameterItems) {
     _parametersStore->set(item.id, item.defaultValue);
   }
+  ParametersStore *parameterStorePtr = _parametersStore;
+  SynthesizerBase *synthPtr = _synth;
   [_parameterTree
       setImplementorValueObserver:^(AUParameter *param, AUValue value) {
         auto id = (int32_t)param.address;
-        _parametersStore->set(id, value);
-        _synth->setParameter(id, (double)value);
+        parameterStorePtr->set(id, value);
+        synthPtr->setParameter(id, (double)value);
       }];
   [_parameterTree setImplementorValueProvider:^(AUParameter *param) {
     auto id = (int32_t)param.address;
-    return (float)_parametersStore->get(id);
+    return (float)parameterStorePtr->get(id);
   }];
   _controllerParameterPort = new ControllerParameterPort(
       _parameterTree, *_parametersDefinitionProvider);
