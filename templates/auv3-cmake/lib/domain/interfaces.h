@@ -46,6 +46,13 @@ enum class ParameterEditState {
   InstantChange,
 };
 
+class IParameterEditActionPort {
+public:
+  virtual ~IParameterEditActionPort() = default;
+  virtual void applyParameterEditFromUi(std::string paramKey, double value,
+                                        ParameterEditState editState) = 0;
+};
+
 class IControllerFacade {
 public:
   virtual ~IControllerFacade() = default;

@@ -3,7 +3,6 @@
 #include "../core/parameter-builder-impl.h"
 #include "../domain/interfaces.h"
 #include "./mac-web-view.h"
-#include "./plugin-domain.h"
 #include <AudioToolbox/AudioToolbox.h>
 #include <CoreAudioKit/CoreAudioKit.h>
 #include <cstdio>
@@ -38,6 +37,17 @@ static AUParameter *createAUParameterFromItem(const ParameterItem &entry) {
   param.value = (float)entry.defaultValue;
   return param;
 }
+
+class IPlatformParameterIo {
+public:
+  virtual ~IPlatformParameterIo() = default;
+  virtual void registerParameters(std::vector<ParameterItem> &params) = 0;
+  virtual double getParameter(uint32_t id) = 0;
+  virtual void setParameter(uint32_t id, double value) = 0;
+
+  virtual void
+  setParameterChangeCallback(std::function<void(uint32_t, double)> fn) = 0;
+};
 
 // --- AUv3ParameterManager Implementation ---
 class AUv3ParameterIo : public IPlatformParameterIo {
@@ -96,7 +106,6 @@ private:
   AUAudioUnitBusArray *_inputBusArray;
   std::unique_ptr<SynthesizerBase> _synth;
   std::unique_ptr<AUv3ParameterIo> _parameterIo;
-  std::unique_ptr<PluginDomain> _pluginDomain;
 }
 @end
 
@@ -116,8 +125,18 @@ private:
 
   _synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
   _parameterIo = std::make_unique<AUv3ParameterIo>(self);
-  _pluginDomain = std::make_unique<PluginDomain>(*_synth, *_parameterIo);
-  _pluginDomain->initialize();
+
+  ParameterBuilderImpl builder;
+  _synth->setupParameters(builder);
+  auto parameterItems = builder.getItems();
+  _parameterIo->registerParameters(parameterItems);
+  for (auto &item : parameterItems) {
+    _synth->setParameter(item.id, item.defaultValue);
+  }
+  _parameterIo->setParameterChangeCallback(
+      [synth = _synth.get()](uint32_t id, double value) {
+        synth->setParameter(id, value);
+      });
 
   AVAudioFormat *defaultFormat =
       [[AVAudioFormat alloc] initStandardFormatWithSampleRate:44100.0
@@ -142,8 +161,8 @@ private:
 }
 
 - (void)getDesiredEditorSize:(uint32_t *)width height:(uint32_t *)height {
-  if (_pluginDomain) {
-    _pluginDomain->getDesiredEditorSize(*width, *height);
+  if (_synth) {
+    _synth->getDesiredEditorSize(*width, *height);
   }
 }
 
@@ -160,7 +179,7 @@ private:
   auto maxFrameLength = self.maximumFramesToRender;
   printf("call prepareProcessing, sampleRate: %f, maxFrameLength: %u\n",
          sampleRate, maxFrameLength);
-  _pluginDomain->prepareProcessing(sampleRate, maxFrameLength);
+  _synth->prepareProcessing(sampleRate, maxFrameLength);
   return [super allocateRenderResourcesAndReturnError:outError];
 }
 
@@ -173,7 +192,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 }
 
 - (AUInternalRenderBlock)internalRenderBlock {
-  PluginDomain *pluginDomainPtr = _pluginDomain.get();
+  SynthesizerBase *synthPtr = _synth.get();
   AUAudioFrameCount maxFramesToRender = self.maximumFramesToRender;
 
   AUInternalRenderBlock block = ^AUAudioUnitStatus(
@@ -195,13 +214,13 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
         uint8_t data2 = event->MIDI.data[2];
 
         if (status == 0x90 && data2 > 0) {
-          pluginDomainPtr->noteOn(data1, (double)data2 / 127.0);
+          synthPtr->noteOn(data1, (double)data2 / 127.0);
         } else if (status == 0x80 || (status == 0x90 && data2 == 0)) {
-          pluginDomainPtr->noteOff(data1);
+          synthPtr->noteOff(data1);
         }
       } else if (event->head.eventType == AURenderEventParameter) {
-        pluginDomainPtr->setParameter(event->parameter.parameterAddress,
-                                      event->parameter.value);
+        synthPtr->setParameter(event->parameter.parameterAddress,
+                               event->parameter.value);
       }
       event = event->head.next;
     }
@@ -216,7 +235,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
     float *left = (float *)bufferL->mData;
     float *right = (float *)bufferR->mData;
     // debugFillNoise(left, right, frameCount);
-    pluginDomainPtr->processAudio(left, right, frameCount);
+    synthPtr->processAudio(left, right, frameCount);
 
     return noErr;
   };
