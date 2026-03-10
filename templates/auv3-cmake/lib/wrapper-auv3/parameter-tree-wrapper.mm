@@ -75,12 +75,10 @@ public:
   }
 };
 
-ParameterTreeWrapper *ParameterTreeWrapper::create(void *parameterTree) {
-  return new ParameterTreeWrapperImpl(
+std::unique_ptr<ParameterTreeWrapper>
+ParameterTreeWrapper::create(void *parameterTree) {
+  return std::make_unique<ParameterTreeWrapperImpl>(
       (__bridge AUParameterTree *)parameterTree);
-}
-void ParameterTreeWrapper::destroy(ParameterTreeWrapper *wrapper) {
-  delete wrapper;
 }
 
 } // namespace sonic

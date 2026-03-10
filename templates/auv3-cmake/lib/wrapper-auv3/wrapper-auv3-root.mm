@@ -28,6 +28,58 @@
     "wrapper-auv3-root.mm requires ARC. Enable -fobjc-arc for Objective-C++ sources."
 #endif
 
+namespace sonic {
+
+class EntryController {
+private:
+  SynthesizerBase &synth;
+  ParameterTreeWrapper &parameterTreeWrapper;
+  ParameterDefinitionsProvider parametersDefinitionProvider;
+  ControllerParameterPort controllerParameterPort;
+  ControllerFacade controllerFacade;
+  ParametersStore parametersStore;
+
+public:
+  static std::vector<sonic::ParameterItem>
+  preGenerateParameterItems(SynthesizerBase &synth) {
+    ParameterBuilderImpl builder;
+    synth.setupParameters(builder);
+    return builder.getItems();
+  }
+  EntryController(SynthesizerBase &synth,
+                  ParameterTreeWrapper &parameterTreeWrapper)
+      : synth(synth), parameterTreeWrapper(parameterTreeWrapper),
+        controllerParameterPort(parameterTreeWrapper,
+                                parametersDefinitionProvider),
+        controllerFacade(controllerParameterPort) {}
+
+  void initialize() {
+    ParameterBuilderImpl builder;
+    synth.setupParameters(builder);
+    auto parameterItems = builder.getItems();
+    parametersDefinitionProvider.addParameters(parameterItems, 0xFFFFFFFF);
+
+    auto maxId = getMaxIdFromParameterItems(parameterItems);
+    parametersStore.setup(maxId);
+    for (const auto &item : parameterItems) {
+      parametersStore.set(item.id, item.defaultValue);
+    }
+    parameterTreeWrapper.setImplementorValueObserver(
+        [this](uint64_t address, float value) {
+          auto id = (int32_t)address;
+          this->parametersStore.set(id, value);
+          this->synth.setParameter(id, value);
+        });
+    parameterTreeWrapper.setImplementorValueProvider([this](uint64_t address) {
+      auto id = (int32_t)address;
+      return parametersStore.get(id);
+    });
+  }
+
+  IControllerFacade &getControllerFacade() { return controllerFacade; }
+};
+}; // namespace sonic
+
 using namespace sonic;
 
 @interface WrapperAuv3AudioUnit ()
@@ -39,12 +91,8 @@ using namespace sonic;
 
 @implementation WrapperAuv3AudioUnit {
   std::unique_ptr<SynthesizerBase> _synth;
-  std::unique_ptr<ParameterDefinitionsProvider> _parametersDefinitionProvider;
-  std::unique_ptr<ParametersStore> _parametersStore;
-  std::unique_ptr<ParameterTreeWrapper, ParameterTreeWrapper::Deleter>
-      _parameterTreeWrapper;
-  std::unique_ptr<ControllerParameterPort> _controllerParameterPort;
-  std::unique_ptr<ControllerFacade> _controllerFacade;
+  std::unique_ptr<ParameterTreeWrapper> _parameterTreeWrapper;
+  std::unique_ptr<EntryController> _entryController;
 }
 @synthesize parameterTree = _parameterTree;
 
@@ -52,44 +100,19 @@ using namespace sonic;
   logger.start();
   logger.mark("setupSynth 0647");
   _synth.reset(createSynthesizerInstance());
-  ParameterBuilderImpl builder;
-  _synth->setupParameters(builder);
-  auto parameterItems = builder.getItems();
+  auto parameterItems = EntryController::preGenerateParameterItems(*_synth);
   _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
-  _parameterTreeWrapper.reset(
-      ParameterTreeWrapper::create((__bridge void *)_parameterTree));
-
-  _parametersDefinitionProvider =
-      std::make_unique<ParameterDefinitionsProvider>();
-  _parametersDefinitionProvider->addParameters(parameterItems, 0xFFFFFFFF);
-  _parametersStore = std::make_unique<ParametersStore>();
-  auto maxId = getMaxIdFromParameterItems(parameterItems);
-  _parametersStore->setup(maxId);
-  for (const auto &item : parameterItems) {
-    _parametersStore->set(item.id, item.defaultValue);
-  }
-  ParametersStore *parameterStorePtr = _parametersStore.get();
-  SynthesizerBase *synthPtr = _synth.get();
-  [_parameterTree
-      setImplementorValueObserver:^(AUParameter *param, AUValue value) {
-        auto id = (int32_t)param.address;
-        parameterStorePtr->set(id, value);
-        synthPtr->setParameter(id, (double)value);
-      }];
-  [_parameterTree setImplementorValueProvider:^(AUParameter *param) {
-    auto id = (int32_t)param.address;
-    return (float)parameterStorePtr->get(id);
-  }];
-  _controllerParameterPort = std::make_unique<ControllerParameterPort>(
-      *_parameterTreeWrapper, *_parametersDefinitionProvider);
-  _controllerFacade =
-      std::make_unique<ControllerFacade>(*_controllerParameterPort);
+  _parameterTreeWrapper =
+      ParameterTreeWrapper::create((__bridge void *)_parameterTree);
+  _entryController =
+      std::make_unique<EntryController>(*_synth, *_parameterTreeWrapper);
+  _entryController->initialize();
 
   printf("setupSynth, done\n");
 }
 
 - (IControllerFacade *)getControllerFacade {
-  return (IControllerFacade *)_controllerFacade.get();
+  return &_entryController->getControllerFacade();
 }
 
 - (instancetype)
@@ -110,11 +133,8 @@ using namespace sonic;
 }
 
 - (void)dealloc {
-  _controllerFacade.reset();
-  _controllerParameterPort.reset();
+  _entryController.reset();
   _parameterTreeWrapper.reset();
-  _parametersStore.reset();
-  _parametersDefinitionProvider.reset();
   _synth.reset();
   logger.stop();
 }

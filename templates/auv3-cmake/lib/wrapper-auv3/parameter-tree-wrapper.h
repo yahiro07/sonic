@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <memory>
 
 namespace sonic {
 
@@ -27,11 +28,7 @@ public:
       std::function<void(uint64_t address, float value)> observer) = 0;
   virtual void removeParameterObserver(void *observerToken) = 0;
 
-  static ParameterTreeWrapper *create(void *parameterTree);
-  static void destroy(ParameterTreeWrapper *wrapper);
-  struct Deleter {
-    void operator()(ParameterTreeWrapper *wrapper) const { destroy(wrapper); }
-  };
+  static std::unique_ptr<ParameterTreeWrapper> create(void *parameterTree);
 };
 
 } // namespace sonic
