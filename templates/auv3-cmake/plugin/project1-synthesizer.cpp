@@ -11,7 +11,7 @@ void Project1Synthesizer::setupParameters(sonic::ParameterBuilder &builder) {
   builder.addUnary(3, "oscVolume", "Volume", 0.5);
 }
 
-void Project1Synthesizer::setParameter(uint32_t id, double value) {
+void Project1Synthesizer::setParameter(uint32_t id, float value) {
   if (id == 0) {
     paramGain = value;
   } else if (id == 1) {
@@ -23,9 +23,9 @@ void Project1Synthesizer::setParameter(uint32_t id, double value) {
   }
 }
 
-void Project1Synthesizer::prepareProcessing(double sampleRate,
+void Project1Synthesizer::prepareProcessing(float sampleRate,
                                             uint32_t maxFrameCount) {
-  this->sampleRate = (float)sampleRate;
+  this->sampleRate = sampleRate;
 }
 
 void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
@@ -50,7 +50,7 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
   }
 }
 
-void Project1Synthesizer::noteOn(int noteNumber, double velocity) {
+void Project1Synthesizer::noteOn(int noteNumber, float velocity) {
   this->noteNumber = noteNumber;
   this->gateOn = true;
 }

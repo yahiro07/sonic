@@ -19,14 +19,14 @@ createAUParameterFromParameterItem(const ParameterItem &entry) {
                                name:[NSString stringWithUTF8String:entry.label
                                                                        .c_str()]
                             address:entry.id
-                                min:(float)entry.minValue
-                                max:(float)entry.maxValue
+                                min:entry.minValue
+                                max:entry.maxValue
                                unit:kAudioUnitParameterUnit_Generic
                            unitName:nil
                               flags:paramOptions
                        valueStrings:nil
                 dependentParameters:nil];
-  param.value = (float)entry.defaultValue;
+  param.value = entry.defaultValue;
   return param;
 }
 

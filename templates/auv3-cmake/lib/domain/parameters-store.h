@@ -6,19 +6,19 @@ namespace sonic {
 
 class VectorParametersStore : public IParametersStore {
 private:
-  std::vector<double> parameters;
+  std::vector<float> parameters;
 
 public:
   VectorParametersStore(size_t parameterCount)
       : parameters(parameterCount, 0.0) {}
 
-  double get(uint32_t id) override {
+  float get(uint32_t id) override {
     if (id < parameters.size()) {
       return parameters[id];
     }
-    return 0.0;
+    return 0.f;
   }
-  void set(uint32_t id, double value) override {
+  void set(uint32_t id, float value) override {
     if (id < parameters.size()) {
       parameters[id] = value;
     }
@@ -27,17 +27,17 @@ public:
 
 class UnorderedMapParametersStore : public IParametersStore {
 private:
-  std::unordered_map<uint32_t, double> parameters;
+  std::unordered_map<uint32_t, float> parameters;
 
 public:
-  double get(uint32_t id) override {
+  float get(uint32_t id) override {
     auto it = parameters.find(id);
     if (it != parameters.end()) {
       return it->second;
     }
-    return 0.0;
+    return 0.f;
   }
-  void set(uint32_t id, double value) override { parameters[id] = value; }
+  void set(uint32_t id, float value) override { parameters[id] = value; }
 };
 
 class ParametersStore : public IParametersStore {
@@ -57,9 +57,9 @@ public:
     }
   }
 
-  double get(uint32_t id) override { return impl->get(id); }
+  float get(uint32_t id) override { return impl->get(id); }
 
-  void set(uint32_t id, double value) override { impl->set(id, value); }
+  void set(uint32_t id, float value) override { impl->set(id, value); }
 };
 
 } // namespace sonic

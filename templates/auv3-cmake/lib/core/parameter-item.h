@@ -17,9 +17,9 @@ typedef struct _ParameterItem {
   ParamId id;
   std::string paramKey;
   std::string label;
-  double defaultValue;
-  double minValue;
-  double maxValue;
+  float defaultValue;
+  float minValue;
+  float maxValue;
   std::vector<std::string> valueStrings; // For enum parameters
   ParameterType type;
   std::string group;

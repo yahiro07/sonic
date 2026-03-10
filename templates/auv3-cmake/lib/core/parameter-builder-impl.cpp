@@ -3,15 +3,15 @@
 namespace sonic {
 
 void ParameterBuilderImpl::addUnary(uint32_t id, Str paramKey, Str label,
-                                    double defaultValue, Str group,
+                                    float defaultValue, Str group,
                                     ParameterFlags flags) {
   parameters.push_back({
       .id = id,
       .paramKey = std::string(paramKey),
       .label = std::string(label),
       .defaultValue = defaultValue,
-      .minValue = 0.0,
-      .maxValue = 1.0,
+      .minValue = 0.f,
+      .maxValue = 1.f,
       .valueStrings = {},
       .type = ParameterType::Unary,
       .group = std::string(group),
@@ -22,8 +22,8 @@ void ParameterBuilderImpl::addUnary(uint32_t id, Str paramKey, Str label,
 void ParameterBuilderImpl::addEnum(uint32_t id, Str paramKey, Str label,
                                    Str defaultValueString, StrVec valueStrings,
                                    Str group, ParameterFlags flags) {
-  const double maxValue =
-      valueStrings.empty() ? 0.0 : static_cast<double>(valueStrings.size() - 1);
+  const float maxValue =
+      valueStrings.empty() ? 0.f : static_cast<float>(valueStrings.size() - 1);
   parameters.push_back({
       .id = id,
       .paramKey = std::string(paramKey),
@@ -35,8 +35,8 @@ void ParameterBuilderImpl::addEnum(uint32_t id, Str paramKey, Str label,
                                       std::find(valueStrings.begin(),
                                                 valueStrings.end(),
                                                 defaultValueString)))
-              : 0.0f,
-      .minValue = 0.0,
+              : 0.f,
+      .minValue = 0.f,
       .maxValue = maxValue,
       .valueStrings =
           std::vector<std::string>(valueStrings.begin(), valueStrings.end()),
@@ -53,9 +53,9 @@ void ParameterBuilderImpl::addBool(uint32_t id, Str paramKey, Str label,
       .id = id,
       .paramKey = std::string(paramKey),
       .label = std::string(label),
-      .defaultValue = defaultValue ? 1.0 : 0.0,
-      .minValue = 0.0,
-      .maxValue = 1.0,
+      .defaultValue = defaultValue ? 1.f : 0.f,
+      .minValue = 0.f,
+      .maxValue = 1.f,
       .valueStrings = {},
       .type = ParameterType::Bool,
       .group = std::string(group),

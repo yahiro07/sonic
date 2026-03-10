@@ -24,7 +24,7 @@ protected:
 public:
   virtual ~ParameterBuilder() = default;
   virtual void addUnary(uint32_t id, Str paramKey, Str label,
-                        double defaultValue, Str group = "",
+                        float defaultValue, Str group = "",
                         ParameterFlags flags = ParameterFlags::None) = 0;
   virtual void addEnum(uint32_t id, Str paramKey, Str label,
                        Str defaultValueString, StrVec valueStrings,
@@ -39,11 +39,11 @@ class SynthesizerBase {
 public:
   virtual ~SynthesizerBase() = default;
   virtual void setupParameters(ParameterBuilder &builder) = 0;
-  virtual void setParameter(uint32_t id, double value) = 0;
-  virtual void prepareProcessing(double sampleRate, uint32_t maxFrameCount) = 0;
+  virtual void setParameter(uint32_t id, float value) = 0;
+  virtual void prepareProcessing(float sampleRate, uint32_t maxFrameCount) = 0;
   virtual void processAudio(float *bufferL, float *bufferR,
                             uint32_t frames) = 0;
-  virtual void noteOn(int noteNumber, double velocity) = 0;
+  virtual void noteOn(int noteNumber, float velocity) = 0;
   virtual void noteOff(int noteNumber) = 0;
 
   virtual void getDesiredEditorSize(uint32_t &width, uint32_t &height) = 0;

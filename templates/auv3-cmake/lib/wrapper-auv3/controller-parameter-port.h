@@ -88,7 +88,7 @@ public:
     }
   }
 
-  void getAllParameters(std::map<std::string, double> &parameters) {
+  void getAllParameters(std::map<std::string, float> &parameters) {
     auto parameterItems = _parametersDefinitionProvider.getParameterItems();
     for (const auto &item : parameterItems) {
       auto value = parameters[item.paramKey] =

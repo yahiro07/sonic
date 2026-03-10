@@ -41,7 +41,7 @@ public:
     }
   }
 
-  void setParameter(uint32_t paramId, double value, bool notifyToUi) override {
+  void setParameter(uint32_t paramId, float value, bool notifyToUi) override {
     std::scoped_lock lock(parameterValuesMutex);
     parameterStore.set(paramId, value);
 
@@ -53,13 +53,13 @@ public:
     }
   }
 
-  double getParameter(uint32_t paramId) override {
+  float getParameter(uint32_t paramId) override {
     std::scoped_lock lock(parameterValuesMutex);
     return parameterStore.get(paramId);
   }
 
   int subscribeParameterChange(
-      std::function<void(std::string paramKey, double value)> callback)
+      std::function<void(std::string paramKey, float value)> callback)
       override {
     auto id = nextToken++;
     parameterChangeListeners[id] = callback;
@@ -70,7 +70,7 @@ public:
     parameterChangeListeners.erase(subscriptionId);
   }
 
-  void getAllParameters(std::map<std::string, double> &parameters) override {
+  void getAllParameters(std::map<std::string, float> &parameters) override {
     std::scoped_lock lock(parameterValuesMutex);
     for (const auto &item : parameterDefinitionsProvider.getParameterItems()) {
       auto paramId = item.id;

@@ -12,7 +12,7 @@ public:
       : parameterPort(parameterPort) {}
 
   int subscribeParameterChange(
-      std::function<void(const std::string, double)> callback) override {
+      std::function<void(const std::string, float)> callback) override {
     return parameterPort.subscribeToParameterChanges(callback);
   }
 
@@ -20,16 +20,16 @@ public:
     parameterPort.unsubscribeFromParameterChanges(token);
   }
 
-  void applyParameterEditFromUi(std::string paramKey, double value,
+  void applyParameterEditFromUi(std::string paramKey, float value,
                                 ParameterEditState editState) override {
     parameterPort.applyParameterEditFromUi(paramKey, value, editState);
   }
 
-  void getAllParameters(std::map<std::string, double> &parameters) override {
+  void getAllParameters(std::map<std::string, float> &parameters) override {
     parameterPort.getAllParameters(parameters);
   }
 
-  void requestNoteOn(int noteNumber, double velocity) override {}
+  void requestNoteOn(int noteNumber, float velocity) override {}
   void requestNoteOff(int noteNumber) override {}
 };
 } // namespace sonic
