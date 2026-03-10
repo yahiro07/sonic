@@ -74,17 +74,25 @@ public:
     }
     auto id = *idPtr;
     if (editState == ParameterEditState::Begin) {
+      auto currentValue = _parameterTreeWrapper.getParameterValue(id);
       _parameterTreeWrapper.setParameterValue(
-          id, value, ptObserverToken, ParameterAutomationEventType::Touch);
+          id, currentValue, ptObserverToken,
+          ParameterAutomationEventType::Touch);
     } else if (editState == ParameterEditState::End) {
+      auto currentValue = _parameterTreeWrapper.getParameterValue(id);
       _parameterTreeWrapper.setParameterValue(
-          id, value, ptObserverToken, ParameterAutomationEventType::Release);
+          id, currentValue, ptObserverToken,
+          ParameterAutomationEventType::Release);
     } else if (editState == ParameterEditState::Perform) {
       _parameterTreeWrapper.setParameterValue(
           id, value, ptObserverToken, ParameterAutomationEventType::Value);
     } else if (editState == ParameterEditState::InstantChange) {
       _parameterTreeWrapper.setParameterValue(
+          id, value, ptObserverToken, ParameterAutomationEventType::Touch);
+      _parameterTreeWrapper.setParameterValue(
           id, value, ptObserverToken, ParameterAutomationEventType::Value);
+      _parameterTreeWrapper.setParameterValue(
+          id, value, ptObserverToken, ParameterAutomationEventType::Release);
     }
   }
 

@@ -15,20 +15,20 @@ struct RxMsgUiLoaded {
 };
 struct RxMsgBeginEdit {
   std::string type = "beginEdit";
-  std::string identifier;
+  std::string paramKey;
 };
 struct RxMsgPerformEdit {
   std::string type = "performEdit";
-  std::string identifier;
+  std::string paramKey;
   float value;
 };
 struct RxMsgEndEdit {
   std::string type = "endEdit";
-  std::string identifier;
+  std::string paramKey;
 };
 struct RxMsgInstantEdit {
   std::string type = "instantEdit";
-  std::string identifier;
+  std::string paramKey;
   float value;
 };
 struct RxMsgNoteOnRequest {
@@ -56,7 +56,7 @@ using RxMessageVariant =
 
 struct TxMsgSetParameter {
   std::string type = "setParameter";
-  std::string identifier;
+  std::string paramKey;
   float value;
 };
 struct TxMsgBulkSendParameters {
@@ -135,17 +135,17 @@ private:
       };
       sendMessageToWebView(msg);
     } else if (auto *m = std::get_if<RxMsgBeginEdit>(&rxMessage)) {
-      controllerFacade.applyParameterEditFromUi(m->identifier, 0.f,
+      controllerFacade.applyParameterEditFromUi(m->paramKey, 0.f,
                                                 ParameterEditState::Begin);
     } else if (auto *m = std::get_if<RxMsgPerformEdit>(&rxMessage)) {
-      controllerFacade.applyParameterEditFromUi(m->identifier, m->value,
+      controllerFacade.applyParameterEditFromUi(m->paramKey, m->value,
                                                 ParameterEditState::Perform);
     } else if (auto *m = std::get_if<RxMsgEndEdit>(&rxMessage)) {
-      controllerFacade.applyParameterEditFromUi(m->identifier, 0.f,
+      controllerFacade.applyParameterEditFromUi(m->paramKey, 0.f,
                                                 ParameterEditState::End);
     } else if (auto *m = std::get_if<RxMsgInstantEdit>(&rxMessage)) {
       controllerFacade.applyParameterEditFromUi(
-          m->identifier, m->value, ParameterEditState::InstantChange);
+          m->paramKey, m->value, ParameterEditState::InstantChange);
     } else if (auto *m = std::get_if<RxMsgNoteOnRequest>(&rxMessage)) {
       controllerFacade.requestNoteOn(m->noteNumber, 1.f);
     } else if (auto *m = std::get_if<RxMsgNoteOffRequest>(&rxMessage)) {
@@ -159,11 +159,11 @@ private:
     }
   }
 
-  void handleParameterChangeFromController(const std::string &identifier,
+  void handleParameterChangeFromController(const std::string &paramKey,
                                            float value) {
     TxMsgSetParameter msg{
         .type = "setParameter",
-        .identifier = identifier,
+        .paramKey = paramKey,
         .value = value,
     };
     sendMessageToWebView(msg);

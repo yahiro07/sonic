@@ -50,7 +50,7 @@ using namespace sonic;
 
 - (void)setupSynth {
   logger.start();
-  logger.mark("setupSynth 0238");
+  logger.mark("setupSynth 0647");
   _synth.reset(createSynthesizerInstance());
   ParameterBuilderImpl builder;
   _synth->setupParameters(builder);
