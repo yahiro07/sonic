@@ -5,6 +5,7 @@ namespace pseudo_framework_design {
   type Int32 = number;
   type Int64 = number;
   type Float = number;
+  type VoidP = any;
 
   interface IPlatformControllerOutgoingParameterPort {
     beginEdit(id: Int32): void;
@@ -287,6 +288,160 @@ namespace pseudo_framework_design {
     }
   }
   const createSynthesizerInstance = () => new MySynthesizer();
+
+  //----------
+  //📁adapters/vst3
+
+  interface IVstDependent {
+    update(changedUnknown: any, message: Int32): void;
+  }
+
+  class VstEditController {
+    beginEdit(id: Int32) {}
+    performEdit(id: Int32, value: Float) {}
+    endEdit(id: Int32) {}
+  }
+
+  class VstParameterChangeNotifier implements IVstDependent {
+    constructor(private editController: VstEditController) {}
+
+    listener: ((id: Int32, value: Float) => void) | null = null;
+
+    start(fn: (id: Int32, value: Float) => void) {
+      this.listener = fn;
+      for (const param of (this.editController as any).parameterObjects) {
+        param.addDependent(this);
+      }
+    }
+
+    stop() {
+      this.listener = null;
+      for (const param of (this.editController as any).parameterObjects) {
+        param.removeDependent(this);
+      }
+    }
+
+    update(changedUnknown: any, message: Int32) {}
+  }
+
+  class VstParametersOutputPort implements IPlatformControllerOutgoingParameterPort {
+    constructor(private editController: VstEditController) {}
+
+    beginEdit(id: Int32): void {
+      this.editController.beginEdit(id);
+    }
+    performEdit(id: Int32, value: Float): void {
+      //parameter flow: UI --> Host, DSP
+      this.editController.performEdit(id, value);
+    }
+    endEdit(id: Int32): void {
+      this.editController.endEdit(id);
+    }
+  }
+
+  interface VstEditorView {}
+
+  class WebViewEditorView implements VstEditorView {
+    webView: AnyTypeOf["WebView"] & IWebViewIo;
+    webViewBridge: WebViewBridge | null = null;
+    editorPortal: EditorPortal;
+
+    constructor(
+      editController: EditController,
+      parametersOutputPort: VstParametersOutputPort,
+    ) {
+      this.webView = d.createWebView();
+      this.editorPortal = new EditorPortal(
+        editController.parameterManager,
+        parametersOutputPort,
+      );
+    }
+
+    attached(parent: VoidP) {
+      this.webView.attachToParent(parent);
+      this.webViewBridge = new WebViewBridge(this.editorPortal);
+      this.webViewBridge.setup(this.webView);
+    }
+
+    removed() {
+      this.webViewBridge?.cleanup();
+      this.webViewBridge = null;
+      this.webView.removeFromParent();
+      this.webView.close();
+      this.webView = null;
+    }
+  }
+
+  class AudioProcessor {
+    synth: ISynthesizerBase;
+    constructor() {
+      this.synth = createSynthesizerInstance();
+    }
+    process(processData: AnyTypeOf["VstProcessData"]): void {
+      const data: IProcessingData = {
+        events: [],
+      };
+      const inputEvents = processData.inputEvents.map((e: any) => {
+        if (e.type === "noteOn") {
+          const { noteNumber, velocity, sampleOffset } = e;
+          return { type: "noteOn", noteNumber, velocity, sampleOffset };
+        } else if (e.type === "noteOff") {
+          const { noteNumber, sampleOffset } = e;
+          return { type: "noteOff", noteNumber, sampleOffset };
+        } else if (e.type === "parameterChange") {
+          const { id, value, sampleOffset } = e;
+          return { type: "parameterChange", id, value, sampleOffset };
+        }
+      });
+      data.events.push(...inputEvents);
+      const outL = processData.outputs[0].channelBuffers32[0];
+      const outR = processData.outputs[0].channelBuffers32[1];
+      this.synth.processAudio(outL, outR, data);
+    }
+
+    notify(message: AnyTypeOf["IMessage"]): void {}
+  }
+
+  class EditController extends VstEditController {
+    synth: ISynthesizerBase;
+    parameterManager: IMainThreadParameterManager;
+    parameterOutputPort: VstParametersOutputPort;
+    editorPortal: EditorPortal;
+    parameterChangeNotifier: VstParameterChangeNotifier;
+    constructor() {
+      super();
+      this.synth = createSynthesizerInstance();
+      const parameterEntries = this.synth.getParameterEntries();
+      this.parameterManager = new MainThreadParameterManager();
+      this.parameterManager.setup(parameterEntries);
+      this.parameterOutputPort = new VstParametersOutputPort(this);
+      this.editorPortal = new EditorPortal(
+        this.parameterManager,
+        this.parameterOutputPort,
+      );
+      this.parameterChangeNotifier = new VstParameterChangeNotifier(this);
+    }
+
+    initialize() {
+      this.parameterChangeNotifier.start((id, value) => {
+        //parameter flow: Host --> UI
+        this.parameterManager.setParameter(id, value, true);
+      });
+    }
+
+    createView(name: string): AnyTypeOf["PlugView"] | null {
+      if (name == "editor") {
+        return new WebViewEditorView(this, this.parameterOutputPort);
+      }
+      return null;
+    }
+
+    setParameterNormalized(id: Int32, value: Float): void {
+      this.parameterManager.setParameter(id, value, true);
+    }
+
+    notify(message: AnyTypeOf["IMessage"]): void {}
+  }
 
   //----------
   //📁adapters/clap
