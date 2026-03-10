@@ -379,7 +379,7 @@ namespace pseudo_framework_design {
     }
     process(processData: AnyTypeOf["VstProcessData"]): void {
       const data: IProcessingData = {
-        events: [],
+        events: d.usePreAllocatedEvents(256),
       };
       const inputEvents = processData.inputEvents.map((e: any) => {
         if (e.type === "noteOn") {
@@ -735,7 +735,11 @@ namespace pseudo_framework_design {
     flatParameterTree: Record<Int32, AnyTypeOf["Auv3Parameter"]> = {};
     token: Int32 = 0;
 
-    constructor(private parameterTree: AnyTypeOf["Auv3ParameterTree"]) {
+    constructor(
+      private parameterTree: AnyTypeOf["Auv3ParameterTree"],
+      private parameterManager: MainThreadParameterManager,
+      private dspParameterQueue: SPSCQueue<any, any>,
+    ) {
       const flatten = (node: any) => {
         if (node.type === "parameter") {
           this.flatParameterTree[node.id] = node;
@@ -744,6 +748,23 @@ namespace pseudo_framework_design {
         }
       };
       flatten(this.parameterTree);
+      this.setupParameterTreeCallbacks();
+    }
+
+    setupParameterTreeCallbacks() {
+      this.parameterTree.implementorValueObserver(
+        (param: any, value: Float) => {
+          // this.dspParameterQueue.push({ id: param.address, value });
+          //not routing parameters to DSP since it's supposed to be
+          //sent to renderBlock directly by host.
+
+          //parameter flow: Host --> UI
+          this.parameterManager.setParameter(param.address, value, true);
+        },
+      );
+      this.parameterTree.implementorValueProvider((param: any) => {
+        return this.parameterManager.getParameter(param.address);
+      });
     }
 
     beginEdit(address: Int32): void {
@@ -751,11 +772,16 @@ namespace pseudo_framework_design {
       parameter.setValue({ evenType: ".began" });
     }
     performEdit(address: Int32, value: Float): void {
-      //parameter flow: Host,DSP <-- UI
+      //parameter flow: Host <-- UI
       //this triggers parameterTree.implementorValueObserver callback
-      // which then pushes the change to DSP via SPSCQueue
       const parameter = this.flatParameterTree[address];
       parameter.setValue({ value, originator: this.token });
+
+      //parameter flow: DSP <-- UI
+      //pushes the change to DSP via SPSCQueue
+      // this.dspParameterQueue.push({ id: address, value });
+      //not routing parameters manually to DSP
+      //expecting host or AU base system to send the route the parameter to renderBlock.
     }
     endEdit(address: Int32): void {
       const parameter = this.flatParameterTree[address];
@@ -775,9 +801,13 @@ namespace pseudo_framework_design {
       this.synth = createSynthesizerInstance();
       const parameterEntries = this.synth.getParameterEntries();
       const parameterTree = d2.createAuv3ParameterTree(parameterEntries);
+      this.parameterManager = new MainThreadParameterManager();
+      this.parameterManager.setup(parameterEntries);
 
       this.uiParameterDestPort = new Auv3UiOriginatedParameterDestinationPort(
         parameterTree,
+        this.parameterManager,
+        this.dspParameterQueue,
       );
       for (const entry of parameterEntries) {
         this.dspParameterQueue.push({
@@ -785,29 +815,16 @@ namespace pseudo_framework_design {
           value: entry.defaultValue,
         });
       }
-      this.parameterManager = new MainThreadParameterManager();
-      this.parameterManager.setup(parameterEntries);
 
       this.editorPortal = new EditorPortal(
         this.parameterManager,
         this.uiParameterDestPort,
       );
-
-      parameterTree.implementorValueObserver((param: any, value: Float) => {
-        //parameter flow: Host/UI --> DSP
-        this.dspParameterQueue.push({ id: param.address, value });
-        //parameter flow: Host/UI --> UI (including ui originated reflected value)
-        //cannot determine whether the change is originated from Host or UI here
-        this.parameterManager.setParameter(param.address, value, true);
-      });
-      parameterTree.implementorValueProvider((param: any) => {
-        return this.parameterManager.getParameter(param.address);
-      });
     }
     internalRenderBlock() {
       return (buffers: any, sourceEvents: any) => {
         const data: IProcessingData = {
-          events: [],
+          events: d.usePreAllocatedEvents(256),
         };
         let e: { id: Int32; value: Float } | null;
         while ((e = this.dspParameterQueue.pop())) {
