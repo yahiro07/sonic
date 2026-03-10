@@ -49,7 +49,6 @@ public:
   setParameterChangeCallback(std::function<void(uint32_t, double)> fn) = 0;
 };
 
-// --- AUv3ParameterManager Implementation ---
 class AUv3ParameterIo : public IPlatformParameterIo {
 public:
   AUv3ParameterIo() {}
@@ -122,6 +121,23 @@ private:
     return nil;
   }
 
+  AVAudioFormat *defaultFormat =
+      [[AVAudioFormat alloc] initStandardFormatWithSampleRate:44100.0
+                                                     channels:2];
+  _outputBus = [[AUAudioUnitBus alloc] initWithFormat:defaultFormat
+                                                error:outError];
+  if (!_outputBus) {
+    return nil;
+  }
+
+  [self setupBuses];
+
+  [self setupSynth];
+
+  return self;
+}
+
+- (void)setupSynth {
   _synth = std::unique_ptr<SynthesizerBase>(createSynthesizerInstance());
   _parameterIo = std::make_unique<AUv3ParameterIo>();
 
@@ -136,15 +152,9 @@ private:
       [synth = _synth.get()](uint32_t id, double value) {
         synth->setParameter(id, value);
       });
+}
 
-  AVAudioFormat *defaultFormat =
-      [[AVAudioFormat alloc] initStandardFormatWithSampleRate:44100.0
-                                                     channels:2];
-  _outputBus = [[AUAudioUnitBus alloc] initWithFormat:defaultFormat
-                                                error:outError];
-  if (!_outputBus) {
-    return nil;
-  }
+- (void)setupBuses {
   _outputBus.maximumChannelCount = 2;
 
   _outputBusArray =
@@ -155,8 +165,6 @@ private:
       [[AUAudioUnitBusArray alloc] initWithAudioUnit:self
                                              busType:AUAudioUnitBusTypeInput
                                               busses:@[]];
-
-  return self;
 }
 
 - (void)getDesiredEditorSize:(uint32_t *)width height:(uint32_t *)height {
