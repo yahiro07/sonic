@@ -3,7 +3,7 @@
 
 namespace sonic {
 
-class ParameterTreeWrapper : public IParameterTreeWrapper {
+class ParameterTreeWrapperImpl : public ParameterTreeWrapper {
 private:
   AUParameterTree *_parameterTree;
 
@@ -13,7 +13,7 @@ private:
   }
 
 public:
-  ParameterTreeWrapper(AUParameterTree *parameterTree)
+  ParameterTreeWrapperImpl(AUParameterTree *parameterTree)
       : _parameterTree(parameterTree) {
     if (_parameterTree) {
       CFRetain((__bridge CFTypeRef)_parameterTree);
@@ -26,7 +26,7 @@ public:
       return;
     }
   }
-  ~ParameterTreeWrapper() {
+  ~ParameterTreeWrapperImpl() {
     if (_parameterTree) {
       CFRelease((__bridge CFTypeRef)_parameterTree);
       _parameterTree = nil;
@@ -75,11 +75,11 @@ public:
   }
 };
 
-IParameterTreeWrapper *createParameterTreeWrapper(void *parameterTree) {
-  return new ParameterTreeWrapper((__bridge AUParameterTree *)parameterTree);
+ParameterTreeWrapper *ParameterTreeWrapper::create(void *parameterTree) {
+  return new ParameterTreeWrapperImpl(
+      (__bridge AUParameterTree *)parameterTree);
 }
-
-void destroyParameterTreeWrapper(IParameterTreeWrapper *wrapper) {
+void ParameterTreeWrapper::destroy(ParameterTreeWrapper *wrapper) {
   delete wrapper;
 }
 

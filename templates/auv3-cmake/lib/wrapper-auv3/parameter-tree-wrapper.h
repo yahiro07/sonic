@@ -9,9 +9,9 @@ enum class ParameterAutomationEventType {
   Release = 2 // AUParameterAutomationEventTypeRelease
 };
 
-class IParameterTreeWrapper {
+class ParameterTreeWrapper {
 public:
-  virtual ~IParameterTreeWrapper() = default;
+  virtual ~ParameterTreeWrapper() = default;
   virtual void setImplementorValueObserver(
       std::function<void(uint64_t address, float value)> observer) = 0;
   virtual void setImplementorValueProvider(
@@ -26,15 +26,12 @@ public:
   virtual void *tokenByAddingParameterObserver(
       std::function<void(uint64_t address, float value)> observer) = 0;
   virtual void removeParameterObserver(void *observerToken) = 0;
-};
 
-IParameterTreeWrapper *createParameterTreeWrapper(void *parameterTree);
-void destroyParameterTreeWrapper(IParameterTreeWrapper *wrapper);
-
-struct ParameterTreeWrapperDeleter {
-  void operator()(IParameterTreeWrapper *wrapper) const {
-    destroyParameterTreeWrapper(wrapper);
-  }
+  static ParameterTreeWrapper *create(void *parameterTree);
+  static void destroy(ParameterTreeWrapper *wrapper);
+  struct Deleter {
+    void operator()(ParameterTreeWrapper *wrapper) const { destroy(wrapper); }
+  };
 };
 
 } // namespace sonic

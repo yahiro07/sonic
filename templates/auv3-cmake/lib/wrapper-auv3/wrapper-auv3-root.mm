@@ -41,7 +41,7 @@ using namespace sonic;
   std::unique_ptr<SynthesizerBase> _synth;
   std::unique_ptr<ParameterDefinitionsProvider> _parametersDefinitionProvider;
   std::unique_ptr<ParametersStore> _parametersStore;
-  std::unique_ptr<IParameterTreeWrapper, ParameterTreeWrapperDeleter>
+  std::unique_ptr<ParameterTreeWrapper, ParameterTreeWrapper::Deleter>
       _parameterTreeWrapper;
   std::unique_ptr<ControllerParameterPort> _controllerParameterPort;
   std::unique_ptr<ControllerFacade> _controllerFacade;
@@ -57,7 +57,8 @@ using namespace sonic;
   auto parameterItems = builder.getItems();
   _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
   _parameterTreeWrapper.reset(
-      createParameterTreeWrapper((__bridge void *)_parameterTree));
+      ParameterTreeWrapper::create((__bridge void *)_parameterTree));
+
   _parametersDefinitionProvider =
       std::make_unique<ParameterDefinitionsProvider>();
   _parametersDefinitionProvider->addParameters(parameterItems, 0xFFFFFFFF);

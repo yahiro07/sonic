@@ -9,7 +9,7 @@ namespace sonic {
 
 class ControllerParameterPort {
 private:
-  IParameterTreeWrapper &_parameterTreeWrapper;
+  ParameterTreeWrapper &_parameterTreeWrapper;
   ParameterDefinitionsProvider &_parametersDefinitionProvider;
   void *ptObserverToken = nullptr;
 
@@ -42,7 +42,7 @@ private:
 
 public:
   ControllerParameterPort(
-      IParameterTreeWrapper &parameterTreeWrapper,
+      ParameterTreeWrapper &parameterTreeWrapper,
       ParameterDefinitionsProvider &parametersDefinitionProvider)
       : _parameterTreeWrapper(parameterTreeWrapper),
         _parametersDefinitionProvider(parametersDefinitionProvider) {}
