@@ -248,8 +248,8 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   if (!_webViewBridge) {
     auto controllerFacade = [audioUnit getControllerFacade];
     auto webViewIo = (IWebViewIo *)_webView.get();
-    _webViewBridge =
-        std::make_unique<WebViewBridge>(*controllerFacade, *webViewIo);
+    _webViewBridge = std::unique_ptr<WebViewBridge>(
+        WebViewBridge::create(*controllerFacade, *webViewIo));
     _webViewBridge->setup();
   }
 
