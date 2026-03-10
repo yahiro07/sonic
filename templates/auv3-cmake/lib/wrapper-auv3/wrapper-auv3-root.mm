@@ -214,6 +214,7 @@ public:
 };
 
 @interface WrapperAuv3AudioUnit ()
+@property AUParameterTree *parameterTree;
 @property AUAudioUnitBus *outputBus;
 @property AUAudioUnitBusArray *outputBusArray;
 @property AUAudioUnitBusArray *inputBusArray;
@@ -278,18 +279,7 @@ public:
   if (!self) {
     return nil;
   }
-
-  AVAudioFormat *defaultFormat =
-      [[AVAudioFormat alloc] initStandardFormatWithSampleRate:44100.0
-                                                     channels:2];
-  _outputBus = [[AUAudioUnitBus alloc] initWithFormat:defaultFormat
-                                                error:outError];
-  if (!_outputBus) {
-    return nil;
-  }
-
   [self setupBuses];
-
   [self setupSynth];
 
   return self;
@@ -300,8 +290,11 @@ public:
 }
 
 - (void)setupBuses {
+  AVAudioFormat *defaultFormat =
+      [[AVAudioFormat alloc] initStandardFormatWithSampleRate:44100.0
+                                                     channels:2];
+  _outputBus = [[AUAudioUnitBus alloc] initWithFormat:defaultFormat error:nil];
   _outputBus.maximumChannelCount = 2;
-
   _outputBusArray =
       [[AUAudioUnitBusArray alloc] initWithAudioUnit:self
                                              busType:AUAudioUnitBusTypeOutput
