@@ -1,5 +1,5 @@
 project(wrapper-auv3
-	LANGUAGES OBJCXX CXX
+	LANGUAGES CXX OBJCXX
 )
 
 add_library(wrapper-auv3 STATIC)

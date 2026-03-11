@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(project1)
+project(project1 LANGUAGES CXX OBJCXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
