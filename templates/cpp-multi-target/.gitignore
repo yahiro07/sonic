@@ -1,5 +1,5 @@
 build/
-build-xcode/
+build-*/
 
 project.xcworkspace/
 xcuserdata/
