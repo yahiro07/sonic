@@ -2,7 +2,7 @@
 #include "../api/synthesizer-base.h"
 #include "../common/spsc-queue.h"
 #include "../core/parameter-builder-impl.h"
-#include "../core/parameter-definitions-provider.h"
+#include "../core/parameter-registry.h"
 #include "../domain/interfaces.h"
 #include "../domain/parameters-store.h"
 #include "./controller-facade.h"
@@ -17,7 +17,7 @@
 
 namespace sonic {
 
-static int getMaxIdFromParameterItems(const std::vector<ParameterItem> &items) {
+static int getMaxIdFromParameterItems(const ParameterSpecArray &items) {
   int maxId = 0;
   for (const auto &item : items) {
     if (item.id > maxId) {
@@ -29,7 +29,7 @@ static int getMaxIdFromParameterItems(const std::vector<ParameterItem> &items) {
 
 class EntryController {
 private:
-  ParameterDefinitionsProvider parametersDefinitionProvider;
+  ParameterRegistry parametersRegistry;
   SynthesizerBase &synth;
   ParameterTreeWrapper &parameterTreeWrapper;
   ParameterService parameterService;
@@ -41,23 +41,21 @@ private:
   SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
 
 public:
-  static std::vector<sonic::ParameterItem>
-  preGenerateParameterItems(SynthesizerBase &synth) {
+  static ParameterSpecArray preGenerateParameterItems(SynthesizerBase &synth) {
     ParameterBuilderImpl builder;
     synth.setupParameters(builder);
     return builder.getItems();
   }
-  EntryController(SynthesizerBase &synth,
-                  std::vector<ParameterItem> &parameteritems,
+  EntryController(SynthesizerBase &synth, ParameterSpecArray &parameteritems,
                   ParameterTreeWrapper &parameterTreeWrapper)
       : synth(synth), parameterTreeWrapper(parameterTreeWrapper),
-        parameterService(parameterTreeWrapper, parametersDefinitionProvider),
+        parameterService(parameterTreeWrapper, parametersRegistry),
         controllerFacade(parameterService, noteService) {
-    parametersDefinitionProvider.addParameters(parameteritems, 0xFFFFFFFF);
+    parametersRegistry.addParameters(parameteritems, 0xFFFFFFFF);
   }
 
   void initialize() {
-    auto parameterItems = parametersDefinitionProvider.getParameterItems();
+    auto parameterItems = parametersRegistry.getParameterItems();
     auto maxId = getMaxIdFromParameterItems(parameterItems);
     parametersStore.setup(maxId);
     for (const auto &item : parameterItems) {

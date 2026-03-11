@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/parameter-definitions-provider.h"
+#include "../core/parameter-registry.h"
 #include "../domain/interfaces.h"
 #include "../support/parameter-tree-wrapper.h"
 #include <map>
@@ -10,7 +10,7 @@ namespace sonic {
 class ParameterService {
 private:
   ParameterTreeWrapper &_parameterTreeWrapper;
-  ParameterDefinitionsProvider &_parametersDefinitionProvider;
+  ParameterRegistry &_parameterRegistry;
   void *ptObserverToken = nullptr;
 
   std::map<int, std::function<void(std::string, float)>> listeners;
@@ -21,7 +21,7 @@ private:
     ptObserverToken = _parameterTreeWrapper.tokenByAddingParameterObserver(
         [this](uint64_t address, float value) {
           auto id = (int32_t)address;
-          auto item = _parametersDefinitionProvider.getParameterItemById(id);
+          auto item = _parameterRegistry.getParameterItemById(id);
           if (!item) {
             return;
           }
@@ -42,9 +42,9 @@ private:
 
 public:
   ParameterService(ParameterTreeWrapper &parameterTreeWrapper,
-                   ParameterDefinitionsProvider &parametersDefinitionProvider)
+                   ParameterRegistry &parameterRegistry)
       : _parameterTreeWrapper(parameterTreeWrapper),
-        _parametersDefinitionProvider(parametersDefinitionProvider) {}
+        _parameterRegistry(parameterRegistry) {}
 
   ~ParameterService() { stopObserve(); }
 
@@ -67,7 +67,7 @@ public:
 
   void applyParameterEditFromUi(std::string paramKey, float value,
                                 ParameterEditState editState) {
-    auto idPtr = _parametersDefinitionProvider.getIdByParamKey(paramKey);
+    auto idPtr = _parameterRegistry.getIdByParamKey(paramKey);
     if (idPtr == std::nullopt) {
       return;
     }
@@ -96,7 +96,7 @@ public:
   }
 
   void getAllParameters(std::map<std::string, float> &parameters) {
-    auto parameterItems = _parametersDefinitionProvider.getParameterItems();
+    auto parameterItems = _parameterRegistry.getParameterItems();
     for (const auto &item : parameterItems) {
       auto value = parameters[item.paramKey] =
           _parameterTreeWrapper.getParameterValue(item.id);

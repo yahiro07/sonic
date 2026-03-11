@@ -1,14 +1,14 @@
 #pragma once
-#include "./parameter-item.h"
+#include "./parameter-spec-item.h"
 
 namespace sonic {
 
 class ParameterBuilderImpl : public ParameterBuilder {
 private:
-  std::vector<ParameterItem> parameters;
+  std::vector<ParameterSpecItem> parameters;
 
 public:
-  std::vector<ParameterItem> getItems() { return parameters; }
+  std::vector<ParameterSpecItem> getItems() { return parameters; }
 
   void addUnary(uint32_t id, Str paramKey, Str label, float defaultValue,
                 Str group, ParameterFlags flags);

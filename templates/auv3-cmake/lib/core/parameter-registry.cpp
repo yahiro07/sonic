@@ -1,12 +1,12 @@
-#include "./parameter-definitions-provider.h"
+#include "./parameter-registry.h"
 #include <optional>
 #include <string>
 #include <unordered_map>
 
 namespace sonic {
 
-void ParameterDefinitionsProvider::addParameters(
-    std::vector<ParameterItem> &parameterItems, uint32_t maxId) {
+void ParameterRegistry::addParameters(ParameterSpecArray &parameterItems,
+                                      uint32_t maxId) {
   this->parameterItems.clear();
   this->parameterItemsMap.clear();
   this->paramKeyToIdMap.clear();
@@ -28,7 +28,7 @@ void ParameterDefinitionsProvider::addParameters(
 }
 
 std::optional<ParamId>
-ParameterDefinitionsProvider::getIdByParamKey(const std::string &paramKey) {
+ParameterRegistry::getIdByParamKey(const std::string &paramKey) {
   auto val = paramKeyToIdMap.find(paramKey);
   if (val == paramKeyToIdMap.end()) {
     return std::nullopt;
@@ -36,8 +36,7 @@ ParameterDefinitionsProvider::getIdByParamKey(const std::string &paramKey) {
   return val->second;
 }
 
-std::optional<std::string>
-ParameterDefinitionsProvider::getParamKeyById(ParamId id) {
+std::optional<std::string> ParameterRegistry::getParamKeyById(ParamId id) {
   auto val = parameterItemsMap.find(id);
   if (val == parameterItemsMap.end()) {
     return std::nullopt;
@@ -45,8 +44,7 @@ ParameterDefinitionsProvider::getParamKeyById(ParamId id) {
   return val->second->paramKey;
 }
 
-const ParameterItem *
-ParameterDefinitionsProvider::getParameterItemById(ParamId id) {
+const ParameterSpecItem *ParameterRegistry::getParameterItemById(ParamId id) {
   auto val = parameterItemsMap.find(id);
   if (val == parameterItemsMap.end()) {
     return nullptr;
@@ -54,8 +52,8 @@ ParameterDefinitionsProvider::getParameterItemById(ParamId id) {
   return val->second;
 }
 
-const ParameterItem *ParameterDefinitionsProvider::getParameterItemByParamKey(
-    const std::string &paramKey) {
+const ParameterSpecItem *
+ParameterRegistry::getParameterItemByParamKey(const std::string &paramKey) {
   auto val = paramKeyToIdMap.find(paramKey);
   if (val == paramKeyToIdMap.end()) {
     return nullptr;

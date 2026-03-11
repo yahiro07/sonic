@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../api/synthesizer-base.h"
-#include "../core/parameter-item.h"
+#include "../core/parameter-spec-item.h"
 #include <functional>
 #include <map>
 
@@ -45,13 +45,6 @@ enum class ParameterEditState {
   End,
   InstantChange,
 };
-
-// class IParameterEditActionDestinationPort {
-// public:
-//   virtual ~IParameterEditActionDestinationPort() = default;
-//   virtual void applyParameterEditFromUi(std::string paramKey, float value,
-//                                         ParameterEditState editState) = 0;
-// };
 
 class IControllerFacade {
 public:

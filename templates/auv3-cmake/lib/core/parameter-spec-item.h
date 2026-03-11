@@ -13,7 +13,7 @@ enum class ParameterType {
   Bool,
 };
 
-typedef struct _ParameterItem {
+struct ParameterSpecItem {
   ParamId id;
   std::string paramKey;
   std::string label;
@@ -25,6 +25,8 @@ typedef struct _ParameterItem {
   std::string group;
   ParameterFlags flags;
   // bool isInternal;
-} ParameterItem;
+};
+
+using ParameterSpecArray = std::vector<ParameterSpecItem>;
 
 } // namespace sonic

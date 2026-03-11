@@ -7,7 +7,7 @@ add_library(wrapper-auv3 STATIC)
 target_sources(wrapper-auv3
 	PRIVATE
     ../core/parameter-builder-impl.cpp
-    ../core/parameter-definitions-provider.cpp
+    ../core/parameter-registry.cpp
 		./wrapper-auv3-root.mm
     ../common/mac-web-view.mm
     ../common/logger.cpp

@@ -1,12 +1,12 @@
 #pragma once
 
-#import "../../core/parameter-item.h"
+#import "../../core/parameter-spec-item.h"
 #import <CoreAudioKit/CoreAudioKit.h>
 
 namespace sonic {
 
 static AUParameter *
-createAUParameterFromParameterItem(const ParameterItem &entry) {
+createAUParameterFromParameterItem(const ParameterSpecItem &entry) {
   AudioUnitParameterOptions paramOptions =
       kAudioUnitParameterFlag_IsWritable | kAudioUnitParameterFlag_IsReadable;
   if (entry.type == ParameterType::Enum) {
@@ -30,8 +30,8 @@ createAUParameterFromParameterItem(const ParameterItem &entry) {
   return param;
 }
 
-static AUParameterTree *createAUParameterTreeFromParameterItems(
-    const std::vector<ParameterItem> &items) {
+static AUParameterTree *
+createAUParameterTreeFromParameterItems(const ParameterSpecArray &items) {
   NSMutableArray *auParams = [NSMutableArray array];
   for (const auto &entry : items) {
     [auParams addObject:createAUParameterFromParameterItem(entry)];
