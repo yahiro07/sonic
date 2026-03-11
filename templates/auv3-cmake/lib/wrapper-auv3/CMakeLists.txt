@@ -11,7 +11,7 @@ target_sources(wrapper-auv3
 		./wrapper-auv3-root.mm
     ../common/mac-web-view.mm
     ../common/logger.cpp
-    ./parameter-tree-wrapper.mm
+    ./support/parameter-tree-wrapper.mm
     ../domain/webview-bridge.cpp
 )
 

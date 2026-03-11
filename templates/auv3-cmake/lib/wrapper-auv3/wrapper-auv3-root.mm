@@ -3,9 +3,9 @@
 #import "../common/logger.h"
 #import "../common/mac-web-view.h"
 #import "../domain/webview-bridge.h"
-#import "./au-parameter-helper.h"
-#import "./entry-controller.h"
-#import "./parameter-tree-wrapper.h"
+#import "./logic/entry-controller.h"
+#import "./support/au-parameter-helper.h"
+#import "./support/parameter-tree-wrapper.h"
 #import <AudioToolbox/AUParameters.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudioKit/CoreAudioKit.h>
