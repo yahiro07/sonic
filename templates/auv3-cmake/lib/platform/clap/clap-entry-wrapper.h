@@ -2,6 +2,8 @@
 #include "../../domain/interfaces.h"
 #include <clap/clap.h>
 
+namespace sonic {
+
 struct PluginMeta {
   const char *id;
   const char *name;
@@ -18,3 +20,5 @@ typedef sonic::IPluginSynthesizer *(*SynthesizerInitializerFn)();
 const clap_plugin_entry_t &
 createClapPluginEntry(SynthesizerInitializerFn synthInitializer,
                       const PluginMeta &meta);
+
+} // namespace sonic

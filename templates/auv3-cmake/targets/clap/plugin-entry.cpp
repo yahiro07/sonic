@@ -2,7 +2,7 @@
 #include "../../plugin/project1-synthesizer.h"
 #include <math.h>
 
-PluginMeta meta = {
+sonic::PluginMeta meta = {
     .id = "com.my-company.my-plugin",
     .name = "MyPlugin",
     .vendor = "MyCompany",

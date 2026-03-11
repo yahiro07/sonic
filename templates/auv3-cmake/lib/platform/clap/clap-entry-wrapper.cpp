@@ -2,6 +2,8 @@
 #include "./clap-rootage.h"
 #include "./entry-controller.h"
 
+namespace sonic {
+
 static void overwriteDescriptor(clap_plugin_descriptor_t &desc,
                                 const PluginMeta &meta) {
   desc.id = meta.id;
@@ -32,3 +34,5 @@ createClapPluginEntry(SynthesizerInitializerFn synthInitializer,
   }();
   return clapPlugin;
 }
+
+} // namespace sonic

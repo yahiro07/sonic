@@ -20,6 +20,8 @@
 // #include <string>
 #include "../../api/synthesizer-base.h"
 
+namespace sonic {
+
 #define GUI_API CLAP_WINDOW_API_COCOA
 
 using IPluginSynthesizer = sonic::SynthesizerBase;
@@ -229,3 +231,5 @@ EntryController *EntryController::create(void *synthInstance) {
   return new EntryControllerImpl(
       static_cast<sonic::IPluginSynthesizer *>(synthInstance));
 }
+
+} // namespace sonic

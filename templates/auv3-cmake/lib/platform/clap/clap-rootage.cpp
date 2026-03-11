@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <string.h>
 
+namespace sonic {
+
 using PlugBasis = EntryController;
 
 static PlugBasis *getPluginData(const clap_plugin_t *plugin) {
@@ -25,8 +27,6 @@ static const clap_plugin_params_t extensionParams = {
         return false;
 
       plug->getParameterInfo(index, info);
-      // printf("get_info %d %s %d %f\n", index, info->name, info->id,
-      //        info->default_value);
       return true;
     },
 
@@ -34,7 +34,6 @@ static const clap_plugin_params_t extensionParams = {
                     double *value) -> bool {
       auto plug = getPluginData(plugin);
       *value = plug->getParameterValue(id);
-      // printf("get_value %f\n", *value);
       return true;
     },
 
@@ -336,3 +335,5 @@ void clapRootage_setEntryControllerInstantiateFn(
 const clap_plugin_entry_t &clapRootage_getClapPluginEntry() {
   return clapEntry;
 }
+
+} // namespace sonic

@@ -2,6 +2,8 @@
 
 #include <clap/clap.h>
 
+namespace sonic {
+
 class EntryController {
 public:
   clap_plugin_t plugin;
@@ -35,3 +37,5 @@ public:
 
   static EntryController *create(void *synthInstance);
 };
+
+} // namespace sonic

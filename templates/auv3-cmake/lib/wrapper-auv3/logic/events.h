@@ -14,7 +14,7 @@ struct DownstreamEvent {
   union {
     struct {
       int noteNumber;
-      double velocity; // 0 for note off
+      float velocity; // 0 for note off
     } note;
   };
 };
@@ -28,7 +28,7 @@ struct UpstreamEvent {
   union {
     struct {
       int noteNumber;
-      double velocity; // 0 for note off
+      float velocity; // 0 for note off
     } note;
   };
 };
