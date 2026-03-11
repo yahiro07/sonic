@@ -7,3 +7,5 @@ xcshareddata/
 buildServer.json
 
 .vscode/settings.json
+
+Makefile
