@@ -26,8 +26,8 @@ static int getMaxIdFromParameterItems(const std::vector<ParameterItem> &items) {
 
 class EntryController {
 private:
+  ParameterDefinitionsProvider parametersDefinitionProvider;
   SynthesizerBase &synth;
-  ParameterDefinitionsProvider &parametersDefinitionProvider;
   ParameterTreeWrapper &parameterTreeWrapper;
   ControllerParameterPort controllerParameterPort;
   ControllerFacade controllerFacade;
@@ -41,14 +41,14 @@ public:
     return builder.getItems();
   }
   EntryController(SynthesizerBase &synth,
-                  ParameterDefinitionsProvider &parametersDefinitionProvider,
+                  std::vector<ParameterItem> &parameteritems,
                   ParameterTreeWrapper &parameterTreeWrapper)
-      : synth(synth),
-        parametersDefinitionProvider(parametersDefinitionProvider),
-        parameterTreeWrapper(parameterTreeWrapper),
+      : synth(synth), parameterTreeWrapper(parameterTreeWrapper),
         controllerParameterPort(parameterTreeWrapper,
                                 parametersDefinitionProvider),
-        controllerFacade(controllerParameterPort) {}
+        controllerFacade(controllerParameterPort) {
+    parametersDefinitionProvider.addParameters(parameteritems, 0xFFFFFFFF);
+  }
 
   void initialize() {
     auto parameterItems = parametersDefinitionProvider.getParameterItems();
