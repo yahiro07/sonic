@@ -10,6 +10,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudioKit/CoreAudioKit.h>
 #import <CoreFoundation/CoreFoundation.h>
+#include <memory>
 
 #if !__has_feature(objc_arc)
 #error                                                                         \
@@ -28,6 +29,7 @@ using namespace sonic;
 @implementation WrapperAuv3AudioUnit {
   std::unique_ptr<SynthesizerBase> _synth;
   std::unique_ptr<ParameterTreeWrapper> _parameterTreeWrapper;
+  std::unique_ptr<ParameterDefinitionsProvider> _parametersDefinitionProvider;
   std::unique_ptr<EntryController> _entryController;
 }
 @synthesize parameterTree = _parameterTree;
@@ -37,11 +39,13 @@ using namespace sonic;
   logger.mark("setupSynth 0837");
   _synth.reset(createSynthesizerInstance());
   auto parameterItems = EntryController::preGenerateParameterItems(*_synth);
+  _parametersDefinitionProvider.reset(new ParameterDefinitionsProvider());
+  _parametersDefinitionProvider->addParameters(parameterItems, 0xFFFFFFFF);
   _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
   _parameterTreeWrapper =
       ParameterTreeWrapper::create((__bridge void *)_parameterTree);
-  _entryController =
-      std::make_unique<EntryController>(*_synth, *_parameterTreeWrapper);
+  _entryController.reset(new EntryController(
+      *_synth, *_parametersDefinitionProvider, *_parameterTreeWrapper));
   _entryController->initialize();
 
   printf("setupSynth, done\n");
@@ -71,6 +75,7 @@ using namespace sonic;
 - (void)dealloc {
   _entryController.reset();
   _parameterTreeWrapper.reset();
+  _parametersDefinitionProvider.reset();
   _synth.reset();
   logger.stop();
 }
