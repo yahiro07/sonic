@@ -6,6 +6,7 @@
 #import "./logic/entry-controller.h"
 #import "./support/au-parameter-helper.h"
 #import "./support/parameter-tree-wrapper.h"
+#include "logic/events.h"
 #import <AudioToolbox/AUParameters.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudioKit/CoreAudioKit.h>
@@ -35,7 +36,7 @@ using namespace sonic;
 
 - (void)setupSynth {
   logger.start();
-  logger.mark("setupSynth 0837");
+  logger.mark("setupSynth 1318");
   _synth.reset(createSynthesizerInstance());
   auto parameterItems = EntryController::preGenerateParameterItems(*_synth);
   _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
@@ -56,7 +57,7 @@ using namespace sonic;
     initWithComponentDescription:(AudioComponentDescription)componentDescription
                          options:(AudioComponentInstantiationOptions)options
                            error:(NSError **)outError {
-  printf("initWithComponentDescription 0930\n");
+  printf("initWithComponentDescription\n");
   self = [super initWithComponentDescription:componentDescription
                                      options:options
                                        error:outError];
@@ -126,6 +127,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 
 - (AUInternalRenderBlock)internalRenderBlock {
   SynthesizerBase *synthPtr = _synth.get();
+  EntryController *controllerPtr = _entryController.get();
   AUAudioFrameCount maxFramesToRender = self.maximumFramesToRender;
 
   AUInternalRenderBlock block = ^AUAudioUnitStatus(
@@ -137,6 +139,19 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
     (void)timestamp;
     (void)outputBusNumber;
     (void)pullInputBlock;
+
+    {
+      UpstreamEvent e;
+      while (controllerPtr->popUpstreamEvent(e)) {
+        if (e.type == UpstreamEventType::NoteRequest) {
+          if (e.note.velocity > 0.f) {
+            synthPtr->noteOn(e.note.noteNumber, e.note.velocity);
+          } else {
+            synthPtr->noteOff(e.note.noteNumber);
+          }
+        }
+      }
+    }
 
     // Handle MIDI and Parameter events
     const AURenderEvent *event = realtimeEventListHead;

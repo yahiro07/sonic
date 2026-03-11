@@ -1,11 +1,13 @@
 #pragma once
 #include "../api/synthesizer-base.h"
+#include "../common/spsc-queue.h"
 #include "../core/parameter-builder-impl.h"
 #include "../core/parameter-definitions-provider.h"
 #include "../domain/interfaces.h"
 #include "../domain/parameters-store.h"
 #include "./controller-facade.h"
 #include "./controller-parameter-port.h"
+#include "./events.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -32,6 +34,9 @@ private:
   ControllerParameterPort controllerParameterPort;
   ControllerFacade controllerFacade;
   ParametersStore parametersStore;
+
+  SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
+  SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
 
 public:
   static std::vector<sonic::ParameterItem>
@@ -70,14 +75,14 @@ public:
 
     controllerFacade.noteRequestedPort.subscribe(
         [this](int noteNumber, float velocity) {
-          // todo: apply queueing and call on audio thread
-          if (velocity > 0.f) {
-            this->synth.noteOn(noteNumber, velocity);
-          } else {
-            this->synth.noteOff(noteNumber);
-          }
+          upstreamEventQueue.push(UpstreamEvent{
+              .type = UpstreamEventType::NoteRequest,
+              .note = {noteNumber, velocity},
+          });
         });
   }
+
+  bool popUpstreamEvent(UpstreamEvent &e) { return upstreamEventQueue.pop(e); }
 
   void terminate() { controllerFacade.noteRequestedPort.unsubscribe(); }
 

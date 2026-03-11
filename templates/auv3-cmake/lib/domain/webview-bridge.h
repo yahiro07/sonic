@@ -1,6 +1,5 @@
 #pragma once
 #include "../domain/interfaces.h"
-#include <memory>
 
 namespace sonic {
 
