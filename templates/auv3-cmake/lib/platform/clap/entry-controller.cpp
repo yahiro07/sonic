@@ -1,10 +1,8 @@
-#pragma once
-
 // #include "../portable/downstream_event_port.h"
 // #include "../portable/parameter_manager.h"
 // #include "../portable/upstream_event_port.h"
 // #include "./clap_data_helper.h"
-#include "./entry_controller_interface.h"
+#include "./entry-controller.h"
 // #include "./processor_adapter.h"
 // #include "clap/process.h"
 // #include "my_clap_1/portable/event_bridge.h"
@@ -26,7 +24,7 @@
 
 using IPluginSynthesizer = sonic::SynthesizerBase;
 
-class EntryController : public IEntryController {
+class EntryControllerImpl : public EntryController {
 private:
   std::unique_ptr<IPluginSynthesizer> synth;
   // Eventbridge eventBridge;
@@ -98,7 +96,7 @@ private:
   // }
 
 public:
-  EntryController(IPluginSynthesizer &synth) : synth(&synth) {}
+  EntryControllerImpl(IPluginSynthesizer *synth) : synth(synth) {}
 
   void initialize() override {
     // auto thereadId = std::this_thread::get_id();
@@ -115,7 +113,7 @@ public:
     //     });
   }
 
-  ~EntryController() override {
+  ~EntryControllerImpl() override {
     // setupTelemetryUpdateTimer(false, 0);
     // telemetrySupport.setTelemetryTimerRequestCallback(nullptr);
     // eventBridge.clearUpstreamEventPushCallback();
@@ -226,3 +224,8 @@ public:
 
   bool guiHide() override { return true; }
 };
+
+EntryController *EntryController::create(void *synthInstance) {
+  return new EntryControllerImpl(
+      static_cast<sonic::IPluginSynthesizer *>(synthInstance));
+}

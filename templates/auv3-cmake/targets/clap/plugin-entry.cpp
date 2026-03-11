@@ -1,4 +1,4 @@
-#include "../../lib/platform/clap/clap_entry_wrapper.h"
+#include "../../lib/platform/clap/clap-entry-wrapper.h"
 #include "../../plugin/project1-synthesizer.h"
 #include <math.h>
 

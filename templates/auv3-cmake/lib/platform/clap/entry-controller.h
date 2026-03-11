@@ -1,15 +1,15 @@
 #pragma once
 
-#include "clap/clap.h"
+#include <clap/clap.h>
 
-class IEntryController {
+class EntryController {
 public:
   clap_plugin_t plugin;
   const clap_host_t *host = nullptr;
   const clap_host_params_t *hostParams = nullptr;
   const clap_host_timer_support_t *hostTimerSupport = nullptr;
 
-  virtual ~IEntryController() = default;
+  virtual ~EntryController() = default;
 
   virtual void initialize() = 0; // called after host and hostParams are set
 
@@ -32,4 +32,6 @@ public:
 
   virtual void onTimer(clap_id timerId) {}
   virtual void onMainThread() {}
+
+  static EntryController *create(void *synthInstance);
 };

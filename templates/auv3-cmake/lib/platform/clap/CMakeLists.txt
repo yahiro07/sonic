@@ -1,8 +1,9 @@
 project(wrapper-clap)
 
 add_library(${PROJECT_NAME} STATIC 
-  clap_entry_wrapper.cpp
-  clap_rootage.cpp
+  clap-entry-wrapper.cpp
+  clap-rootage.cpp
+  entry-controller.cpp
   ../../common/mac-web-view.mm
 )
 
