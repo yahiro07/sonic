@@ -25,6 +25,11 @@ using namespace sonic;
 @property AUAudioUnitBus *outputBus;
 @property AUAudioUnitBusArray *outputBusArray;
 @property AUAudioUnitBusArray *inputBusArray;
+@property(strong, nonatomic) NSTimer *eventTimer;
+@property(assign, nonatomic) NSInteger activeViewCount;
+- (void)startEventLoop;
+- (void)stopEventLoop;
+- (void)onTimer;
 @end
 
 @implementation WrapperAuv3AudioUnit {
@@ -71,6 +76,7 @@ using namespace sonic;
 }
 
 - (void)dealloc {
+  [self stopEventLoop];
   _entryController->terminate();
   _entryController.reset();
   _parameterTreeWrapper.reset();
@@ -199,6 +205,57 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   return [block copy];
 }
 
+- (void)viewAdded {
+  self.activeViewCount += 1;
+  if (self.activeViewCount == 1) {
+    [self startEventLoop];
+  }
+}
+
+- (void)viewRemoved {
+  if (self.activeViewCount == 0) {
+    return;
+  }
+
+  self.activeViewCount -= 1;
+  if (self.activeViewCount == 0) {
+    [self stopEventLoop];
+  }
+}
+
+- (void)startEventLoop {
+  if (self.eventTimer) {
+    return;
+  }
+
+  __weak typeof(self) weakSelf = self;
+  self.eventTimer = [NSTimer
+      timerWithTimeInterval:1.0 / 60.0
+                    repeats:YES
+                      block:^(NSTimer *_Nonnull timer) {
+                        __strong typeof(weakSelf) strongSelf = weakSelf;
+                        if (!strongSelf) {
+                          [timer invalidate];
+                          return;
+                        }
+
+                        [strongSelf onTimer];
+                      }];
+  [[NSRunLoop mainRunLoop] addTimer:self.eventTimer
+                            forMode:NSRunLoopCommonModes];
+}
+
+- (void)stopEventLoop {
+  [self.eventTimer invalidate];
+  self.eventTimer = nil;
+}
+
+- (void)onTimer {
+  if (_entryController) {
+    _entryController->onTimer();
+  }
+}
+
 @end
 
 //------------------------------------------------------------
@@ -206,6 +263,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 @interface WrapperAuv3ViewFrame () {
   std::unique_ptr<MacWebView> _webView;
   std::unique_ptr<WebViewBridge> _webViewBridge;
+  WrapperAuv3AudioUnit *_audioUnit;
 }
 @end
 
@@ -214,6 +272,8 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 - (void)connectViewToAudioUnit:(WrapperAuv3AudioUnit *)audioUnit
                 viewController:(AUViewController *)viewController {
   printf("WrapperAuv3ViewFrame connectViewToAudioUnit\n");
+
+  _audioUnit = audioUnit;
 
   NSView *root = viewController.view;
   root.wantsLayer = YES;
@@ -241,10 +301,18 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   if (width && height) {
     viewController.preferredContentSize = NSMakeSize(width, height);
   }
+
+  [audioUnit viewAdded];
 }
 
 - (void)disconnectViewFromAudioUnit {
   printf("WrapperAuv3ViewFrame disconnectViewFromAudioUnit\n");
+
+  if (_audioUnit) {
+    [_audioUnit viewRemoved];
+    _audioUnit = nil;
+  }
+
   if (_webViewBridge) {
     _webViewBridge->teardown();
     _webViewBridge.reset();

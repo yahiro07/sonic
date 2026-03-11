@@ -2,9 +2,13 @@
 #include <Foundation/Foundation.h>
 #import <WebKit/WebKit.h>
 
+#if !__has_feature(objc_arc)
+#error "this code requires ARC. Enable -fobjc-arc for Objective-C sources."
+#endif
+
 @interface AudioUnitViewController ()
-@property(nonatomic, strong, nullable) WrapperAuv3AudioUnit *audioUnit;
-@property(nonatomic, strong, nullable) WrapperAuv3ViewFrame *viewFrame;
+@property WrapperAuv3AudioUnit *audioUnit;
+@property WrapperAuv3ViewFrame *viewFrame;
 @end
 
 @implementation AudioUnitViewController
@@ -15,7 +19,7 @@
                                       error:(NSError *_Nullable *_Nullable)
                                                 outError {
   printf(
-      "AudioUnitViewController createAudioUnitWithComponentDescription 0940\n");
+      "AudioUnitViewController createAudioUnitWithComponentDescription 1421\n");
   WrapperAuv3AudioUnit *audioUnit = [[WrapperAuv3AudioUnit alloc]
       initWithComponentDescription:componentDescription
                            options:0
@@ -29,8 +33,7 @@
 
 - (void)loadView {
   printf("AudioUnitViewController loadView\n");
-  self.view = [[NSView alloc]
-      initWithFrame:NSMakeRect(0, 0, 480, 240)]; // temporal size
+  self.view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
   self.view.wantsLayer = YES;
   self.view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 }
@@ -54,12 +57,7 @@
 - (void)dealloc {
   if (self.viewFrame) {
     [self.viewFrame disconnectViewFromAudioUnit];
-    self.viewFrame = nil;
   }
-  self.audioUnit = nil;
-#if !__has_feature(objc_arc)
-  [super dealloc];
-#endif
 }
 
 @end
