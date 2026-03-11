@@ -1,5 +1,14 @@
 set(NAME project1-vst3)
-add_library(${NAME} MODULE plugin-entry.cpp)
+add_library(${NAME} MODULE 
+  version.h
+  plugin_factory.cpp
+  project1_synthesizer.cpp  
+)
+
+
+target_link_libraries(${NAME} PRIVATE 
+  plugin sonic_vst sdk
+)
 
 set_target_properties(${NAME} PROPERTIES
     PREFIX ""
@@ -8,18 +17,15 @@ set_target_properties(${NAME} PROPERTIES
     BUNDLE_EXTENSION vst3
 )
 
-target_link_libraries(${NAME} PRIVATE 
-  plugin wrapper-vst3
-)
-
-# if (APPLE)
-#     if (NOT PROJECT_VERSION)
-#         set(PROJECT_VERSION "1.0.0")
-#     endif()
-#     set_target_properties(${NAME} PROPERTIES
-#         MACOSX_BUNDLE_GUI_IDENTIFIER com.my-company.${NAME}
-#         MACOSX_BUNDLE_BUNDLE_NAME ${NAME}
-#         MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
-#         MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
-#     )
-# endif()
+if (APPLE)
+    if (NOT PROJECT_VERSION)
+        set(PROJECT_VERSION "1.0.0")
+    endif()
+    set_target_properties(${NAME} PROPERTIES
+        MACOSX_BUNDLE_GUI_IDENTIFIER com.my-company.${NAME}
+        MACOSX_BUNDLE_BUNDLE_NAME ${NAME}
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/cmake/clap-info.plist.in
+    )
+endif()
