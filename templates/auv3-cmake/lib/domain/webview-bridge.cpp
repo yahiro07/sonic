@@ -104,6 +104,7 @@ private:
   IControllerFacade &controllerFacade;
   IWebViewIo &webViewIo;
   int parameterChangeSubscriptionToken = -1;
+  int hostNoteSubscriptionToken = -1;
 
   template <typename T> void sendMessageToWebView(T &msg) {
     std::string buffer{};
@@ -169,6 +170,23 @@ private:
     sendMessageToWebView(msg);
   }
 
+  void handleHostNote(int noteNumber, float velocity) {
+    if (velocity > 0.f) {
+      TxMsgHostNoteOn msg{
+          .type = "hostNoteOn",
+          .noteNumber = noteNumber,
+          .velocity = velocity,
+      };
+      sendMessageToWebView(msg);
+    } else {
+      TxMsgHostNoteOff msg{
+          .type = "hostNoteOff",
+          .noteNumber = noteNumber,
+      };
+      sendMessageToWebView(msg);
+    }
+  }
+
 public:
   WebViewBridgeImpl(IControllerFacade &controllerFacade, IWebViewIo &webViewIo)
       : controllerFacade(controllerFacade), webViewIo(webViewIo) {}
@@ -182,6 +200,11 @@ public:
             [this](std::string paramKey, float value) {
               handleParameterChangeFromController(paramKey, value);
             });
+
+    hostNoteSubscriptionToken = controllerFacade.subscribeHostNote(
+        [this](int noteNumber, float velocity) {
+          handleHostNote(noteNumber, velocity);
+        });
   }
 
   void teardown() override {
@@ -189,6 +212,10 @@ public:
       controllerFacade.unsubscribeParameterChange(
           parameterChangeSubscriptionToken);
       parameterChangeSubscriptionToken = -1;
+    }
+    if (hostNoteSubscriptionToken != -1) {
+      controllerFacade.unsubscribeHostNote(hostNoteSubscriptionToken);
+      hostNoteSubscriptionToken = -1;
     }
     webViewIo.setMessageReceiver(nullptr);
   }

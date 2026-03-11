@@ -66,6 +66,10 @@ public:
       std::function<void(const std::string paramKey, float value)>
           callback) = 0;
   virtual void unsubscribeParameterChange(int subscriptionId) = 0;
+
+  virtual int subscribeHostNote(
+      std::function<void(int noteNumber, float velocity)> callback) = 0;
+  virtual void unsubscribeHostNote(int subscriptionId) = 0;
 };
 
 } // namespace sonic

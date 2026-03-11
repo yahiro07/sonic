@@ -7,7 +7,7 @@
 
 namespace sonic {
 
-class ControllerParameterPort {
+class ParameterService {
 private:
   ParameterTreeWrapper &_parameterTreeWrapper;
   ParameterDefinitionsProvider &_parametersDefinitionProvider;
@@ -41,13 +41,12 @@ private:
   }
 
 public:
-  ControllerParameterPort(
-      ParameterTreeWrapper &parameterTreeWrapper,
-      ParameterDefinitionsProvider &parametersDefinitionProvider)
+  ParameterService(ParameterTreeWrapper &parameterTreeWrapper,
+                   ParameterDefinitionsProvider &parametersDefinitionProvider)
       : _parameterTreeWrapper(parameterTreeWrapper),
         _parametersDefinitionProvider(parametersDefinitionProvider) {}
 
-  ~ControllerParameterPort() { stopObserve(); }
+  ~ParameterService() { stopObserve(); }
 
   int subscribeToParameterChanges(
       std::function<void(std::string, double)> listener) {

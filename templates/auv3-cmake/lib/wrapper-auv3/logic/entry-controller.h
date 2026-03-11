@@ -6,8 +6,9 @@
 #include "../domain/interfaces.h"
 #include "../domain/parameters-store.h"
 #include "./controller-facade.h"
-#include "./controller-parameter-port.h"
 #include "./events.h"
+#include "./parameters-service.h"
+#include "logic/note-service.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -31,7 +32,8 @@ private:
   ParameterDefinitionsProvider parametersDefinitionProvider;
   SynthesizerBase &synth;
   ParameterTreeWrapper &parameterTreeWrapper;
-  ControllerParameterPort controllerParameterPort;
+  ParameterService parameterService;
+  NoteService noteService;
   ControllerFacade controllerFacade;
   ParametersStore parametersStore;
 
@@ -49,9 +51,8 @@ public:
                   std::vector<ParameterItem> &parameteritems,
                   ParameterTreeWrapper &parameterTreeWrapper)
       : synth(synth), parameterTreeWrapper(parameterTreeWrapper),
-        controllerParameterPort(parameterTreeWrapper,
-                                parametersDefinitionProvider),
-        controllerFacade(controllerParameterPort) {
+        parameterService(parameterTreeWrapper, parametersDefinitionProvider),
+        controllerFacade(parameterService, noteService) {
     parametersDefinitionProvider.addParameters(parameteritems, 0xFFFFFFFF);
   }
 
@@ -73,18 +74,35 @@ public:
       return parametersStore.get(id);
     });
 
-    controllerFacade.noteRequestedPort.subscribe(
+    noteService.noteRequestPort.subscribe(
         [this](int noteNumber, float velocity) {
+          // requested note from ui
+          // send note request to audio thread via queue
           upstreamEventQueue.push(UpstreamEvent{
               .type = UpstreamEventType::NoteRequest,
               .note = {noteNumber, velocity},
           });
+          // return host note event to show active notes in ui
+          noteService.hostNotePort.call(noteNumber, velocity);
         });
   }
 
+  void terminate() { noteService.noteRequestPort.unsubscribe(); }
+
   bool popUpstreamEvent(UpstreamEvent &e) { return upstreamEventQueue.pop(e); }
 
-  void terminate() { controllerFacade.noteRequestedPort.unsubscribe(); }
+  void pushDownstreamEvent(const DownstreamEvent &e) {
+    downstreamEventQueue.push(e);
+  }
+
+  void onTimer() {
+    DownstreamEvent e;
+    while (downstreamEventQueue.pop(e)) {
+      if (e.type == DownstreamEventType::HostNote) {
+        noteService.hostNotePort.call(e.note.noteNumber, e.note.velocity);
+      }
+    }
+  }
 
   IControllerFacade &getControllerFacade() { return controllerFacade; }
 };

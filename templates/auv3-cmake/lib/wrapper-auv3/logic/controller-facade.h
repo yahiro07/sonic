@@ -1,43 +1,51 @@
 #pragma once
 #include "../common/listener-port.h"
 #include "../domain/interfaces.h"
-#include "./controller-parameter-port.h"
+#include "./note-service.h"
+#include "./parameters-service.h"
 
 namespace sonic {
 
 class ControllerFacade : public IControllerFacade {
 private:
-  ControllerParameterPort &parameterPort;
+  ParameterService &parameterService;
+  NoteService &noteService;
 
 public:
-  SingleListenerPort<int, float> noteRequestedPort;
-
-  ControllerFacade(ControllerParameterPort &parameterPort)
-      : parameterPort(parameterPort) {}
+  ControllerFacade(ParameterService &parameterService, NoteService &noteService)
+      : parameterService(parameterService), noteService(noteService) {}
 
   int subscribeParameterChange(
       std::function<void(const std::string, float)> callback) override {
-    return parameterPort.subscribeToParameterChanges(callback);
+    return parameterService.subscribeToParameterChanges(callback);
   }
 
   void unsubscribeParameterChange(int token) override {
-    parameterPort.unsubscribeFromParameterChanges(token);
+    parameterService.unsubscribeFromParameterChanges(token);
   }
 
   void applyParameterEditFromUi(std::string paramKey, float value,
                                 ParameterEditState editState) override {
-    parameterPort.applyParameterEditFromUi(paramKey, value, editState);
+    parameterService.applyParameterEditFromUi(paramKey, value, editState);
   }
 
   void getAllParameters(std::map<std::string, float> &parameters) override {
-    parameterPort.getAllParameters(parameters);
+    parameterService.getAllParameters(parameters);
   }
 
   void requestNoteOn(int noteNumber, float velocity) override {
-    noteRequestedPort.call(noteNumber, velocity);
+    noteService.noteRequestPort.call(noteNumber, velocity);
   }
   void requestNoteOff(int noteNumber) override {
-    noteRequestedPort.call(noteNumber, .0f);
+    noteService.noteRequestPort.call(noteNumber, .0f);
+  }
+
+  int subscribeHostNote(
+      std::function<void(int noteNumber, float velocity)> callback) override {
+    return noteService.hostNotePort.subscribe(callback);
+  }
+  void unsubscribeHostNote(int token) override {
+    noteService.hostNotePort.unsubscribe(token);
   }
 };
 
