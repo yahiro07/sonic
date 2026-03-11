@@ -1,6 +1,6 @@
 project(project1-clap)
 
-add_library(${PROJECT_NAME} MODULE main.cpp)
+add_library(${PROJECT_NAME} MODULE plugin-entry.cpp)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     PREFIX ""
