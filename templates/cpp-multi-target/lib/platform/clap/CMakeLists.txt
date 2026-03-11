@@ -1,6 +1,7 @@
-project(wrapper-clap)
+# project(wrapper-clap)
+set(NAME wrapper-clap)
 
-add_library(${PROJECT_NAME} STATIC 
+add_library(${NAME} STATIC 
   clap-entry-wrapper.cpp
   clap-rootage.cpp
   entry-controller.cpp
@@ -14,18 +15,18 @@ add_library(${PROJECT_NAME} STATIC
 set_source_files_properties(../../common/mac-web-view.mm PROPERTIES
   COMPILE_FLAGS "-fobjc-arc")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(${NAME} PRIVATE
   "-framework Cocoa"
   "-framework WebKit"
 )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(${NAME} PROPERTIES
     PREFIX ""
     OUTPUT_NAME "wrapper-clap"
     POSITION_INDEPENDENT_CODE ON
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE glaze::glaze)
+target_link_libraries(${NAME} PRIVATE glaze::glaze)
 
 
   
