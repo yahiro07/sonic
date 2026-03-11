@@ -79,7 +79,7 @@ void Project1Synthesizer::process(float *bufferL, float *bufferR,
 }
 
 std::string Project1Synthesizer::getEditorPageUrl() {
-  if (0) {
+  if (1) {
     return "http://localhost:3000?debug=1";
   } else {
     return "app://local/index.html?debug=1";

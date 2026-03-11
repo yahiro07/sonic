@@ -5,6 +5,13 @@ add_library(${NAME} MODULE
   project1_synthesizer.cpp  
 )
 
+if(APPLE)
+  target_sources(${NAME} PRIVATE
+    ${VST3_SDK_ROOT}/public.sdk/source/main/macmain.cpp
+    ${VST3_SDK_ROOT}/public.sdk/source/main/moduleinit.cpp
+  )
+endif()
+
 
 target_link_libraries(${NAME} PRIVATE 
   plugin sonic_vst sdk
@@ -26,6 +33,6 @@ if (APPLE)
         MACOSX_BUNDLE_BUNDLE_NAME ${NAME}
         MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
-        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/cmake/clap-info.plist.in
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/cmake/base-info.plist.in
     )
 endif()
