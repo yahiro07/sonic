@@ -1,32 +1,16 @@
 #pragma once
+#include "../common/listener-port.h"
 #include "../domain/interfaces.h"
 #include "./controller-parameter-port.h"
 
 namespace sonic {
-
-template <typename... Args> class SingleListenerEventPort {
-private:
-  std::function<void(Args...)> listener;
-
-public:
-  void subscribe(std::function<void(Args...)> listener) {
-    this->listener = listener;
-  }
-  void unsubscribe() { this->listener = nullptr; }
-
-  void call(Args... args) {
-    if (listener) {
-      listener(args...);
-    }
-  }
-};
 
 class ControllerFacade : public IControllerFacade {
 private:
   ControllerParameterPort &parameterPort;
 
 public:
-  SingleListenerEventPort<int, float> noteRequestedPort;
+  SingleListenerPort<int, float> noteRequestedPort;
 
   ControllerFacade(ControllerParameterPort &parameterPort)
       : parameterPort(parameterPort) {}
