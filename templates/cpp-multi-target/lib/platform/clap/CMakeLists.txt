@@ -18,6 +18,7 @@ set_source_files_properties(../../common/mac-web-view.mm PROPERTIES
 target_link_libraries(${NAME} PRIVATE
   "-framework Cocoa"
   "-framework WebKit"
+  clap
 )
 
 set_target_properties(${NAME} PROPERTIES

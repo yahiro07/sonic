@@ -8,7 +8,7 @@ set_target_properties(${NAME} PROPERTIES
     BUNDLE_EXTENSION clap
 )
 
-target_link_libraries(${NAME} PRIVATE plugin wrapper-clap)
+target_link_libraries(${NAME} PRIVATE plugin wrapper-clap clap)
 
 if (APPLE)
     if (NOT PROJECT_VERSION)

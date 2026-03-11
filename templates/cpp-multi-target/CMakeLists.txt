@@ -7,24 +7,38 @@ if(APPLE)
 	set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "" FORCE)
 endif()
 
-include(FetchContent)
-FetchContent_Declare(
-  glaze
-  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-  GIT_TAG v7.1.0
-  GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(glaze)
+if(NOT SONIC_USE_LOCAL_SDK)
+  include(FetchContent)
+  FetchContent_Declare(
+    glaze
+    GIT_REPOSITORY https://github.com/stephenberry/glaze.git
+    GIT_TAG v7.1.0
+    GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(glaze)
 
-include(FetchContent)
-FetchContent_Declare(
-  clap
-  GIT_REPOSITORY https://github.com/free-audio/clap.git
-  GIT_TAG 1.2.7
-  GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(clap)
-include_directories(${clap_SOURCE_DIR}/include)
+  include(FetchContent)
+  FetchContent_Declare(
+    clap
+    GIT_REPOSITORY https://github.com/free-audio/clap.git
+    GIT_TAG 1.2.7
+    GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(clap)
+  include_directories(${clap_SOURCE_DIR}/include)
+else()
+  get_filename_component(CLAP_SOURCE_DIR
+    "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/clap"
+    ABSOLUTE
+  )
+  add_subdirectory("${CLAP_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/clap_build")
+
+  get_filename_component(GLAZE_SOURCE_DIR
+    "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/glaze"
+    ABSOLUTE
+  )
+  add_subdirectory("${GLAZE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/glaze_build")
+endif()
 
 #----------------
 #prepare for vst3
@@ -44,7 +58,7 @@ option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
 option(SMTG_ENABLE_VST3_HOSTING_EXAMPLES "Enable VST 3 Hosting Examples" OFF)
 option(SMTG_ENABLE_VSTGUI_SUPPORT "Enable VSTGUI Support" OFF)
 
-if(NOT SONIC_USE_LOCAL_VST3SDK)
+if(NOT SONIC_USE_LOCAL_SDK)
   include(FetchContent)
   FetchContent_Populate(
       sonic_repo
@@ -70,8 +84,8 @@ set(VST3_SDK_ROOT "${SMTG_VST3_LOCATION_DIR}")
 
 add_subdirectory(plugin)
 
-# add_subdirectory(lib/platform/clap)
-# add_subdirectory(targets/clap)
+add_subdirectory(lib/platform/clap)
+add_subdirectory(targets/clap)
 
 add_subdirectory(lib/platform/vst3)
 add_subdirectory(targets/vst3)
