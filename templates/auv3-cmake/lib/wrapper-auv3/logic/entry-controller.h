@@ -35,7 +35,7 @@ private:
   ParameterService parameterService;
   NoteService noteService;
   ControllerFacade controllerFacade;
-  ParametersStore parametersStore;
+  ParametersStore parametersStore; // parameters in audio thread
 
   SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
   SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;

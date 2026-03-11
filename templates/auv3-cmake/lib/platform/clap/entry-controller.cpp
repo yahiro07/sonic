@@ -1,169 +1,500 @@
-// #include "../portable/downstream_event_port.h"
-// #include "../portable/parameter_manager.h"
-// #include "../portable/upstream_event_port.h"
-// #include "./clap_data_helper.h"
 #include "./entry-controller.h"
-// #include "./processor_adapter.h"
-// #include "clap/process.h"
-// #include "my_clap_1/portable/event_bridge.h"
-// #include "my_clap_1/portable/interfaces.h"
-// #include "my_clap_1/portable/telemetry_support.h"
-// #include "my_clap_1/portable/webview_bridge.h"
-#include "../../common/mac-web-view.h"
-// #include "sonic_common/logic/parameter_definitions_provider.h"
-// #include <CoreFoundation/CFNotificationCenter.h>
-// #include <atomic>
-#include <cassert>
-// #include <cstddef>
-// #include <cstring>
-#include <memory>
-// #include <string>
 #include "../../api/synthesizer-base.h"
+#include "../../common/listener-port.h"
+#include "../../common/mac-web-view.h"
+#include "../../common/spsc-queue.h"
+#include "../../core/parameter-builder-impl.h"
+#include "../../core/parameter-registry.h"
+#include "../../domain/parameters-store.h"
+#include "../../domain/webview-bridge.h"
+#include "./clap-data-helper.h"
+#include "./events.h"
+#include <atomic>
+#include <cassert>
+#include <memory>
 
 namespace sonic {
 
-#define GUI_API CLAP_WINDOW_API_COCOA
+static int getMaxIdFromParameterItems(const ParameterSpecArray &items) {
+  int maxId = 0;
+  for (const auto &item : items) {
+    if (item.id > maxId) {
+      maxId = item.id;
+    }
+  }
+  return maxId;
+}
 
-using IPluginSynthesizer = sonic::SynthesizerBase;
+static UpstreamEventType
+mapParameterEditStateToUpstreamEventType(ParameterEditState editState) {
+  if (editState == ParameterEditState::Begin) {
+    return UpstreamEventType::ParameterBeginEdit;
+  } else if (editState == ParameterEditState::Perform) {
+    return UpstreamEventType::ParameterApplyEdit;
+  } else if (editState == ParameterEditState::End) {
+    return UpstreamEventType::ParameterEndEdit;
+  } else if (editState == ParameterEditState::InstantChange) {
+    return UpstreamEventType::ParameterInstantChange;
+  }
+  return UpstreamEventType::ParameterApplyEdit;
+}
+
+class ParametersHub {
+  ParametersStore &parametersStore;
+
+public:
+  ParametersHub(ParametersStore &parametersStore)
+      : parametersStore(parametersStore) {}
+
+  SingleListenerPort<ParamId, float, ParameterEditState>
+      parameterEditFromUiPort;
+  MultipleListenerPort<ParamId, float> parameterChangeFromHostPort;
+
+  void setParameterFromUi(ParamId id, float value,
+                          ParameterEditState editState) {
+    if (editState == ParameterEditState::Perform ||
+        editState == ParameterEditState::InstantChange) {
+      parametersStore.set(id, value);
+    } else {
+      value = parametersStore.get(id);
+    }
+    parameterEditFromUiPort.call(id, value, editState);
+  }
+
+  void setParameterFromHost(ParamId id, float value) {
+    parametersStore.set(id, value);
+    parameterChangeFromHostPort.call(id, value);
+  }
+
+  float getParameterValue(ParamId id) { return parametersStore.get(id); }
+};
+
+class ParameterService {
+  ParameterRegistry &parametersRegistry;
+  ParametersHub &parametersHub;
+
+public:
+  ParameterService(ParameterRegistry &parametersRegistry,
+                   ParametersHub &parametersHub)
+      : parametersRegistry(parametersRegistry), parametersHub(parametersHub) {}
+
+  int subscribeParameterChanges(
+      std::function<void(std::string, float)> listener) {
+    int token = parametersHub.parameterChangeFromHostPort.subscribe(
+        [this, listener](int id, float value) {
+          auto item = parametersRegistry.getParameterItemById(id);
+          if (!item) {
+            return;
+          }
+          auto paramKey = item->paramKey;
+          listener(paramKey, value);
+        });
+    return token;
+  }
+  void unsubscribeParameterChanges(int token) {
+    parametersHub.parameterChangeFromHostPort.unsubscribe(token);
+  }
+
+  void applyParameterEditFromUi(std::string paramKey, float value,
+                                ParameterEditState editState) {
+    auto idPtr = parametersRegistry.getIdByParamKey(paramKey);
+    if (idPtr == std::nullopt) {
+      return;
+    }
+    auto id = *idPtr;
+    parametersHub.setParameterFromUi(id, value, editState);
+  }
+  void getAllParameters(std::map<std::string, float> &parameters) {
+    auto parameterItems = parametersRegistry.getParameterItems();
+    for (const auto &item : parameterItems) {
+      parameters[item.paramKey] = parametersHub.getParameterValue(item.id);
+    }
+  }
+};
+
+class NoteService {
+public:
+  // note request: DSP <-- Controller <-- UI
+  SingleListenerPort<int, float> noteRequestPort;
+
+  // active note state: Host,DSP --> Controller --> UI
+  MultipleListenerPort<int, float> hostNotePort;
+};
+
+class ControllerFacade : public IControllerFacade {
+  ParameterService &parameterService;
+  NoteService &noteService;
+
+public:
+  ControllerFacade(ParameterService &parameterService, NoteService &noteService)
+      : parameterService(parameterService), noteService(noteService) {}
+
+  int subscribeParameterChange(
+      std::function<void(const std::string, float)> callback) override {
+    return parameterService.subscribeParameterChanges(callback);
+  }
+
+  void unsubscribeParameterChange(int token) override {
+    parameterService.unsubscribeParameterChanges(token);
+  }
+
+  void applyParameterEditFromUi(std::string paramKey, float value,
+                                ParameterEditState editState) override {
+    parameterService.applyParameterEditFromUi(paramKey, value, editState);
+  }
+
+  void getAllParameters(std::map<std::string, float> &parameters) override {
+    parameterService.getAllParameters(parameters);
+  }
+
+  void requestNoteOn(int noteNumber, float velocity) override {
+    noteService.noteRequestPort.call(noteNumber, velocity);
+  }
+  void requestNoteOff(int noteNumber) override {
+    noteService.noteRequestPort.call(noteNumber, .0f);
+  }
+
+  int subscribeHostNote(
+      std::function<void(int noteNumber, float velocity)> callback) override {
+    return noteService.hostNotePort.subscribe(callback);
+  }
+  void unsubscribeHostNote(int token) override {
+    noteService.hostNotePort.unsubscribe(token);
+  }
+};
+
+class IHostCallbackRequester {
+public:
+  virtual ~IHostCallbackRequester() = default;
+  virtual void requestMainThreadCallback() = 0;
+  virtual void requestFlush() = 0;
+};
+
+class HostCallbackRequester : public IHostCallbackRequester {
+private:
+  const clap_host_t *host;
+  const clap_host_params_t *hostParams;
+
+public:
+  HostCallbackRequester(const clap_host_t *host,
+                        const clap_host_params_t *hostParams)
+      : host(host), hostParams(hostParams) {}
+
+  void requestMainThreadCallback() override {
+    if (host->request_callback) {
+      host->request_callback(host);
+    }
+  }
+
+  void requestFlush() override {
+    if (hostParams->request_flush) {
+      hostParams->request_flush(host);
+    }
+  }
+};
+
+class IEventBridge {
+public:
+  virtual void pushUpstreamEvent(UpstreamEvent e) = 0;
+  virtual bool popUpstreamEvent(UpstreamEvent &e) = 0;
+
+  virtual void pushDownstreamEvent(DownstreamEvent e) = 0;
+  virtual bool popDownstreamEvent(DownstreamEvent &e) = 0;
+};
+
+class Eventbridge : public IEventBridge {
+private:
+  SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
+  SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
+  IHostCallbackRequester *hostCallbackRequester;
+  std::atomic<bool> mainThreadRequestedFlag = false;
+
+public:
+  void setHostCallbackRequester(IHostCallbackRequester *hostCallbackRequester) {
+    this->hostCallbackRequester = hostCallbackRequester;
+  }
+
+  void pushUpstreamEvent(UpstreamEvent e) override {
+    if (upstreamEventQueue.push(e)) {
+      hostCallbackRequester->requestFlush();
+    }
+  }
+  bool popUpstreamEvent(UpstreamEvent &e) override {
+    return upstreamEventQueue.pop(e);
+  }
+
+  void pushDownstreamEvent(DownstreamEvent e) override {
+    if (downstreamEventQueue.push(e)) {
+      bool expected = false;
+      if (mainThreadRequestedFlag.compare_exchange_strong(
+              expected, true, std::memory_order_acq_rel)) {
+        hostCallbackRequester->requestMainThreadCallback();
+      }
+    }
+  }
+  bool popDownstreamEvent(DownstreamEvent &e) override {
+    return downstreamEventQueue.pop(e);
+  }
+
+  void clearMainThreadRequestedFlag() {
+    mainThreadRequestedFlag.store(false, std::memory_order_release);
+  }
+};
+
+class ProcessorAdapter {
+private:
+  IPluginSynthesizer &synth;
+  IEventBridge &eventBridge;
+
+  void pushDownstreamEvent(DownstreamEvent e) {
+    eventBridge.pushDownstreamEvent(e);
+  }
+
+  void processInputEvent(const clap_event_header_t *event) {
+    if (event->space_id == CLAP_CORE_EVENT_SPACE_ID) {
+      if (event->type == CLAP_EVENT_NOTE_ON ||
+          event->type == CLAP_EVENT_NOTE_OFF) {
+        const clap_event_note_t *noteEvent = (const clap_event_note_t *)event;
+        if (event->type == CLAP_EVENT_NOTE_ON) {
+          synth.noteOn(noteEvent->key, noteEvent->velocity);
+          pushDownstreamEvent(
+              {.type = DownstreamEventType::HostNote,
+               .note = {.noteNumber = noteEvent->key,
+                        .velocity = (float)noteEvent->velocity}});
+        } else if (event->type == CLAP_EVENT_NOTE_OFF) {
+          synth.noteOff(noteEvent->key);
+          pushDownstreamEvent(
+              {.type = DownstreamEventType::HostNote,
+               .note = {.noteNumber = noteEvent->key, .velocity = 0.f}});
+        }
+      }
+      if (event->type == CLAP_EVENT_PARAM_VALUE) {
+        auto *paramEvent = (const clap_event_param_value_t *)event;
+        auto paramId = paramEvent->param_id;
+        auto value = paramEvent->value;
+        synth.setParameter(paramId, value);
+        pushDownstreamEvent(
+            {.type = DownstreamEventType::ParameterChange,
+             .param = {.paramId = paramId, .value = (float)value}});
+      }
+    }
+  }
+
+  void drainUpstreamEvents(const clap_output_events_t *out) {
+    // outgoing parameters, UI --> Host, DSP
+    UpstreamEvent item;
+    while (eventBridge.popUpstreamEvent(item)) {
+      if (item.type == UpstreamEventType::ParameterBeginEdit) {
+        clap_event_param_gesture_t clapEvent{};
+        mapUpstreamParamGestureEventToClapEvent(item, clapEvent);
+        out->try_push(out, &clapEvent.header);
+      } else if (item.type == UpstreamEventType::ParameterApplyEdit) {
+        synth.setParameter(item.param.paramId, item.param.value);
+        clap_event_param_value_t clapEvent{};
+        mapUpstreamParamChangeEventToClapEvent(item, clapEvent);
+        out->try_push(out, &clapEvent.header);
+      } else if (item.type == UpstreamEventType::ParameterEndEdit) {
+        clap_event_param_gesture_t clapEvent{};
+        mapUpstreamParamGestureEventToClapEvent(item, clapEvent);
+        out->try_push(out, &clapEvent.header);
+      } else if (item.type == UpstreamEventType::NoteRequest) {
+        synth.noteOn(item.note.noteNumber, item.note.velocity);
+        pushDownstreamEvent({.type = DownstreamEventType::HostNote,
+                             .note = {.noteNumber = item.note.noteNumber,
+                                      .velocity = item.note.velocity}});
+      }
+    }
+  }
+
+public:
+  ProcessorAdapter(IPluginSynthesizer &synth, IEventBridge &eventBridge)
+      : synth(synth), eventBridge(eventBridge) {}
+
+  void prepareProcessing(double sampleRate, uint32_t maxFrameCount) {
+    synth.prepareProcessing(sampleRate, maxFrameCount);
+  }
+
+  void renderAudio(uint32_t start, uint32_t end, float *outputL,
+                   float *outputR) {
+    synth.processAudio(outputL + start, outputR + start, end - start);
+  }
+
+  clap_process_status process(const clap_process_t *process) {
+    if (!process)
+      return CLAP_PROCESS_ERROR;
+    if (process->audio_outputs_count != 1)
+      return CLAP_PROCESS_ERROR;
+
+    auto &out = process->audio_outputs[0];
+    if (out.data64)
+      return CLAP_PROCESS_ERROR;
+    if (!out.data32 || out.channel_count < 2 || !out.data32[0] ||
+        !out.data32[1])
+      return CLAP_PROCESS_ERROR;
+
+    drainUpstreamEvents(process->out_events);
+
+    const uint32_t frameCount = process->frames_count;
+    const uint32_t inputEventCount =
+        process->in_events ? process->in_events->size(process->in_events) : 0;
+    uint32_t eventIndex = 0;
+    uint32_t nextEventFrame = inputEventCount ? 0 : frameCount;
+
+    for (uint32_t i = 0; i < frameCount;) {
+      while (eventIndex < inputEventCount && nextEventFrame == i) {
+        const clap_event_header_t *event =
+            process->in_events->get(process->in_events, eventIndex);
+        if (!event) {
+          eventIndex++;
+          continue;
+        }
+
+        if (event->time != i) {
+          nextEventFrame = event->time;
+          break;
+        }
+
+        this->processInputEvent(event);
+        eventIndex++;
+
+        if (eventIndex == inputEventCount) {
+          nextEventFrame = frameCount;
+          break;
+        }
+      }
+
+      this->renderAudio(i, nextEventFrame, out.data32[0], out.data32[1]);
+      i = nextEventFrame;
+    }
+
+    return CLAP_PROCESS_CONTINUE;
+  }
+
+  void flushParameters(const clap_input_events_t *in,
+                       const clap_output_events_t *out) {
+    if (in) {
+      for (uint32_t i = 0; i < in->size(in); i++) {
+        const clap_event_header_t *event = in->get(in, i);
+        this->processInputEvent(event);
+      }
+    }
+
+    if (out) {
+      drainUpstreamEvents(out);
+    }
+  }
+};
+
+class DomainController {
+public:
+  IPluginSynthesizer &synth;
+  IEventBridge &eventBridge;
+  ParameterRegistry parametersRegistry;
+  ParametersStore parametersStore; // parameters in main thread
+  ParametersHub parametersHub{parametersStore};
+  ParameterService parameterService{parametersRegistry, parametersHub};
+  IHostCallbackRequester &hostCallbackRequester;
+  NoteService noteService;
+  ControllerFacade controllerFacade{parameterService, noteService};
+
+  DomainController(IPluginSynthesizer &synth,
+                   ParameterSpecArray &parameterItems,
+                   IEventBridge &eventBridge,
+                   IHostCallbackRequester &hostCallbackRequester)
+      : synth(synth), eventBridge(eventBridge),
+        hostCallbackRequester(hostCallbackRequester) {
+    parametersRegistry.addParameters(parameterItems, 0xFFFFFFFE);
+  }
+
+  void initialize() {
+    auto parameterItems = parametersRegistry.getParameterItems();
+    auto maxId = getMaxIdFromParameterItems(parameterItems);
+    parametersStore.setup(maxId);
+    for (const auto &item : parameterItems) {
+      parametersStore.set(item.id, item.defaultValue);
+    }
+
+    parametersHub.parameterEditFromUiPort.subscribe(
+        [this](ParamId id, float value, ParameterEditState editState) {
+          auto type = mapParameterEditStateToUpstreamEventType(editState);
+          eventBridge.pushUpstreamEvent(
+              UpstreamEvent{.type = type, .param = {id, value}});
+          hostCallbackRequester.requestFlush();
+        });
+  }
+
+  void onMainThread() {
+    DownstreamEvent e;
+    while (eventBridge.popDownstreamEvent(e)) {
+      if (e.type == DownstreamEventType::ParameterChange) {
+        parametersHub.setParameterFromHost(e.param.paramId, e.param.value);
+      } else if (e.type == DownstreamEventType::HostNote) {
+        noteService.hostNotePort.call(e.note.noteNumber, e.note.velocity);
+      }
+    }
+  }
+};
 
 class EntryControllerImpl : public EntryController {
 private:
+  Eventbridge eventBridge;
   std::unique_ptr<IPluginSynthesizer> synth;
-  // Eventbridge eventBridge;
-  // ProcessorAdapter processorAdapter{*synth, eventBridge};
-  // TelemetrySupport telemetrySupport{*synth, processorAdapter};
-
+  ProcessorAdapter processorAdapter{*synth, eventBridge};
   std::unique_ptr<sonic::MacWebView> webView;
+  std::unique_ptr<WebViewBridge> webViewBridge;
 
-  // sonic_common::ParameterDefinitionsProvider parameterDefinitionsProvider;
-
-  // ParameterManager parameterManager{parameterDefinitionsProvider};
-  // UpstreamEventPort upstreamEventPort{parameterDefinitionsProvider,
-  //                                     parameterManager, eventBridge};
-  // DownstreamEventPort downstreamEventPort;
-  // WebViewBridge webViewBridge{parameterManager, upstreamEventPort,
-  //                             downstreamEventPort, telemetrySupport};
-
-  // std::atomic<bool> mainThreadRequestedFlag = false;
-
-  // clap_id telemetryUpdateTimerId = -1;
-  // int telemetryTimerRegisteredIntervalMs = 0;
-
-  // void setupEventBridgeCallbacks() {
-  //   eventBridge.setUpstreamEventPushCallback([this]() {
-  //     // after pushed an upstream event (from main thread),
-  //     // request host to call flush() for emitting events
-  //     if (this->hostParams) {
-  //       this->hostParams->request_flush(this->host);
-  //     }
-  //   });
-  //   eventBridge.setDownstreamEventPushCallback([this]() {
-  //     // after pushed a downstream event (from audio thread),
-  //     // request host to call on_main_thread() for polling events
-  //     if (this->host && this->host->request_callback) {
-  //       bool expected = false;
-  //       if (mainThreadRequestedFlag.compare_exchange_strong(
-  //               expected, true, std::memory_order_acq_rel)) {
-  //         this->host->request_callback(this->host);
-  //       }
-  //     }
-  //   });
-  // }
-
-  // void clearMainThreadRequestedFlag() {
-  //   mainThreadRequestedFlag.store(false, std::memory_order_release);
-  // }
-
-  // void setupTelemetryUpdateTimer(bool enabled, int intervalMs) {
-  //   if (!(hostTimerSupport && hostTimerSupport->register_timer &&
-  //         hostTimerSupport->unregister_timer))
-  //     return;
-  //   if (enabled) {
-  //     if (telemetryUpdateTimerId != -1) {
-  //       if (telemetryTimerRegisteredIntervalMs == intervalMs) {
-  //         // already registered with the same interval, no need to
-  //         re-register return;
-  //       }
-  //       hostTimerSupport->unregister_timer(host, telemetryUpdateTimerId);
-  //     }
-  //     hostTimerSupport->register_timer(host, intervalMs,
-  //                                      &telemetryUpdateTimerId);
-  //     telemetryTimerRegisteredIntervalMs = intervalMs;
-  //     printf("registered timer id: %d\n", telemetryUpdateTimerId);
-  //   } else {
-  //     hostTimerSupport->unregister_timer(host, telemetryUpdateTimerId);
-  //     telemetryUpdateTimerId = -1;
-  //     telemetryTimerRegisteredIntervalMs = 0;
-  //   }
-  // }
+  std::unique_ptr<DomainController> domainController;
+  std::unique_ptr<HostCallbackRequester> hostCallbackRequester;
 
 public:
   EntryControllerImpl(IPluginSynthesizer *synth) : synth(synth) {}
 
   void initialize() override {
-    // auto thereadId = std::this_thread::get_id();
-    // printf("initialize thread id: %d\n",
-    //        std::hash<std::thread::id>{}(thereadId));
 
-    // uint64_t maxAddress = 0xFFFFFFFE; // for valid clap_id
-    // parameterManager.setupParameters(*synth, maxAddress);
-    // setupEventBridgeCallbacks();
-    // telemetrySupport.setup();
-    // telemetrySupport.setTelemetryTimerRequestCallback(
-    //     [this](bool enabled, int intervalMs) {
-    //       this->setupTelemetryUpdateTimer(enabled, intervalMs);
-    //     });
+    ParameterBuilderImpl builder;
+    synth->setupParameters(builder);
+    auto parameterItems = builder.getItems();
+
+    hostCallbackRequester.reset(new HostCallbackRequester(host, hostParams));
+
+    domainController.reset(new DomainController(
+        *synth, parameterItems, eventBridge, *hostCallbackRequester.get()));
+    domainController->initialize();
   }
 
-  ~EntryControllerImpl() override {
-    // setupTelemetryUpdateTimer(false, 0);
-    // telemetrySupport.setTelemetryTimerRequestCallback(nullptr);
-    // eventBridge.clearUpstreamEventPushCallback();
-    // eventBridge.clearDownstreamEventPushCallback();
-    guiDestroy();
-  }
+  ~EntryControllerImpl() override { guiDestroy(); }
 
   void prepareProcessing(double sampleRate, uint32_t maxFrameCount) override {
-    // processorAdapter.prepareProcessing(sampleRate, maxFrameCount);
+    processorAdapter.prepareProcessing(sampleRate, maxFrameCount);
   }
 
-  // bool first = true;
-
   clap_process_status process(const clap_process_t *process) override {
-    // if (first) {
-    //   auto thereadId = std::this_thread::get_id();
-    //   printf("audio thread thread id: %d\n",
-    //          std::hash<std::thread::id>{}(thereadId));
-    //   first = false;
-    // }
-    // auto res = processorAdapter.process(process);
-    // if (res == CLAP_PROCESS_CONTINUE) {
-    //   telemetrySupport.process();
-    // }
-    // return res;
-    return CLAP_PROCESS_CONTINUE;
+    auto res = processorAdapter.process(process);
+    if (res == CLAP_PROCESS_CONTINUE) {
+      // telemetrySupport.process();
+    }
+    return res;
   }
 
   void flush(const clap_input_events_t *in,
              const clap_output_events_t *out) override {
-    // processorAdapter.flushParameters(in, out);
+    processorAdapter.flushParameters(in, out);
   }
 
   uint32_t getParameterCount() const override {
-    // return parameterDefinitionsProvider.getParameterItems().size();
-    return 0;
+    return domainController->parametersRegistry.getParameterItems().size();
   }
 
   void getParameterInfo(uint32_t index,
                         clap_param_info_t *info) const override {
-    // auto parameterItems = parameterDefinitionsProvider.getParameterItems();
-    // auto &item = parameterItems[index];
-    // assignParameterInfo(info, item);
+    auto parameterItems =
+        domainController->parametersRegistry.getParameterItems();
+    auto &item = parameterItems[index];
+    assignParameterInfo(info, item);
   }
 
   double getParameterValue(clap_id id) const override {
-    // return parameterManager.getParameter(id);
-    return 0;
+    return domainController->parametersStore.get(id);
   }
 
   void onTimer(clap_id timerId) override {
@@ -174,31 +505,28 @@ public:
   }
 
   void onMainThread() override {
-    // auto thereadId = std::this_thread::get_id();
-    // printf("main thread thread id: %d\n",
-    //        std::hash<std::thread::id>{}(thereadId));
-
-    // clearMainThreadRequestedFlag();
-    // DownstreamEvent e;
-    // while (eventBridge.popDownstreamEvent(e)) {
-    //   if (e.type == DownstreamEventType::ParameterChange) {
-    //     parameterManager.setParameter(e.param.paramId, e.param.value, true);
-    //   }
-    //   downstreamEventPort.emitDownstreamEvent(e);
-    // }
+    eventBridge.clearMainThreadRequestedFlag();
+    domainController->onMainThread();
   }
 
   bool guiCreate() override {
     webView = std::make_unique<sonic::MacWebView>();
     std::string url = synth->getEditorPageUrl();
     webView->loadUrl(url);
-    // webViewBridge.onWebViewOpen(webView.get());
+    auto &controllerFacade = domainController->controllerFacade;
+    auto webViewIo = (IWebViewIo *)webView.get();
+    webViewBridge = std::unique_ptr<WebViewBridge>(
+        WebViewBridge::create(controllerFacade, *webViewIo));
+    webViewBridge->setup();
     return true;
   }
 
   void guiDestroy() override {
+    if (webViewBridge) {
+      webViewBridge->teardown();
+      webViewBridge.reset();
+    }
     if (webView) {
-      // webViewBridge.onWebViewClose();
       webView->setMessageReceiver(nullptr);
       webView->removeFromParent();
       webView.reset();
@@ -209,7 +537,7 @@ public:
     if (!webView) {
       return false;
     }
-    assert(0 == std::strcmp(window->api, GUI_API));
+    assert(0 == std::strcmp(window->api, CLAP_WINDOW_API_COCOA));
     webView->attachToParent(window->cocoa);
     return true;
   }

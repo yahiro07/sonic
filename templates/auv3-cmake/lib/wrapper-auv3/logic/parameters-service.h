@@ -49,7 +49,7 @@ public:
   ~ParameterService() { stopObserve(); }
 
   int subscribeToParameterChanges(
-      std::function<void(std::string, double)> listener) {
+      std::function<void(std::string, float)> listener) {
     int token = nextListenerToken++;
     listeners[token] = listener;
     if (listeners.size() == 1) {

@@ -5,6 +5,10 @@ add_library(${PROJECT_NAME} STATIC
   clap-rootage.cpp
   entry-controller.cpp
   ../../common/mac-web-view.mm
+  ../../core/parameter-builder-impl.cpp
+  ../../core/parameter-registry.cpp
+  ../../domain/webview-bridge.cpp
+
 )
 
 set_source_files_properties(../../common/mac-web-view.mm PROPERTIES
