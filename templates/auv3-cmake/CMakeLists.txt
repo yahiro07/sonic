@@ -35,7 +35,7 @@ add_subdirectory(targets/clap)
 # add_subdirectory(lib/platform/vst3)
 # add_subdirectory(targets/vst3)
 
-# add_subdirectory(lib/wrapper-auv3)
+add_subdirectory(lib/platform/auv3)
 
 
 

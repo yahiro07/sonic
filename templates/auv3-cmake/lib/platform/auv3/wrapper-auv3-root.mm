@@ -1,8 +1,8 @@
 #import "./wrapper-auv3-root.h"
-#import "../api/synthesizer-base.h"
-#import "../common/logger.h"
-#import "../common/mac-web-view.h"
-#import "../domain/webview-bridge.h"
+#import "../../api/synthesizer-base.h"
+#import "../../common/logger.h"
+#import "../../common/mac-web-view.h"
+#import "../../domain/webview-bridge.h"
 #import "./logic/entry-controller.h"
 #import "./support/au-parameter-helper.h"
 #import "./support/parameter-tree-wrapper.h"
@@ -168,10 +168,10 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
         uint8_t data2 = event->MIDI.data[2];
 
         if (status == 0x90 && data2 > 0) {
-          synthPtr->noteOn(data1, (double)data2 / 127.0);
+          synthPtr->noteOn(data1, data2 / 127.f);
           controllerPtr->pushDownstreamEvent(DownstreamEvent{
               .type = DownstreamEventType::HostNote,
-              .note = {data1, (double)data2 / 127.0},
+              .note = {data1, data2 / 127.f},
           });
         } else if (status == 0x80 || (status == 0x90 && data2 == 0)) {
           synthPtr->noteOff(data1);

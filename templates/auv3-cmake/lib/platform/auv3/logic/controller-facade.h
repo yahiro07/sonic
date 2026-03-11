@@ -1,6 +1,6 @@
 #pragma once
-#include "../common/listener-port.h"
-#include "../domain/interfaces.h"
+#include "../../../common/listener-port.h"
+#include "../../../domain/interfaces.h"
 #include "./note-service.h"
 #include "./parameters-service.h"
 

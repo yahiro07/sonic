@@ -1,18 +1,16 @@
 #pragma once
-#include "../api/synthesizer-base.h"
-#include "../common/spsc-queue.h"
-#include "../core/parameter-builder-impl.h"
-#include "../core/parameter-registry.h"
-#include "../domain/interfaces.h"
-#include "../domain/parameters-store.h"
+#include "../../../api/synthesizer-base.h"
+#include "../../../common/spsc-queue.h"
+#include "../../../core/parameter-builder-impl.h"
+#include "../../../core/parameter-registry.h"
+#include "../../../domain/interfaces.h"
+#include "../../../domain/parameters-store.h"
+#include "../logic/note-service.h"
 #include "./controller-facade.h"
 #include "./events.h"
 #include "./parameters-service.h"
-#include "logic/note-service.h"
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <memory>
 #include <vector>
 
 namespace sonic {

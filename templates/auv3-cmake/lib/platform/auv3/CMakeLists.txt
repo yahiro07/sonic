@@ -6,13 +6,13 @@ add_library(wrapper-auv3 STATIC)
 
 target_sources(wrapper-auv3
 	PRIVATE
-    ../core/parameter-builder-impl.cpp
-    ../core/parameter-registry.cpp
-		./wrapper-auv3-root.mm
-    ../common/mac-web-view.mm
-    ../common/logger.cpp
+    ../../core/parameter-builder-impl.cpp
+    ../../core/parameter-registry.cpp
+	./wrapper-auv3-root.mm
+    ../../common/mac-web-view.mm
+    ../../common/logger.cpp
     ./support/parameter-tree-wrapper.mm
-    ../domain/webview-bridge.cpp
+    ../../domain/webview-bridge.cpp
 )
 
 target_compile_options(wrapper-auv3

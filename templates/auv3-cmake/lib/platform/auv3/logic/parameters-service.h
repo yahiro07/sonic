@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../core/parameter-registry.h"
-#include "../domain/interfaces.h"
+#include "../../../core/parameter-registry.h"
+#include "../../../domain/interfaces.h"
 #include "../support/parameter-tree-wrapper.h"
 #include <map>
 

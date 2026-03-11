@@ -1,6 +1,6 @@
 #pragma once
 
-#import "../../core/parameter-spec-item.h"
+#import "../../../core/parameter-spec-item.h"
 #import <CoreAudioKit/CoreAudioKit.h>
 
 namespace sonic {
