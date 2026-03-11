@@ -67,7 +67,19 @@ public:
       auto id = (int32_t)address;
       return parametersStore.get(id);
     });
+
+    controllerFacade.noteRequestedPort.subscribe(
+        [this](int noteNumber, float velocity) {
+          // todo: apply queueing and call on audio thread
+          if (velocity > 0.f) {
+            this->synth.noteOn(noteNumber, velocity);
+          } else {
+            this->synth.noteOff(noteNumber);
+          }
+        });
   }
+
+  void terminate() { controllerFacade.noteRequestedPort.unsubscribe(); }
 
   IControllerFacade &getControllerFacade() { return controllerFacade; }
 };

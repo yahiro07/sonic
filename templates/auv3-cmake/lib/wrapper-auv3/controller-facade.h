@@ -3,11 +3,31 @@
 #include "./controller-parameter-port.h"
 
 namespace sonic {
+
+template <typename... Args> class SingleListenerEventPort {
+private:
+  std::function<void(Args...)> listener;
+
+public:
+  void subscribe(std::function<void(Args...)> listener) {
+    this->listener = listener;
+  }
+  void unsubscribe() { this->listener = nullptr; }
+
+  void call(Args... args) {
+    if (listener) {
+      listener(args...);
+    }
+  }
+};
+
 class ControllerFacade : public IControllerFacade {
 private:
   ControllerParameterPort &parameterPort;
 
 public:
+  SingleListenerEventPort<int, float> noteRequestedPort;
+
   ControllerFacade(ControllerParameterPort &parameterPort)
       : parameterPort(parameterPort) {}
 
@@ -29,7 +49,12 @@ public:
     parameterPort.getAllParameters(parameters);
   }
 
-  void requestNoteOn(int noteNumber, float velocity) override {}
-  void requestNoteOff(int noteNumber) override {}
+  void requestNoteOn(int noteNumber, float velocity) override {
+    noteRequestedPort.call(noteNumber, velocity);
+  }
+  void requestNoteOff(int noteNumber) override {
+    noteRequestedPort.call(noteNumber, .0f);
+  }
 };
+
 } // namespace sonic

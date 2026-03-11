@@ -70,6 +70,7 @@ using namespace sonic;
 }
 
 - (void)dealloc {
+  _entryController->terminate();
   _entryController.reset();
   _parameterTreeWrapper.reset();
   _synth.reset();
