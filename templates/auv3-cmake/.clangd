@@ -1,0 +1,11 @@
+CompileFlags:
+  CompilationDatabase: build
+
+---
+If:
+  PathMatch: ^xcode-project/Project1/Project1Extension/.*\.m$
+CompileFlags:
+  Add:
+    - -xobjective-c
+    - -fobjc-arc
+    - -fobjc-weak
