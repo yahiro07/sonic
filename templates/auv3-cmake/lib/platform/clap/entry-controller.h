@@ -23,7 +23,7 @@ public:
   virtual uint32_t getParameterCount() const = 0;
   virtual void getParameterInfo(uint32_t index,
                                 clap_param_info_t *info) const = 0;
-  virtual double getParameterValue(clap_id id) const = 0;
+  virtual double getParameterValue(clap_id id) = 0;
 
   virtual bool guiCreate() = 0;
   virtual void guiDestroy() = 0;
