@@ -60,7 +60,7 @@ public:
       parametersStore.set(item.id, item.defaultValue);
     }
     parameterTreeWrapper.setImplementorValueObserver(
-        [this](uint64_t address, float value) {
+        [this](uint64_t address, double value) {
           auto id = (int32_t)address;
           this->parametersStore.set(id, value);
           this->synth.setParameter(id, value);
@@ -71,7 +71,7 @@ public:
     });
 
     noteService.noteRequestPort.subscribe(
-        [this](int noteNumber, float velocity) {
+        [this](int noteNumber, double velocity) {
           // requested note from ui
           // send note request to audio thread via queue
           upstreamEventQueue.push(UpstreamEvent{
