@@ -205,9 +205,11 @@ public:
         [this](int noteNumber, double velocity) {
           handleHostNote(noteNumber, velocity);
         });
+    controllerFacade.incrementViewCount();
   }
 
   void teardown() override {
+    controllerFacade.decrementViewCount();
     if (parameterChangeSubscriptionToken != -1) {
       controllerFacade.unsubscribeParameterChange(
           parameterChangeSubscriptionToken);
