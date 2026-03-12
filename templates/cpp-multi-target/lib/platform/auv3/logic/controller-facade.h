@@ -16,7 +16,7 @@ public:
       : parameterService(parameterService), noteService(noteService) {}
 
   int subscribeParameterChange(
-      std::function<void(const std::string, float)> callback) override {
+      std::function<void(const std::string, double)> callback) override {
     return parameterService.subscribeToParameterChanges(callback);
   }
 
@@ -24,16 +24,16 @@ public:
     parameterService.unsubscribeFromParameterChanges(token);
   }
 
-  void applyParameterEditFromUi(std::string paramKey, float value,
+  void applyParameterEditFromUi(std::string paramKey, double value,
                                 ParameterEditState editState) override {
     parameterService.applyParameterEditFromUi(paramKey, value, editState);
   }
 
-  void getAllParameters(std::map<std::string, float> &parameters) override {
+  void getAllParameters(std::map<std::string, double> &parameters) override {
     parameterService.getAllParameters(parameters);
   }
 
-  void requestNoteOn(int noteNumber, float velocity) override {
+  void requestNoteOn(int noteNumber, double velocity) override {
     noteService.noteRequestPort.call(noteNumber, velocity);
   }
   void requestNoteOff(int noteNumber) override {
@@ -41,7 +41,7 @@ public:
   }
 
   int subscribeHostNote(
-      std::function<void(int noteNumber, float velocity)> callback) override {
+      std::function<void(int noteNumber, double velocity)> callback) override {
     return noteService.hostNotePort.subscribe(callback);
   }
   void unsubscribeHostNote(int token) override {

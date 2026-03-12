@@ -20,7 +20,7 @@ struct RxMsgBeginEdit {
 struct RxMsgPerformEdit {
   std::string type = "performEdit";
   std::string paramKey;
-  float value;
+  double value;
 };
 struct RxMsgEndEdit {
   std::string type = "endEdit";
@@ -29,7 +29,7 @@ struct RxMsgEndEdit {
 struct RxMsgInstantEdit {
   std::string type = "instantEdit";
   std::string paramKey;
-  float value;
+  double value;
 };
 struct RxMsgNoteOnRequest {
   std::string type = "noteOnRequest";
@@ -57,16 +57,16 @@ using RxMessageVariant =
 struct TxMsgSetParameter {
   std::string type = "setParameter";
   std::string paramKey;
-  float value;
+  double value;
 };
 struct TxMsgBulkSendParameters {
   std::string type = "bulkSendParameters";
-  std::map<std::string, float> parameters;
+  std::map<std::string, double> parameters;
 };
 struct TxMsgHostNoteOn {
   std::string type = "hostNoteOn";
   int noteNumber;
-  float velocity;
+  double velocity;
 };
 struct TxMsgHostNoteOff {
   std::string type = "hostNoteOff";
@@ -128,7 +128,7 @@ private:
              m->message.c_str());
     } else if (auto *m = std::get_if<RxMsgUiLoaded>(&rxMessage)) {
       printf("ui loaded\n");
-      std::map<std::string, float> parameters;
+      std::map<std::string, double> parameters;
       controllerFacade.getAllParameters(parameters);
       TxMsgBulkSendParameters msg{
           .type = "bulkSendParameters",
@@ -170,8 +170,8 @@ private:
     sendMessageToWebView(msg);
   }
 
-  void handleHostNote(int noteNumber, float velocity) {
-    if (velocity > 0.f) {
+  void handleHostNote(int noteNumber, double velocity) {
+    if (velocity > 0.0) {
       TxMsgHostNoteOn msg{
           .type = "hostNoteOn",
           .noteNumber = noteNumber,
@@ -197,12 +197,12 @@ public:
     });
     parameterChangeSubscriptionToken =
         controllerFacade.subscribeParameterChange(
-            [this](std::string paramKey, float value) {
+            [this](std::string paramKey, double value) {
               handleParameterChangeFromController(paramKey, value);
             });
 
     hostNoteSubscriptionToken = controllerFacade.subscribeHostNote(
-        [this](int noteNumber, float velocity) {
+        [this](int noteNumber, double velocity) {
           handleHostNote(noteNumber, velocity);
         });
   }

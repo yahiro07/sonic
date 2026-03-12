@@ -16,10 +16,10 @@ public:
   ~Project1Synthesizer() override {}
 
   void setupParameters(sonic::ParameterBuilder &builder) override;
-  void setParameter(uint32_t id, float value) override;
-  void prepareProcessing(float sampleRate, uint32_t maxFrameCount) override;
+  void setParameter(uint32_t id, double value) override;
+  void prepareProcessing(double sampleRate, uint32_t maxFrameCount) override;
   void processAudio(float *bufferL, float *bufferR, uint32_t frames) override;
-  void noteOn(int noteNumber, float velocity) override;
+  void noteOn(int noteNumber, double velocity) override;
   void noteOff(int noteNumber) override;
   void getDesiredEditorSize(uint32_t &width, uint32_t &height) override;
   std::string getEditorPageUrl() override;

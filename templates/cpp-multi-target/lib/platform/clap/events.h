@@ -15,11 +15,11 @@ struct DownstreamEvent {
   union {
     struct {
       int noteNumber;
-      float velocity; // 0 for note off
+      double velocity; // 0 for note off
     } note;
     struct {
       uint32_t paramId;
-      float value;
+      double value;
     } param;
   };
 };
@@ -37,11 +37,11 @@ struct UpstreamEvent {
   union {
     struct {
       uint32_t paramId;
-      float value;
+      double value;
     } param;
     struct {
       int noteNumber;
-      float velocity; // 0 for note off
+      double velocity; // 0 for note off
     } note;
   };
 };

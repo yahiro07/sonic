@@ -13,13 +13,13 @@ private:
   ParameterRegistry &_parameterRegistry;
   void *ptObserverToken = nullptr;
 
-  std::map<int, std::function<void(std::string, float)>> listeners;
+  std::map<int, std::function<void(std::string, double)>> listeners;
   int nextListenerToken = 0;
 
   void startObserve() {
 
     ptObserverToken = _parameterTreeWrapper.tokenByAddingParameterObserver(
-        [this](uint64_t address, float value) {
+        [this](uint64_t address, double value) {
           auto id = (int32_t)address;
           auto item = _parameterRegistry.getParameterItemById(id);
           if (!item) {
@@ -49,7 +49,7 @@ public:
   ~ParameterService() { stopObserve(); }
 
   int subscribeToParameterChanges(
-      std::function<void(std::string, float)> listener) {
+      std::function<void(std::string, double)> listener) {
     int token = nextListenerToken++;
     listeners[token] = listener;
     if (listeners.size() == 1) {
@@ -65,7 +65,7 @@ public:
     }
   }
 
-  void applyParameterEditFromUi(std::string paramKey, float value,
+  void applyParameterEditFromUi(std::string paramKey, double value,
                                 ParameterEditState editState) {
     auto idPtr = _parameterRegistry.getIdByParamKey(paramKey);
     if (idPtr == std::nullopt) {
@@ -95,7 +95,7 @@ public:
     }
   }
 
-  void getAllParameters(std::map<std::string, float> &parameters) {
+  void getAllParameters(std::map<std::string, double> &parameters) {
     auto parameterItems = _parameterRegistry.getParameterItems();
     for (const auto &item : parameterItems) {
       auto value = parameters[item.paramKey] =

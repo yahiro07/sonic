@@ -19,8 +19,8 @@ public:
 class IParametersStore {
 public:
   virtual ~IParametersStore() = default;
-  virtual float get(uint32_t id) = 0;
-  virtual void set(uint32_t id, float value) = 0;
+  virtual double get(uint32_t id) = 0;
+  virtual void set(uint32_t id, double value) = 0;
 };
 
 // class IParameterManager {
@@ -49,19 +49,19 @@ enum class ParameterEditState {
 class IControllerFacade {
 public:
   virtual ~IControllerFacade() = default;
-  virtual void getAllParameters(std::map<std::string, float> &parameters) = 0;
-  virtual void applyParameterEditFromUi(std::string paramKey, float value,
+  virtual void getAllParameters(std::map<std::string, double> &parameters) = 0;
+  virtual void applyParameterEditFromUi(std::string paramKey, double value,
                                         ParameterEditState editState) = 0;
-  virtual void requestNoteOn(int noteNumber, float velocity) = 0;
+  virtual void requestNoteOn(int noteNumber, double velocity) = 0;
   virtual void requestNoteOff(int noteNumber) = 0;
 
   virtual int subscribeParameterChange(
-      std::function<void(const std::string paramKey, float value)>
+      std::function<void(const std::string paramKey, double value)>
           callback) = 0;
   virtual void unsubscribeParameterChange(int subscriptionId) = 0;
 
   virtual int subscribeHostNote(
-      std::function<void(int noteNumber, float velocity)> callback) = 0;
+      std::function<void(int noteNumber, double velocity)> callback) = 0;
   virtual void unsubscribeHostNote(int subscriptionId) = 0;
 };
 

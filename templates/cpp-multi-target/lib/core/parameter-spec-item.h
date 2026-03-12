@@ -17,9 +17,9 @@ struct ParameterSpecItem {
   ParamId id;
   std::string paramKey;
   std::string label;
-  float defaultValue;
-  float minValue;
-  float maxValue;
+  double defaultValue;
+  double minValue;
+  double maxValue;
   std::vector<std::string> valueStrings; // For enum parameters
   ParameterType type;
   std::string group;

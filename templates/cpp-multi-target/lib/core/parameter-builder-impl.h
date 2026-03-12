@@ -10,7 +10,7 @@ private:
 public:
   std::vector<ParameterSpecItem> getItems() { return parameters; }
 
-  void addUnary(uint32_t id, Str paramKey, Str label, float defaultValue,
+  void addUnary(uint32_t id, Str paramKey, Str label, double defaultValue,
                 Str group, ParameterFlags flags);
   void addEnum(uint32_t id, Str paramKey, Str label, Str defaultValueString,
                StrVec valueStrings, Str group, ParameterFlags flags);

@@ -168,16 +168,16 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
         uint8_t data2 = event->MIDI.data[2];
 
         if (status == 0x90 && data2 > 0) {
-          synthPtr->noteOn(data1, data2 / 127.f);
+          synthPtr->noteOn(data1, data2 / 127.0);
           controllerPtr->pushDownstreamEvent(DownstreamEvent{
               .type = DownstreamEventType::HostNote,
-              .note = {data1, data2 / 127.f},
+              .note = {data1, data2 / 127.0},
           });
         } else if (status == 0x80 || (status == 0x90 && data2 == 0)) {
           synthPtr->noteOff(data1);
           controllerPtr->pushDownstreamEvent(DownstreamEvent{
               .type = DownstreamEventType::HostNote,
-              .note = {data1, 0.f},
+              .note = {data1, 0.0},
           });
         }
       } else if (event->head.eventType == AURenderEventParameter) {

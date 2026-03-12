@@ -18,7 +18,7 @@ void Project1Synthesizer::setupParameters(sonic::ParameterBuilder &builder) {
   builder.addUnary(kOscVolume, "oscVolume", "Volume", 0.5);
 }
 
-void Project1Synthesizer::setParameter(uint32_t id, float value) {
+void Project1Synthesizer::setParameter(uint32_t id, double value) {
   if (id == kOscEnabled) {
     oscEnabled = value;
   } else if (id == kOscWave) {
@@ -30,7 +30,7 @@ void Project1Synthesizer::setParameter(uint32_t id, float value) {
   }
 }
 
-void Project1Synthesizer::prepareProcessing(float sampleRate,
+void Project1Synthesizer::prepareProcessing(double sampleRate,
                                             uint32_t maxFrameCount) {
   this->sampleRate = sampleRate;
 }
@@ -77,7 +77,7 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
   memcpy(bufferR, bufferL, sizeof(float) * frames);
 }
 
-void Project1Synthesizer::noteOn(int noteNumber, float velocity) {
+void Project1Synthesizer::noteOn(int noteNumber, double velocity) {
   this->noteNumber = noteNumber;
   this->gateOn = true;
 }

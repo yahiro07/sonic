@@ -46,11 +46,11 @@ public:
   ParametersHub(ParametersStore &parametersStore)
       : parametersStore(parametersStore) {}
 
-  SingleListenerPort<ParamId, float, ParameterEditState>
+  SingleListenerPort<ParamId, double, ParameterEditState>
       parameterEditFromUiPort;
-  MultipleListenerPort<ParamId, float> parameterChangeFromHostPort;
+  MultipleListenerPort<ParamId, double> parameterChangeFromHostPort;
 
-  void setParameterFromUi(ParamId id, float value,
+  void setParameterFromUi(ParamId id, double value,
                           ParameterEditState editState) {
     if (editState == ParameterEditState::Perform ||
         editState == ParameterEditState::InstantChange) {
@@ -61,12 +61,12 @@ public:
     parameterEditFromUiPort.call(id, value, editState);
   }
 
-  void setParameterFromHost(ParamId id, float value) {
+  void setParameterFromHost(ParamId id, double value) {
     parametersStore.set(id, value);
     parameterChangeFromHostPort.call(id, value);
   }
 
-  float getParameterValue(ParamId id) { return parametersStore.get(id); }
+  double getParameterValue(ParamId id) { return parametersStore.get(id); }
 };
 
 class ParameterService {
@@ -79,9 +79,9 @@ public:
       : parametersRegistry(parametersRegistry), parametersHub(parametersHub) {}
 
   int subscribeParameterChanges(
-      std::function<void(std::string, float)> listener) {
+      std::function<void(std::string, double)> listener) {
     int token = parametersHub.parameterChangeFromHostPort.subscribe(
-        [this, listener](int id, float value) {
+        [this, listener](int id, double value) {
           auto item = parametersRegistry.getParameterItemById(id);
           if (!item) {
             return;
@@ -95,7 +95,7 @@ public:
     parametersHub.parameterChangeFromHostPort.unsubscribe(token);
   }
 
-  void applyParameterEditFromUi(std::string paramKey, float value,
+  void applyParameterEditFromUi(std::string paramKey, double value,
                                 ParameterEditState editState) {
     auto idPtr = parametersRegistry.getIdByParamKey(paramKey);
     if (idPtr == std::nullopt) {
@@ -104,7 +104,7 @@ public:
     auto id = *idPtr;
     parametersHub.setParameterFromUi(id, value, editState);
   }
-  void getAllParameters(std::map<std::string, float> &parameters) {
+  void getAllParameters(std::map<std::string, double> &parameters) {
     auto parameterItems = parametersRegistry.getParameterItems();
     for (const auto &item : parameterItems) {
       parameters[item.paramKey] = parametersHub.getParameterValue(item.id);
@@ -115,10 +115,10 @@ public:
 class NoteService {
 public:
   // note request: DSP <-- Controller <-- UI
-  SingleListenerPort<int, float> noteRequestPort;
+  SingleListenerPort<int, double> noteRequestPort;
 
   // active note state: Host,DSP --> Controller --> UI
-  MultipleListenerPort<int, float> hostNotePort;
+  MultipleListenerPort<int, double> hostNotePort;
 };
 
 class ControllerFacade : public IControllerFacade {
@@ -130,7 +130,7 @@ public:
       : parameterService(parameterService), noteService(noteService) {}
 
   int subscribeParameterChange(
-      std::function<void(const std::string, float)> callback) override {
+      std::function<void(const std::string, double)> callback) override {
     return parameterService.subscribeParameterChanges(callback);
   }
 
@@ -138,16 +138,16 @@ public:
     parameterService.unsubscribeParameterChanges(token);
   }
 
-  void applyParameterEditFromUi(std::string paramKey, float value,
+  void applyParameterEditFromUi(std::string paramKey, double value,
                                 ParameterEditState editState) override {
     parameterService.applyParameterEditFromUi(paramKey, value, editState);
   }
 
-  void getAllParameters(std::map<std::string, float> &parameters) override {
+  void getAllParameters(std::map<std::string, double> &parameters) override {
     parameterService.getAllParameters(parameters);
   }
 
-  void requestNoteOn(int noteNumber, float velocity) override {
+  void requestNoteOn(int noteNumber, double velocity) override {
     noteService.noteRequestPort.call(noteNumber, velocity);
   }
   void requestNoteOff(int noteNumber) override {
@@ -155,7 +155,7 @@ public:
   }
 
   int subscribeHostNote(
-      std::function<void(int noteNumber, float velocity)> callback) override {
+      std::function<void(int noteNumber, double velocity)> callback) override {
     return noteService.hostNotePort.subscribe(callback);
   }
   void unsubscribeHostNote(int token) override {
@@ -260,15 +260,14 @@ private:
         const clap_event_note_t *noteEvent = (const clap_event_note_t *)event;
         if (event->type == CLAP_EVENT_NOTE_ON) {
           synth.noteOn(noteEvent->key, noteEvent->velocity);
-          pushDownstreamEvent(
-              {.type = DownstreamEventType::HostNote,
-               .note = {.noteNumber = noteEvent->key,
-                        .velocity = (float)noteEvent->velocity}});
+          pushDownstreamEvent({.type = DownstreamEventType::HostNote,
+                               .note = {.noteNumber = noteEvent->key,
+                                        .velocity = noteEvent->velocity}});
         } else if (event->type == CLAP_EVENT_NOTE_OFF) {
           synth.noteOff(noteEvent->key);
           pushDownstreamEvent(
               {.type = DownstreamEventType::HostNote,
-               .note = {.noteNumber = noteEvent->key, .velocity = 0.f}});
+               .note = {.noteNumber = noteEvent->key, .velocity = 0.0}});
         }
       }
       if (event->type == CLAP_EVENT_PARAM_VALUE) {
@@ -422,7 +421,7 @@ public:
               UpstreamEvent{.type = type, .param = {id, value}});
         });
     noteService.noteRequestPort.subscribe(
-        [this](int noteNumber, float velocity) {
+        [this](int noteNumber, double velocity) {
           // requested note from ui
           // send note request to audio thread via queue
           eventBridge.pushUpstreamEvent(UpstreamEvent{

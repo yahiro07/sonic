@@ -92,9 +92,10 @@ set(VST3_SDK_ROOT "${SMTG_VST3_LOCATION_DIR}")
 
 add_subdirectory(plugin)
 
-# add_subdirectory(lib/platform/clap) add_subdirectory(targets/clap)
+add_subdirectory(lib/platform/clap)
+add_subdirectory(targets/clap)
 
 add_subdirectory(lib/platform/vst3)
 add_subdirectory(targets/vst3)
 
-# add_subdirectory(lib/platform/auv3)
+add_subdirectory(lib/platform/auv3)

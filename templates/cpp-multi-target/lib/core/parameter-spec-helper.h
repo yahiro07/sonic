@@ -8,33 +8,34 @@ namespace sonic {
 
 class ParameterSpecHelper {
 public:
-  static float getNormalized(const ParameterSpecItem *item, float value) {
+  static double getNormalized(const ParameterSpecItem *item, double value) {
     if (item->type == ParameterType::Enum) {
       auto count = item->valueStrings.size();
       if (count < 2) {
-        return 0.f;
+        return 0.0;
       }
       int stepCount = count - 1;
       int idx = std::lround(value);
       int clampedIdx = std::clamp(idx, 0, stepCount);
-      return static_cast<float>(clampedIdx) / static_cast<float>(stepCount);
+      return static_cast<double>(clampedIdx) / static_cast<double>(stepCount);
     } else if (item->type == ParameterType::Bool) {
-      return value > 0.5f ? 1.0f : 0.0f;
+      return value > 0.5 ? 1.0 : 0.0;
     } else {
-      return std::max(0.0f, std::min(value, 1.0f));
+      return std::max(0.0, std::min(value, 1.0));
     }
   }
-  static float getUnnormalized(const ParameterSpecItem *item, float normValue) {
+  static double getUnnormalized(const ParameterSpecItem *item,
+                                double normValue) {
     if (item->type == ParameterType::Enum) {
       auto count = item->valueStrings.size();
       if (count < 2) {
-        return 0.0f;
+        return 0.0;
       }
       auto stepCount = count - 1;
-      auto clampedNorm = std::clamp(normValue, 0.f, 1.f);
+      auto clampedNorm = std::clamp(normValue, 0.0, 1.0);
       return std::lround(clampedNorm * stepCount);
     } else if (item->type == ParameterType::Bool) {
-      return normValue > 0.5f ? 1.0f : 0.0f;
+      return normValue > 0.5 ? 1.0 : 0.0;
     }
     return normValue;
   }

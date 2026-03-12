@@ -5,9 +5,9 @@ namespace sonic {
 class NoteService {
 public:
   // note request: DSP <-- Controller <-- UI
-  SingleListenerPort<int, float> noteRequestPort;
+  SingleListenerPort<int, double> noteRequestPort;
 
   // active note state: Host,DSP --> Controller --> UI
-  MultipleListenerPort<int, float> hostNotePort;
+  MultipleListenerPort<int, double> hostNotePort;
 };
 } // namespace sonic
