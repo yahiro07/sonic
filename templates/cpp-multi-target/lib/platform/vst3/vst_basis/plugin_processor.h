@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../../common/logger.h"
 #include "../../../core/parameter-registry.h"
 #include "../../../core/parameter-spec-item.h"
 #include "../../../domain/parameters-store.h"
@@ -28,10 +29,12 @@ private:
 
 public:
   PluginProcessor() {
+    logger.start();
+    logger.log("PluginProcessor constructor 1541");
     setControllerClass(gPluginFactoryGlobalHolder.controllerCID);
   }
 
-  ~PluginProcessor() SMTG_OVERRIDE = default;
+  ~PluginProcessor() SMTG_OVERRIDE { logger.stop(); }
 
   static Steinberg::FUnknown *createInstance(void * /*context*/) {
     return (Steinberg::Vst::IAudioProcessor *)new PluginProcessor;

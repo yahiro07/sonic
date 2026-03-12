@@ -47,6 +47,12 @@ public:
                    .velocity = velocity},
       };
       return true;
+    } else if (strcmp(message->getMessageID(), "pollingProcessorSideEvent") ==
+               0) {
+      e = UpstreamEvent{
+          .type = UpstreamEventType::PollingProcessorSideEvent,
+      };
+      return true;
     }
     return false;
   };
@@ -75,6 +81,11 @@ public:
         msg->setMessageID("noteRequest");
         msg->getAttributes()->setInt("noteNumber", e.note.noteNumber);
         msg->getAttributes()->setFloat("velocity", e.note.velocity);
+        component.sendMessage(msg);
+      }
+    } else if (e.type == UpstreamEventType::PollingProcessorSideEvent) {
+      if (auto msg = owned(component.allocateMessage())) {
+        msg->setMessageID("pollingProcessorSideEvent");
         component.sendMessage(msg);
       }
     }

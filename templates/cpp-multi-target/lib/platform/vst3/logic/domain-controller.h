@@ -228,14 +228,10 @@ public:
 
     noteService.noteRequestPort.subscribe(
         [this](int noteNumber, double velocity) {
-          // requested note from ui
-          // send note request to audio thread via IMessage
           this->messagePort.sendUpstreamEvent(UpstreamEvent{
               .type = UpstreamEventType::NoteRequest,
               .note = {noteNumber, velocity},
           });
-          // return host note event to show active notes in ui
-          noteService.hostNotePort.call(noteNumber, velocity);
         });
 
     mainLoopTimer.setCallback([this]() { this->onMatinThreadTimer(); });

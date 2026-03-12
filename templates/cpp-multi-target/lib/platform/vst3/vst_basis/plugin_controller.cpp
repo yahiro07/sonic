@@ -1,4 +1,5 @@
 #include "./plugin_controller.h"
+#include "../../../common/logger.h"
 #include "../../../core/parameter-spec-helper.h"
 #include "../modules/processor_state_helper.h"
 #include "./plugin-editor-view.h"

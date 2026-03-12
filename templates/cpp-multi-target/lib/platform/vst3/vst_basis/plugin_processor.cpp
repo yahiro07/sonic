@@ -67,11 +67,17 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
   UpstreamEvent e;
   while (upstreamEventQueue.pop(e)) {
     if (e.type == UpstreamEventType::NoteRequest) {
+      // note requested from ui
       if (e.note.velocity > 0.0) {
         synthInstance->noteOn(e.note.noteNumber, e.note.velocity);
       } else {
         synthInstance->noteOff(e.note.noteNumber);
       }
+      // return response
+      downstreamEventQueue.push({
+          .type = DownstreamEventType::HostNote,
+          .note = {e.note.noteNumber, e.note.velocity},
+      });
     }
   }
 
@@ -81,15 +87,18 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
     for (int32 i = 0; i < numEvent; i++) {
       Vst::Event event{};
       if (eventList->getEvent(i, event) == kResultOk) {
-        if (event.type == Vst::Event::kNoteOnEvent ||
-            event.type == Vst::Event::kNoteOffEvent) {
+        if (event.type == Vst::Event::kNoteOnEvent) {
           synthInstance->noteOn(event.noteOn.pitch, event.noteOn.velocity);
-          // logger.log("note on %d", event.noteOn.pitch);
-          auto noteNumber = event.noteOn.pitch;
-          auto velocity = event.noteOn.velocity;
           downstreamEventQueue.push({
               .type = DownstreamEventType::HostNote,
-              .note{noteNumber, velocity},
+              .note{.noteNumber = event.noteOn.noteId,
+                    .velocity = event.noteOn.velocity},
+          });
+        } else if (event.type == Vst::Event::kNoteOffEvent) {
+          synthInstance->noteOff(event.noteOff.pitch);
+          downstreamEventQueue.push({
+              .type = DownstreamEventType::HostNote,
+              .note{.noteNumber = event.noteOff.noteId, .velocity = 0.0},
           });
         }
       }

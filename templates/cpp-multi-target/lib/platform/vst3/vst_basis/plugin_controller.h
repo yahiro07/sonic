@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../../common/logger.h"
 #include "../logic/domain-controller.h"
 #include "../support/controller-parameter-portal.h"
 #include "../support/event-message-bus.h"
@@ -26,8 +25,8 @@ private:
                                     controllerSideMessagePort, mainLoopTimer};
 
 public:
-  PluginController() { logger.start(); }
-  ~PluginController() SMTG_OVERRIDE { logger.stop(); }
+  PluginController() {}
+  ~PluginController() SMTG_OVERRIDE {}
 
   static FUnknown *createInstance(void *) {
     return (Vst::IEditController *)new PluginController;
