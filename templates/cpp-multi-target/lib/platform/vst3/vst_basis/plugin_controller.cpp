@@ -1,6 +1,6 @@
 #include "./plugin_controller.h"
-#include "../logic/parameter_builder_impl.h"
-#include "../logic/parameter_item_helper.h"
+#include "../../../core/parameter-builder-impl.h"
+#include "../../../core/parameter-spec-helper.h"
 #include "../modules/processor_state_helper.h"
 #include "../modules/webview_editor_view.h"
 
@@ -15,7 +15,7 @@ tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
     auto parameterBuilder = ParameterBuilderImpl();
     synthInstance->setupParameters(parameterBuilder);
     auto parameterItems = parameterBuilder.getItems();
-    parameterDefinitionsProvider.addParameters(parameterItems);
+    parameterRegistry.addParameters(parameterItems, 0x7FFFFFFE);
     parametersManager.addParameters(parameterItems);
     parametersManager.startObserve();
   }
@@ -39,13 +39,12 @@ tresult PLUGIN_API PluginController::setComponentState(IBStream *state) {
     return kResultFalse;
   }
   for (auto &kv : processorState.parameters) {
-    auto paramItem =
-        parameterDefinitionsProvider.getParameterItemByIdentifier(kv.first);
+    auto paramItem = parameterRegistry.getParameterItemByParamKey(kv.first);
     if (!paramItem)
       continue;
     auto value = kv.second;
-    auto normalizedValue = ParameterItemHelper::getNormalized(paramItem, value);
-    setParamNormalized(paramItem->address, normalizedValue);
+    auto normalizedValue = ParameterSpecHelper::getNormalized(paramItem, value);
+    setParamNormalized(paramItem->id, normalizedValue);
   }
   return kResultOk;
 }

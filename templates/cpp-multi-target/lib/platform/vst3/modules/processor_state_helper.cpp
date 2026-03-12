@@ -1,10 +1,12 @@
 #include "./processor_state_helper.h"
-#include "../general/logger.h"
+#include "../../../common/logger.h"
 #include <base/source/fstreamer.h>
 #include <glaze/glaze.hpp>
 #include <pluginterfaces/base/ibstream.h>
 
 namespace sonic_vst {
+
+using namespace sonic;
 
 using namespace Steinberg;
 

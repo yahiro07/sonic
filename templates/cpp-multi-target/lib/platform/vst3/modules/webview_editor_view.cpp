@@ -1,5 +1,5 @@
-#include "../general/logger.h"
-#include "../general/mac_web_view.h"
+#include "../../../common/logger.h"
+#include "../../../common/mac-web-view.h"
 #include "./event_hub.h"
 #include "./parameters_manager.h"
 #include <glaze/glaze.hpp>

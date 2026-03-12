@@ -1,5 +1,5 @@
 #include "./parameters_manager.h"
-#include "../logic/parameter_item_helper.h"
+#include "../../../core/parameter-spec-helper.h"
 #include <base/source/fstring.h>
 #include <cmath>
 #include <functional>
@@ -9,6 +9,8 @@
 namespace sonic_vst {
 
 using namespace Steinberg;
+
+using ParameterItemHelper = ParameterSpecHelper;
 
 static int getParameterVstFlags(const ParameterItem *item) {
   auto flags = 0;
@@ -37,7 +39,7 @@ void ParametersManager::addVstParameter(const ParameterItem &item) {
                              step,             // step count (0 for continuous)
                              normDefaultValue, // default value (normalized)
                              flags,            // flags
-                             item.address      // tag (ID)
+                             item.id           // tag (ID)
   );
 }
 
@@ -63,7 +65,7 @@ void ParametersManager::addParameters(
     std::vector<ParameterItem> &parameterItems) {
   for (const auto &item : parameterItems) {
     addVstParameter(item);
-    this->parametersCache[item.address] =
+    this->parametersCache[item.id] =
         ParameterItemHelper::getNormalized(&item, item.defaultValue);
   }
 }
@@ -78,8 +80,7 @@ void ParametersManager::startObserve() {
         if (editingParamAddress == address) {
           return;
         }
-        auto paramItem =
-            parameterDefinitionsProvider.getParameterItemByAddress(address);
+        auto paramItem = parameterRegistry.getParameterItemById(address);
         if (!paramItem)
           return;
 
@@ -90,7 +91,7 @@ void ParametersManager::startObserve() {
 
         auto value = ParameterItemHelper::getUnnormalized(paramItem, normValue);
         for (auto &receiver : uiSideReceivers) {
-          receiver.second(paramItem->identifier, value);
+          receiver.second(paramItem->paramKey, value);
         }
       });
 }
@@ -100,14 +101,12 @@ void ParametersManager::stopObserve() { parameterChangeNotifier.stop(); }
 // UI --> EditController --> DSP, Host
 void ParametersManager::applyParameterEdit(std::string identifier, double value,
                                            ParameterEditingState editingState) {
-  auto _address =
-      parameterDefinitionsProvider.getAddressByIdentifier(identifier);
+  auto _address = parameterRegistry.getIdByParamKey(identifier);
   if (!_address) {
     return;
   }
   auto address = *_address;
-  auto paramItem =
-      parameterDefinitionsProvider.getParameterItemByAddress(address);
+  auto paramItem = parameterRegistry.getParameterItemById(address);
   if (!paramItem) {
     return;
   }
@@ -151,12 +150,11 @@ void ParametersManager::unsubscribeFromEditor(int subscriptionId) {
 
 void ParametersManager::getAllParameterValues(
     std::map<std::string, double> &parameters) {
-  const auto &parameterItems = parameterDefinitionsProvider.getParameterItems();
-  for (auto &kv : parameterItems) {
-    auto &item = kv.second;
-    auto address = item.address;
+  const auto &parameterItems = parameterRegistry.getParameterItems();
+  for (auto &item : parameterItems) {
+    auto address = item.id;
     auto value = parametersCache[address];
-    parameters[item.identifier] =
+    parameters[item.paramKey] =
         ParameterItemHelper::getUnnormalized(&item, value);
   }
 }

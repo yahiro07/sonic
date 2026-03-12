@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../general/logger.h"
+#include "../../../common/logger.h"
 #include "../modules/event_hub.h"
 #include "../modules/parameters_manager.h"
 #include "../vst_entry/vst_entry_wrapper.h"
@@ -15,13 +15,12 @@ class PluginController : public Vst::EditControllerEx1 {
 private:
   SynthesizerBase *synthInstance;
   ParametersManager parametersManager;
-  ParameterDefinitionsProvider parameterDefinitionsProvider;
+  ParameterRegistry parameterRegistry;
   EventHub eventHub;
 
 public:
   PluginController()
-      : parametersManager(*this, this->parameters,
-                          this->parameterDefinitionsProvider),
+      : parametersManager(*this, this->parameters, this->parameterRegistry),
         eventHub(*this) {
     logger.start();
     synthInstance = gPluginFactoryGlobalHolder.synthInstantiateFn();

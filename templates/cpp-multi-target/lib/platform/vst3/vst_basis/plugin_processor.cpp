@@ -1,7 +1,7 @@
 #include "./plugin_processor.h"
-#include "../general/logger.h"
-#include "../logic/parameter_builder_impl.h"
-#include "../logic/parameter_item_helper.h"
+#include "../../../common/logger.h"
+#include "../../../core/parameter-builder-impl.h"
+#include "../../../core/parameter-spec-helper.h"
 #include "../modules/processor_state_helper.h"
 #include "../vst_entry/vst_entry_wrapper.h"
 #include <pluginterfaces/vst/ivstevents.h>
@@ -33,9 +33,9 @@ tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
   auto parameterBuilder = ParameterBuilderImpl();
   synthInstance->setupParameters(parameterBuilder);
   auto parameterItems = parameterBuilder.getItems();
-  parameterDefinitionsProvider.addParameters(parameterItems);
+  parameterRegistry.addParameters(parameterItems, 0x7FFFFFFE);
   for (auto &item : parameterItems) {
-    parametersCache[item.address] = item.defaultValue;
+    parametersCache[item.id] = item.defaultValue;
   }
 
   return kResultOk;
@@ -65,10 +65,9 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
         auto paramId = paramQueue->getParameterId();
         if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) ==
             kResultTrue) {
-          auto paramItem =
-              parameterDefinitionsProvider.getParameterItemByAddress(paramId);
+          auto paramItem = parameterRegistry.getParameterItemById(paramId);
           const auto unnormalizedValue =
-              ParameterItemHelper::getUnnormalized(paramItem, value);
+              ParameterSpecHelper::getUnnormalized(paramItem, value);
           // logger.log("parameter %d received in audio thread %f %f",
           //                    paramId, value, unnormalizedValue);
           parametersCache[paramId] = unnormalizedValue;
@@ -166,11 +165,10 @@ tresult PLUGIN_API PluginProcessor::getState(IBStream *state) {
   ProcessorState processorState{};
   processorState.parametersVersion = kParametersVersion;
   for (auto &kv : parametersCache) {
-    auto paramItem =
-        parameterDefinitionsProvider.getParameterItemByAddress(kv.first);
+    auto paramItem = parameterRegistry.getParameterItemById(kv.first);
     if (!paramItem)
       continue;
-    processorState.parameters[paramItem->identifier] = kv.second;
+    processorState.parameters[paramItem->paramKey] = kv.second;
   }
 
   processorStateHelper_writeState(state, processorState);
@@ -187,12 +185,11 @@ tresult PLUGIN_API PluginProcessor::setState(IBStream *state) {
     return kResultFalse;
   }
   for (auto &kv : processorState.parameters) {
-    auto paramItem =
-        parameterDefinitionsProvider.getParameterItemByIdentifier(kv.first);
+    auto paramItem = parameterRegistry.getParameterItemByParamKey(kv.first);
     if (!paramItem)
       continue;
-    parametersCache[paramItem->address] = kv.second;
-    synthInstance->setParameter(paramItem->address, kv.second);
+    parametersCache[paramItem->id] = kv.second;
+    synthInstance->setParameter(paramItem->id, kv.second);
   }
 
   return kResultOk;

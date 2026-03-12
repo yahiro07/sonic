@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../logic/parameter_definitions_provider.h"
-#include "../logic/parameter_item.h"
+#include "../../../core/parameter-registry.h"
+#include "../../../core/parameter-spec-item.h"
 #include "./parameter_change_notifier.h"
 #include <base/source/fstring.h>
 #include <functional>
@@ -11,6 +11,10 @@
 
 namespace sonic_vst {
 
+using namespace sonic;
+using ParamAddress = ParamId;
+using ParameterItem = ParameterSpecItem;
+
 enum class ParameterEditingState { Begin, Perform, End, InstantChange };
 
 class ParametersManager {
@@ -18,7 +22,7 @@ class ParametersManager {
 private:
   Steinberg::Vst::EditController &editController;
   Steinberg::Vst::ParameterContainer &vstParameters;
-  ParameterDefinitionsProvider &parameterDefinitionsProvider;
+  sonic::ParameterRegistry &parameterRegistry;
 
   ParameterChangeNotifier parameterChangeNotifier;
   // Cache is stored in normalized (0..1) space.
@@ -40,9 +44,9 @@ private:
 public:
   ParametersManager(Steinberg::Vst::EditController &editController,
                     Steinberg::Vst::ParameterContainer &vstParameters,
-                    ParameterDefinitionsProvider &parameterDefinitionsProvider)
+                    ParameterRegistry &parameterRegistry)
       : editController(editController), vstParameters(vstParameters),
-        parameterDefinitionsProvider(parameterDefinitionsProvider) {}
+        parameterRegistry(parameterRegistry) {}
 
   ~ParametersManager() {}
 

@@ -1,7 +1,9 @@
 #pragma once
-#include "../general/spsc_queue.h"
+#include "../../../common/spsc-queue.h"
 
 namespace sonic_vst {
+
+using namespace sonic;
 
 enum class RealtimeHostEventType {
   None = 0,

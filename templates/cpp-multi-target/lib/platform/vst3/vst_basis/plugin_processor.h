@@ -1,12 +1,15 @@
 #pragma once
 
-#include "../logic/parameter_definitions_provider.h"
-#include "../logic/parameter_item.h"
-#include "../logic/realtime_host_event_queue.h"
+#include "../../../core/parameter-registry.h"
+#include "../../../core/parameter-spec-item.h"
 #include "../modules/event_hub.h"
+#include "../modules/realtime_host_event_queue.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
 
 namespace vst_basis {
+
+using namespace sonic;
+using ParamAddress = ParamId;
 
 using namespace sonic_vst;
 using namespace Steinberg;
@@ -14,7 +17,7 @@ using namespace Steinberg;
 class PluginProcessor : public Vst::AudioEffect {
 private:
   SynthesizerBase *synthInstance;
-  ParameterDefinitionsProvider parameterDefinitionsProvider;
+  ParameterRegistry parameterRegistry;
   std::unordered_map<ParamAddress, double> parametersCache;
   RealtimeHostEventQueue realtimeHostEventQueue;
   ProcessorSideMessagingBridge processorSideMessagingBridge;
