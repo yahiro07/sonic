@@ -43,15 +43,15 @@ public:
 class IProcessorSideMessagePort {
 public:
   virtual ~IProcessorSideMessagePort() = default;
-  virtual bool popUpstreamEvent(UpstreamEvent &event) = 0;
-  virtual void pushDownstreamEvent(DownstreamEvent event) = 0;
+  virtual bool popUpstreamEventReceived(UpstreamEvent &event) = 0;
+  virtual void sendDownstreamEvent(DownstreamEvent event) = 0;
 };
 
 class IControllerSideMessagePort {
 public:
   virtual ~IControllerSideMessagePort() = default;
-  virtual bool popDownstreamEvent(DownstreamEvent &event) = 0;
-  virtual void pushUpstreamEvent(UpstreamEvent event) = 0;
+  virtual bool popDownstreamEventReceived(DownstreamEvent &event) = 0;
+  virtual void sendUpstreamEvent(UpstreamEvent event) = 0;
 };
 
 } // namespace sonic

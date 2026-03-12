@@ -2,12 +2,11 @@
 
 #include "../../../api/synthesizer-base.h"
 #include "../../../common/listener-port.h"
-#include "../../../core/parameter-builder-impl.h"
 #include "../../../core/parameter-registry.h"
 #include "../../../core/parameter-spec-helper.h"
 #include "../../../domain/parameters-store.h"
-
 #include "./interfaces.h"
+#include "./parameters-initializer.h"
 
 namespace sonic {
 
@@ -202,16 +201,7 @@ public:
                    IMainLoopTimer &mainLoopTimer)
       : synth(synth), controllerParameterPortal(controllerParameterPortal),
         messagePort(messagePort), mainLoopTimer(mainLoopTimer) {
-    auto parameterBuilder = ParameterBuilderImpl();
-    synth.setupParameters(parameterBuilder);
-    auto parameterItems = parameterBuilder.getItems();
-    parametersRegistry.addParameters(parameterItems, 0x7FFFFFFE);
-    auto maxId =
-        ParameterSpecHelper::getMaxIdFromParameterItems(parameterItems);
-    parametersStore.setup(maxId);
-    for (const auto &item : parameterItems) {
-      parametersStore.set(item.id, item.defaultValue);
-    }
+    initializeParameters(synth, parametersRegistry, parametersStore);
 
     // parameter flow: Controller <-- (normalize) <-- Hub <-- UI
     controllerParameterPortal.subscribeParameterChange(
@@ -235,7 +225,7 @@ public:
         [this](int noteNumber, double velocity) {
           // requested note from ui
           // send note request to audio thread via IMessage
-          this->messagePort.pushUpstreamEvent(UpstreamEvent{
+          this->messagePort.sendUpstreamEvent(UpstreamEvent{
               .type = UpstreamEventType::NoteRequest,
               .note = {noteNumber, velocity},
           });
@@ -255,11 +245,14 @@ public:
 
   void onMatinThreadTimer() {
     DownstreamEvent e;
-    while (messagePort.popDownstreamEvent(e)) {
+    while (messagePort.popDownstreamEventReceived(e)) {
       if (e.type == DownstreamEventType::HostNote) {
         noteService.hostNotePort.call(e.note.noteNumber, e.note.velocity);
       }
     }
+    messagePort.sendUpstreamEvent(UpstreamEvent{
+        .type = UpstreamEventType::PollingProcessorSideEvent,
+    });
   }
 
   ControllerFacade &getControllerFacade() { return controllerFacade; }

@@ -18,9 +18,7 @@ struct DownstreamEvent {
   };
 };
 
-enum class UpstreamEventType {
-  NoteRequest,
-};
+enum class UpstreamEventType { NoteRequest, PollingProcessorSideEvent };
 
 struct UpstreamEvent {
   UpstreamEventType type;

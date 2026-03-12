@@ -1,20 +1,12 @@
 #include "./plugin_processor.h"
 #include "../../../common/logger.h"
-#include "../../../core/parameter-builder-impl.h"
 #include "../../../core/parameter-spec-helper.h"
+#include "../logic/parameters-initializer.h"
 #include "../modules/processor_state_helper.h"
-#include "../vst_entry/vst_entry_wrapper.h"
 #include <pluginterfaces/vst/ivstevents.h>
 #include <pluginterfaces/vst/ivstparameterchanges.h>
 
 namespace vst_basis {
-
-PluginProcessor::PluginProcessor() : processorSideMessagingBridge(*this) {
-  setControllerClass(gPluginFactoryGlobalHolder.controllerCID);
-  synthInstance = gPluginFactoryGlobalHolder.synthInstantiateFn();
-}
-
-PluginProcessor::~PluginProcessor() { delete synthInstance; }
 
 float randF() { return (float)rand() / (float)RAND_MAX; }
 tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
@@ -30,13 +22,7 @@ tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
 
   getAudioOutput(0)->setFlags(Vst::BusInfo::kDefaultActive);
 
-  auto parameterBuilder = ParameterBuilderImpl();
-  synthInstance->setupParameters(parameterBuilder);
-  auto parameterItems = parameterBuilder.getItems();
-  parameterRegistry.addParameters(parameterItems, 0x7FFFFFFE);
-  for (auto &item : parameterItems) {
-    parametersCache[item.id] = item.defaultValue;
-  }
+  initializeParameters(*synthInstance, parameterRegistry, parametersStore);
 
   return kResultOk;
 }
@@ -70,9 +56,21 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
               ParameterSpecHelper::getUnnormalized(paramItem, value);
           // logger.log("parameter %d received in audio thread %f %f",
           //                    paramId, value, unnormalizedValue);
-          parametersCache[paramId] = unnormalizedValue;
+          parametersStore.set(paramId, unnormalizedValue);
           synthInstance->setParameter(paramId, unnormalizedValue);
         }
+      }
+    }
+  }
+
+  //---Read upstream events-------------
+  UpstreamEvent e;
+  while (upstreamEventQueue.pop(e)) {
+    if (e.type == UpstreamEventType::NoteRequest) {
+      if (e.note.velocity > 0.0) {
+        synthInstance->noteOn(e.note.noteNumber, e.note.velocity);
+      } else {
+        synthInstance->noteOff(e.note.noteNumber);
       }
     }
   }
@@ -83,21 +81,15 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
     for (int32 i = 0; i < numEvent; i++) {
       Vst::Event event{};
       if (eventList->getEvent(i, event) == kResultOk) {
-        if (event.type == Vst::Event::kNoteOnEvent) {
+        if (event.type == Vst::Event::kNoteOnEvent ||
+            event.type == Vst::Event::kNoteOffEvent) {
           synthInstance->noteOn(event.noteOn.pitch, event.noteOn.velocity);
           // logger.log("note on %d", event.noteOn.pitch);
-          realtimeHostEventQueue.push({
-              .type = RealtimeHostEventType::NoteOn,
-              .data1 = event.noteOn.pitch,
-              .data2 = event.noteOn.velocity,
-          });
-        } else if (event.type == Vst::Event::kNoteOffEvent) {
-          synthInstance->noteOff(event.noteOff.pitch);
-          // logger.log("note off %d", event.noteOff.pitch);
-          realtimeHostEventQueue.push({
-              .type = RealtimeHostEventType::NoteOff,
-              .data1 = event.noteOff.pitch,
-              .data2 = 0,
+          auto noteNumber = event.noteOn.pitch;
+          auto velocity = event.noteOn.velocity;
+          downstreamEventQueue.push({
+              .type = DownstreamEventType::HostNote,
+              .note{noteNumber, velocity},
           });
         }
       }
@@ -164,11 +156,9 @@ tresult PLUGIN_API PluginProcessor::getState(IBStream *state) {
   constexpr int kParametersVersion = 1;
   ProcessorState processorState{};
   processorState.parametersVersion = kParametersVersion;
-  for (auto &kv : parametersCache) {
-    auto paramItem = parameterRegistry.getParameterItemById(kv.first);
-    if (!paramItem)
-      continue;
-    processorState.parameters[paramItem->paramKey] = kv.second;
+  for (auto item : parameterRegistry.getParameterItems()) {
+    auto value = parametersStore.get(item.id);
+    processorState.parameters[item.paramKey] = value;
   }
 
   processorStateHelper_writeState(state, processorState);
@@ -188,7 +178,7 @@ tresult PLUGIN_API PluginProcessor::setState(IBStream *state) {
     auto paramItem = parameterRegistry.getParameterItemByParamKey(kv.first);
     if (!paramItem)
       continue;
-    parametersCache[paramItem->id] = kv.second;
+    parametersStore.set(paramItem->id, kv.second);
     synthInstance->setParameter(paramItem->id, kv.second);
   }
 
@@ -196,33 +186,20 @@ tresult PLUGIN_API PluginProcessor::setState(IBStream *state) {
 }
 
 tresult PLUGIN_API PluginProcessor::notify(Vst::IMessage *message) {
-  auto wm = processorSideMessagingBridge.decodeMessage(message);
-  if (!wm.has_value()) {
-    return AudioEffect::notify(message);
-  }
-
-  if (wm->type == WrappedMessageType::noteOnRequestFromEditor) {
-    auto noteNumber = wm->noteOnRequestFromEditor.noteNumber;
-    auto velocity = wm->noteOnRequestFromEditor.velocity;
-    synthInstance->noteOn(noteNumber, velocity);
-    processorSideMessagingBridge.sendHostNoteOn(noteNumber, velocity);
-  } else if (wm->type == WrappedMessageType::noteOffRequestFromEditor) {
-    auto noteNumber = wm->noteOffRequestFromEditor.noteNumber;
-    synthInstance->noteOff(noteNumber);
-    processorSideMessagingBridge.sendHostNoteOff(noteNumber);
-  } else if (wm->type == WrappedMessageType::pullProcessorSideEvents) {
-    RealtimeHostEvent e;
-    int count = 0;
-    while (realtimeHostEventQueue.pop(e) && count < 64) {
-      if (e.type == RealtimeHostEventType::NoteOn) {
-        processorSideMessagingBridge.sendHostNoteOn(e.data1, e.data2);
-      } else if (e.type == RealtimeHostEventType::NoteOff) {
-        processorSideMessagingBridge.sendHostNoteOff(e.data1);
+  UpstreamEvent e;
+  if (processorSideMessagePort.decodeMessage(message, e)) {
+    if (e.type == UpstreamEventType::NoteRequest) {
+      upstreamEventQueue.push(UpstreamEvent{
+          .type = UpstreamEventType::NoteRequest, .note = e.note});
+    } else if (e.type == UpstreamEventType::PollingProcessorSideEvent) {
+      DownstreamEvent event;
+      while (downstreamEventQueue.pop(event)) {
+        processorSideMessagePort.sendDownstreamEvent(event);
       }
-      count++;
     }
+    return kResultOk;
   }
-  return kResultOk;
+  return AudioEffect::notify(message);
 }
 
 } // namespace vst_basis

@@ -2,8 +2,9 @@
 
 #include "../../../core/parameter-registry.h"
 #include "../../../core/parameter-spec-item.h"
-#include "../modules/event_hub.h"
-#include "../modules/realtime_host_event_queue.h"
+#include "../../../domain/parameters-store.h"
+#include "../support/event-message-bus.h"
+#include "../vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
 
 namespace vst_basis {
@@ -13,18 +14,24 @@ using ParamAddress = ParamId;
 
 using namespace sonic_vst;
 using namespace Steinberg;
+using namespace vst_support;
 
 class PluginProcessor : public Vst::AudioEffect {
 private:
-  SynthesizerBase *synthInstance;
+  std::unique_ptr<SynthesizerBase> synthInstance{
+      gPluginFactoryGlobalHolder.synthInstantiateFn()};
   ParameterRegistry parameterRegistry;
-  std::unordered_map<ParamAddress, double> parametersCache;
-  RealtimeHostEventQueue realtimeHostEventQueue;
-  ProcessorSideMessagingBridge processorSideMessagingBridge;
+  ParametersStore parametersStore;
+  ProcessorSideMessagePort processorSideMessagePort{*this};
+  SPSCQueue<UpstreamEvent, 256> upstreamEventQueue;
+  SPSCQueue<DownstreamEvent, 256> downstreamEventQueue;
 
 public:
-  PluginProcessor();
-  ~PluginProcessor() SMTG_OVERRIDE;
+  PluginProcessor() {
+    setControllerClass(gPluginFactoryGlobalHolder.controllerCID);
+  }
+
+  ~PluginProcessor() SMTG_OVERRIDE = default;
 
   static Steinberg::FUnknown *createInstance(void * /*context*/) {
     return (Steinberg::Vst::IAudioProcessor *)new PluginProcessor;

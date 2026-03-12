@@ -11,24 +11,71 @@ using namespace sonic;
 using namespace Steinberg;
 using namespace Steinberg::Vst;
 
+class ProcessorSideMessagePort : public IProcessorSideMessagePort {
+private:
+  ComponentBase &component; // supposing audioEffect
+
+public:
+  ProcessorSideMessagePort(ComponentBase &component) : component(component) {}
+
+  void sendDownstreamEvent(DownstreamEvent e) override {
+    if (e.type == DownstreamEventType::HostNote) {
+      if (auto msg = owned(component.allocateMessage())) {
+        msg->setMessageID("hostNote");
+        msg->getAttributes()->setInt("noteNumber", e.note.noteNumber);
+        msg->getAttributes()->setFloat("velocity", e.note.velocity);
+        component.sendMessage(msg);
+      }
+    }
+  }
+
+  bool decodeMessage(Steinberg::Vst::IMessage *message, UpstreamEvent &e) {
+    if (strcmp(message->getMessageID(), "noteRequest") == 0) {
+      Steinberg::int64 noteNumber;
+      double velocity;
+      if (message->getAttributes()->getInt("noteNumber", noteNumber) !=
+          Steinberg::kResultOk) {
+        return false;
+      }
+      if (message->getAttributes()->getFloat("velocity", velocity) !=
+          Steinberg::kResultOk) {
+        return false;
+      }
+      e = UpstreamEvent{
+          .type = UpstreamEventType::NoteRequest,
+          .note = {.noteNumber = static_cast<int>(noteNumber),
+                   .velocity = velocity},
+      };
+      return true;
+    }
+    return false;
+  };
+
+  bool popUpstreamEventReceived(UpstreamEvent &e) override {
+    // dummy
+    // audioProcessor directly uses ProcessorSideMessagePort and can call
+    // decodeMessage with the signature depending VST types
+    return false;
+  }
+};
+
 class ControllerSideMessagePort : public IControllerSideMessagePort {
 private:
-  ComponentBase &editController;
+  ComponentBase &component; // supposing editController
 
   // not needed SPSC but using this for easiness
   SPSCQueue<DownstreamEvent, 256> receivedDownstreamEvents;
 
 public:
-  ControllerSideMessagePort(ComponentBase &editController)
-      : editController(editController) {}
+  ControllerSideMessagePort(ComponentBase &component) : component(component) {}
 
-  void pushUpstreamEvent(UpstreamEvent e) override {
+  void sendUpstreamEvent(UpstreamEvent e) override {
     if (e.type == UpstreamEventType::NoteRequest) {
-      if (auto msg = owned(editController.allocateMessage())) {
+      if (auto msg = owned(component.allocateMessage())) {
         msg->setMessageID("noteRequest");
         msg->getAttributes()->setInt("noteNumber", e.note.noteNumber);
         msg->getAttributes()->setFloat("velocity", e.note.velocity);
-        editController.sendMessage(msg);
+        component.sendMessage(msg);
       }
     }
   }
@@ -55,7 +102,7 @@ public:
     return false;
   };
 
-  bool popDownstreamEvent(DownstreamEvent &e) override {
+  bool popDownstreamEventReceived(DownstreamEvent &e) override {
     return receivedDownstreamEvents.pop(e);
   }
 };
