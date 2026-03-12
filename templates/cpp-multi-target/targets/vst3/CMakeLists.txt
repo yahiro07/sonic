@@ -2,7 +2,6 @@ set(NAME project1-vst3)
 add_library(${NAME} MODULE 
   version.h
   plugin_factory.cpp
-  project1_synthesizer.cpp  
 )
 
 if(APPLE)

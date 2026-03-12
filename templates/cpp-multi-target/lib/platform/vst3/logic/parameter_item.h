@@ -1,9 +1,11 @@
 #pragma once
-#include "../synthesizer_base.h"
+#include "../../../api/synthesizer-base.h"
 #include <string>
 #include <vector>
 
 namespace sonic_vst {
+
+using namespace sonic;
 
 typedef uint64_t ParamAddress;
 

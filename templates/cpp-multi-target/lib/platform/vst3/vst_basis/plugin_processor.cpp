@@ -127,9 +127,9 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
     }
 
     if (outL && outR) {
-      synthInstance->process(outL, outR, data.numSamples);
+      synthInstance->processAudio(outL, outR, data.numSamples);
     } else if (outL) {
-      synthInstance->process(outL, outL, data.numSamples);
+      synthInstance->processAudio(outL, outL, data.numSamples);
     }
   }
   return kResultOk;
@@ -139,7 +139,8 @@ tresult PLUGIN_API
 PluginProcessor::setupProcessing(Vst::ProcessSetup &newSetup) {
   printf("setupProcessing sampleRate: %f, maxSamplesPerBlock: %d\n",
          newSetup.sampleRate, newSetup.maxSamplesPerBlock);
-  synthInstance->prepare(newSetup.sampleRate, newSetup.maxSamplesPerBlock);
+  synthInstance->prepareProcessing(newSetup.sampleRate,
+                                   newSetup.maxSamplesPerBlock);
   return AudioEffect::setupProcessing(newSetup);
 }
 

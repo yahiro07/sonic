@@ -4,7 +4,6 @@
 #include "../logic/parameter_item.h"
 #include "../logic/realtime_host_event_queue.h"
 #include "../modules/event_hub.h"
-#include "../synthesizer_base.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
 
 namespace vst_basis {

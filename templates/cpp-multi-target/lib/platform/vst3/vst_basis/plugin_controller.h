@@ -3,7 +3,6 @@
 #include "../general/logger.h"
 #include "../modules/event_hub.h"
 #include "../modules/parameters_manager.h"
-#include "../synthesizer_base.h"
 #include "../vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 

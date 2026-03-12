@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../synthesizer_base.h"
+#include "../../../api/synthesizer-base.h"
 #include <public.sdk/source/main/pluginfactory.h>
 
 namespace sonic_vst {
 
-typedef SynthesizerBase *(*SynthInstantiateFn)();
+typedef sonic::SynthesizerBase *(*SynthInstantiateFn)();
 
 typedef struct _PluginMeta {
   std::string name;

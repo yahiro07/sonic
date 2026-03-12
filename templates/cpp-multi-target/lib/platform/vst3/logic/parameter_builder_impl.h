@@ -12,13 +12,12 @@ public:
   void callSetupParameters(SynthesizerBase *synthInstance) {
     synthInstance->setupParameters(*this);
   }
-  void addUnary(uint64_t address, Str identifier, Str label,
-                double defaultValue, Str group, ParameterFlags flags);
-  void addEnum(uint64_t address, Str identifier, Str label,
-               Str defaultValueString, StrVec valueStrings, Str group,
-               ParameterFlags flags);
-  void addBool(uint64_t address, Str identifier, Str label, bool defaultValue,
-               Str group, ParameterFlags flags);
+  void addUnary(uint32_t id, Str paramKey, Str label, float defaultValue,
+                Str group, ParameterFlags flags) override;
+  void addEnum(uint32_t id, Str paramKey, Str label, Str defaultValueString,
+               StrVec valueStrings, Str group, ParameterFlags flags) override;
+  void addBool(uint32_t id, Str paramKey, Str label, bool defaultValue,
+               Str group, ParameterFlags flags) override;
 };
 
 } // namespace sonic_vst

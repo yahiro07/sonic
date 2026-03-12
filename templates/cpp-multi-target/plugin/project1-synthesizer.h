@@ -12,8 +12,8 @@ enum OscWaveType {
 
 class Project1Synthesizer : public sonic::SynthesizerBase {
 public:
-  Project1Synthesizer();
-  ~Project1Synthesizer() override = default;
+  Project1Synthesizer() {}
+  ~Project1Synthesizer() override {}
 
   void setupParameters(sonic::ParameterBuilder &builder) override;
   void setParameter(uint32_t id, float value) override;
