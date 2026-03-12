@@ -15,8 +15,6 @@ target_sources(${NAME} PRIVATE
   ../../core/parameter-builder-impl.cpp
   ../../core/parameter-registry.cpp
   modules/parameter_change_notifier.cpp
-  modules/parameters_manager.cpp
-  modules/webview_editor_view.cpp
   modules/processor_state_helper.cpp
   vst_entry/vst_entry_wrapper.cpp
   vst_basis/plugin_processor.cpp
