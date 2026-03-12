@@ -131,6 +131,11 @@ public:
       : parameterService(parameterService), noteService(noteService),
         mainLoopTimer(mainLoopTimer) {}
 
+  ControllerFacade(const ControllerFacade &) = delete;
+  ControllerFacade &operator=(const ControllerFacade &) = delete;
+  ControllerFacade(ControllerFacade &&) = delete;
+  ControllerFacade &operator=(ControllerFacade &&) = delete;
+
   int subscribeParameterChange(
       std::function<void(const std::string, double)> callback) override {
     return parameterService.subscribeParameterChanges(callback);

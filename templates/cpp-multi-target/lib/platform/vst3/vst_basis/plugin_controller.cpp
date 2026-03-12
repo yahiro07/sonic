@@ -105,7 +105,7 @@ IPlugView *PLUGIN_API PluginController::createView(FIDString name) {
     auto editorPageUrl = synthInstance->getEditorPageUrl();
     // return createWebViewEditorView(this, &parametersManager, &eventHub,
     //  editorPageUrl);
-    auto controllerFacade = domainController.getControllerFacade();
+    auto &controllerFacade = domainController.getControllerFacade();
     return new PluginEditorView(this, controllerFacade, editorPageUrl);
   }
   return nullptr;
