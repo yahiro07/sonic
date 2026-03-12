@@ -2,7 +2,7 @@
 #include "../../../core/parameter-builder-impl.h"
 #include "../../../core/parameter-spec-helper.h"
 #include "../modules/processor_state_helper.h"
-#include "../modules/webview_editor_view.h"
+#include "./plugin-editor-view.h"
 
 namespace vst_basis {
 
@@ -65,8 +65,10 @@ tresult PLUGIN_API PluginController::getState(IBStream *state) {
 IPlugView *PLUGIN_API PluginController::createView(FIDString name) {
   if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
     auto editorPageUrl = synthInstance->getEditorPageUrl();
-    return createWebViewEditorView(this, &parametersManager, &eventHub,
-                                   editorPageUrl);
+    // return createWebViewEditorView(this, &parametersManager, &eventHub,
+    //  editorPageUrl);
+    const auto controllerFacade = domainController.getControllerFacade();
+    return new PluginEditorView(this, controllerFacade, editorPageUrl);
   }
   return nullptr;
 }

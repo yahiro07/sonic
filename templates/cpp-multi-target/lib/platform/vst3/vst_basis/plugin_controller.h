@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../common/logger.h"
+#include "../logic/domain-controller.h"
 #include "../modules/event_hub.h"
 #include "../modules/parameters_manager.h"
 #include "../vst_entry/vst_entry_wrapper.h"
@@ -13,22 +14,18 @@ using namespace Steinberg;
 
 class PluginController : public Vst::EditControllerEx1 {
 private:
-  SynthesizerBase *synthInstance;
-  ParametersManager parametersManager;
+  std::unique_ptr<SynthesizerBase> synthInstance{
+      gPluginFactoryGlobalHolder.synthInstantiateFn()};
   ParameterRegistry parameterRegistry;
-  EventHub eventHub;
+  ParametersManager parametersManager{*this, this->parameters,
+                                      this->parameterRegistry};
+  EventHub eventHub{*this};
+  DomainController domainController{*synthInstance};
 
 public:
-  PluginController()
-      : parametersManager(*this, this->parameters, this->parameterRegistry),
-        eventHub(*this) {
-    logger.start();
-    synthInstance = gPluginFactoryGlobalHolder.synthInstantiateFn();
-  }
-  ~PluginController() SMTG_OVERRIDE {
-    delete synthInstance;
-    logger.stop();
-  }
+  PluginController() { logger.start(); }
+  ~PluginController() SMTG_OVERRIDE { logger.stop(); }
+
   static FUnknown *createInstance(void *) {
     return (Vst::IEditController *)new PluginController;
   }

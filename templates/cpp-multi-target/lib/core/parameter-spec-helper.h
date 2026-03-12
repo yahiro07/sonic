@@ -51,6 +51,16 @@ public:
     }
     return 0;
   }
+
+  static int getMaxIdFromParameterItems(const ParameterSpecArray &items) {
+    int maxId = 0;
+    for (const auto &item : items) {
+      if (item.id > maxId) {
+        maxId = item.id;
+      }
+    }
+    return maxId;
+  }
 };
 
 } // namespace sonic
