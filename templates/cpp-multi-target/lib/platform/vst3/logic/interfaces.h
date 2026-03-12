@@ -17,6 +17,15 @@ public:
                                   ParameterEditState editState) = 0;
 };
 
+class IMainLoopTimer {
+public:
+  virtual ~IMainLoopTimer() = default;
+  virtual void start() = 0;
+  virtual void stop() = 0;
+  virtual void setCallback(std::function<void()> callback) = 0;
+  virtual void clearCallback() = 0;
+};
+
 // class IUpstreamEventBus {
 // public:
 //   virtual ~IUpstreamEventBus() = default;

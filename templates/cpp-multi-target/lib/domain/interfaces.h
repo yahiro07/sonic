@@ -63,6 +63,9 @@ public:
   virtual int subscribeHostNote(
       std::function<void(int noteNumber, double velocity)> callback) = 0;
   virtual void unsubscribeHostNote(int subscriptionId) = 0;
+
+  virtual void incrementViewCount() = 0;
+  virtual void decrementViewCount() = 0;
 };
 
 } // namespace sonic

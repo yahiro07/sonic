@@ -4,6 +4,7 @@
 #include "../logic/domain-controller.h"
 #include "../support/controller-parameter-portal.h"
 #include "../support/event-message-bus.h"
+#include "../support/main-loop-timer.h"
 #include "../vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
@@ -20,8 +21,9 @@ private:
   ParameterRegistry parameterRegistry;
   ControllerSideMessagePort controllerSideMessagePort{*this};
   ControllerParameterPortal controllerParameterPortal{*this};
+  MainLoopTimer mainLoopTimer;
   DomainController domainController{*synthInstance, controllerParameterPortal,
-                                    controllerSideMessagePort};
+                                    controllerSideMessagePort, mainLoopTimer};
 
 public:
   PluginController() { logger.start(); }

@@ -161,6 +161,9 @@ public:
   void unsubscribeHostNote(int token) override {
     noteService.hostNotePort.unsubscribe(token);
   }
+
+  void incrementViewCount() override {}
+  void decrementViewCount() override {}
 };
 
 class IHostCallbackRequester {

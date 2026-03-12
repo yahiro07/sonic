@@ -122,10 +122,15 @@ public:
 class ControllerFacade : public IControllerFacade {
   ParameterService &parameterService;
   NoteService &noteService;
+  IMainLoopTimer &mainLoopTimer;
+
+  int viewCount = 0;
 
 public:
-  ControllerFacade(ParameterService &parameterService, NoteService &noteService)
-      : parameterService(parameterService), noteService(noteService) {}
+  ControllerFacade(ParameterService &parameterService, NoteService &noteService,
+                   IMainLoopTimer &mainLoopTimer)
+      : parameterService(parameterService), noteService(noteService),
+        mainLoopTimer(mainLoopTimer) {}
 
   int subscribeParameterChange(
       std::function<void(const std::string, double)> callback) override {
@@ -159,6 +164,20 @@ public:
   void unsubscribeHostNote(int token) override {
     noteService.hostNotePort.unsubscribe(token);
   }
+
+  void incrementViewCount() override {
+    viewCount++;
+    if (viewCount == 1) {
+      mainLoopTimer.start();
+    }
+  }
+
+  void decrementViewCount() override {
+    viewCount--;
+    if (viewCount == 0) {
+      mainLoopTimer.stop();
+    }
+  }
 };
 
 class DomainController {
@@ -172,14 +191,17 @@ class DomainController {
   NoteService noteService;
   IControllerSideMessagePort &messagePort;
   ParameterService parameterService{parametersRegistry, parametersHub};
-  ControllerFacade controllerFacade{parameterService, noteService};
+  IMainLoopTimer &mainLoopTimer;
+  ControllerFacade controllerFacade{parameterService, noteService,
+                                    mainLoopTimer};
 
 public:
   DomainController(SynthesizerBase &synth,
                    IControllerParameterPortal &controllerParameterPortal,
-                   IControllerSideMessagePort &messagePort)
+                   IControllerSideMessagePort &messagePort,
+                   IMainLoopTimer &mainLoopTimer)
       : synth(synth), controllerParameterPortal(controllerParameterPortal),
-        messagePort(messagePort) {
+        messagePort(messagePort), mainLoopTimer(mainLoopTimer) {
     auto parameterBuilder = ParameterBuilderImpl();
     synth.setupParameters(parameterBuilder);
     auto parameterItems = parameterBuilder.getItems();
@@ -220,9 +242,12 @@ public:
           // return host note event to show active notes in ui
           noteService.hostNotePort.call(noteNumber, velocity);
         });
+
+    mainLoopTimer.setCallback([this]() { this->onMatinThreadTimer(); });
   }
 
   void teardown() {
+    mainLoopTimer.clearCallback();
     controllerParameterPortal.unsubscribeParameterChange();
     parametersHub.parameterEditFromUiPort.unsubscribe();
     noteService.noteRequestPort.unsubscribe();
