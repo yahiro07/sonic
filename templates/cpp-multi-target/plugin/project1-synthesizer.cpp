@@ -3,23 +3,30 @@
 
 namespace project1 {
 
+enum ParameterAddress {
+  kOscEnabled = 0,
+  kOscWave,
+  kOscPitch,
+  kOscVolume,
+};
+
 void Project1Synthesizer::setupParameters(sonic::ParameterBuilder &builder) {
-  builder.addUnary(0, "gain", "Gain", 0.1);
-  builder.addEnum(1, "waveType", "Wave Type", "saw",
+  builder.addUnary(kOscEnabled, "gain", "Gain", 0.1);
+  builder.addEnum(kOscWave, "waveType", "Wave Type", "saw",
                   {"saw", "square", "triangle", "sine"});
-  builder.addUnary(2, "oscPitch", "Pitch", 0.5);
-  builder.addUnary(3, "oscVolume", "Volume", 0.5);
+  builder.addUnary(kOscPitch, "oscPitch", "Pitch", 0.5);
+  builder.addUnary(kOscVolume, "oscVolume", "Volume", 0.5);
 }
 
 void Project1Synthesizer::setParameter(uint32_t id, float value) {
-  if (id == 0) {
-    paramGain = value;
-  } else if (id == 1) {
-    paramWaveType = value;
-  } else if (id == 2) {
-    paramOscPitch = value;
-  } else if (id == 3) {
-    paramOscVolume = value;
+  if (id == kOscEnabled) {
+    oscEnabled = value;
+  } else if (id == kOscWave) {
+    oscWave = (OscWaveType)value;
+  } else if (id == kOscPitch) {
+    oscPitch = value;
+  } else if (id == kOscVolume) {
+    oscVolume = value;
   }
 }
 
@@ -30,26 +37,44 @@ void Project1Synthesizer::prepareProcessing(float sampleRate,
 
 void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
                                        uint32_t frames) {
-  if (sampleRate == 0.f)
+  if (sampleRate <= 0.0f)
     return;
-  auto relNote = (paramOscPitch * 2.f - 1.f) * 12.f;
-  auto note = noteNumber + relNote;
-  auto freq = exp2f((note - 57.f) / 12.f) * 440.f;
-  auto phaseInc = freq / sampleRate;
 
-  auto gain = gateOn ? paramOscVolume : 0.f;
-  // auto gain = .1f;
-
-  for (uint32_t index = 0; index < frames; index++) {
-    phase += phaseInc;
-    phase -= floorf(phase);
-    // auto y = rand() / (float)RAND_MAX * 2.f - 1.f;
-    auto y = (phase * 2.f - 1.f);
-    // auto y = sinf(phase * 2.f * M_PI);
-    y *= gain;
-    bufferL[index] = y;
-    bufferR[index] = y;
+  if (0) {
+    // debug filling white noise to check the audio path
+    for (uint32_t i = 0; i < frames; ++i) {
+      float y = (rand() / (float)RAND_MAX * 2.f - 1.f) * 0.1f;
+      bufferL[i] = y;
+      bufferR[i] = y;
+    }
   }
+
+  float effectiveNoteNumber =
+      (float)noteNumber + (oscPitch * 2.0f - 1.0f) * 12.0f;
+  float frequency =
+      440.0f * std::pow(2.0f, (effectiveNoteNumber - 69.0f) / 12.0f);
+  float phaseDelta = frequency / sampleRate;
+
+  float gain = (oscEnabled && gateOn) ? oscVolume : 0.0f;
+
+  for (int32_t i = 0; i < frames; ++i) {
+    phase += phaseDelta;
+    if (phase >= 1.0f) {
+      phase -= 1.0f;
+    }
+    float y = 0.0f;
+    if (oscWave == OscWaveType::Saw) {
+      y = (phase * 2.0f - 1.0f);
+    } else if (oscWave == OscWaveType::Square) {
+      y = (phase < 0.5f ? 1.0f : -1.0f);
+    } else if (oscWave == OscWaveType::Triangle) {
+      y = (phase < 0.5f ? 4.0f * phase - 1.0f : -4.0f * phase + 3.0f);
+    } else if (oscWave == OscWaveType::Sine) {
+      y = std::sin(phase * 2.0f * (float)M_PI);
+    }
+    bufferL[i] = y * gain;
+  }
+  memcpy(bufferR, bufferL, sizeof(float) * frames);
 }
 
 void Project1Synthesizer::noteOn(int noteNumber, float velocity) {
@@ -70,7 +95,13 @@ void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
 }
 
 std::string Project1Synthesizer::getEditorPageUrl() {
-  return "http://localhost:3000";
+  if (1) {
+    return "http://localhost:3000?debug=1";
+  } else {
+    return "app://local/index.html?debug=1";
+    // app://local is mapped to the resources/www directory
+    // return "app://local/index.html";
+  }
 }
 
 } // namespace project1

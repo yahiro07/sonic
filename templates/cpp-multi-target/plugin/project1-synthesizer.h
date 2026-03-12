@@ -3,19 +3,18 @@
 
 namespace project1 {
 
+enum OscWaveType {
+  Saw = 0,
+  Square,
+  Triangle,
+  Sine,
+};
+
 class Project1Synthesizer : public sonic::SynthesizerBase {
-private:
-  float sampleRate = 0.;
-  float phase = 0.f;
-  int noteNumber = 60;
-  bool gateOn = false;
-
-  float paramGain = 0.5f;
-  float paramWaveType = 0.f;
-  float paramOscPitch = 0.5f;
-  float paramOscVolume = 0.5f;
-
 public:
+  Project1Synthesizer();
+  ~Project1Synthesizer() override = default;
+
   void setupParameters(sonic::ParameterBuilder &builder) override;
   void setParameter(uint32_t id, float value) override;
   void prepareProcessing(float sampleRate, uint32_t maxFrameCount) override;
@@ -24,6 +23,16 @@ public:
   void noteOff(int noteNumber) override;
   void getDesiredEditorSize(uint32_t &width, uint32_t &height) override;
   std::string getEditorPageUrl() override;
+
+private:
+  bool oscEnabled = true;
+  OscWaveType oscWave = OscWaveType::Saw;
+  float oscPitch = 0.5f;
+  float oscVolume = 0.5f;
+  int noteNumber = 60;
+  bool gateOn = false;
+  float sampleRate = 0.f;
+  float phase = 0.f;
 };
 
 } // namespace project1
