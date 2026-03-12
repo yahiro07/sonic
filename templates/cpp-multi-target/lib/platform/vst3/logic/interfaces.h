@@ -10,25 +10,39 @@ class IControllerParameterPortal {
 public:
   virtual ~IControllerParameterPortal() = default;
   virtual void
-  subscribeParameterChange(std::function<void(int, double)> fn) = 0;
+  subscribeParameterChange(std::function<void(uint32_t, double)> fn) = 0;
   virtual void unsubscribeParameterChange() = 0;
 
-  virtual void applyParameterEdit(std::string paramKey, double value,
+  virtual void applyParameterEdit(uint32_t paramId, double value,
                                   ParameterEditState editState) = 0;
 };
 
-class IUpstreamEventBus {
+// class IUpstreamEventBus {
+// public:
+//   virtual ~IUpstreamEventBus() = default;
+//   virtual void pushUpstreamEvent(UpstreamEvent event) = 0;
+//   virtual bool popUpstreamEvent(UpstreamEvent &event) = 0;
+// };
+
+// class IDownstreamEventBus {
+// public:
+//   virtual ~IDownstreamEventBus() = default;
+//   virtual void pushDownstreamEvent(DownstreamEvent event) = 0;
+//   virtual bool popDownstreamEvent(DownstreamEvent &event) = 0;
+// };
+
+class IProcessorSideMessagePort {
 public:
-  virtual ~IUpstreamEventBus() = default;
-  virtual void pushUpstreamEvent(UpstreamEvent event) = 0;
+  virtual ~IProcessorSideMessagePort() = default;
   virtual bool popUpstreamEvent(UpstreamEvent &event) = 0;
+  virtual void pushDownstreamEvent(DownstreamEvent event) = 0;
 };
 
-class IDownstreamEventBus {
+class IControllerSideMessagePort {
 public:
-  virtual ~IDownstreamEventBus() = default;
-  virtual void pushDownstreamEvent(DownstreamEvent event) = 0;
+  virtual ~IControllerSideMessagePort() = default;
   virtual bool popDownstreamEvent(DownstreamEvent &event) = 0;
+  virtual void pushUpstreamEvent(UpstreamEvent event) = 0;
 };
 
 } // namespace sonic

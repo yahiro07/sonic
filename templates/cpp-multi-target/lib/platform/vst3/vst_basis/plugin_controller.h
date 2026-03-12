@@ -2,8 +2,8 @@
 
 #include "../../../common/logger.h"
 #include "../logic/domain-controller.h"
-#include "../modules/event_hub.h"
-#include "../modules/parameters_manager.h"
+#include "../support/controller-parameter-portal.h"
+#include "../support/event-message-bus.h"
 #include "../vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
@@ -11,16 +11,17 @@ namespace vst_basis {
 
 using namespace sonic_vst;
 using namespace Steinberg;
+using namespace vst_support;
 
 class PluginController : public Vst::EditControllerEx1 {
 private:
   std::unique_ptr<SynthesizerBase> synthInstance{
       gPluginFactoryGlobalHolder.synthInstantiateFn()};
   ParameterRegistry parameterRegistry;
-  ParametersManager parametersManager{*this, this->parameters,
-                                      this->parameterRegistry};
-  EventHub eventHub{*this};
-  DomainController domainController{*synthInstance};
+  ControllerSideMessagePort controllerSideMessagePort{*this};
+  ControllerParameterPortal controllerParameterPortal{*this};
+  DomainController domainController{*synthInstance, controllerParameterPortal,
+                                    controllerSideMessagePort};
 
 public:
   PluginController() { logger.start(); }

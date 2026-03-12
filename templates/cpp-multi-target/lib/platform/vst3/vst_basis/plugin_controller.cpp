@@ -1,10 +1,46 @@
 #include "./plugin_controller.h"
-#include "../../../core/parameter-builder-impl.h"
 #include "../../../core/parameter-spec-helper.h"
 #include "../modules/processor_state_helper.h"
 #include "./plugin-editor-view.h"
+#include <base/source/fstring.h>
 
 namespace vst_basis {
+
+using namespace sonic_vst;
+using namespace sonic;
+
+using ParameterItem = sonic::ParameterSpecItem;
+
+static int getParameterVstFlags(const ParameterItem *item) {
+  auto flags = 0;
+  flags |= Steinberg::Vst::ParameterInfo::kCanAutomate;
+  if (item->flags & ParameterFlags::IsReadOnly) {
+    flags |= Steinberg::Vst::ParameterInfo::kIsReadOnly;
+  }
+  if (item->flags & ParameterFlags::IsHidden) {
+    flags |= Steinberg::Vst::ParameterInfo::kIsHidden;
+  }
+  return flags;
+}
+static void addVstParameter(Steinberg::Vst::ParameterContainer &vstParameters,
+                            const ParameterItem &item) {
+  auto step = ParameterSpecHelper::getStepCount(&item);
+  auto normDefaultValue =
+      ParameterSpecHelper::getNormalized(&item, item.defaultValue);
+  auto flags = getParameterVstFlags(&item);
+
+  Steinberg::String paramName;
+  paramName.fromUTF8(
+      reinterpret_cast<const Steinberg::char8 *>(item.label.c_str()));
+
+  vstParameters.addParameter(paramName.text16(), // name
+                             nullptr,            // units
+                             step,             // step count (0 for continuous)
+                             normDefaultValue, // default value (normalized)
+                             flags,            // flags
+                             item.id           // tag (ID)
+  );
+}
 
 tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
   tresult result = EditControllerEx1::initialize(context);
@@ -16,15 +52,17 @@ tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
     synthInstance->setupParameters(parameterBuilder);
     auto parameterItems = parameterBuilder.getItems();
     parameterRegistry.addParameters(parameterItems, 0x7FFFFFFE);
-    parametersManager.addParameters(parameterItems);
-    parametersManager.startObserve();
+    for (auto &item : parameterItems) {
+      addVstParameter(this->parameters, item);
+    }
+    controllerParameterPortal.startObserve();
   }
 
   return result;
 }
 
 tresult PLUGIN_API PluginController::terminate() {
-  parametersManager.stopObserve();
+  controllerParameterPortal.stopObserve();
   return EditControllerEx1::terminate();
 }
 
@@ -67,7 +105,7 @@ IPlugView *PLUGIN_API PluginController::createView(FIDString name) {
     auto editorPageUrl = synthInstance->getEditorPageUrl();
     // return createWebViewEditorView(this, &parametersManager, &eventHub,
     //  editorPageUrl);
-    const auto controllerFacade = domainController.getControllerFacade();
+    auto controllerFacade = domainController.getControllerFacade();
     return new PluginEditorView(this, controllerFacade, editorPageUrl);
   }
   return nullptr;
@@ -97,7 +135,7 @@ tresult PLUGIN_API PluginController::getParamValueByString(
 
 tresult PLUGIN_API PluginController::notify(Vst::IMessage *message) {
   logger.log("PluginController::notify");
-  auto consumed = eventHub.notifyFromEditController(message);
+  auto consumed = controllerSideMessagePort.applyMessageReceived(message);
   if (consumed) {
     return kResultOk;
   } else {

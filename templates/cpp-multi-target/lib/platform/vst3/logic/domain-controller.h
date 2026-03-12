@@ -170,19 +170,16 @@ class DomainController {
   ParameterNormalizationConverter parameterNormalizationConverter{
       parametersRegistry};
   NoteService noteService;
-  IUpstreamEventBus &upstreamEventBus;
-  IDownstreamEventBus &downstreamEventBus;
+  IControllerSideMessagePort &messagePort;
   ParameterService parameterService{parametersRegistry, parametersHub};
   ControllerFacade controllerFacade{parameterService, noteService};
 
 public:
   DomainController(SynthesizerBase &synth,
                    IControllerParameterPortal &controllerParameterPortal,
-                   IUpstreamEventBus &upstreamEventBus,
-                   IDownstreamEventBus &downstreamEventBus)
+                   IControllerSideMessagePort &messagePort)
       : synth(synth), controllerParameterPortal(controllerParameterPortal),
-        upstreamEventBus(upstreamEventBus),
-        downstreamEventBus(downstreamEventBus) {
+        messagePort(messagePort) {
     auto parameterBuilder = ParameterBuilderImpl();
     synth.setupParameters(parameterBuilder);
     auto parameterItems = parameterBuilder.getItems();
@@ -209,14 +206,14 @@ public:
           auto normalizedValue = parameterNormalizationConverter.normalizeValue(
               id, unnormalizedValue);
           this->controllerParameterPortal.applyParameterEdit(
-              std::to_string(id), normalizedValue, editState);
+              id, normalizedValue, editState);
         });
 
     noteService.noteRequestPort.subscribe(
         [this](int noteNumber, double velocity) {
           // requested note from ui
           // send note request to audio thread via IMessage
-          this->upstreamEventBus.pushUpstreamEvent(UpstreamEvent{
+          this->messagePort.pushUpstreamEvent(UpstreamEvent{
               .type = UpstreamEventType::NoteRequest,
               .note = {noteNumber, velocity},
           });
@@ -233,14 +230,14 @@ public:
 
   void onMatinThreadTimer() {
     DownstreamEvent e;
-    while (downstreamEventBus.popDownstreamEvent(e)) {
+    while (messagePort.popDownstreamEvent(e)) {
       if (e.type == DownstreamEventType::HostNote) {
         noteService.hostNotePort.call(e.note.noteNumber, e.note.velocity);
       }
     }
   }
 
-  IControllerFacade &getControllerFacade() { return controllerFacade; }
+  ControllerFacade &getControllerFacade() { return controllerFacade; }
 };
 
 } // namespace sonic

@@ -22,6 +22,7 @@ target_sources(${NAME} PRIVATE
   vst_basis/plugin_processor.cpp
   vst_basis/plugin_controller.cpp
   ../../common/mac-web-view.mm
+  ../../domain/webview-bridge.cpp
 )
 
 set_source_files_properties(
