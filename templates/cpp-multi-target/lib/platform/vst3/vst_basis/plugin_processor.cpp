@@ -2,7 +2,7 @@
 #include "../../../common/logger.h"
 #include "../../../core/parameter-spec-helper.h"
 #include "../logic/parameters-initializer.h"
-#include "../modules/processor_state_helper.h"
+#include "../support/processor_state_helper.h"
 #include <pluginterfaces/vst/ivstevents.h>
 #include <pluginterfaces/vst/ivstparameterchanges.h>
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "../logic/interfaces.h"
-#include "../modules/parameter_change_notifier.h"
+#include "./parameter_change_notifier.h"
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
 namespace vst_support {
