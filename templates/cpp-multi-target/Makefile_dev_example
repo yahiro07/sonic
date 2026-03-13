@@ -1,0 +1,10 @@
+.PHONY: build
+
+prepare:
+	cmake --preset ninja-template-dev
+
+build:
+	cmake --build --preset ninja-debug
+
+run: build
+	../VstDevHost/build/bin/Debug/VstDevHost ./build/lib/project1-vst3.vst3
