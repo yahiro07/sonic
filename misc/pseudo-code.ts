@@ -1,0 +1,922 @@
+namespace pseudo_framework_design {
+  //----------
+  //📁core
+
+  type Int32 = number;
+  type Int64 = number;
+  type Float = number;
+  type VoidP = any;
+
+  interface IPlatformControllerOutgoingParameterPort {
+    beginEdit(id: Int32): void;
+    performEdit(id: Int32, value: Float): void;
+    endEdit(id: Int32): void;
+  }
+
+  interface IPlatformControllerIncomingParameterPort {
+    subscribeHostOriginatedParameterChange(
+      fn: (id: Int32, value: Float) => void,
+    ): void;
+    unsubscribeHostOriginatedParameterChange(): void;
+  }
+
+  enum ParameterEntryFlags {
+    canAutomate = 1 << 0,
+    isReadonly = 1 << 1,
+    isHidden = 1 << 2,
+  }
+
+  type ParameterEntry = {
+    type: "float" | "int" | "bool";
+    id: Int32;
+    name: string;
+    defaultValue: Float;
+    minValue: Float;
+    maxValue: Float;
+    flags: ParameterEntryFlags;
+    units?: string;
+    step?: Int32;
+  };
+
+  interface IProcessingData {
+    events: (
+      | {
+          type: "noteOn";
+          noteNumber: Int32;
+          velocity: Float;
+          sampleOffset: Int32;
+        }
+      | { type: "noteOff"; noteNumber: Int32; sampleOffset: Int32 }
+      | {
+          type: "parameterChange";
+          id: Int32;
+          value: Float;
+          sampleOffset: Int32;
+        }
+    )[];
+  }
+
+  interface IWebViewIo {
+    sendMessage(msg: string): void;
+    subscribeMessage(fn: (msg: string) => void): void;
+    unsubscribeMessage(): void;
+  }
+
+  interface ISynthesizerBase {
+    getParameterEntries(): ParameterEntry[];
+    processAudio(
+      bufferL: Float[],
+      bufferR: Float[],
+      data: IProcessingData,
+    ): void;
+    setParameter(id: Int32, value: Float): void;
+  }
+
+  declare var d: any;
+  type AnyTypeOf = any;
+
+  interface IMainThreadParameterManager {
+    setup(entries: ParameterEntry[]): void;
+    setParameter(id: Int32, value: Float, notify: boolean): void;
+    getAllParameters(): Record<Int32, Float>;
+    subscribe(fn: (id: Int32, value: Float) => void): Int32;
+    unsubscribe(token: Int32): void;
+  }
+
+  interface ParametersStore {
+    get(id: Int32): Float;
+    set(id: Int32, value: Float): void;
+  }
+
+  class VectorParameterStore implements ParametersStore {
+    private parameters: Float[] = [];
+    setCapacity(capacity: Int32) {
+      this.parameters.length = capacity;
+    }
+    get(id: Int32): Float {
+      return this.parameters[id];
+    }
+    set(id: Int32, value: Float): void {
+      this.parameters[id] = value;
+    }
+  }
+  class UnorderedMapParameterStore implements ParametersStore {
+    private parameters: Record<Int32, Float> = {};
+    get(id: Int32): Float {
+      return this.parameters[id];
+    }
+    set(id: Int32, value: Float): void {
+      this.parameters[id] = value;
+    }
+  }
+  class SwitchingParameterStore {
+    private internalStore: ParametersStore = new VectorParameterStore();
+    setup(maxId: Int32) {
+      if (maxId > 4096) {
+        //this is not preferred but we use unordered map for sparse and large parameter IDs
+        //it is recommended to define dense and small parameter IDs for better performance
+        this.internalStore = new UnorderedMapParameterStore();
+      } else {
+        const parameterStore = new VectorParameterStore();
+        parameterStore.setCapacity(maxId + 1);
+        this.internalStore = parameterStore;
+      }
+    }
+    get(id: Int32) {
+      return this.internalStore.get(id);
+    }
+    set(id: Int32, value: Float) {
+      this.internalStore.set(id, value);
+    }
+  }
+
+  class MainThreadParameterManager {
+    parameterIds: Int32[] = [];
+    parameterStore: SwitchingParameterStore = new SwitchingParameterStore();
+    listeners: Record<Int32, (id: Int32, value: Float) => void> = {};
+    nextToken: Int32 = 0;
+
+    setup(entries: ParameterEntry[]): void {
+      const maxId = Math.max(...entries.map((e) => e.id));
+      this.parameterStore.setup(maxId);
+      entries.forEach((entry) => {
+        this.parameterStore.set(entry.id, entry.defaultValue);
+      });
+      this.parameterIds = entries.map((e) => e.id);
+    }
+
+    setParameter(id: Int32, value: Float, notify: boolean): void {
+      this.parameterStore.set(id, value);
+      if (notify) {
+        Object.values(this.listeners).forEach((fn) => fn(id, value));
+      }
+    }
+    getParameter(id: Int32): Float {
+      return this.parameterStore.get(id);
+    }
+    getAllParameters(): Record<Int32, Float> {
+      const allParams: Record<Int32, Float> = {};
+      for (const id of this.parameterIds) {
+        allParams[id] = this.parameterStore.get(id);
+      }
+      return allParams;
+    }
+    subscribe(fn: (id: Int32, value: Float) => void): Int32 {
+      const token = this.nextToken++;
+      this.listeners[token] = fn;
+      return token;
+    }
+    unsubscribe(token: Int32): void {
+      delete this.listeners[token];
+    }
+  }
+
+  interface IEditorPortal {
+    getAllParameters(): Record<Int32, Float>;
+    beginEdit(id: Int32): void;
+    performEdit(id: Int32, value: Float): void;
+    endEdit(id: Int32): void;
+    subscribeParameterChange(fn: (id: Int32, value: Float) => void): Int32;
+    unsubscribeParameterChange(token: Int32): void;
+  }
+
+  class EditorPortal implements IEditorPortal {
+    constructor(
+      private parameterManager: IMainThreadParameterManager,
+      private parameterOutputPort: IPlatformControllerOutgoingParameterPort,
+    ) {
+      this.parameterManager = parameterManager;
+    }
+    getAllParameters(): Record<Int32, Float> {
+      return this.parameterManager.getAllParameters();
+    }
+    beginEdit(id: Int32): void {
+      this.parameterOutputPort.beginEdit(id);
+    }
+    performEdit(id: Int32, value: Float): void {
+      this.parameterOutputPort.performEdit(id, value);
+    }
+    endEdit(id: Int32): void {
+      this.parameterOutputPort.endEdit(id);
+    }
+    subscribeParameterChange(fn: (id: Int32, value: Float) => void): Int32 {
+      return this.parameterManager.subscribe(fn);
+    }
+    unsubscribeParameterChange(token: Int32): void {
+      this.parameterManager.unsubscribe(token);
+    }
+  }
+
+  class WebViewBridge {
+    webViewIo: IWebViewIo | null = null;
+    parameterSubscriptionToken: Int32 | null = null;
+    constructor(private editorPortal: IEditorPortal) {}
+    setup(webViewIo: IWebViewIo) {
+      webViewIo.subscribeMessage((msg) => {
+        let e = d.decodeMessage(msg);
+        if (e.type === "uiLoaded") {
+          const allParams = this.editorPortal.getAllParameters();
+          webViewIo.sendMessage(d.json(allParams));
+        } else if (e.type === "beginEdit") {
+          this.editorPortal.beginEdit(e.id);
+        } else if (e.type === "performEdit") {
+          this.editorPortal.performEdit(e.id, e.value);
+        } else if (e.type === "endEdit") {
+          this.editorPortal.endEdit(e.id);
+        }
+      });
+      this.parameterSubscriptionToken =
+        this.editorPortal.subscribeParameterChange((id, value) => {
+          webViewIo.sendMessage(d.json({ type: "setParameter", id, value }));
+        });
+      this.webViewIo = webViewIo;
+    }
+    cleanup() {
+      if (this.webViewIo) {
+        this.webViewIo.unsubscribeMessage();
+        if (this.parameterSubscriptionToken !== null) {
+          this.editorPortal.unsubscribeParameterChange(
+            this.parameterSubscriptionToken,
+          );
+          this.parameterSubscriptionToken = null;
+        }
+        this.webViewIo = null;
+      }
+    }
+  }
+
+  interface ISynthesizerBase {
+    getParameterEntries(): ParameterEntry[];
+    processAudio(
+      bufferL: Float[],
+      bufferR: Float[],
+      data: IProcessingData,
+    ): void;
+    setParameter(id: Int32, value: Float): void;
+  }
+
+  //----------
+  //📁plugin
+
+  enum ParameterID {
+    gain = 0,
+  }
+  class MySynthesizer implements ISynthesizerBase {
+    parameters = {
+      gain: 0,
+    } as { gain: number };
+
+    getParameterEntries(): ParameterEntry[] {
+      return [
+        {
+          type: "float",
+          id: 0,
+          name: "Gain",
+          defaultValue: 0.5,
+          minValue: 0,
+          maxValue: 1,
+          flags: ParameterEntryFlags.canAutomate,
+        },
+      ];
+    }
+    processAudio(
+      bufferL: Float[],
+      bufferR: Float[],
+      data: IProcessingData,
+    ): void {
+      //for simplicity, we process parameter changes at the beginning of the block
+      for (const event of data.events) {
+        if (event.type === "parameterChange") {
+          this.setParameter(event.id, event.value);
+        }
+      }
+      const gain = this.parameters.gain;
+      for (let i = 0; i < bufferL.length; i++) {
+        bufferL[i] *= gain;
+        bufferR[i] *= gain;
+      }
+    }
+    setParameter(id: Int32, value: Float): void {
+      if (id === ParameterID.gain) {
+        this.parameters.gain = value;
+      }
+    }
+  }
+  const createSynthesizerInstance = () => new MySynthesizer();
+
+  //----------
+  //📁adapters/vst3
+
+  interface IVstDependent {
+    update(changedUnknown: any, message: Int32): void;
+  }
+
+  class VstEditController {
+    beginEdit(id: Int32) {}
+    performEdit(id: Int32, value: Float) {}
+    endEdit(id: Int32) {}
+  }
+
+  class VstParameterChangeNotifier implements IVstDependent {
+    constructor(private editController: VstEditController) {}
+
+    listener: ((id: Int32, value: Float) => void) | null = null;
+
+    start(fn: (id: Int32, value: Float) => void) {
+      this.listener = fn;
+      for (const param of (this.editController as any).parameterObjects) {
+        param.addDependent(this);
+      }
+    }
+
+    stop() {
+      this.listener = null;
+      for (const param of (this.editController as any).parameterObjects) {
+        param.removeDependent(this);
+      }
+    }
+
+    update(changedUnknown: any, message: Int32) {}
+  }
+
+  class VstParametersOutputPort implements IPlatformControllerOutgoingParameterPort {
+    constructor(private editController: VstEditController) {}
+
+    beginEdit(id: Int32): void {
+      this.editController.beginEdit(id);
+    }
+    performEdit(id: Int32, value: Float): void {
+      //parameter flow: UI --> Host, DSP
+      this.editController.performEdit(id, value);
+    }
+    endEdit(id: Int32): void {
+      this.editController.endEdit(id);
+    }
+  }
+
+  interface VstEditorView {}
+
+  class WebViewEditorView implements VstEditorView {
+    webView: AnyTypeOf["WebView"] & IWebViewIo;
+    webViewBridge: WebViewBridge | null = null;
+    editorPortal: EditorPortal;
+
+    constructor(
+      editController: EditController,
+      parametersOutputPort: VstParametersOutputPort,
+    ) {
+      this.webView = d.createWebView();
+      this.editorPortal = new EditorPortal(
+        editController.parameterManager,
+        parametersOutputPort,
+      );
+    }
+
+    attached(parent: VoidP) {
+      this.webView.attachToParent(parent);
+      this.webViewBridge = new WebViewBridge(this.editorPortal);
+      this.webViewBridge.setup(this.webView);
+    }
+
+    removed() {
+      this.webViewBridge?.cleanup();
+      this.webViewBridge = null;
+      this.webView.removeFromParent();
+      this.webView.close();
+      this.webView = null;
+    }
+  }
+
+  class AudioProcessor {
+    synth: ISynthesizerBase;
+    constructor() {
+      this.synth = createSynthesizerInstance();
+    }
+    process(processData: AnyTypeOf["VstProcessData"]): void {
+      const data: IProcessingData = {
+        events: d.usePreAllocatedEvents(256),
+      };
+      const inputEvents = processData.inputEvents.map((e: any) => {
+        if (e.type === "noteOn") {
+          const { noteNumber, velocity, sampleOffset } = e;
+          return { type: "noteOn", noteNumber, velocity, sampleOffset };
+        } else if (e.type === "noteOff") {
+          const { noteNumber, sampleOffset } = e;
+          return { type: "noteOff", noteNumber, sampleOffset };
+        } else if (e.type === "parameterChange") {
+          const { id, value, sampleOffset } = e;
+          return { type: "parameterChange", id, value, sampleOffset };
+        }
+      });
+      data.events.push(...inputEvents);
+      const outL = processData.outputs[0].channelBuffers32[0];
+      const outR = processData.outputs[0].channelBuffers32[1];
+      this.synth.processAudio(outL, outR, data);
+    }
+
+    notify(message: AnyTypeOf["IMessage"]): void {}
+  }
+
+  class EditController extends VstEditController {
+    synth: ISynthesizerBase;
+    parameterManager: IMainThreadParameterManager;
+    parameterOutputPort: VstParametersOutputPort;
+    editorPortal: EditorPortal;
+    parameterChangeNotifier: VstParameterChangeNotifier;
+    constructor() {
+      super();
+      this.synth = createSynthesizerInstance();
+      const parameterEntries = this.synth.getParameterEntries();
+      this.parameterManager = new MainThreadParameterManager();
+      this.parameterManager.setup(parameterEntries);
+      this.parameterOutputPort = new VstParametersOutputPort(this);
+      this.editorPortal = new EditorPortal(
+        this.parameterManager,
+        this.parameterOutputPort,
+      );
+      this.parameterChangeNotifier = new VstParameterChangeNotifier(this);
+    }
+
+    initialize() {
+      this.parameterChangeNotifier.start((id, value) => {
+        //parameter flow: Host --> UI
+        this.parameterManager.setParameter(id, value, true);
+      });
+    }
+
+    createView(name: string): AnyTypeOf["PlugView"] | null {
+      if (name == "editor") {
+        return new WebViewEditorView(this, this.parameterOutputPort);
+      }
+      return null;
+    }
+
+    setParameterNormalized(id: Int32, value: Float): void {
+      this.parameterManager.setParameter(id, value, true);
+    }
+
+    notify(message: AnyTypeOf["IMessage"]): void {}
+  }
+
+  //----------
+  //📁adapters/clap
+  declare var d1: any;
+
+  interface SPSCQueue<T, Size> {
+    push(item: T): void;
+    pop(): T | null;
+  }
+
+  class ClapParametersOutputPort implements IPlatformControllerOutgoingParameterPort {
+    host: AnyTypeOf["clap_host_t"];
+    hostParams: AnyTypeOf["clap_host_params_t"];
+
+    setHosts(
+      host: AnyTypeOf["clap_host_t"],
+      hostParams: AnyTypeOf["clap_host_params_t"],
+    ) {
+      this.host = host;
+      this.hostParams = hostParams;
+    }
+
+    outputEventQueue: SPSCQueue<
+      | { type: "performEdit"; id: Int32; value: Float }
+      | { type: "beginEdit" | "endEdit"; id: Int32 },
+      256
+    > = d1.createSPSCQueue();
+
+    listener: ((id: Int32, value: Float) => void) | null = null;
+
+    subscribeUiOriginatedParameterChange(
+      fn: (id: Int32, value: Float) => void,
+    ): void {
+      this.listener = fn;
+    }
+    unsubscribeUiOriginatedParameterChange(): void {
+      this.listener = null;
+    }
+
+    beginEdit(id: Int32): void {
+      this.outputEventQueue.push({ type: "beginEdit", id });
+      this.hostParams.request_flush(this.host);
+    }
+    performEdit(id: Int32, value: Float): void {
+      this.outputEventQueue.push({ type: "performEdit", id, value });
+      this.hostParams.request_flush(this.host);
+      if (this.listener) {
+        this.listener(id, value);
+      }
+    }
+    endEdit(id: Int32): void {
+      this.outputEventQueue.push({ type: "endEdit", id });
+      this.hostParams.request_flush(this.host);
+    }
+
+    popOutputEvent():
+      | { type: "performEdit"; id: Int32; value: Float }
+      | { type: "beginEdit" | "endEdit"; id: Int32 }
+      | null {
+      return this.outputEventQueue.pop();
+    }
+  }
+
+  class ClapParametersInputPort implements IPlatformControllerIncomingParameterPort {
+    host: AnyTypeOf["clap_host_t"];
+
+    setHosts(host: AnyTypeOf["clap_host_t"]) {
+      this.host = host;
+    }
+
+    mainThreadRequestedFlag: {
+      //atomic
+      value: boolean;
+      store(newValue: boolean, mo: "memory_order_release"): void;
+      compareExchange(
+        expected: boolean,
+        newValue: boolean,
+        mo: "memory_order_acq_rel",
+      ): boolean;
+    } = { value: false } as any;
+
+    inputEventQueue: SPSCQueue<
+      { type: "parameter"; id: Int32; value: Float },
+      256
+    > = d1.createSPSCQueue();
+
+    listener: ((id: Int32, value: Float) => void) | null = null;
+
+    subscribeHostOriginatedParameterChange(
+      fn: (id: Int32, value: Float) => void,
+    ): void {
+      this.listener = fn;
+    }
+    unsubscribeHostOriginatedParameterChange(): void {
+      this.listener = null;
+    }
+
+    pushInputEventFromAudioThread(id: Int32, value: Float) {
+      this.inputEventQueue.push({ type: "parameter", id, value });
+      if (
+        this.mainThreadRequestedFlag.compareExchange(
+          false,
+          true,
+          "memory_order_acq_rel",
+        )
+      ) {
+        this.host.request_callback(this.host);
+      }
+    }
+
+    mainThreadCallback() {
+      this.mainThreadRequestedFlag.store(false, "memory_order_release");
+      let e;
+      while ((e = this.inputEventQueue.pop()) !== null) {
+        if (e.type === "parameter" && this.listener) {
+          this.listener(e.id, e.value);
+        }
+      }
+    }
+  }
+
+  class EntryController {
+    plugin: AnyTypeOf["clap_plugin_t"];
+    host: AnyTypeOf["clap_host_t"];
+    hostParams: AnyTypeOf["clap_host_params_t"];
+
+    synth: ISynthesizerBase;
+    parameterManager: IMainThreadParameterManager;
+    parameterInputPort: ClapParametersInputPort;
+    parameterOutputPort: ClapParametersOutputPort;
+    editorPortal: EditorPortal;
+    initialParameterQueue: SPSCQueue<{ id: Int32; value: Float }, 1024> =
+      d1.createSPSCQueue();
+    constructor() {
+      this.synth = createSynthesizerInstance();
+      const parameterEntries = this.synth.getParameterEntries();
+      this.parameterManager = new MainThreadParameterManager();
+      this.parameterManager.setup(parameterEntries);
+      this.parameterInputPort = new ClapParametersInputPort();
+      this.parameterOutputPort = new ClapParametersOutputPort();
+      this.editorPortal = new EditorPortal(
+        this.parameterManager,
+        this.parameterOutputPort,
+      );
+      this.parameterInputPort.subscribeHostOriginatedParameterChange(
+        (id, value) => {
+          this.parameterManager.setParameter(id, value, true);
+        },
+      );
+      this.parameterOutputPort.subscribeUiOriginatedParameterChange(
+        (id, value) => {
+          this.parameterManager.setParameter(id, value, false);
+        },
+      );
+      for (const entry of parameterEntries) {
+        this.initialParameterQueue.push({
+          id: entry.id,
+          value: entry.defaultValue,
+        });
+      }
+    }
+
+    initialize() {
+      this.parameterInputPort.setHosts(this.host);
+      this.parameterOutputPort.setHosts(this.host, this.hostParams);
+    }
+
+    processInternal(
+      processData: AnyTypeOf["clap_audio_process_t"] | null,
+      inEvents: AnyTypeOf["clap_input_events_t"],
+      outEvents: AnyTypeOf["clap_output_events_t"],
+    ): void {
+      const data: IProcessingData = {
+        events: [],
+      };
+
+      {
+        //apply initial parameters
+        let e: { id: Int32; value: Float } | null;
+        while ((e = this.initialParameterQueue.pop())) {
+          if (e) {
+            data.events.push({
+              type: "parameterChange",
+              id: e.id,
+              value: e.value,
+              sampleOffset: 0,
+            });
+          }
+        }
+      }
+
+      //handle input events
+      for (let i = 0; i < inEvents.size(inEvents); i++) {
+        const e = inEvents.get(inEvents, i);
+        if (e.type === "clap_event_note_on") {
+          data.events.push({
+            type: "noteOn",
+            noteNumber: e.note_number,
+            velocity: e.velocity,
+            sampleOffset: e.sample_offset,
+          });
+        } else if (e.type === "clap_event_note_off") {
+          data.events.push({
+            type: "noteOff",
+            noteNumber: e.note_number,
+            sampleOffset: e.sample_offset,
+          });
+        } else if (e.type === "clap_event_param_value") {
+          //parameter flow: Host --> DSP
+          data.events.push({
+            type: "parameterChange",
+            id: e.param_id,
+            value: e.value,
+            sampleOffset: e.sample_offset,
+          });
+          //parameter flow: Host --> UI
+          this.parameterInputPort.pushInputEventFromAudioThread(
+            e.param_id,
+            e.value,
+          );
+        }
+      }
+
+      {
+        //flush output events to host
+        let e;
+        while ((e = this.parameterOutputPort.popOutputEvent()) !== null) {
+          if (e.type === "beginEdit") {
+            outEvents.try_push({
+              type: "CLAP_EVENT_PARAM_GESTURE_BEGIN",
+              id: e.id,
+            });
+          } else if (e.type === "performEdit") {
+            //parameter flow: UI --> Host
+            outEvents.try_push({
+              type: "CLAP_EVENT_PARAM_VALUE",
+              id: e.id,
+              value: e.value,
+            });
+            //parameter flow: UI --> DSP
+            data.events.push({
+              type: "parameterChange",
+              id: e.id,
+              value: e.value,
+              sampleOffset: 0,
+            });
+          } else if (e.type === "endEdit") {
+            outEvents.try_push({
+              type: "CLAP_EVENT_PARAM_GESTURE_END",
+              id: e.id,
+            });
+          }
+        }
+      }
+
+      if (processData) {
+        data.events.sort((a, b) => a.sampleOffset - b.sampleOffset);
+
+        this.synth.processAudio(
+          processData.audio_inputs[0].data32f,
+          processData.audio_outputs[0].data32f,
+          data,
+        );
+      }
+    }
+
+    //flush may be called on the UI thread, but since CLAP's specification ensures that process and flush are never called simultaneously,
+    // mutual exclusion for process/flush is not implemented here.
+
+    process(processData: AnyTypeOf["clap_process_t"]) {
+      this.processInternal(
+        processData,
+        processData.in_events,
+        processData.out_events,
+      );
+    }
+    flush(
+      inEvents: AnyTypeOf["clap_input_events_t"],
+      outEvents: AnyTypeOf["clap_output_events_t"],
+    ) {
+      this.processInternal(null, inEvents, outEvents);
+    }
+    onMainThread() {
+      this.parameterInputPort.mainThreadCallback();
+    }
+
+    createWebViewBridge() {
+      return new WebViewBridge(this.editorPortal);
+    }
+  }
+
+  //----------
+  //📁adapters/auv3
+  declare var d2: any;
+
+  class Auv3UiOriginatedParameterDestinationPort implements IPlatformControllerOutgoingParameterPort {
+    flatParameterTree: Record<Int32, AnyTypeOf["Auv3Parameter"]> = {};
+    token: Int32 = 0;
+
+    constructor(private parameterTree: AnyTypeOf["Auv3ParameterTree"]) {
+      const flatten = (node: any) => {
+        if (node.type === "parameter") {
+          this.flatParameterTree[node.id] = node;
+        } else if (node.type === "folder") {
+          node.children.forEach(flatten);
+        }
+      };
+      flatten(this.parameterTree);
+    }
+
+    beginEdit(address: Int32): void {
+      const parameter = this.flatParameterTree[address];
+      parameter.setValue({ evenType: ".began" });
+    }
+    performEdit(address: Int32, value: Float): void {
+      //parameter flow: Host <-- UI
+      //this triggers parameterTree.implementorValueObserver callback
+      const parameter = this.flatParameterTree[address];
+      parameter.setValue({ value, originator: this.token });
+
+      //parameter flow: DSP <-- UI
+      //pushes the change to DSP via SPSCQueue
+      // this.dspParameterQueue.push({ id: address, value });
+      //not routing parameters manually to DSP
+      //expecting host or AU base system to send the route the parameter to renderBlock.
+    }
+    endEdit(address: Int32): void {
+      const parameter = this.flatParameterTree[address];
+      parameter.setValue({ evenType: ".ended" });
+    }
+  }
+
+  class AudioUnit {
+    synth: ISynthesizerBase;
+    dspParameterQueue: SPSCQueue<{ id: Int32; value: Float }, 1024> =
+      d1.createSPSCQueue();
+    uiParameterDestPort: Auv3UiOriginatedParameterDestinationPort;
+    parameterTree: AnyTypeOf["Auv3ParameterTree"];
+    parameterManager: MainThreadParameterManager;
+    editorPortal: EditorPortal;
+    parameterObserverToken: AnyTypeOf["AUParameterObserverToken"] | null = null;
+    dspParameterStore: SwitchingParameterStore = new SwitchingParameterStore();
+
+    constructor() {
+      this.synth = createSynthesizerInstance();
+      const parameterEntries = this.synth.getParameterEntries();
+      this.parameterTree = d2.createAuv3ParameterTree(parameterEntries);
+      const maxId = Math.max(...parameterEntries.map((it) => it.id)) + 1;
+      this.dspParameterStore.setup(maxId);
+      this.parameterManager = new MainThreadParameterManager();
+      this.parameterManager.setup(parameterEntries);
+
+      this.uiParameterDestPort = new Auv3UiOriginatedParameterDestinationPort(
+        this.parameterTree,
+      );
+      for (const entry of parameterEntries) {
+        //here we are in main thread, but there are no running audio thread yet,
+        //so it's safe to set the initial parameters
+        this.synth.setParameter(entry.id, entry.defaultValue);
+        this.dspParameterStore.set(entry.id, entry.defaultValue);
+      }
+      this.editorPortal = new EditorPortal(
+        this.parameterManager,
+        this.uiParameterDestPort,
+      );
+      this.setupParameterTreeCallbacks();
+      this.setupParameterObserver();
+    }
+
+    setupParameterTreeCallbacks() {
+      this.parameterTree.implementorValueObserver(
+        (param: any, value: Float) => {
+          //this might not be safe
+          // this.synth.setParameter(param.address, value);
+          // this.dspParameterStore.set(param.address, value);
+
+          //pass parameter to the audio thread by queue
+          //since it might be called from other threads than audio thread.
+          this.dspParameterQueue.push({ id: param.address, value });
+        },
+      );
+      this.parameterTree.implementorValueProvider((param: any) => {
+        return this.dspParameterStore.get(param.id);
+      });
+    }
+    setupParameterObserver() {
+      this.parameterObserverToken =
+        this.parameterTree.tokenByAddingParameterObserver(
+          (address: Int32, value: Float) => {
+            //there is possibility to be called here from not a thread than
+            //main thread.
+            //add hopping by queue if it causes problems
+            this.parameterManager.setParameter(address, value, true);
+          },
+        );
+    }
+
+    internalRenderBlock() {
+      return (buffers: any, sourceEvents: any) => {
+        const data: IProcessingData = {
+          events: d.usePreAllocatedEvents(256),
+        };
+        let e: { id: Int32; value: Float } | null;
+        while ((e = this.dspParameterQueue.pop())) {
+          data.events.push({
+            type: "parameterChange",
+            id: e.id,
+            value: e.value,
+            sampleOffset: 0,
+          });
+        }
+        const inputEvents = sourceEvents.map((e: any) => {
+          if (e.type === "noteOn") {
+            const { noteNumber, velocity, sampleOffset } = e;
+            return { type: "noteOn", noteNumber, velocity, sampleOffset };
+          } else if (e.type === "noteOff") {
+            const { noteNumber, sampleOffset } = e;
+            return { type: "noteOff", noteNumber, sampleOffset };
+          } else if (e.type === "parameterChange") {
+            const { id, value, sampleOffset } = e;
+            return { type: "parameterChange", id, value, sampleOffset };
+          }
+        });
+        data.events.push(...inputEvents);
+        this.synth.processAudio(buffers[0], buffers[1], data);
+      };
+    }
+
+    createWebViewBridge() {
+      return new WebViewBridge(this.editorPortal);
+    }
+  }
+  class AudioUnitViewController {
+    audioUnit: AudioUnit | null = null;
+    rootView: AnyTypeOf["NSView"];
+    webView: AnyTypeOf["WebView"] & IWebViewIo;
+    webViewBridge: WebViewBridge | null = null;
+
+    createAudioUnit() {
+      const audioUnit = new AudioUnit();
+      this.connectViewToAudioUnit(audioUnit);
+      this.audioUnit = audioUnit;
+      return audioUnit;
+    }
+    viewDidLoad() {
+      if (this.audioUnit && !this.webView) {
+        this.connectViewToAudioUnit(this.audioUnit);
+      }
+    }
+    connectViewToAudioUnit(audioUnit: AudioUnit) {
+      this.webView = d.createWebView();
+      this.webView.setParent(this.rootView);
+      this.webViewBridge = audioUnit.createWebViewBridge();
+      this.webViewBridge.setup(this.webView);
+    }
+    disconnectViewFromAudioUnit() {
+      this.webViewBridge?.cleanup();
+      this.webViewBridge = null;
+      this.webView.close();
+      this.webView = null;
+    }
+  }
+}

@@ -1,0 +1,6 @@
+[submodule "clap"]
+	path = dependencies/clap
+	url = https://github.com/free-audio/clap.git
+[submodule "glaze"]
+	path = dependencies/glaze
+	url = https://github.com/stephenberry/glaze.git

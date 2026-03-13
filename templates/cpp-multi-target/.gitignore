@@ -1,0 +1,11 @@
+build/
+build-*/
+
+project.xcworkspace/
+xcuserdata/
+xcshareddata/
+buildServer.json
+
+.vscode/settings.json
+
+Makefile

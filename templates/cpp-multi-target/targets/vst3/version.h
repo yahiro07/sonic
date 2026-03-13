@@ -1,0 +1,14 @@
+#pragma once
+
+#include <pluginterfaces/base/fplatform.h>
+
+#define stringOriginalFilename "Project1.vst3"
+#if SMTG_PLATFORM_64
+#define stringFileDescription "Project1 VST3 (64Bit)"
+#else
+#define stringFileDescription "Project1 VST3"
+#endif
+#define stringCompanyName "MyCompany\0"
+#define stringLegalCopyright "Copyright(c) 2026 MyCompany."
+#define stringLegalTrademarks                                                  \
+  "VST is a trademark of Steinberg Media Technologies GmbH"

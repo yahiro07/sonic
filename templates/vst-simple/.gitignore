@@ -1,2 +1,4 @@
 build/
 resource/www/
+CMakePresets.json
+Makefile

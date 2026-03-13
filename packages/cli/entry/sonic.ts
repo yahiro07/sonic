@@ -65,47 +65,88 @@ async function handleInputCommand(inputCommand: InputCommand | undefined) {
   }
 }
 
+type BaseOptions = {
+  projectName: string;
+  templateName: string;
+};
+async function readBaseOptions(): Promise<BaseOptions | "cancelled"> {
+  const templateName = await clackPrompts.select({
+    message: "Select a template",
+    options: templateEntries.map((entry) => ({
+      value: entry.name,
+      hint: entry.description,
+    })),
+  });
+  if (clackPrompts.isCancel(templateName)) return "cancelled";
+
+  let defaultProjectName = `${casingToCapital(templateName)}1`;
+
+  let retryCount = 0;
+  while (fs.existsSync(path.join(process.cwd(), defaultProjectName))) {
+    defaultProjectName = incrementSuffix(defaultProjectName);
+    retryCount++;
+    if (retryCount > 100) {
+      throw new Error("too many default project name retries");
+    }
+  }
+
+  let projectName = await clackPrompts.text({
+    message: "Enter project name",
+    placeholder: defaultProjectName,
+  });
+  if (clackPrompts.isCancel(projectName)) return "cancelled";
+
+  if (projectName === "") {
+    projectName = defaultProjectName;
+  }
+  const newProjectFolderPath = path.join(process.cwd(), projectName);
+  if (fs.existsSync(newProjectFolderPath)) {
+    const res = await clackPrompts.confirm({
+      message: `Project ${projectName} already exists. Do you want to replace it?`,
+      initialValue: false,
+    });
+    if (!res || clackPrompts.isCancel(res)) {
+      return "cancelled";
+    }
+  }
+  return { projectName, templateName };
+}
+
+async function readBaseOptionsForDebug(): Promise<BaseOptions | "cancelled"> {
+  const templateName = await clackPrompts.select({
+    message: "Select a template",
+    options: templateEntries.map((entry) => ({
+      value: entry.name,
+      hint: entry.description,
+    })),
+  });
+  if (clackPrompts.isCancel(templateName)) return "cancelled";
+  const projectNameDefault = `${casingToCapital(templateName)}1`;
+  let projectName = await clackPrompts.text({
+    message: "Enter project name",
+    initialValue: projectNameDefault,
+  });
+  if (clackPrompts.isCancel(projectName)) return "cancelled";
+  return { projectName, templateName };
+}
+
 async function createProject() {
   try {
-    const templateName = await clackPrompts.select({
-      message: "Select a template",
-      options: templateEntries.map((entry) => ({
-        value: entry.name,
-        hint: entry.description,
-      })),
-    });
-    if (clackPrompts.isCancel(templateName)) return;
-
-    let defaultProjectName = `${casingToCapital(templateName)}1`;
-
-    let retryCount = 0;
-    while (fs.existsSync(path.join(process.cwd(), defaultProjectName))) {
-      defaultProjectName = incrementSuffix(defaultProjectName);
-      retryCount++;
-      if (retryCount > 100) {
-        throw new Error("too many default project name retries");
-      }
+    const isWorkerDev = process.env.CLI_TEMPLATE_WORKER_DEVELOPMENT;
+    if (isWorkerDev) {
+      console.log("isWorkerDev: true");
     }
-
-    let projectName = await clackPrompts.text({
-      message: "Enter project name",
-      placeholder: defaultProjectName,
-    });
-    if (clackPrompts.isCancel(projectName)) return;
-
-    if (projectName === "") {
-      projectName = defaultProjectName;
+    const baseOptions = isWorkerDev
+      ? await readBaseOptionsForDebug()
+      : await readBaseOptions();
+    if (baseOptions === "cancelled") {
+      console.log("operation cancelled.");
+      return;
     }
+    const { projectName, templateName } = baseOptions;
+
     const newProjectFolderPath = path.join(process.cwd(), projectName);
     if (fs.existsSync(newProjectFolderPath)) {
-      const ok = await clackPrompts.confirm({
-        message: `Project ${projectName} already exists. Do you want to replace it?`,
-        initialValue: false,
-      });
-      if (!ok) {
-        console.log("operation cancelled.");
-        return;
-      }
       fs.rmSync(newProjectFolderPath, { recursive: true });
     }
 
@@ -117,17 +158,24 @@ async function createProject() {
     }
 
     try {
-      const ok = await templateEntry.worker.createProject(
+      const result = await templateEntry.worker.createProject(
         projectName,
         templateName,
       );
-      if (!ok) {
+      if (result === true) {
+        console.log(`project ${projectName} created.`);
+      }
+      if (result === false) {
         console.log(`failed to create project ${projectName}`);
         return;
+      } else if (result === "cancelled") {
+        console.log("operation cancelled.");
+        return;
       }
-      console.log(`project ${projectName} created.`);
     } catch (error) {
-      fs.rmSync(newProjectFolderPath, { recursive: true });
+      if (!isWorkerDev) {
+        fs.rmSync(newProjectFolderPath, { recursive: true });
+      }
       throw error;
     }
   } catch (error) {
