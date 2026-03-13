@@ -36,8 +36,9 @@ include(FetchContent)
 FetchContent_Populate(
   sonic_repo
   GIT_REPOSITORY https://github.com/yahiro07/sonic.git
-  GIT_TAG "8e19c7001a3f130c5621268168ae1feee5b32906"
-  GIT_SHALLOW TRUE)
+  GIT_TAG "f13855e9a1f6fea4e2208b427964d0b0d7224574"
+  GIT_SHALLOW TRUE
+  GIT_SUBMODULES_RECURSE YES)
 
 option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
 option(SMTG_ENABLE_VST3_HOSTING_EXAMPLES "Enable VST 3 Hosting Examples" OFF)
