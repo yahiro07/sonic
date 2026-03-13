@@ -23,9 +23,9 @@ if(NOT SONIC_USE_LOCAL_SDK)
   FetchContent_Populate(
     sonic_repo
     GIT_REPOSITORY https://github.com/yahiro07/sonic.git
-    GIT_TAG "8e19c7001a3f130c5621268168ae1feee5b32906"
+    GIT_TAG "f13855e9a1f6fea4e2208b427964d0b0d7224574"
     GIT_SHALLOW TRUE
-    SOURCE_SUBDIR dependencies/vst3sdk)
+    GIT_SUBMODULES_RECURSE YES)
 else()
   get_filename_component(
     VST3SDK_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/vst3sdk"
