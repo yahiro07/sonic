@@ -4,15 +4,21 @@
     {
       "name": "ninja",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
-      "cacheVariables": {
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      "binaryDir": "${sourceDir}/build"
     },
     {
       "name": "xcode",
       "generator": "Xcode",
       "binaryDir": "${sourceDir}/build-xcode"
+    },
+    {
+      "name": "ninja-template-dev",
+      "inherits": ["ninja"],
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "SMTG_RUN_VST_VALIDATOR": "OFF",
+	      "SONIC_USE_LOCAL_SDK": "ON"
+      }
     }
   ],
   "buildPresets": [

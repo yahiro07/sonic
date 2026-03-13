@@ -68,14 +68,12 @@ option(SMTG_ENABLE_VSTGUI_SUPPORT "Enable VSTGUI Support" OFF)
 
 if(NOT SONIC_USE_LOCAL_SDK)
   include(FetchContent)
-  FetchContent_Populate(
-    sonic_repo
-    GIT_REPOSITORY https://github.com/yahiro07/sonic.git
-    GIT_TAG "8e19c7001a3f130c5621268168ae1feee5b32906"
+  FetchContent_Declare(
+    vst3sdk
+    GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk
+    GIT_TAG v3.8.0_build_66
     GIT_SHALLOW TRUE)
-
-  add_subdirectory("${sonic_repo_SOURCE_DIR}/dependencies/vst3sdk"
-                   "${CMAKE_BINARY_DIR}/vst3sdk_build")
+  FetchContent_MakeAvailable(vst3sdk)
 else()
   get_filename_component(
     VST3SDK_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/vst3sdk"
@@ -92,8 +90,7 @@ set(VST3_SDK_ROOT "${SMTG_VST3_LOCATION_DIR}")
 
 add_subdirectory(plugin)
 
-# add_subdirectory(lib/platform/clap)
-# add_subdirectory(targets/clap)
+# add_subdirectory(lib/platform/clap) add_subdirectory(targets/clap)
 
 add_subdirectory(lib/platform/vst3)
 add_subdirectory(targets/vst3)
