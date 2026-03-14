@@ -10,7 +10,6 @@
       "name": "ninja-template-dev",
       "inherits": ["ninja"],
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm/bin/clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     }
