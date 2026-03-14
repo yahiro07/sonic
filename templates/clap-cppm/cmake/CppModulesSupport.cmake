@@ -29,8 +29,8 @@ if(NOT _clang_scan_deps)
 endif()
 
 # macOS + upstream LLVM/Clang: make sure the SDK sysroot is set so system
-# headers (e.g. assert.h) can be found.
-if(APPLE AND NOT DEFINED CMAKE_OSX_SYSROOT)
+# headers (e.g. assert.h, time.h) can be found.
+if(APPLE AND "${CMAKE_OSX_SYSROOT}" STREQUAL "")
   execute_process(
     COMMAND xcrun --sdk macosx --show-sdk-path
     OUTPUT_VARIABLE _macos_sdk

@@ -22,6 +22,9 @@ target_sources(
           platform/clap/clap-rootage.cpp
           platform/clap/entry-controller.cpp)
 
+target_sources(${NAME} PRIVATE FILE_SET CXX_MODULES FILES
+                               platform/clap/my-module.cpp)
+
 set_source_files_properties(common/mac-web-view.mm PROPERTIES COMPILE_FLAGS
                                                               "-fobjc-arc")
 

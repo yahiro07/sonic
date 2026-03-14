@@ -1,4 +1,18 @@
 cmake_minimum_required(VERSION 3.20)
+
+if(APPLE AND "${CMAKE_OSX_SYSROOT}" STREQUAL "")
+  execute_process(
+    COMMAND xcrun --sdk macosx --show-sdk-path
+    OUTPUT_VARIABLE _macos_sdk
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET)
+  if(EXISTS "${_macos_sdk}")
+    set(CMAKE_OSX_SYSROOT
+        "${_macos_sdk}"
+        CACHE PATH "macOS SDK sysroot" FORCE)
+  endif()
+endif()
+
 project(project1 LANGUAGES C CXX OBJCXX)
 
 include(cmake/CppModulesSupport.cmake)
