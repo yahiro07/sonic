@@ -16,9 +16,9 @@ public:
   setMessageReceiver(std::function<void(const std::string &)> receiver) = 0;
 };
 
-class IParametersStore {
+class IParameterStore {
 public:
-  virtual ~IParametersStore() = default;
+  virtual ~IParameterStore() = default;
   virtual double get(uint32_t id) = 0;
   virtual void set(uint32_t id, double value) = 0;
 };

@@ -1,8 +1,7 @@
 #include "./entry-controller.h"
 #include "../../api/synthesizer-base.h"
 #include "../../common/mac-web-view.h"
-#include "../../domain/parameters-store.h"
-#include "../../domain/webview-bridge.h"
+#include "../../core/webview-bridge.h"
 #include "./clap-data-helper.h"
 #include "./events.h"
 #include <atomic>
@@ -31,11 +30,11 @@ mapParameterEditStateToUpstreamEventType(ParameterEditState editState) {
 }
 
 class ParametersHub {
-  ParametersStore &parametersStore;
+  ParameterStore &parameterStore;
 
 public:
-  ParametersHub(ParametersStore &parametersStore)
-      : parametersStore(parametersStore) {}
+  ParametersHub(ParameterStore &parameterStore)
+      : parameterStore(parameterStore) {}
 
   SingleListenerPort<ParamId, double, ParameterEditState>
       parameterEditFromUiPort;
@@ -45,19 +44,19 @@ public:
                           ParameterEditState editState) {
     if (editState == ParameterEditState::Perform ||
         editState == ParameterEditState::InstantChange) {
-      parametersStore.set(id, value);
+      parameterStore.set(id, value);
     } else {
-      value = parametersStore.get(id);
+      value = parameterStore.get(id);
     }
     parameterEditFromUiPort.call(id, value, editState);
   }
 
   void setParameterFromHost(ParamId id, double value) {
-    parametersStore.set(id, value);
+    parameterStore.set(id, value);
     parameterChangeFromHostPort.call(id, value);
   }
 
-  double getParameterValue(ParamId id) { return parametersStore.get(id); }
+  double getParameterValue(ParamId id) { return parameterStore.get(id); }
 };
 
 class ParameterService {
@@ -390,8 +389,8 @@ public:
   IPluginSynthesizer &synth;
   IEventBridge &eventBridge;
   ParameterRegistry parametersRegistry;
-  ParametersStore parametersStore; // parameters in main thread
-  ParametersHub parametersHub{parametersStore};
+  ParameterStore parameterStore; // parameters in main thread
+  ParametersHub parametersHub{parameterStore};
   ParameterService parameterService{parametersRegistry, parametersHub};
   NoteService noteService;
   ControllerFacade controllerFacade{parameterService, noteService};
@@ -404,9 +403,9 @@ public:
 
     auto maxId =
         ParameterSpecHelper::getMaxIdFromParameterItems(parameterItems);
-    parametersStore.setup(maxId);
+    parameterStore.setup(maxId);
     for (const auto &item : parameterItems) {
-      parametersStore.set(item.id, item.defaultValue);
+      parameterStore.set(item.id, item.defaultValue);
     }
 
     parametersHub.parameterEditFromUiPort.subscribe(
@@ -506,7 +505,7 @@ public:
   }
 
   double getParameterValue(clap_id id) override {
-    return domainController.parametersStore.get(id);
+    return domainController.parameterStore.get(id);
   }
 
   void onTimer(clap_id timerId) override {

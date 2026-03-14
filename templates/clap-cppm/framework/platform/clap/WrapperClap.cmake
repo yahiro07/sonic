@@ -14,7 +14,7 @@ target_compile_features(${NAME} PRIVATE cxx_std_20)
 
 target_sources(
   ${NAME}
-  PRIVATE common/mac-web-view.mm domain/webview-bridge.cpp
+  PRIVATE common/mac-web-view.mm core/webview-bridge.cpp
           platform/clap/clap-entry-wrapper.cpp platform/clap/clap-rootage.cpp
           platform/clap/entry-controller.cpp)
 
@@ -26,6 +26,7 @@ target_sources(
           common/spsc-queue.ixx
           common/listener-port.ixx
           core/parameter.ixx
+          core/parameter-store.ixx
           core/parameter-spec-item.ixx
           core/parameter-spec-helper.ixx
           core/parameter-builder-impl.ixx
