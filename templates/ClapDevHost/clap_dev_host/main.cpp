@@ -80,8 +80,24 @@ public:
     });
 
     std::filesystem::path path(pluginPath);
+
+    // If the path ends with .clap and it's a directory (bundle),
+    // point to the executable inside the bundle.
+    if (path.extension() == ".clap" && std::filesystem::is_directory(path)) {
+      auto name = path.stem().string();
+      auto binaryPath = path / "Contents" / "MacOS" / name;
+      if (std::filesystem::exists(binaryPath)) {
+        path = binaryPath;
+      }
+    }
+
     auto vstPath = std::filesystem::absolute(path).lexically_normal().string();
     printf("Loading plugin: %s\n", vstPath.c_str());
+
+    if (!std::filesystem::exists(vstPath)) {
+      printf("Error: Plugin file does not exist: %s\n", vstPath.c_str());
+      return;
+    }
 
     auto loaded = pluginBridge.loadPlugin(vstPath);
     if (!loaded) {
