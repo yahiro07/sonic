@@ -7,4 +7,4 @@ build:
 	cmake --build --preset ninja-debug
 
 run: build
-	../VstDevHost/build/bin/Debug/VstDevHost ./build/lib/project1-vst3.vst3
+	../ClapDevHost/build/bin/Debug/ClapDevHost ./_build/Ninja/variants/project1-clap.clap
