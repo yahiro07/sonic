@@ -13,6 +13,8 @@
 #include <cassert>
 #include <memory>
 
+import my_module;
+
 namespace sonic {
 
 static int getMaxIdFromParameterItems(const ParameterSpecArray &items) {
@@ -468,6 +470,9 @@ public:
   EntryControllerImpl(IPluginSynthesizer *synth) : synth(std::move(synth)) {}
 
   void initialize() override {
+    printf("EntryControllerImpl::initialize called\n");
+    my_function();
+
     hostCallbackRequester.initialize(host, hostParams);
 
     ParameterBuilderImpl builder;
