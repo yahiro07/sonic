@@ -128,25 +128,44 @@ private:
              m->message.c_str());
     } else if (auto *m = std::get_if<RxMsgUiLoaded>(&rxMessage)) {
       printf("ui loaded\n");
+      std::map<ParamId, double> rawParameters;
+      controllerFacade.getAllParameters(rawParameters);
       std::map<std::string, double> parameters;
-      controllerFacade.getAllParameters(parameters);
+      for (auto &entry : rawParameters) {
+        auto paramKey = controllerFacade.getParameterKeyById(entry.first);
+        if (paramKey) {
+          parameters[*paramKey] = entry.second;
+        }
+      }
       TxMsgBulkSendParameters msg{
           .type = "bulkSendParameters",
           .parameters = parameters,
       };
       sendMessageToWebView(msg);
     } else if (auto *m = std::get_if<RxMsgBeginEdit>(&rxMessage)) {
-      controllerFacade.applyParameterEditFromUi(m->paramKey, 0.f,
-                                                ParameterEditState::Begin);
+      auto paramId = controllerFacade.getParameterIdByParamKey(m->paramKey);
+      if (paramId) {
+        controllerFacade.applyParameterEditFromUi(*paramId, 0.f,
+                                                  ParameterEditState::Begin);
+      }
     } else if (auto *m = std::get_if<RxMsgPerformEdit>(&rxMessage)) {
-      controllerFacade.applyParameterEditFromUi(m->paramKey, m->value,
-                                                ParameterEditState::Perform);
+      auto paramId = controllerFacade.getParameterIdByParamKey(m->paramKey);
+      if (paramId) {
+        controllerFacade.applyParameterEditFromUi(*paramId, m->value,
+                                                  ParameterEditState::Perform);
+      }
     } else if (auto *m = std::get_if<RxMsgEndEdit>(&rxMessage)) {
-      controllerFacade.applyParameterEditFromUi(m->paramKey, 0.f,
-                                                ParameterEditState::End);
+      auto paramId = controllerFacade.getParameterIdByParamKey(m->paramKey);
+      if (paramId) {
+        controllerFacade.applyParameterEditFromUi(*paramId, 0.f,
+                                                  ParameterEditState::End);
+      }
     } else if (auto *m = std::get_if<RxMsgInstantEdit>(&rxMessage)) {
-      controllerFacade.applyParameterEditFromUi(
-          m->paramKey, m->value, ParameterEditState::InstantChange);
+      auto paramId = controllerFacade.getParameterIdByParamKey(m->paramKey);
+      if (paramId) {
+        controllerFacade.applyParameterEditFromUi(
+            *paramId, m->value, ParameterEditState::InstantChange);
+      }
     } else if (auto *m = std::get_if<RxMsgNoteOnRequest>(&rxMessage)) {
       controllerFacade.requestNoteOn(m->noteNumber, 1.f);
     } else if (auto *m = std::get_if<RxMsgNoteOffRequest>(&rxMessage)) {
@@ -197,8 +216,11 @@ public:
     });
     parameterChangeSubscriptionToken =
         controllerFacade.subscribeParameterChange(
-            [this](std::string paramKey, double value) {
-              handleParameterChangeFromController(paramKey, value);
+            [this](ParamId paramId, double value) {
+              auto paramKey = controllerFacade.getParameterKeyById(paramId);
+              if (paramKey) {
+                handleParameterChangeFromController(*paramKey, value);
+              }
             });
 
     hostNoteSubscriptionToken = controllerFacade.subscribeHostNote(

@@ -72,37 +72,44 @@ public:
                    ParametersHub &parametersHub)
       : parametersRegistry(parametersRegistry), parametersHub(parametersHub) {}
 
-  int subscribeParameterChanges(
-      std::function<void(std::string, double)> listener) {
+  int subscribeParameterChanges(std::function<void(ParamId, double)> listener) {
     int token = parametersHub.parameterChangeFromHostPort.subscribe(
-        [this, listener](int id, double value) {
-          auto item = parametersRegistry.getParameterItemById(id);
-          if (!item) {
-            return;
-          }
-          auto paramKey = item->paramKey;
-          listener(paramKey, value);
-        });
+        [this, listener](ParamId id, double value) { listener(id, value); });
     return token;
   }
   void unsubscribeParameterChanges(int token) {
     parametersHub.parameterChangeFromHostPort.unsubscribe(token);
   }
 
-  void applyParameterEditFromUi(std::string paramKey, double value,
+  void applyParameterEditFromUi(ParamId paramId, double value,
                                 ParameterEditState editState) {
-    auto idPtr = parametersRegistry.getIdByParamKey(paramKey);
-    if (idPtr == std::nullopt) {
-      return;
-    }
-    auto id = *idPtr;
-    parametersHub.setParameterFromUi(id, value, editState);
+    parametersHub.setParameterFromUi(paramId, value, editState);
   }
-  void getAllParameters(std::map<std::string, double> &parameters) {
+  void getAllParameters(std::map<ParamId, double> &parameters) {
     auto parameterItems = parametersRegistry.getParameterItems();
     for (const auto &item : parameterItems) {
-      parameters[item.paramKey] = parametersHub.getParameterValue(item.id);
+      parameters[item.id] = parametersHub.getParameterValue(item.id);
     }
+  }
+
+  std::optional<ParamId> getParameterIdByParamKey(std::string paramKey) {
+    auto parameterItems = parametersRegistry.getParameterItems();
+    for (const auto &item : parameterItems) {
+      if (item.paramKey == paramKey) {
+        return item.id;
+      }
+    }
+    return std::nullopt;
+  }
+
+  std::optional<std::string> getParameterKeyById(ParamId id) {
+    auto parameterItems = parametersRegistry.getParameterItems();
+    for (const auto &item : parameterItems) {
+      if (item.id == id) {
+        return item.paramKey;
+      }
+    }
+    return std::nullopt;
   }
 };
 
@@ -124,7 +131,7 @@ public:
       : parameterService(parameterService), noteService(noteService) {}
 
   int subscribeParameterChange(
-      std::function<void(const std::string, double)> callback) override {
+      std::function<void(ParamId, double)> callback) override {
     return parameterService.subscribeParameterChanges(callback);
   }
 
@@ -132,12 +139,12 @@ public:
     parameterService.unsubscribeParameterChanges(token);
   }
 
-  void applyParameterEditFromUi(std::string paramKey, double value,
+  void applyParameterEditFromUi(ParamId paramId, double value,
                                 ParameterEditState editState) override {
-    parameterService.applyParameterEditFromUi(paramKey, value, editState);
+    parameterService.applyParameterEditFromUi(paramId, value, editState);
   }
 
-  void getAllParameters(std::map<std::string, double> &parameters) override {
+  void getAllParameters(std::map<ParamId, double> &parameters) override {
     parameterService.getAllParameters(parameters);
   }
 
@@ -158,6 +165,14 @@ public:
 
   void incrementViewCount() override {}
   void decrementViewCount() override {}
+
+  std::optional<ParamId>
+  getParameterIdByParamKey(std::string paramKey) override {
+    return parameterService.getParameterIdByParamKey(paramKey);
+  }
+  std::optional<std::string> getParameterKeyById(ParamId id) override {
+    return parameterService.getParameterKeyById(id);
+  }
 };
 
 class IHostCallbackRequester {
