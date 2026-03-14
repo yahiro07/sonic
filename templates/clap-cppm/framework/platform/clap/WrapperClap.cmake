@@ -8,9 +8,10 @@ set_target_properties(
              OUTPUT_NAME "wrapper-clap"
              POSITION_INDEPENDENT_CODE ON
              CXX_EXTENSIONS OFF
-             CXX_SCAN_FOR_MODULES ON)
+             CXX_SCAN_FOR_MODULES ON
+             CXX_MODULE_STD ON)
 
-target_compile_features(${NAME} PRIVATE cxx_std_20)
+target_compile_features(${NAME} PRIVATE cxx_std_23)
 
 target_sources(
   ${NAME}

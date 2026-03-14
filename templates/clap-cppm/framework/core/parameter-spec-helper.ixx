@@ -1,10 +1,9 @@
 module;
 #include "../api/synthesizer-base.h"
-#include <algorithm>
-#include <cmath>
 
 export module core:parameter_spec_helper;
 import :parameter_spec_item;
+import std;
 
 namespace sonic {
 

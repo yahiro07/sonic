@@ -1,9 +1,8 @@
 module;
 #include "../api/synthesizer-base.h"
-#include <string>
-#include <vector>
 
 export module core:parameter_spec_item;
+import std;
 
 namespace sonic {
 

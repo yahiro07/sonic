@@ -1,10 +1,10 @@
 module;
-#include <optional>
-#include <string>
-#include <unordered_map>
+#include <stdint.h>
+#include <stdio.h>
 
 export module core:parameter_registry;
 import :parameter_spec_item;
+import std;
 
 namespace sonic {
 

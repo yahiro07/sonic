@@ -51,8 +51,7 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
 
   float effectiveNoteNumber =
       (float)noteNumber + (oscPitch * 2.0f - 1.0f) * 12.0f;
-  float frequency =
-      440.0f * std::pow(2.0f, (effectiveNoteNumber - 69.0f) / 12.0f);
+  float frequency = 440.0f * pow(2.0f, (effectiveNoteNumber - 69.0f) / 12.0f);
   float phaseDelta = frequency / sampleRate;
 
   float gain = (oscEnabled && gateOn) ? oscVolume : 0.0f;
@@ -70,7 +69,7 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
     } else if (oscWave == OscWaveType::Triangle) {
       y = (phase < 0.5f ? 4.0f * phase - 1.0f : -4.0f * phase + 3.0f);
     } else if (oscWave == OscWaveType::Sine) {
-      y = std::sin(phase * 2.0f * (float)M_PI);
+      y = sin(phase * 2.0f * (float)M_PI);
     }
     bufferL[i] = y * gain;
   }

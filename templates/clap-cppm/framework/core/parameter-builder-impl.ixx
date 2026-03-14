@@ -1,8 +1,8 @@
 module;
 #include "../api/synthesizer-base.h"
-#include <vector>
 
 export module core:parameter_builder_impl;
+import std;
 import :parameter_spec_item;
 
 namespace sonic {
@@ -40,7 +40,7 @@ public:
         .label = std::string(label),
         .defaultValue =
             std::find(valueStrings.begin(), valueStrings.end(),
-                 defaultValueString) != valueStrings.end()
+                      defaultValueString) != valueStrings.end()
                 ? (double)(std::distance(valueStrings.begin(),
                                          std::find(valueStrings.begin(),
                                                    valueStrings.end(),
