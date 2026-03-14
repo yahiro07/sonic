@@ -1,0 +1,25 @@
+{
+  "version": 8,
+  "configurePresets": [
+    {
+      "name": "ninja",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build/Ninja"
+    },
+    {
+      "name": "ninja-template-dev",
+      "inherits": ["ninja"],
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm/bin/clang++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "ninja-debug",
+      "configurePreset": "ninja",
+      "configuration": "Debug"
+    }
+  ]
+}
