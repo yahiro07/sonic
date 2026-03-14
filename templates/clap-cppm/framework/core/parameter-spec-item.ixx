@@ -1,5 +1,4 @@
 module;
-#pragma once
 #include "../api/synthesizer-base.h"
 #include <string>
 #include <vector>

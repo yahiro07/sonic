@@ -39,7 +39,7 @@ public:
         .paramKey = std::string(paramKey),
         .label = std::string(label),
         .defaultValue =
-            find(valueStrings.begin(), valueStrings.end(),
+            std::find(valueStrings.begin(), valueStrings.end(),
                  defaultValueString) != valueStrings.end()
                 ? (double)(std::distance(valueStrings.begin(),
                                          std::find(valueStrings.begin(),
