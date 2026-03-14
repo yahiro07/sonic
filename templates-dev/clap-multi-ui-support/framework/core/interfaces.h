@@ -23,22 +23,6 @@ public:
   virtual void set(uint32_t id, double value) = 0;
 };
 
-// class IParameterManager {
-// public:
-//   virtual ~IParameterManager() = default;
-
-//   virtual void setParameter(ParamId id, float value, bool notifyToUi) = 0;
-//   virtual float getParameter(ParamId id) = 0;
-
-//   virtual void getAllParameters(std::map<std::string, float> &parameters) =
-//   0;
-
-//   virtual int subscribeParameterChange(
-//       std::function<void(const std::string paramKey, float value)>
-//           callback) = 0;
-//   virtual void unsubscribeParameterChange(int subscriptionId) = 0;
-// };
-
 enum class ParameterEditState {
   Begin,
   Perform,

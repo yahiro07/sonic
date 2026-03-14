@@ -1,7 +1,6 @@
 #include "./entry-controller.h"
 #include "../../api/synthesizer-base.h"
 #include "../../common/listener-port.h"
-#include "../../common/mac-web-view.h"
 #include "../../common/spsc-queue.h"
 #include "../../core/interfaces.h"
 #include "../../core/parameter-builder-impl.h"
@@ -9,7 +8,8 @@
 #include "../../core/parameter-spec-helper.h"
 #include "../../core/parameter-spec-item.h"
 #include "../../core/parameter-store.h"
-#include "../../core/webview-bridge.h"
+#include "../../gui/webview/mac-web-view.h"
+#include "../../gui/webview/webview-bridge.h"
 #include "./clap-data-helper.h"
 #include "./events.h"
 #include <atomic>
