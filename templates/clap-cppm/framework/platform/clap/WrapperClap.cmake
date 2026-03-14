@@ -14,16 +14,23 @@ target_compile_features(${NAME} PRIVATE cxx_std_20)
 
 target_sources(
   ${NAME}
-  PRIVATE common/mac-web-view.mm
-          core/parameter-builder-impl.cpp
-          core/parameter-registry.cpp
-          domain/webview-bridge.cpp
-          platform/clap/clap-entry-wrapper.cpp
-          platform/clap/clap-rootage.cpp
+  PRIVATE common/mac-web-view.mm domain/webview-bridge.cpp
+          platform/clap/clap-entry-wrapper.cpp platform/clap/clap-rootage.cpp
           platform/clap/entry-controller.cpp)
 
-target_sources(${NAME} PRIVATE FILE_SET CXX_MODULES FILES
-                               platform/clap/my-module.cpp)
+target_sources(
+  ${NAME}
+  PRIVATE FILE_SET
+          CXX_MODULES
+          FILES
+          common/spsc-queue.ixx
+          common/listener-port.ixx
+          core/parameter.ixx
+          core/parameter-spec-item.ixx
+          core/parameter-spec-helper.ixx
+          core/parameter-builder-impl.ixx
+          core/parameter-registry.ixx
+          platform/clap/my-module.cpp)
 
 set_source_files_properties(common/mac-web-view.mm PROPERTIES COMPILE_FLAGS
                                                               "-fobjc-arc")

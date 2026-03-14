@@ -1,12 +1,12 @@
-#pragma once
+module;
 #include <atomic>
 #include <stdint.h>
 
+export module spsc_queue;
+
 namespace sonic {
 
-template <typename T, size_t Capacity>
-
-class SPSCQueue {
+export template <typename T, size_t Capacity> class SPSCQueue {
   static_assert(Capacity >= 2, "Capacity must be >= 2");
   static_assert((Capacity & (Capacity - 1)) == 0,
                 "Capacity must be power of two");

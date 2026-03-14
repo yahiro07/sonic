@@ -1,5 +1,5 @@
+module;
 #include "./logger.h"
-#include "./spsc-queue.h"
 #include <arpa/inet.h>
 #include <atomic>
 #include <cstring>
@@ -8,6 +8,8 @@
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
+
+import spsc_queue;
 
 namespace sonic {
 

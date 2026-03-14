@@ -1,10 +1,12 @@
-#pragma once
+module;
 #include <functional>
 #include <map>
 
+export module listener_port;
+
 namespace sonic {
 
-template <typename... Args> class SingleListenerPort {
+export template <typename... Args> class SingleListenerPort {
 private:
   std::function<void(Args...)> listener;
 
@@ -21,7 +23,7 @@ public:
   }
 };
 
-template <typename... Args> class MultipleListenerPort {
+export template <typename... Args> class MultipleListenerPort {
 private:
   std::map<int, std::function<void(Args...)>> listeners;
   int nextToken = 0;

@@ -1,10 +1,6 @@
 #include "./entry-controller.h"
 #include "../../api/synthesizer-base.h"
-#include "../../common/listener-port.h"
 #include "../../common/mac-web-view.h"
-#include "../../common/spsc-queue.h"
-#include "../../core/parameter-builder-impl.h"
-#include "../../core/parameter-registry.h"
 #include "../../domain/parameters-store.h"
 #include "../../domain/webview-bridge.h"
 #include "./clap-data-helper.h"
@@ -14,18 +10,11 @@
 #include <memory>
 
 import my_module;
+import core;
+import spsc_queue;
+import listener_port;
 
 namespace sonic {
-
-static int getMaxIdFromParameterItems(const ParameterSpecArray &items) {
-  int maxId = 0;
-  for (const auto &item : items) {
-    if (item.id > maxId) {
-      maxId = item.id;
-    }
-  }
-  return maxId;
-}
 
 static UpstreamEventType
 mapParameterEditStateToUpstreamEventType(ParameterEditState editState) {
@@ -413,7 +402,8 @@ public:
   void initialize(ParameterSpecArray &parameterItems) {
     parametersRegistry.addParameters(parameterItems, 0xFFFFFFFE);
 
-    auto maxId = getMaxIdFromParameterItems(parameterItems);
+    auto maxId =
+        ParameterSpecHelper::getMaxIdFromParameterItems(parameterItems);
     parametersStore.setup(maxId);
     for (const auto &item : parameterItems) {
       parametersStore.set(item.id, item.defaultValue);

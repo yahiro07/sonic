@@ -1,1 +1,1 @@
-include(cmake/WrapperClap.cmake)
+include(platform/clap/WrapperClap.cmake)

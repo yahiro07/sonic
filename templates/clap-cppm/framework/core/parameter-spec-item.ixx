@@ -1,19 +1,22 @@
+module;
 #pragma once
 #include "../api/synthesizer-base.h"
 #include <string>
 #include <vector>
 
+export module core:parameter_spec_item;
+
 namespace sonic {
 
-using ParamId = uint32_t;
+export using ParamId = uint32_t;
 
-enum class ParameterType {
+export enum class ParameterType {
   Unary,
   Enum,
   Bool,
 };
 
-struct ParameterSpecItem {
+export struct ParameterSpecItem {
   ParamId id;
   std::string paramKey;
   std::string label;
@@ -27,6 +30,6 @@ struct ParameterSpecItem {
   // bool isInternal;
 };
 
-using ParameterSpecArray = std::vector<ParameterSpecItem>;
+export using ParameterSpecArray = std::vector<ParameterSpecItem>;
 
 } // namespace sonic

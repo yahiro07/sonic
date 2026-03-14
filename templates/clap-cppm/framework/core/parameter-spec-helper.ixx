@@ -1,12 +1,14 @@
-#pragma once
-
-#include "./parameter-spec-item.h"
+module;
+#include "../api/synthesizer-base.h"
 #include <algorithm>
 #include <cmath>
 
+export module core:parameter_spec_helper;
+import :parameter_spec_item;
+
 namespace sonic {
 
-class ParameterSpecHelper {
+export class ParameterSpecHelper {
 public:
   static double getNormalized(const ParameterSpecItem *item, double value) {
     if (item->type == ParameterType::Enum) {
