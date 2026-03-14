@@ -1,5 +1,5 @@
 #include "webview-bridge.h"
-#include "../../core/interfaces.h"
+#include "../interfaces.h"
 #include <glaze/glaze.hpp>
 
 namespace sonic {

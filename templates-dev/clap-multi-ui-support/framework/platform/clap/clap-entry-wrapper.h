@@ -1,5 +1,5 @@
 #pragma once
-#include "../../core/interfaces.h"
+#include "../../core/types.h"
 #include <clap/clap.h>
 
 namespace sonic {

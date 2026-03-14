@@ -1,27 +1,9 @@
 #pragma once
-
-#include "../api/synthesizer-base.h"
+#include "../core/types.h"
 #include <functional>
 #include <map>
 
 namespace sonic {
-
-using IPluginSynthesizer = SynthesizerBase;
-
-class IWebViewIo {
-public:
-  virtual ~IWebViewIo() = default;
-  virtual void sendMessage(const std::string &message) = 0;
-  virtual void
-  setMessageReceiver(std::function<void(const std::string &)> receiver) = 0;
-};
-
-class IParameterStore {
-public:
-  virtual ~IParameterStore() = default;
-  virtual double get(uint32_t id) = 0;
-  virtual void set(uint32_t id, double value) = 0;
-};
 
 enum class ParameterEditState {
   Begin,

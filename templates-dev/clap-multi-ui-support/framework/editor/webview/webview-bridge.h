@@ -1,5 +1,6 @@
 #pragma once
-#include "../../core/interfaces.h"
+#include "../interfaces.h"
+#include "./webview-io.h"
 
 namespace sonic {
 

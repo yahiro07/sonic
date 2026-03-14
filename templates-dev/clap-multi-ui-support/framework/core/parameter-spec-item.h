@@ -1,9 +1,7 @@
 #pragma once
-#include "../api/synthesizer-base.h"
+#include "./types.h"
 
 namespace sonic {
-
-using ParamId = uint32_t;
 
 enum class ParameterType {
   Unary,

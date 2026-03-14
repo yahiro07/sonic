@@ -1,5 +1,5 @@
 #pragma once
-#include "../../core/interfaces.h"
+#include "./webview-io.h"
 #include <functional>
 #include <memory>
 

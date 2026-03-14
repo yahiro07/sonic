@@ -1,8 +1,16 @@
 #pragma once
-#include "./interfaces.h"
 #include <cstdint>
+#include <unordered_map>
+#include <vector>
 
 namespace sonic {
+
+class IParameterStore {
+public:
+  virtual ~IParameterStore() = default;
+  virtual double get(uint32_t id) = 0;
+  virtual void set(uint32_t id, double value) = 0;
+};
 
 class VectorParameterStore : public IParameterStore {
 private:
