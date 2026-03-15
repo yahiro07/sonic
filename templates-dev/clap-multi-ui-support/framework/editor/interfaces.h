@@ -38,4 +38,18 @@ public:
   getParameterIdByParamKey(std::string paramKey) = 0;
 };
 
+class IEditorInstance {
+public:
+  virtual ~IEditorInstance() = default;
+  virtual void setup(std::string loadTargetSpec) = 0;
+  virtual void teardown() = 0;
+  virtual void attachToParent(void *parent) = 0;
+  virtual void removeFromParent() = 0;
+  virtual void setFrame(int x, int y, int width, int height) = 0;
+};
+
+typedef std::function<std::unique_ptr<IEditorInstance>(
+    IControllerFacade &controllerFacade)>
+    EditorFactoryFn;
+
 } // namespace sonic

@@ -7,9 +7,8 @@
 #include "../../core/parameter-spec-helper.h"
 #include "../../core/parameter-spec-item.h"
 #include "../../core/parameter-store.h"
+#include "../../editor/editor-factory-registry.h"
 #include "../../editor/interfaces.h"
-#include "../../editor/webview/mac-web-view.h"
-#include "../../editor/webview/webview-bridge.h"
 #include "./clap-data-helper.h"
 #include "./events.h"
 #include <atomic>
@@ -470,9 +469,7 @@ private:
   Eventbridge eventBridge{hostCallbackRequester};
   ProcessorAdapter processorAdapter{*synth, eventBridge};
   DomainController domainController{*synth, eventBridge};
-
-  std::unique_ptr<sonic::MacWebView> webView;
-  std::unique_ptr<WebViewBridge> webViewBridge;
+  std::unique_ptr<IEditorInstance> editorInstance;
 
 public:
   EntryControllerImpl(IPluginSynthesizer *synth) : synth(std::move(synth)) {}
@@ -539,43 +536,45 @@ public:
   }
 
   bool guiCreate() override {
-    webView = std::make_unique<sonic::MacWebView>();
     std::string url = synth->getEditorPageUrl();
-    webView->loadUrl(url);
-    auto &controllerFacade = domainController.controllerFacade;
-    auto webViewIo = (IWebViewIo *)webView.get();
-    webViewBridge = std::unique_ptr<WebViewBridge>(
-        WebViewBridge::create(controllerFacade, *webViewIo));
-    webViewBridge->setup();
+    auto variantName = url.substr(0, url.find(":"));
+    if (variantName == "http" || variantName == "https") {
+      variantName = "webview";
+    }
+    printf("guiCreate called, variantName: %s\n", variantName.c_str());
+
+    auto editorFactory =
+        EditorFactoryRegistry::getInstance()->getEditorFactory(variantName);
+    if (!editorFactory) {
+      printf("editor factory not found for variant: %s\n", variantName.c_str());
+      return false;
+    }
+    editorInstance = editorFactory(domainController.controllerFacade);
+    if (variantName == "webview") {
+      editorInstance->setup(url);
+    } else {
+      auto loadTargetSpec = url.substr(url.find(":") + 1);
+      editorInstance->setup(loadTargetSpec);
+    }
     return true;
   }
 
-  void guiDestroy() override {
-    if (webViewBridge) {
-      webViewBridge->teardown();
-      webViewBridge.reset();
-    }
-    if (webView) {
-      webView->setMessageReceiver(nullptr);
-      webView->removeFromParent();
-      webView.reset();
-    }
-  }
+  void guiDestroy() override { editorInstance->teardown(); }
 
   bool guiSetParent(const clap_window_t *window) override {
-    if (!webView) {
+    if (!editorInstance) {
       return false;
     }
     assert(0 == std::strcmp(window->api, CLAP_WINDOW_API_COCOA));
-    webView->attachToParent(window->cocoa);
+    editorInstance->attachToParent(window->cocoa);
     return true;
   }
 
   bool guiSetSize(uint32_t width, uint32_t height) override {
-    if (!webView) {
+    if (!editorInstance) {
       return false;
     }
-    webView->setFrame(0, 0, width, height);
+    editorInstance->setFrame(0, 0, width, height);
     return true;
   }
 

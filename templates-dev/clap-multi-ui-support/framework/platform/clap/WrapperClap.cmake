@@ -15,6 +15,7 @@ target_sources(
   ${NAME}
   PRIVATE editor/webview/mac-web-view.mm
           editor/webview/webview-bridge.cpp
+          editor/webview/webview-editor.cpp
           #
           platform/clap/clap-entry-wrapper.cpp
           platform/clap/clap-rootage.cpp
