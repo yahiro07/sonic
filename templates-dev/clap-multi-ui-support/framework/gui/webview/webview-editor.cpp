@@ -1,7 +1,7 @@
-#include "../editor-factory-registry.h"
+#include "./webview-editor.h"
+#include "../../core/editor-factory-registry.h"
 #include "./mac-web-view.h"
 #include "./webview-bridge.h"
-#include "./webview-editor.h"
 
 namespace sonic {
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "../interfaces.h"
+#include "../../core/editor-interfaces.h"
 #include "./webview-io.h"
 
 namespace sonic {

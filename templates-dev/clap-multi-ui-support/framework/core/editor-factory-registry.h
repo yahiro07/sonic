@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./interfaces.h"
+#include "./editor-interfaces.h"
 #include <map>
 
 namespace sonic {

@@ -1,4 +1,4 @@
-#include "../editor-factory-registry.h"
+#include "../../core/editor-factory-registry.h"
 
 namespace sonic {
 
