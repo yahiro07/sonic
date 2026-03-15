@@ -94,12 +94,14 @@ void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
 }
 
 std::string Project1Synthesizer::getEditorPageUrl() {
-  if (1) {
+  if (0) {
     return "http://localhost:3000?debug=1";
-  } else {
+  } else if (0) {
     return "app://local/index.html?debug=1";
     // app://local is mapped to the resources/www directory
     // return "app://local/index.html";
+  } else {
+    return "microui:default";
   }
 }
 

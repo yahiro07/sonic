@@ -2,6 +2,6 @@
 
 namespace sonic {
 
-void registerNativeEditorFactory();
+void registerMicrouiEditorFactory();
 
 } // namespace sonic
