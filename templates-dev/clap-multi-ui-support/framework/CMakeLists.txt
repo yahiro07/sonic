@@ -1,1 +1,2 @@
-include(platform/clap/WrapperClap.cmake)
+add_subdirectory(gui/webview)
+add_subdirectory(platform/clap)

@@ -8,7 +8,7 @@ set_target_properties(
              BUNDLE True
              BUNDLE_EXTENSION clap)
 
-target_link_libraries(${NAME} PRIVATE plugin wrapper-clap clap)
+target_link_libraries(${NAME} PRIVATE plugin wrapper-clap gui-webview)
 
 if(APPLE)
   if(NOT PROJECT_VERSION)
