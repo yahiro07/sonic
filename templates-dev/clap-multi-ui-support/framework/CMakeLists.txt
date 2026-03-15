@@ -1,2 +1,2 @@
-add_subdirectory(gui/webview)
+add_subdirectory(plugin-view/webview)
 add_subdirectory(platform/clap)

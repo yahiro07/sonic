@@ -1,4 +1,4 @@
-set(NAME gui-webview)
+set(NAME plugin-view-webview)
 
 add_library(${NAME} STATIC)
 

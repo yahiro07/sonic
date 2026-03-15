@@ -43,19 +43,16 @@ public:
 };
 
 void registerWebviewEditorFactory() {
-  static bool registered = false;
-  if (registered) {
-    return;
-  }
-  registered = true;
-
-  EditorFactoryFn factoryFn = [](IControllerFacade &controllerFacade)
-      -> std::unique_ptr<IEditorInstance> {
-    return std::make_unique<WebviewEditorInstance>(controllerFacade);
-  };
-  EditorFactoryRegistry::getInstance()->registerEditorVariant("webview",
-                                                              factoryFn);
-  printf("webview editor factory registered\n");
+  static bool registered = []() {
+    EditorFactoryFn factoryFn = [](IControllerFacade &controllerFacade)
+        -> std::unique_ptr<IEditorInstance> {
+      return std::make_unique<WebviewEditorInstance>(controllerFacade);
+    };
+    EditorFactoryRegistry::getInstance()->registerEditorVariant("webview",
+                                                                factoryFn);
+    printf("webview editor factory registered\n");
+    return true;
+  }();
 }
 
 } // namespace sonic
