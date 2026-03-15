@@ -17,12 +17,12 @@ public:
     editor = sonic_plugin_view_microui::createEditor(window);
   }
 
-  void setup(std::string loadTargetSpec) override {
-    editor->setup();
-    // window.runEventLoop();
-  }
+  void setup(std::string /*loadTargetSpec*/) override { editor->setup(); }
 
-  void teardown() override { editor->dispose(); }
+  void teardown() override {
+    editor->dispose();
+    window.removeFromParent();
+  }
 
   void attachToParent(void *parent) override { window.attachToParent(parent); }
   void removeFromParent() override { window.removeFromParent(); }

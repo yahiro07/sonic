@@ -78,7 +78,6 @@ public:
   virtual IInputProvider &input() = 0;
   virtual IDrawingScreen &screen() = 0;
   virtual IFrameTimer &timer() = 0;
-  virtual void runEventLoop() = 0;
 
   virtual void attachToParent(void *parent) = 0;
   virtual void removeFromParent() = 0;
@@ -93,7 +92,6 @@ public:
   IInputProvider &input() override;
   IDrawingScreen &screen() override;
   IFrameTimer &timer() override;
-  void runEventLoop() override;
 
   void attachToParent(void *parent) override;
   void removeFromParent() override;

@@ -16,12 +16,6 @@ class WindowRepresentorImpl;
 - (instancetype)initWithOwner:(void *)owner frame:(NSRect)frame;
 @end
 
-@interface WindowDelegate : NSObject <NSWindowDelegate> {
-  void *owner_;
-}
-- (instancetype)initWithOwner:(void *)owner;
-@end
-
 namespace sonic_plugin_view_microui {
 namespace {
 
@@ -264,32 +258,52 @@ private:
 class WindowRepresentorImpl {
 public:
   WindowRepresentorImpl() {
-    app_ = [NSApplication sharedApplication];
-    [app_ setActivationPolicy:NSApplicationActivationPolicyRegular];
     timer_.setPostTickCallback([this]() { requestDisplay(); });
 
     NSRect frame = NSMakeRect(0, 0, 400, 300);
-    delegate_ = [[WindowDelegate alloc] initWithOwner:this];
     view_ = [[WindowView alloc] initWithOwner:this frame:frame];
-
-    window_ = [[NSWindow alloc] initWithContentRect:frame
-                                          styleMask:(NSWindowStyleMaskTitled |
-                                                     NSWindowStyleMaskClosable |
-                                                     NSWindowStyleMaskResizable)
-                                            backing:NSBackingStoreBuffered
-                                              defer:NO];
-    [window_ setDelegate:delegate_];
-    [window_ setContentView:view_];
-    [window_ makeKeyAndOrderFront:nil];
-    [app_ activateIgnoringOtherApps:YES];
   }
 
   ~WindowRepresentorImpl() {
     timer_.stop();
-    [window_ orderOut:nil];
+    removeFromParent();
   }
 
-  void runEventLoop() { [app_ run]; }
+  void attachToParent(void *parent) {
+    NSView *parentView = (__bridge NSView *)parent;
+    if (parentView == nil || view_ == nil) {
+      return;
+    }
+
+    if (view_.superview != nil && view_.superview != parentView) {
+      [view_ removeFromSuperview];
+    }
+
+    parent_view_ = parentView;
+    if (view_.superview != parentView) {
+      [parentView addSubview:view_];
+    }
+
+    [view_ setFrame:parentView.bounds];
+    [view_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+    [view_ setNeedsDisplay:YES];
+  }
+
+  void removeFromParent() {
+    current_buttons_ = 0;
+    parent_view_ = nil;
+    if (view_ != nil && view_.superview != nil) {
+      [view_ removeFromSuperview];
+    }
+  }
+
+  void setFrame(int x, int y, int width, int height) {
+    if (view_ == nil) {
+      return;
+    }
+    [view_ setFrame:NSMakeRect(x, y, width, height)];
+    [view_ setNeedsDisplay:YES];
+  }
 
   void requestDisplay() { [view_ setNeedsDisplay:YES]; }
 
@@ -315,10 +329,8 @@ public:
   FrameTimer timer_;
 
 private:
-  NSApplication *app_ = nil;
-  NSWindow *window_ = nil;
+  NSView *parent_view_ = nil;
   WindowView *view_ = nil;
-  WindowDelegate *delegate_ = nil;
   int current_buttons_ = 0;
 };
 
@@ -423,23 +435,6 @@ using namespace sonic_plugin_view_microui;
 
 @end
 
-@implementation WindowDelegate
-
-- (instancetype)initWithOwner:(void *)owner {
-  self = [super init];
-  if (self) {
-    owner_ = owner;
-  }
-  return self;
-}
-
-- (void)windowWillClose:(__unused NSNotification *)notification {
-  static_cast<WindowRepresentorImpl *>(owner_)->timer_.stop();
-  [NSApp terminate:nil];
-}
-
-@end
-
 namespace sonic_plugin_view_microui {
 
 struct WindowRepresentor::Impl : WindowRepresentorImpl {};
@@ -454,6 +449,14 @@ IDrawingScreen &WindowRepresentor::screen() { return impl_->screen_; }
 
 IFrameTimer &WindowRepresentor::timer() { return impl_->timer_; }
 
-void WindowRepresentor::runEventLoop() { impl_->runEventLoop(); }
+void WindowRepresentor::attachToParent(void *parent) {
+  impl_->attachToParent(parent);
+}
+
+void WindowRepresentor::removeFromParent() { impl_->removeFromParent(); }
+
+void WindowRepresentor::setFrame(int x, int y, int width, int height) {
+  impl_->setFrame(x, y, width, height);
+}
 
 } // namespace sonic_plugin_view_microui
