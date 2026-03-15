@@ -9,6 +9,7 @@
 #include "../../core/parameter-store.h"
 #include "../../editor/editor-factory-registry.h"
 #include "../../editor/interfaces.h"
+#include "../../editor/webview/webview-editor.h"
 #include "./clap-data-helper.h"
 #include "./events.h"
 #include <atomic>
@@ -462,6 +463,14 @@ public:
   }
 };
 
+static void registerBuiltinEditorFactories() {
+  static bool registered = false;
+  if (!registered) {
+    registerWebviewEditorFactory();
+    registered = true;
+  }
+}
+
 class EntryControllerImpl : public EntryController {
 private:
   std::unique_ptr<IPluginSynthesizer> synth;
@@ -476,6 +485,7 @@ public:
 
   void initialize() override {
     printf("EntryControllerImpl::initialize called\n");
+    registerBuiltinEditorFactories();
 
     hostCallbackRequester.initialize(host, hostParams);
 

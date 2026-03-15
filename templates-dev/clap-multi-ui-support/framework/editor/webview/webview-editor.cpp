@@ -1,6 +1,7 @@
 #include "../editor-factory-registry.h"
 #include "./mac-web-view.h"
 #include "./webview-bridge.h"
+#include "./webview-editor.h"
 
 namespace sonic {
 
@@ -41,7 +42,13 @@ public:
   }
 };
 
-static bool registerWebviewEditorFactory() {
+void registerWebviewEditorFactory() {
+  static bool registered = false;
+  if (registered) {
+    return;
+  }
+  registered = true;
+
   EditorFactoryFn factoryFn = [](IControllerFacade &controllerFacade)
       -> std::unique_ptr<IEditorInstance> {
     return std::make_unique<WebviewEditorInstance>(controllerFacade);
@@ -49,9 +56,6 @@ static bool registerWebviewEditorFactory() {
   EditorFactoryRegistry::getInstance()->registerEditorVariant("webview",
                                                               factoryFn);
   printf("webview editor factory registered\n");
-  return true;
 }
-
-static bool initialized = registerWebviewEditorFactory();
 
 } // namespace sonic
