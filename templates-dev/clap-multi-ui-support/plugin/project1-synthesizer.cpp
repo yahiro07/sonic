@@ -104,8 +104,3 @@ std::string Project1Synthesizer::getEditorPageUrl() {
 }
 
 } // namespace project1
-
-sonic::SynthesizerBase *createSynthesizerInstance() {
-  printf("project1-synthesizer: createSynthesizerInstance 0655\n");
-  return new project1::Project1Synthesizer();
-}
