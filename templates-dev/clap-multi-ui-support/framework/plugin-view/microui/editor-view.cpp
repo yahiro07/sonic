@@ -16,57 +16,68 @@ Rect toRect(mu_Rect rect) { return Rect{rect.x, rect.y, rect.w, rect.h}; }
 Point toPoint(mu_Vec2 point) { return Point{point.x, point.y}; }
 
 class EditorView final : public IEditor {
+private:
+  IWindowRepresentor &window;
+  sonic::IControllerFacade &controllerFacade;
+  mu_Context context{};
+  float sliderValue = 0.5f;
+  float sliderValue2 = 0.5f;
+  int previousButtons = 0;
+  bool isSetup = false;
+
 public:
-  explicit EditorView(IWindowRepresentor &window) : window_(window) {
-    mu_init(&context_);
-    context_.text_width = &EditorView::measureTextWidth;
-    context_.text_height = &EditorView::measureTextHeight;
-    context_.style->font = this;
+  explicit EditorView(IWindowRepresentor &window,
+                      sonic::IControllerFacade &controllerFacade)
+      : window(window), controllerFacade(controllerFacade) {
+    mu_init(&context);
+    context.text_width = &EditorView::measureTextWidth;
+    context.text_height = &EditorView::measureTextHeight;
+    context.style->font = this;
   }
 
   ~EditorView() override { teardown(); }
 
   void setup() override {
-    if (is_setup_) {
+    if (isSetup) {
       return;
     }
 
-    window_.timer().start([this]() { onTick(); }, 50);
-    window_.input().subscribePointer(
+    window.timer().start([this]() { onTick(); }, 50);
+    window.input().subscribePointer(
         [this](const PointerEvent &event) { onPointer(event); });
-    is_setup_ = true;
+    isSetup = true;
     render();
   }
 
   void teardown() override {
-    if (!is_setup_) {
+    if (!isSetup) {
       return;
     }
 
-    window_.timer().stop();
-    window_.input().unsubscribePointer();
-    is_setup_ = false;
+    window.timer().stop();
+    window.input().unsubscribePointer();
+    isSetup = false;
   }
 
 private:
   static int measureTextWidth(mu_Font font, const char *text, int length) {
     const auto *self = static_cast<const EditorView *>(font);
-    return self->window_.screen().textWidth(text, length);
+    return self->window.screen().textWidth(text, length);
   }
 
   static int measureTextHeight(mu_Font font) {
     const auto *self = static_cast<const EditorView *>(font);
-    return self->window_.screen().textHeight();
+    return self->window.screen().textHeight();
   }
 
   void onTick() { render(); }
 
   void onPointer(const PointerEvent &event) {
-    mu_input_mousemove(&context_, event.position.x, event.position.y);
+    mu_input_mousemove(&context, event.position.x, event.position.y);
 
-    dispatchButtonChanges(previous_buttons_, event.buttons, event.position);
+    dispatchButtonChanges(previousButtons, event.buttons, event.position);
 
-    previous_buttons_ = event.buttons;
+    previousButtons = event.buttons;
     render();
   }
 
@@ -81,10 +92,10 @@ private:
       }
 
       if (isDown) {
-        mu_input_mousedown(&context_, position.x, position.y,
+        mu_input_mousedown(&context, position.x, position.y,
                            toMuMouseButton(mask));
       } else {
-        mu_input_mouseup(&context_, position.x, position.y,
+        mu_input_mouseup(&context, position.x, position.y,
                          toMuMouseButton(mask));
       }
     }
@@ -103,31 +114,31 @@ private:
   }
 
   void render() {
-    auto &screen = window_.screen();
+    auto &screen = window.screen();
     screen.beginFrame();
     screen.clear(Color{51, 51, 51, 255});
 
-    mu_begin(&context_);
+    mu_begin(&context);
 
-    if (mu_begin_window(&context_, "Window", mu_rect(50, 50, 220, 170))) {
-      if (mu_button(&context_, "Button")) {
+    if (mu_begin_window(&context, "Window", mu_rect(50, 50, 220, 170))) {
+      if (mu_button(&context, "Button")) {
       }
 
-      if (mu_button(&context_, "Button2")) {
+      if (mu_button(&context, "Button2")) {
       }
 
-      mu_slider_ex(&context_, &slider_value_, 0.0f, 1.0f, 0, "%.2f",
+      mu_slider_ex(&context, &sliderValue, 0.0f, 1.0f, 0, "%.2f",
                    MU_OPT_ALIGNCENTER);
-      mu_slider_ex(&context_, &slider_value2_, 0.0f, 1.0f, 0, "%.2f",
+      mu_slider_ex(&context, &sliderValue2, 0.0f, 1.0f, 0, "%.2f",
                    MU_OPT_ALIGNCENTER);
-      mu_label(&context_, "Hello microui");
-      mu_end_window(&context_);
+      mu_label(&context, "Hello microui");
+      mu_end_window(&context);
     }
 
-    mu_end(&context_);
+    mu_end(&context);
 
     mu_Command *command = nullptr;
-    while (mu_next_command(&context_, &command)) {
+    while (mu_next_command(&context, &command)) {
       switch (command->type) {
       case MU_COMMAND_RECT:
         screen.drawRect(toRect(command->rect.rect),
@@ -153,19 +164,14 @@ private:
       }
     }
   }
-
-  IWindowRepresentor &window_;
-  mu_Context context_{};
-  float slider_value_ = 0.5f;
-  float slider_value2_ = 0.5f;
-  int previous_buttons_ = 0;
-  bool is_setup_ = false;
 };
 
 } // namespace
 
-std::unique_ptr<IEditor> createEditor(IWindowRepresentor &window) {
-  return std::make_unique<EditorView>(window);
+std::unique_ptr<IEditor>
+createEditor(IWindowRepresentor &window,
+             sonic::IControllerFacade &controllerFacade) {
+  return std::make_unique<EditorView>(window, controllerFacade);
 }
 
 } // namespace sonic_plugin_view_microui

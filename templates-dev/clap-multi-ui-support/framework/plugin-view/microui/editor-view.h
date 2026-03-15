@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "../../core/editor-interfaces.h"
 #include "window-representor.h"
 
 namespace sonic_plugin_view_microui {
@@ -13,6 +14,8 @@ public:
   virtual void teardown() = 0;
 };
 
-std::unique_ptr<IEditor> createEditor(IWindowRepresentor &window);
+std::unique_ptr<IEditor>
+createEditor(IWindowRepresentor &window,
+             sonic::IControllerFacade &controllerFacade);
 
 } // namespace sonic_plugin_view_microui

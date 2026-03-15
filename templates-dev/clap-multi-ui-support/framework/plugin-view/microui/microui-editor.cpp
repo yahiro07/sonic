@@ -14,7 +14,7 @@ class MicrouiEditorInstance : public IEditorInstance {
 public:
   MicrouiEditorInstance(IControllerFacade &controllerFacade)
       : controllerFacade(controllerFacade) {
-    editor = sonic_plugin_view_microui::createEditor(window);
+    editor = sonic_plugin_view_microui::createEditor(window, controllerFacade);
   }
 
   void setup(std::string /*loadTargetSpec*/) override { editor->setup(); }
