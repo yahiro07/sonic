@@ -20,7 +20,7 @@ public:
   void setup(std::string /*loadTargetSpec*/) override { editor->setup(); }
 
   void teardown() override {
-    editor->dispose();
+    editor->teardown();
     window.removeFromParent();
   }
 

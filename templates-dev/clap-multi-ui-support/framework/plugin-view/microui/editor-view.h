@@ -10,7 +10,7 @@ class IEditor {
 public:
   virtual ~IEditor() = default;
   virtual void setup() = 0;
-  virtual void dispose() = 0;
+  virtual void teardown() = 0;
 };
 
 std::unique_ptr<IEditor> createEditor(IWindowRepresentor &window);

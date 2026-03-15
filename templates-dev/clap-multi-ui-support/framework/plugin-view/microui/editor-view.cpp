@@ -24,7 +24,7 @@ public:
     context_.style->font = this;
   }
 
-  ~EditorView() override { dispose(); }
+  ~EditorView() override { teardown(); }
 
   void setup() override {
     if (is_setup_) {
@@ -38,7 +38,7 @@ public:
     render();
   }
 
-  void dispose() override {
+  void teardown() override {
     if (!is_setup_) {
       return;
     }
