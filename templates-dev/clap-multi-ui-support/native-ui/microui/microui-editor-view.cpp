@@ -8,13 +8,60 @@ namespace project1_gui {
 
 using namespace sonic_plugin_view_microui;
 
-Color toColor(mu_Color color) {
-  return Color{color.r, color.g, color.b, color.a};
-}
+class EditorHelper {
+public:
+  static Color toColor(mu_Color color) {
+    return Color{color.r, color.g, color.b, color.a};
+  }
 
-Rect toRect(mu_Rect rect) { return Rect{rect.x, rect.y, rect.w, rect.h}; }
+  static Rect toRect(mu_Rect rect) {
+    return Rect{rect.x, rect.y, rect.w, rect.h};
+  }
 
-Point toPoint(mu_Vec2 point) { return Point{point.x, point.y}; }
+  static Point toPoint(mu_Vec2 point) { return Point{point.x, point.y}; }
+
+  static void sendMicroUiCommandsToScreen(mu_Context &context,
+                                          IDrawingScreen &screen) {
+    mu_Command *command = nullptr;
+    while (mu_next_command(&context, &command)) {
+      switch (command->type) {
+      case MU_COMMAND_RECT:
+        screen.drawRect(toRect(command->rect.rect),
+                        toColor(command->rect.color));
+        break;
+
+      case MU_COMMAND_TEXT:
+        screen.drawText(command->text.str, toPoint(command->text.pos),
+                        toColor(command->text.color));
+        break;
+
+      case MU_COMMAND_ICON:
+        screen.drawIcon(command->icon.id, toRect(command->icon.rect),
+                        toColor(command->icon.color));
+        break;
+
+      case MU_COMMAND_CLIP:
+        screen.applyClip(toRect(command->clip.rect));
+        break;
+
+      default:
+        break;
+      }
+    }
+  }
+
+  static int toMuMouseButton(int mask) {
+    switch (mask) {
+    case PointerButtonRight:
+      return MU_MOUSE_RIGHT;
+    case PointerButtonMiddle:
+      return MU_MOUSE_MIDDLE;
+    case PointerButtonLeft:
+    default:
+      return MU_MOUSE_LEFT;
+    }
+  }
+};
 
 class EditorView final : public sonic_plugin_view_microui::IMicrouiEditor {
 private:
@@ -98,23 +145,11 @@ private:
 
       if (isDown) {
         mu_input_mousedown(&context, position.x, position.y,
-                           toMuMouseButton(mask));
+                           EditorHelper::toMuMouseButton(mask));
       } else {
         mu_input_mouseup(&context, position.x, position.y,
-                         toMuMouseButton(mask));
+                         EditorHelper::toMuMouseButton(mask));
       }
-    }
-  }
-
-  int toMuMouseButton(int mask) const {
-    switch (mask) {
-    case PointerButtonRight:
-      return MU_MOUSE_RIGHT;
-    case PointerButtonMiddle:
-      return MU_MOUSE_MIDDLE;
-    case PointerButtonLeft:
-    default:
-      return MU_MOUSE_LEFT;
     }
   }
 
@@ -141,33 +176,7 @@ private:
     }
 
     mu_end(&context);
-
-    mu_Command *command = nullptr;
-    while (mu_next_command(&context, &command)) {
-      switch (command->type) {
-      case MU_COMMAND_RECT:
-        screen.drawRect(toRect(command->rect.rect),
-                        toColor(command->rect.color));
-        break;
-
-      case MU_COMMAND_TEXT:
-        screen.drawText(command->text.str, toPoint(command->text.pos),
-                        toColor(command->text.color));
-        break;
-
-      case MU_COMMAND_ICON:
-        screen.drawIcon(command->icon.id, toRect(command->icon.rect),
-                        toColor(command->icon.color));
-        break;
-
-      case MU_COMMAND_CLIP:
-        screen.applyClip(toRect(command->clip.rect));
-        break;
-
-      default:
-        break;
-      }
-    }
+    EditorHelper::sendMicroUiCommandsToScreen(context, screen);
   }
 };
 
