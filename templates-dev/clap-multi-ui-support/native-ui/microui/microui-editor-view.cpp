@@ -1,30 +1,84 @@
 #include "./microui-editor-view.h"
 #include "../../framework/plugin-view/microui/microui-view-adapter.h"
+#include <optional>
 
 namespace project1_gui {
 
 using namespace sonic_plugin_view_microui;
+
+struct Parameters {
+  float oscPitch;
+  float oscVolume;
+};
+
+struct BindingItem {
+  uint32_t paramId;
+  float *uiValue;
+  float *cachedValue;
+};
+
+class ParameterBindingHelper {
+private:
+  sonic::IControllerFacade &controllerFacade;
+
+  std::map<std::string, float> cachedParameters;
+
+  std::vector<BindingItem> bindingItems;
+
+public:
+  explicit ParameterBindingHelper(sonic::IControllerFacade &controllerFacade)
+      : controllerFacade(controllerFacade) {
+    auto paramDefs = controllerFacade.getParameterSpecs();
+    for (const auto &paramDef : paramDefs) {
+      cachedParameters[paramDef.paramKey] = paramDef.defaultValue;
+    }
+  }
+
+  void bindFloat(float *parameterValue, std::string paramKey) {
+    auto _paramId = controllerFacade.getParameterIdByParamKey(paramKey);
+    if (_paramId == std::nullopt)
+      return;
+    auto paramId = *_paramId;
+
+    BindingItem bindingItem{
+        .paramId = paramId,
+        .uiValue = parameterValue,
+        .cachedValue = &cachedParameters[paramKey],
+    };
+    *bindingItem.uiValue = *bindingItem.cachedValue;
+
+    bindingItems.push_back(bindingItem);
+  }
+
+  void sync() {
+    for (const auto &bindingItem : bindingItems) {
+      if (*bindingItem.uiValue != *bindingItem.cachedValue) {
+        controllerFacade.applyParameterEditFromUi(
+            bindingItem.paramId, *bindingItem.uiValue,
+            sonic::ParameterEditState::Perform);
+        *bindingItem.cachedValue = *bindingItem.uiValue;
+      }
+    }
+  }
+};
 
 class EditorView : public IMicrouiEditor {
 private:
   IWindowRepresentor &window;
   mu_Context context{};
   MicrouiViewAdaptor viewAdaptor{window, context};
-
   sonic::IControllerFacade &controllerFacade;
+  ParameterBindingHelper binder{controllerFacade};
 
-  float sliderValue = 0.5f;
-  float sliderValue2 = 0.5f;
+  Parameters parameters;
 
 public:
   explicit EditorView(IWindowRepresentor &window,
                       sonic::IControllerFacade &controllerFacade)
       : window(window), controllerFacade(controllerFacade) {
     mu_init(&context);
-    // for (const auto &paramItem : controllerFacade.getParameterSpecs()) {
-    //   printf("parameter id: %u, key: %s\n", paramItem.id,
-    //          paramItem.paramKey.c_str());
-    // }
+    binder.bindFloat(&parameters.oscPitch, "oscPitch");
+    binder.bindFloat(&parameters.oscVolume, "oscVolume");
   }
 
   ~EditorView() override { teardown(); }
@@ -50,9 +104,9 @@ public:
       if (mu_button(&context, "Button2")) {
       }
 
-      mu_slider_ex(&context, &sliderValue, 0.0f, 1.0f, 0, "%.2f",
+      mu_slider_ex(&context, &parameters.oscPitch, 0.0f, 1.0f, 0, "%.2f",
                    MU_OPT_ALIGNCENTER);
-      mu_slider_ex(&context, &sliderValue2, 0.0f, 1.0f, 0, "%.2f",
+      mu_slider_ex(&context, &parameters.oscVolume, 0.0f, 1.0f, 0, "%.2f",
                    MU_OPT_ALIGNCENTER);
       mu_label(&context, "Hello microui");
       mu_end_window(&context);
@@ -60,6 +114,8 @@ public:
 
     mu_end(&context);
     EditorHelper::sendMicroUiCommandsToScreen(context, screen);
+
+    binder.sync();
   }
 };
 
