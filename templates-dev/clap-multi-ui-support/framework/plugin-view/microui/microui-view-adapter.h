@@ -1,3 +1,5 @@
+#pragma once
+
 #include "./window-representor.h"
 #include <functional>
 
