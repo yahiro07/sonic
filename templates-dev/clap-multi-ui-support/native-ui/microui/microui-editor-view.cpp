@@ -63,8 +63,32 @@ public:
   }
 };
 
+class TextSizeProvider {
+  IWindowRepresentor &window;
+
+public:
+  TextSizeProvider(IWindowRepresentor &window) : window(window) {}
+
+  void setup(mu_Context &context) {
+    context.text_width = &TextSizeProvider::measureTextWidth;
+    context.text_height = &TextSizeProvider::measureTextHeight;
+    context.style->font = this;
+  }
+
+  static int measureTextWidth(mu_Font font, const char *text, int length) {
+    const auto *self = static_cast<const TextSizeProvider *>(font);
+    return self->window.screen().textWidth(text, length);
+  }
+
+  static int measureTextHeight(mu_Font font) {
+    const auto *self = static_cast<const TextSizeProvider *>(font);
+    return self->window.screen().textHeight();
+  }
+};
+
 class EditorView final : public sonic_plugin_view_microui::IMicrouiEditor {
 private:
+  TextSizeProvider textSizeProvider;
   IWindowRepresentor &window;
   sonic::IControllerFacade &controllerFacade;
   mu_Context context{};
@@ -76,11 +100,10 @@ private:
 public:
   explicit EditorView(IWindowRepresentor &window,
                       sonic::IControllerFacade &controllerFacade)
-      : window(window), controllerFacade(controllerFacade) {
+      : textSizeProvider(window), window(window),
+        controllerFacade(controllerFacade) {
     mu_init(&context);
-    context.text_width = &EditorView::measureTextWidth;
-    context.text_height = &EditorView::measureTextHeight;
-    context.style->font = this;
+    textSizeProvider.setup(context);
     // for (const auto &paramItem : controllerFacade.getParameterSpecs()) {
     //   printf("parameter id: %u, key: %s\n", paramItem.id,
     //          paramItem.paramKey.c_str());
@@ -112,16 +135,6 @@ public:
   }
 
 private:
-  static int measureTextWidth(mu_Font font, const char *text, int length) {
-    const auto *self = static_cast<const EditorView *>(font);
-    return self->window.screen().textWidth(text, length);
-  }
-
-  static int measureTextHeight(mu_Font font) {
-    const auto *self = static_cast<const EditorView *>(font);
-    return self->window.screen().textHeight();
-  }
-
   void onTick() { render(); }
 
   void onPointer(const PointerEvent &event) {
