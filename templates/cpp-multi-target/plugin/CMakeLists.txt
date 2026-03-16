@@ -1,3 +1,5 @@
+project(plugin LANGUAGES CXX)
+
 add_library(plugin STATIC)
 
 target_sources(plugin PRIVATE project1-synthesizer.cpp project1-factory.cpp)

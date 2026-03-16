@@ -2,6 +2,8 @@
 #include <Foundation/Foundation.h>
 #import <WebKit/WebKit.h>
 
+#import "../../../framework/plugin-view/webview/webview-editor.h"
+
 #if !__has_feature(objc_arc)
 #error "this code requires ARC. Enable -fobjc-arc for Objective-C sources."
 #endif
@@ -49,6 +51,7 @@
 - (void)ensureInitialized {
   if (self.audioUnit && !self.viewFrame) {
     printf("AudioUnitViewController initialize\n");
+    sonic::registerWebviewEditorFactory();
     self.viewFrame = [[WrapperAuv3ViewFrame alloc] init];
     [self.viewFrame connectViewToAudioUnit:self.audioUnit viewController:self];
   }

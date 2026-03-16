@@ -2,10 +2,10 @@ CompileFlags:
   CompilationDatabase: build
 ---
 If:
-  PathMatch: ^xcode-project/Project1/Project1Extension/.*\.m$
+  PathMatch: ^xcode-project/Project1/Project1Extension/.*\.mm$
 CompileFlags:
   Add:
-    - -xobjective-c
+    - -xobjective-c++
     - -fobjc-arc
     - -fobjc-weak
 ---

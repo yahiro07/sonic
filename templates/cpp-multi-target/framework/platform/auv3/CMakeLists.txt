@@ -22,4 +22,5 @@ set_target_properties(
              XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
              XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_WEAK YES)
 
-target_link_libraries(wrapper-auv3 PRIVATE plugin-view-webview)
+# target_link_libraries( wrapper-auv3 PUBLIC plugin-view-webview "-framework
+# AudioToolbox" "-framework AVFoundation" "-framework CoreAudioKit")

@@ -332,6 +332,7 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
   }
 
   if (_editorInstance) {
+    _editorInstance->removeFromParent();
     _editorInstance->teardown();
     _editorInstance.reset();
   }
