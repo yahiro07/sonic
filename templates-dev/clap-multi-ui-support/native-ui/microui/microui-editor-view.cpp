@@ -21,6 +21,7 @@ private:
   sonic::IControllerFacade &controllerFacade;
   ParameterBindingHelper binder{controllerFacade};
 
+  bool noteState = false;
   Parameters parameters;
 
 public:
@@ -51,13 +52,19 @@ public:
     mu_begin(&context);
 
     if (mu_begin_window(&context, "Window", mu_rect(50, 50, 220, 170))) {
-      if (mu_button(&context, "Button")) {
+
+      mu_label(&context, "Hello microui");
+
+      if (mu_button(&context, "Note(60)")) {
+        noteState = !noteState;
+        if (noteState) {
+          controllerFacade.requestNoteOn(60, 1.0f);
+        } else {
+          controllerFacade.requestNoteOff(60);
+        }
       }
 
-      if (mu_button(&context, "Button2")) {
-      }
-
-      mu_checkbox(&context, "Checkbox", &parameters.oscEnabled);
+      mu_checkbox(&context, "Enabled", &parameters.oscEnabled);
       mu_slider_ex(&context, &parameters.oscWave, 0.0f, 3.0f, 0, "%.2f",
                    MU_OPT_ALIGNCENTER);
 
@@ -65,7 +72,6 @@ public:
                    MU_OPT_ALIGNCENTER);
       mu_slider_ex(&context, &parameters.oscVolume, 0.0f, 1.0f, 0, "%.2f",
                    MU_OPT_ALIGNCENTER);
-      mu_label(&context, "Hello microui");
       mu_end_window(&context);
     }
 
