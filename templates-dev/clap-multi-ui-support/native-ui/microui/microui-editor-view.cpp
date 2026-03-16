@@ -86,55 +86,39 @@ public:
   }
 };
 
-class EditorView final : public sonic_plugin_view_microui::IMicrouiEditor {
+class MicrouiViewAdaptor {
 private:
-  TextSizeProvider textSizeProvider;
   IWindowRepresentor &window;
-  sonic::IControllerFacade &controllerFacade;
-  mu_Context context{};
-  float sliderValue = 0.5f;
-  float sliderValue2 = 0.5f;
+  TextSizeProvider textSizeProvider;
+  mu_Context &context;
   int previousButtons = 0;
+  std::function<void()> render;
   bool isSetup = false;
 
 public:
-  explicit EditorView(IWindowRepresentor &window,
-                      sonic::IControllerFacade &controllerFacade)
-      : textSizeProvider(window), window(window),
-        controllerFacade(controllerFacade) {
-    mu_init(&context);
-    textSizeProvider.setup(context);
-    // for (const auto &paramItem : controllerFacade.getParameterSpecs()) {
-    //   printf("parameter id: %u, key: %s\n", paramItem.id,
-    //          paramItem.paramKey.c_str());
-    // }
-  }
+  MicrouiViewAdaptor(IWindowRepresentor &window, mu_Context &context)
+      : window(window), textSizeProvider(window), context(context) {}
 
-  ~EditorView() override { teardown(); }
-
-  void setup() override {
-    if (isSetup) {
-      return;
-    }
-
-    window.timer().start([this]() { onTick(); }, 50);
-    window.input().subscribePointer(
-        [this](const PointerEvent &event) { onPointer(event); });
-    isSetup = true;
-    render();
-  }
-
-  void teardown() override {
+  void setup(std::function<void()> render) {
     if (!isSetup) {
-      return;
+      this->render = render;
+      textSizeProvider.setup(context);
+      window.input().subscribePointer(
+          [this](const PointerEvent &event) { onPointer(event); });
+      window.timer().start([this]() { onTick(); }, 50);
+      isSetup = true;
     }
-
-    window.timer().stop();
-    window.input().unsubscribePointer();
-    isSetup = false;
   }
 
-private:
+  void teardown() {
+    if (isSetup) {
+      render = nullptr;
+      window.input().unsubscribePointer();
+      window.timer().stop();
+      isSetup = false;
+    }
+  }
+
   void onTick() { render(); }
 
   void onPointer(const PointerEvent &event) {
@@ -165,6 +149,37 @@ private:
       }
     }
   }
+};
+
+class EditorView final : public sonic_plugin_view_microui::IMicrouiEditor {
+private:
+  MicrouiViewAdaptor viewAdaptor;
+  IWindowRepresentor &window;
+  sonic::IControllerFacade &controllerFacade;
+  mu_Context context{};
+  float sliderValue = 0.5f;
+  float sliderValue2 = 0.5f;
+
+public:
+  explicit EditorView(IWindowRepresentor &window,
+                      sonic::IControllerFacade &controllerFacade)
+      : window(window), controllerFacade(controllerFacade),
+        viewAdaptor(window, context) {
+    mu_init(&context);
+    // for (const auto &paramItem : controllerFacade.getParameterSpecs()) {
+    //   printf("parameter id: %u, key: %s\n", paramItem.id,
+    //          paramItem.paramKey.c_str());
+    // }
+  }
+
+  ~EditorView() override { teardown(); }
+
+  void setup() override {
+    viewAdaptor.setup([this]() { render(); });
+    render();
+  }
+
+  void teardown() override { viewAdaptor.teardown(); }
 
   void render() {
     auto &screen = window.screen();
