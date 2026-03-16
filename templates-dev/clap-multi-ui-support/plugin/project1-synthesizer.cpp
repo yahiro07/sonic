@@ -11,8 +11,8 @@ enum ParameterAddress {
 };
 
 void Project1Synthesizer::setupParameters(sonic::ParameterBuilder &builder) {
-  builder.addUnary(kOscEnabled, "gain", "Gain", 0.1);
-  builder.addEnum(kOscWave, "waveType", "Wave Type", "saw",
+  builder.addBool(kOscEnabled, "oscEnabled", "Enabled", true);
+  builder.addEnum(kOscWave, "oscWave", "Waveform", "saw",
                   {"saw", "square", "triangle", "sine"});
   builder.addUnary(kOscPitch, "oscPitch", "Pitch", 0.5);
   builder.addUnary(kOscVolume, "oscVolume", "Volume", 0.5);

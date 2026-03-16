@@ -1,5 +1,6 @@
 #include "./microui-editor-view.h"
 #include "../../framework/plugin-view/microui/microui-view-adapter.h"
+#include <cmath>
 #include <optional>
 
 namespace project1_gui {
@@ -7,34 +8,27 @@ namespace project1_gui {
 using namespace sonic_plugin_view_microui;
 
 struct Parameters {
+  int oscEnabled;
+  float oscWave;
   float oscPitch;
   float oscVolume;
 };
 
 struct BindingItem {
   uint32_t paramId;
-  float &uiValue;
-  float &cachedValue;
+  std::function<float()> getUiValue;
+  float cachedValue;
 };
 
 class ParameterBindingHelper {
 private:
   sonic::IControllerFacade &controllerFacade;
 
-  std::map<std::string, float> cachedParameters;
+  std::map<std::string, float> initialParameters;
 
   std::vector<BindingItem> bindingItems;
 
-public:
-  explicit ParameterBindingHelper(sonic::IControllerFacade &controllerFacade)
-      : controllerFacade(controllerFacade) {
-    auto paramDefs = controllerFacade.getParameterSpecs();
-    for (const auto &paramDef : paramDefs) {
-      cachedParameters[paramDef.paramKey] = paramDef.defaultValue;
-    }
-  }
-
-  void bindFloat(float &parameterValue, std::string paramKey) {
+  void bindParamFn(std::string paramKey, std::function<float()> getUiValue) {
     auto _paramId = controllerFacade.getParameterIdByParamKey(paramKey);
     if (_paramId == std::nullopt)
       return;
@@ -42,21 +36,39 @@ public:
 
     BindingItem bindingItem{
         .paramId = paramId,
-        .uiValue = parameterValue,
-        .cachedValue = cachedParameters[paramKey],
+        .getUiValue = getUiValue,
+        .cachedValue = getUiValue(),
     };
-    bindingItem.uiValue = bindingItem.cachedValue;
 
     bindingItems.push_back(bindingItem);
   }
 
+public:
+  explicit ParameterBindingHelper(sonic::IControllerFacade &controllerFacade)
+      : controllerFacade(controllerFacade) {
+    auto paramDefs = controllerFacade.getParameterSpecs();
+    for (const auto &paramDef : paramDefs) {
+      initialParameters[paramDef.paramKey] = paramDef.defaultValue;
+    }
+  }
+
+  void bindFloat(float &value, std::string paramKey) {
+    value = initialParameters[paramKey];
+    bindParamFn(paramKey, [&value]() { return value; });
+  }
+
+  void bindInt(int &value, std::string paramKey) {
+    value = (int)roundf(initialParameters[paramKey]);
+    bindParamFn(paramKey, [&value]() { return (float)value; });
+  }
+
   void sync() {
-    for (const auto &bindingItem : bindingItems) {
-      if (bindingItem.uiValue != bindingItem.cachedValue) {
+    for (auto &bindingItem : bindingItems) {
+      auto newValue = bindingItem.getUiValue();
+      if (newValue != bindingItem.cachedValue) {
         controllerFacade.applyParameterEditFromUi(
-            bindingItem.paramId, bindingItem.uiValue,
-            sonic::ParameterEditState::Perform);
-        bindingItem.cachedValue = bindingItem.uiValue;
+            bindingItem.paramId, newValue, sonic::ParameterEditState::Perform);
+        bindingItem.cachedValue = newValue;
       }
     }
   }
@@ -77,6 +89,8 @@ public:
                       sonic::IControllerFacade &controllerFacade)
       : window(window), controllerFacade(controllerFacade) {
     mu_init(&context);
+    binder.bindInt(parameters.oscEnabled, "oscEnabled");
+    binder.bindFloat(parameters.oscWave, "oscWave");
     binder.bindFloat(parameters.oscPitch, "oscPitch");
     binder.bindFloat(parameters.oscVolume, "oscVolume");
   }
@@ -103,6 +117,10 @@ public:
 
       if (mu_button(&context, "Button2")) {
       }
+
+      mu_checkbox(&context, "Checkbox", &parameters.oscEnabled);
+      mu_slider_ex(&context, &parameters.oscWave, 0.0f, 3.0f, 0, "%.2f",
+                   MU_OPT_ALIGNCENTER);
 
       mu_slider_ex(&context, &parameters.oscPitch, 0.0f, 1.0f, 0, "%.2f",
                    MU_OPT_ALIGNCENTER);
