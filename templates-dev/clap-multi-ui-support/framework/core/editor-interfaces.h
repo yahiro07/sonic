@@ -1,5 +1,6 @@
 #pragma once
 #include "../core/types.h"
+#include "./parameter-spec-item.h"
 #include <functional>
 #include <map>
 #include <optional>
@@ -36,6 +37,8 @@ public:
   virtual std::optional<std::string> getParameterKeyById(ParamId id) = 0;
   virtual std::optional<ParamId>
   getParameterIdByParamKey(std::string paramKey) = 0;
+
+  virtual const ParameterSpecArray &getParameterSpecs() = 0;
 };
 
 class IEditorInstance {

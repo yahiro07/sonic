@@ -34,6 +34,10 @@ public:
     context.text_width = &EditorView::measureTextWidth;
     context.text_height = &EditorView::measureTextHeight;
     context.style->font = this;
+    // for (const auto &paramItem : controllerFacade.getParameterSpecs()) {
+    //   printf("parameter id: %u, key: %s\n", paramItem.id,
+    //          paramItem.paramKey.c_str());
+    // }
   }
 
   ~EditorView() override { teardown(); }

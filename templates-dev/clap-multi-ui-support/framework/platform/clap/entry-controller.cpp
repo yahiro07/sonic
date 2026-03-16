@@ -110,6 +110,10 @@ public:
     }
     return std::nullopt;
   }
+
+  const ParameterSpecArray &getParameterSpecs() {
+    return parametersRegistry.getParameterItems();
+  }
 };
 
 class NoteService {
@@ -171,6 +175,10 @@ public:
   }
   std::optional<std::string> getParameterKeyById(ParamId id) override {
     return parameterService.getParameterKeyById(id);
+  }
+
+  const ParameterSpecArray &getParameterSpecs() override {
+    return parameterService.getParameterSpecs();
   }
 };
 
