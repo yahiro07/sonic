@@ -1,6 +1,6 @@
 #pragma once
 #include "../../../common/listener-port.h"
-#include "../../../domain/interfaces.h"
+#include "../../../core/editor-interfaces.h"
 #include "./note-service.h"
 #include "./parameters-service.h"
 
@@ -16,7 +16,7 @@ public:
       : parameterService(parameterService), noteService(noteService) {}
 
   int subscribeParameterChange(
-      std::function<void(const std::string, double)> callback) override {
+      std::function<void(ParamId paramId, double)> callback) override {
     return parameterService.subscribeToParameterChanges(callback);
   }
 
@@ -24,12 +24,12 @@ public:
     parameterService.unsubscribeFromParameterChanges(token);
   }
 
-  void applyParameterEditFromUi(std::string paramKey, double value,
+  void applyParameterEditFromUi(ParamId paramId, double value,
                                 ParameterEditState editState) override {
-    parameterService.applyParameterEditFromUi(paramKey, value, editState);
+    parameterService.applyParameterEditFromUi(paramId, value, editState);
   }
 
-  void getAllParameters(std::map<std::string, double> &parameters) override {
+  void getAllParameters(std::map<ParamId, double> &parameters) override {
     parameterService.getAllParameters(parameters);
   }
 
@@ -50,6 +50,18 @@ public:
 
   void incrementViewCount() override {}
   void decrementViewCount() override {}
+
+  std::optional<ParamId>
+  getParameterIdByParamKey(std::string paramKey) override {
+    return parameterService.getParameterIdByParamKey(paramKey);
+  }
+  std::optional<std::string> getParameterKeyById(ParamId id) override {
+    return parameterService.getParameterKeyById(id);
+  }
+
+  const ParameterSpecArray &getParameterSpecs() override {
+    return parameterService.getParameterSpecs();
+  }
 };
 
 } // namespace sonic

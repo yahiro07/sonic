@@ -1,13 +1,13 @@
 #pragma once
 #include "../../../api/synthesizer-base.h"
 #include "../../../common/spsc-queue.h"
+#include "../../../core/editor-interfaces.h"
 #include "../../../core/parameter-builder-impl.h"
 #include "../../../core/parameter-registry.h"
-#include "../../../domain/interfaces.h"
-#include "../../../domain/parameters-store.h"
-#include "../logic/note-service.h"
+#include "../../../core/parameter-store.h"
 #include "./controller-facade.h"
 #include "./events.h"
+#include "./note-service.h"
 #include "./parameters-service.h"
 #include <cstdlib>
 #include <cstring>
@@ -33,7 +33,7 @@ private:
   ParameterService parameterService;
   NoteService noteService;
   ControllerFacade controllerFacade;
-  ParametersStore parametersStore; // parameters in audio thread
+  ParameterStore parameterStore; // parameters in audio thread
 
   SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
   SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
@@ -55,19 +55,19 @@ public:
   void initialize() {
     auto parameterItems = parametersRegistry.getParameterItems();
     auto maxId = getMaxIdFromParameterItems(parameterItems);
-    parametersStore.setup(maxId);
+    parameterStore.setup(maxId);
     for (const auto &item : parameterItems) {
-      parametersStore.set(item.id, item.defaultValue);
+      parameterStore.set(item.id, item.defaultValue);
     }
     parameterTreeWrapper.setImplementorValueObserver(
         [this](uint64_t address, double value) {
           auto id = (int32_t)address;
-          this->parametersStore.set(id, value);
+          this->parameterStore.set(id, value);
           this->synth.setParameter(id, value);
         });
     parameterTreeWrapper.setImplementorValueProvider([this](uint64_t address) {
       auto id = (int32_t)address;
-      return parametersStore.get(id);
+      return parameterStore.get(id);
     });
 
     noteService.noteRequestPort.subscribe(

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../../../core/editor-interfaces.h"
 #include "../../../core/parameter-registry.h"
-#include "../../../domain/interfaces.h"
 #include "../support/parameter-tree-wrapper.h"
 #include <map>
 
@@ -9,25 +9,20 @@ namespace sonic {
 
 class ParameterService {
 private:
-  ParameterTreeWrapper &_parameterTreeWrapper;
-  ParameterRegistry &_parameterRegistry;
+  ParameterTreeWrapper &parameterTreeWrapper;
+  ParameterRegistry &parameterRegistry;
   void *ptObserverToken = nullptr;
 
-  std::map<int, std::function<void(std::string, double)>> listeners;
+  std::map<int, std::function<void(ParamId, double)>> listeners;
   int nextListenerToken = 0;
 
   void startObserve() {
 
-    ptObserverToken = _parameterTreeWrapper.tokenByAddingParameterObserver(
+    ptObserverToken = parameterTreeWrapper.tokenByAddingParameterObserver(
         [this](uint64_t address, double value) {
-          auto id = (int32_t)address;
-          auto item = _parameterRegistry.getParameterItemById(id);
-          if (!item) {
-            return;
-          }
-          auto paramKey = item->paramKey;
+          auto paramId = (int32_t)address;
           for (const auto &[token, listener] : listeners) {
-            listener(paramKey, value);
+            listener(paramId, value);
           }
         });
     printf("startObserve, observerToken: %p\n", ptObserverToken);
@@ -35,7 +30,7 @@ private:
 
   void stopObserve() {
     if (ptObserverToken) {
-      _parameterTreeWrapper.removeParameterObserver(ptObserverToken);
+      parameterTreeWrapper.removeParameterObserver(ptObserverToken);
       ptObserverToken = nullptr;
     }
   }
@@ -43,13 +38,13 @@ private:
 public:
   ParameterService(ParameterTreeWrapper &parameterTreeWrapper,
                    ParameterRegistry &parameterRegistry)
-      : _parameterTreeWrapper(parameterTreeWrapper),
-        _parameterRegistry(parameterRegistry) {}
+      : parameterTreeWrapper(parameterTreeWrapper),
+        parameterRegistry(parameterRegistry) {}
 
   ~ParameterService() { stopObserve(); }
 
   int subscribeToParameterChanges(
-      std::function<void(std::string, double)> listener) {
+      std::function<void(ParamId, double)> listener) {
     int token = nextListenerToken++;
     listeners[token] = listener;
     if (listeners.size() == 1) {
@@ -65,42 +60,61 @@ public:
     }
   }
 
-  void applyParameterEditFromUi(std::string paramKey, double value,
+  void applyParameterEditFromUi(ParamId id, double value,
                                 ParameterEditState editState) {
-    auto idPtr = _parameterRegistry.getIdByParamKey(paramKey);
-    if (idPtr == std::nullopt) {
-      return;
-    }
-    auto id = *idPtr;
     if (editState == ParameterEditState::Begin) {
-      auto currentValue = _parameterTreeWrapper.getParameterValue(id);
-      _parameterTreeWrapper.setParameterValue(
+      auto currentValue = parameterTreeWrapper.getParameterValue(id);
+      parameterTreeWrapper.setParameterValue(
           id, currentValue, ptObserverToken,
           ParameterAutomationEventType::Touch);
     } else if (editState == ParameterEditState::End) {
-      auto currentValue = _parameterTreeWrapper.getParameterValue(id);
-      _parameterTreeWrapper.setParameterValue(
+      auto currentValue = parameterTreeWrapper.getParameterValue(id);
+      parameterTreeWrapper.setParameterValue(
           id, currentValue, ptObserverToken,
           ParameterAutomationEventType::Release);
     } else if (editState == ParameterEditState::Perform) {
-      _parameterTreeWrapper.setParameterValue(
+      parameterTreeWrapper.setParameterValue(
           id, value, ptObserverToken, ParameterAutomationEventType::Value);
     } else if (editState == ParameterEditState::InstantChange) {
-      _parameterTreeWrapper.setParameterValue(
+      parameterTreeWrapper.setParameterValue(
           id, value, ptObserverToken, ParameterAutomationEventType::Touch);
-      _parameterTreeWrapper.setParameterValue(
+      parameterTreeWrapper.setParameterValue(
           id, value, ptObserverToken, ParameterAutomationEventType::Value);
-      _parameterTreeWrapper.setParameterValue(
+      parameterTreeWrapper.setParameterValue(
           id, value, ptObserverToken, ParameterAutomationEventType::Release);
     }
   }
 
-  void getAllParameters(std::map<std::string, double> &parameters) {
-    auto parameterItems = _parameterRegistry.getParameterItems();
+  void getAllParameters(std::map<ParamId, double> &parameters) {
+    auto parameterItems = parameterRegistry.getParameterItems();
     for (const auto &item : parameterItems) {
-      auto value = parameters[item.paramKey] =
-          _parameterTreeWrapper.getParameterValue(item.id);
+      auto value = parameters[item.id] =
+          parameterTreeWrapper.getParameterValue(item.id);
     }
+  }
+
+  std::optional<ParamId> getParameterIdByParamKey(std::string paramKey) {
+    auto parameterItems = parameterRegistry.getParameterItems();
+    for (const auto &item : parameterItems) {
+      if (item.paramKey == paramKey) {
+        return item.id;
+      }
+    }
+    return std::nullopt;
+  }
+
+  std::optional<std::string> getParameterKeyById(ParamId id) {
+    auto parameterItems = parameterRegistry.getParameterItems();
+    for (const auto &item : parameterItems) {
+      if (item.id == id) {
+        return item.paramKey;
+      }
+    }
+    return std::nullopt;
+  }
+
+  const ParameterSpecArray &getParameterSpecs() {
+    return parameterRegistry.getParameterItems();
   }
 };
 

@@ -1,8 +1,9 @@
 #import "./wrapper-auv3-root.h"
 #import "../../api/synthesizer-base.h"
 #import "../../common/logger.h"
-#import "../../common/mac-web-view.h"
-#import "../../domain/webview-bridge.h"
+#include "../../core/editor-factory-registry.h"
+#import "../../core/editor-interfaces.h"
+// #include "../../plugin-view/webview/webview-editor.h"
 #import "./logic/entry-controller.h"
 #import "./support/au-parameter-helper.h"
 #import "./support/parameter-tree-wrapper.h"
@@ -100,10 +101,8 @@ using namespace sonic;
                                               busses:@[]];
 }
 
-- (void)getDesiredEditorSize:(uint32_t *)width height:(uint32_t *)height {
-  if (_synth) {
-    _synth->getDesiredEditorSize(*width, *height);
-  }
+- (SynthesizerBase *)getSynthesizerInstance {
+  return _synth.get();
 }
 
 - (AUAudioUnitBusArray *)outputBusses {
@@ -228,12 +227,12 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
     return;
   }
 
-  __weak typeof(self) weakSelf = self;
+  __weak __typeof__(self) weakSelf = self;
   self.eventTimer = [NSTimer
       timerWithTimeInterval:1.0 / 60.0
                     repeats:YES
                       block:^(NSTimer *_Nonnull timer) {
-                        __strong typeof(weakSelf) strongSelf = weakSelf;
+                        __strong __typeof__(weakSelf) strongSelf = weakSelf;
                         if (!strongSelf) {
                           [timer invalidate];
                           return;
@@ -261,13 +260,38 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 //------------------------------------------------------------
 
 @interface WrapperAuv3ViewFrame () {
-  std::unique_ptr<MacWebView> _webView;
-  std::unique_ptr<WebViewBridge> _webViewBridge;
+  std::unique_ptr<IEditorInstance> _editorInstance;
   WrapperAuv3AudioUnit *_audioUnit;
 }
 @end
 
 @implementation WrapperAuv3ViewFrame
+
+static std::unique_ptr<IEditorInstance>
+setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
+  auto variantName = url.substr(0, url.find(":"));
+  if (variantName == "http" || variantName == "https") {
+    variantName = "webview";
+  }
+  printf("setupEditorInstance called, variantName: %s\n", variantName.c_str());
+
+  // void registerWebviewEditorFactory();
+
+  auto editorFactory =
+      EditorFactoryRegistry::getInstance()->getEditorFactory(variantName);
+  if (!editorFactory) {
+    printf("editor factory not found for variant: %s\n", variantName.c_str());
+    return nullptr;
+  }
+  auto editorInstance = editorFactory(controllerFacade);
+  if (variantName == "webview") {
+    editorInstance->setup(url);
+  } else {
+    auto loadTargetSpec = url.substr(url.find(":") + 1);
+    editorInstance->setup(loadTargetSpec);
+  }
+  return editorInstance;
+}
 
 - (void)connectViewToAudioUnit:(WrapperAuv3AudioUnit *)audioUnit
                 viewController:(AUViewController *)viewController {
@@ -282,22 +306,16 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   root.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   root.autoresizesSubviews = YES;
 
-  if (!_webView) {
-    _webView = std::make_unique<MacWebView>();
-    _webView->attachToParent((__bridge void *)root);
-    _webView->loadUrl("http://localhost:3000");
-  }
-  if (!_webViewBridge) {
-    auto controllerFacade = [audioUnit getControllerFacade];
-    auto webViewIo = (IWebViewIo *)_webView.get();
-    _webViewBridge = std::unique_ptr<WebViewBridge>(
-        WebViewBridge::create(*controllerFacade, *webViewIo));
-    _webViewBridge->setup();
-  }
+  auto synth = [audioUnit getSynthesizerInstance];
+  auto controllerFacade = [audioUnit getControllerFacade];
+
+  auto url = synth->getEditorPageUrl();
+  _editorInstance = setupEditorInstance(url, *controllerFacade);
+  _editorInstance->attachToParent((__bridge void *)root);
 
   uint32_t width = 0;
   uint32_t height = 0;
-  [audioUnit getDesiredEditorSize:&width height:&height];
+  synth->getDesiredEditorSize(width, height);
   if (width && height) {
     viewController.preferredContentSize = NSMakeSize(width, height);
   }
@@ -313,13 +331,9 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
     _audioUnit = nil;
   }
 
-  if (_webViewBridge) {
-    _webViewBridge->teardown();
-    _webViewBridge.reset();
-  }
-  if (_webView) {
-    _webView->removeFromParent();
-    _webView.reset();
+  if (_editorInstance) {
+    _editorInstance->teardown();
+    _editorInstance.reset();
   }
 }
 

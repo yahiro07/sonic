@@ -16,7 +16,7 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
   if (variantName == "http" || variantName == "https") {
     variantName = "webview";
   }
-  printf("guiCreate called, variantName: %s\n", variantName.c_str());
+  printf("setupEditorInstance called, variantName: %s\n", variantName.c_str());
 
   auto editorFactory =
       EditorFactoryRegistry::getInstance()->getEditorFactory(variantName);

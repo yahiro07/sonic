@@ -1,11 +1,18 @@
 CompileFlags:
   CompilationDatabase: build
-
 ---
 If:
   PathMatch: ^xcode-project/Project1/Project1Extension/.*\.m$
 CompileFlags:
   Add:
     - -xobjective-c
+    - -fobjc-arc
+    - -fobjc-weak
+---
+If:
+  PathMatch: ^framework/platform/auv3/.*\.mm$
+CompileFlags:
+  Add:
+    - -xobjective-c++
     - -fobjc-arc
     - -fobjc-weak
