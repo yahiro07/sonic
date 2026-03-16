@@ -1,4 +1,4 @@
-#include "../lib/api/synthesizer-base.h"
+#include "../framework/api/synthesizer-base.h"
 #include <math.h>
 
 namespace project1 {

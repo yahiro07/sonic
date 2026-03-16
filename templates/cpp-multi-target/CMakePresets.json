@@ -13,11 +13,12 @@
     },
     {
       "name": "ninja-template-dev",
-      "inherits": ["ninja"],
+      "inherits": [
+        "ninja"
+      ],
       "cacheVariables": {
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "SMTG_RUN_VST_VALIDATOR": "OFF",
-	      "SONIC_USE_LOCAL_SDK": "ON"
+        "SONIC_USE_LOCAL_SDK": "ON"
       }
     }
   ],
