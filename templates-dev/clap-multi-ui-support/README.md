@@ -8,7 +8,7 @@ It's adding Extensible UI adapter layer to integrate arbitral UI framework or li
 
 - CLAP targeted (for development easiness)
 - tested on MacOS (Apple Silicon)
-- `microui` could integrated, but the wrapping layer is still verbose. It's required more easy-to-use wrapper.
+- `microui` has integrated to test the gui adapter layer works.
 
 ## how to build and run
 
@@ -17,5 +17,3 @@ It's adding Extensible UI adapter layer to integrate arbitral UI framework or li
   cmake --build --preset ninja-debug
   sh ./run.sh
 ```
-
-
