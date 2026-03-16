@@ -13,8 +13,8 @@ struct Parameters {
 
 struct BindingItem {
   uint32_t paramId;
-  float *uiValue;
-  float *cachedValue;
+  float &uiValue;
+  float &cachedValue;
 };
 
 class ParameterBindingHelper {
@@ -34,7 +34,7 @@ public:
     }
   }
 
-  void bindFloat(float *parameterValue, std::string paramKey) {
+  void bindFloat(float &parameterValue, std::string paramKey) {
     auto _paramId = controllerFacade.getParameterIdByParamKey(paramKey);
     if (_paramId == std::nullopt)
       return;
@@ -43,20 +43,20 @@ public:
     BindingItem bindingItem{
         .paramId = paramId,
         .uiValue = parameterValue,
-        .cachedValue = &cachedParameters[paramKey],
+        .cachedValue = cachedParameters[paramKey],
     };
-    *bindingItem.uiValue = *bindingItem.cachedValue;
+    bindingItem.uiValue = bindingItem.cachedValue;
 
     bindingItems.push_back(bindingItem);
   }
 
   void sync() {
     for (const auto &bindingItem : bindingItems) {
-      if (*bindingItem.uiValue != *bindingItem.cachedValue) {
+      if (bindingItem.uiValue != bindingItem.cachedValue) {
         controllerFacade.applyParameterEditFromUi(
-            bindingItem.paramId, *bindingItem.uiValue,
+            bindingItem.paramId, bindingItem.uiValue,
             sonic::ParameterEditState::Perform);
-        *bindingItem.cachedValue = *bindingItem.uiValue;
+        bindingItem.cachedValue = bindingItem.uiValue;
       }
     }
   }
@@ -77,8 +77,8 @@ public:
                       sonic::IControllerFacade &controllerFacade)
       : window(window), controllerFacade(controllerFacade) {
     mu_init(&context);
-    binder.bindFloat(&parameters.oscPitch, "oscPitch");
-    binder.bindFloat(&parameters.oscVolume, "oscVolume");
+    binder.bindFloat(parameters.oscPitch, "oscPitch");
+    binder.bindFloat(parameters.oscVolume, "oscVolume");
   }
 
   ~EditorView() override { teardown(); }
