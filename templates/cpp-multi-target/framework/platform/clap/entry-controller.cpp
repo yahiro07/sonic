@@ -130,7 +130,13 @@ public:
     return true;
   }
 
-  void guiDestroy() override { editorInstance->teardown(); }
+  void guiDestroy() override {
+    if (editorInstance) {
+      editorInstance->removeFromParent();
+      editorInstance->teardown();
+      editorInstance.reset();
+    }
+  }
 
   bool guiSetParent(const clap_window_t *window) override {
     if (!editorInstance) {

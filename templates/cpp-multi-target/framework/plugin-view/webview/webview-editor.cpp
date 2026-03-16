@@ -29,7 +29,6 @@ public:
       webViewBridge.reset();
     }
     webView.setMessageReceiver(nullptr);
-    webView.removeFromParent();
   }
 
   virtual void attachToParent(void *parent) override {
