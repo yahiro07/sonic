@@ -1,26 +1,40 @@
+#include "microui-editor.h"
 #include "../../core/editor-factory-registry.h"
-#include "./editor-view.h"
 #include "./window-representor.h"
+#include <memory>
 
 namespace sonic_plugin_view_microui {
 
 using namespace sonic;
 
+static std::map<std::string, MicrouiEditorFactoryFn> factoryMap;
+
 class MicrouiEditorInstance : public IEditorInstance {
   IControllerFacade &controllerFacade;
   WindowRepresentor window;
-  std::unique_ptr<IEditor> editor;
+  std::unique_ptr<IMicrouiEditor> editor;
 
 public:
   MicrouiEditorInstance(IControllerFacade &controllerFacade)
-      : controllerFacade(controllerFacade) {
-    editor = sonic_plugin_view_microui::createEditor(window, controllerFacade);
+      : controllerFacade(controllerFacade) {}
+
+  void setup(std::string loadTargetSpec) override {
+    auto factoryFn = factoryMap.at(loadTargetSpec);
+    if (!factoryFn) {
+      printf("microui editor factory not found for %s\n",
+             loadTargetSpec.c_str());
+      return;
+    }
+    editor = std::unique_ptr<IMicrouiEditor>(
+        std::move(factoryFn(window, controllerFacade)));
+    editor->setup();
   }
 
-  void setup(std::string /*loadTargetSpec*/) override { editor->setup(); }
-
   void teardown() override {
-    editor->teardown();
+    if (editor) {
+      editor->teardown();
+      editor.reset();
+    }
     window.removeFromParent();
   }
 
@@ -32,11 +46,12 @@ public:
   }
 };
 
-} // namespace sonic_plugin_view_microui
+void registerMicrouiEditorFactory(
+    std::string name,
+    sonic_plugin_view_microui::MicrouiEditorFactoryFn factoryFn) {
 
-namespace sonic {
+  factoryMap[name] = factoryFn;
 
-void registerMicrouiEditorFactory() {
   static bool registered = []() {
     EditorFactoryFn factoryFn = [](IControllerFacade &controllerFacade)
         -> std::unique_ptr<IEditorInstance> {
@@ -50,4 +65,4 @@ void registerMicrouiEditorFactory() {
   }();
 }
 
-} // namespace sonic
+} // namespace sonic_plugin_view_microui

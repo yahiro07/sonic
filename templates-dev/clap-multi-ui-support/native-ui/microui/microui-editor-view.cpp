@@ -1,11 +1,12 @@
-#include "editor-view.h"
+#include "./microui-editor-view.h"
 
 extern "C" {
-#include "microui.h"
+#include "../../framework/plugin-view/microui/microui.h"
 }
 
-namespace sonic_plugin_view_microui {
-namespace {
+namespace project1_gui {
+
+using namespace sonic_plugin_view_microui;
 
 Color toColor(mu_Color color) {
   return Color{color.r, color.g, color.b, color.a};
@@ -15,7 +16,7 @@ Rect toRect(mu_Rect rect) { return Rect{rect.x, rect.y, rect.w, rect.h}; }
 
 Point toPoint(mu_Vec2 point) { return Point{point.x, point.y}; }
 
-class EditorView final : public IEditor {
+class EditorView final : public sonic_plugin_view_microui::IMicrouiEditor {
 private:
   IWindowRepresentor &window;
   sonic::IControllerFacade &controllerFacade;
@@ -166,12 +167,10 @@ private:
   }
 };
 
-} // namespace
-
-std::unique_ptr<IEditor>
-createEditor(IWindowRepresentor &window,
-             sonic::IControllerFacade &controllerFacade) {
-  return std::make_unique<EditorView>(window, controllerFacade);
+sonic_plugin_view_microui::IMicrouiEditor *
+createMicrouiEditor(sonic_plugin_view_microui::IWindowRepresentor &window,
+                    sonic::IControllerFacade &controllerFacade) {
+  return new EditorView(window, controllerFacade);
 }
 
-} // namespace sonic_plugin_view_microui
+} // namespace project1_gui

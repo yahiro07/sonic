@@ -9,7 +9,7 @@ set_target_properties(
              BUNDLE_EXTENSION clap)
 
 target_link_libraries(${NAME} PRIVATE plugin wrapper-clap plugin-view-webview
-                                      plugin-view-microui)
+                                      plugin-view-microui native-ui-microui)
 
 if(APPLE)
   if(NOT PROJECT_VERSION)
