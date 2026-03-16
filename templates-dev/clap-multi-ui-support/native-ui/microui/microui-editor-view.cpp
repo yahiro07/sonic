@@ -1,22 +1,25 @@
 #include "./microui-editor-view.h"
-#include "./microui-view-adapter.h"
+#include "../../framework/plugin-view/microui/microui-view-adapter.h"
 
 namespace project1_gui {
 
-class EditorView final : public sonic_plugin_view_microui::IMicrouiEditor {
+using namespace sonic_plugin_view_microui;
+
+class EditorView : public IMicrouiEditor {
 private:
-  MicrouiViewAdaptor viewAdaptor;
   IWindowRepresentor &window;
-  sonic::IControllerFacade &controllerFacade;
   mu_Context context{};
+  MicrouiViewAdaptor viewAdaptor{window, context};
+
+  sonic::IControllerFacade &controllerFacade;
+
   float sliderValue = 0.5f;
   float sliderValue2 = 0.5f;
 
 public:
   explicit EditorView(IWindowRepresentor &window,
                       sonic::IControllerFacade &controllerFacade)
-      : window(window), controllerFacade(controllerFacade),
-        viewAdaptor(window, context) {
+      : window(window), controllerFacade(controllerFacade) {
     mu_init(&context);
     // for (const auto &paramItem : controllerFacade.getParameterSpecs()) {
     //   printf("parameter id: %u, key: %s\n", paramItem.id,

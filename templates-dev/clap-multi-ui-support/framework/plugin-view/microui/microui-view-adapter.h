@@ -1,14 +1,11 @@
-#include "./microui-editor-view.h"
+#include "./window-representor.h"
+#include <functional>
 
 extern "C" {
-#include "../../framework/plugin-view/microui/microui.h"
+#include "./microui.h"
 }
 
-namespace project1_gui {
-
-// todo: apply pimpl
-
-using namespace sonic_plugin_view_microui;
+namespace sonic_plugin_view_microui {
 
 class EditorHelper {
 public:
@@ -97,30 +94,7 @@ private:
   std::function<void()> render;
   bool isSetup = false;
 
-public:
-  MicrouiViewAdaptor(IWindowRepresentor &window, mu_Context &context)
-      : window(window), textSizeProvider(window), context(context) {}
-
-  void setup(std::function<void()> render) {
-    if (!isSetup) {
-      this->render = render;
-      textSizeProvider.setup(context);
-      window.input().subscribePointer(
-          [this](const PointerEvent &event) { onPointer(event); });
-      window.timer().start([this]() { onTick(); }, 50);
-      isSetup = true;
-    }
-  }
-
-  void teardown() {
-    if (isSetup) {
-      render = nullptr;
-      window.input().unsubscribePointer();
-      window.timer().stop();
-      isSetup = false;
-    }
-  }
-
+private:
   void onTick() { render(); }
 
   void onPointer(const PointerEvent &event) {
@@ -151,6 +125,29 @@ public:
       }
     }
   }
-};
 
-} // namespace project1_gui
+public:
+  MicrouiViewAdaptor(IWindowRepresentor &window, mu_Context &context)
+      : window(window), textSizeProvider(window), context(context) {}
+
+  void setup(std::function<void()> render) {
+    if (!isSetup) {
+      this->render = render;
+      textSizeProvider.setup(context);
+      window.input().subscribePointer(
+          [this](const PointerEvent &event) { onPointer(event); });
+      window.timer().start([this]() { onTick(); }, 50);
+      isSetup = true;
+    }
+  }
+
+  void teardown() {
+    if (isSetup) {
+      render = nullptr;
+      window.input().unsubscribePointer();
+      window.timer().stop();
+      isSetup = false;
+    }
+  }
+};
+} // namespace sonic_plugin_view_microui
