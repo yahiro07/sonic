@@ -2,8 +2,7 @@
 
 #include "../../../common/logger.h"
 #include "../../../core/parameter-registry.h"
-#include "../../../core/parameter-spec-item.h"
-#include "../../../domain/parameters-store.h"
+#include "../../../core/parameter-store.h"
 #include "../support/event-message-bus.h"
 #include "../vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
@@ -22,7 +21,7 @@ private:
   std::unique_ptr<SynthesizerBase> synthInstance{
       gPluginFactoryGlobalHolder.synthInstantiateFn()};
   ParameterRegistry parameterRegistry;
-  ParametersStore parametersStore;
+  ParameterStore parameterStore;
   ProcessorSideMessagePort processorSideMessagePort{*this};
   SPSCQueue<UpstreamEvent, 256> upstreamEventQueue;
   SPSCQueue<DownstreamEvent, 256> downstreamEventQueue;

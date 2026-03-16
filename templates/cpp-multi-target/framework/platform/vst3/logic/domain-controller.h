@@ -4,19 +4,19 @@
 #include "../../../common/listener-port.h"
 #include "../../../core/parameter-registry.h"
 #include "../../../core/parameter-spec-helper.h"
-#include "../../../domain/parameters-store.h"
+#include "../../../core/parameter-store.h"
 #include "./interfaces.h"
 #include "./parameters-initializer.h"
 
 namespace sonic {
 
 class ParametersHub {
-  ParametersStore &parametersStore;
+  ParameterStore &parameterStore;
 
 public:
   ParametersHub(ParameterRegistry &parametersRegistry,
-                ParametersStore &parametersStore)
-      : parametersStore(parametersStore) {}
+                ParameterStore &parameterStore)
+      : parameterStore(parameterStore) {}
 
   SingleListenerPort<ParamId, double, ParameterEditState>
       parameterEditFromUiPort;
@@ -26,19 +26,19 @@ public:
                           ParameterEditState editState) {
     if (editState == ParameterEditState::Perform ||
         editState == ParameterEditState::InstantChange) {
-      parametersStore.set(id, value);
+      parameterStore.set(id, value);
     } else {
-      value = parametersStore.get(id);
+      value = parameterStore.get(id);
     }
     parameterEditFromUiPort.call(id, value, editState);
   }
 
   void setParameterFromController(ParamId id, double value) {
-    parametersStore.set(id, value);
+    parameterStore.set(id, value);
     parameterChangeFromControllerPort.call(id, value);
   }
 
-  double getParameterValue(ParamId id) { return parametersStore.get(id); }
+  double getParameterValue(ParamId id) { return parameterStore.get(id); }
 };
 
 class ParameterService {
@@ -50,37 +50,36 @@ public:
                    ParametersHub &parametersHub)
       : parametersRegistry(parametersRegistry), parametersHub(parametersHub) {}
 
-  int subscribeParameterChanges(
-      std::function<void(std::string, double)> listener) {
+  int subscribeParameterChanges(std::function<void(ParamId, double)> listener) {
     int token = parametersHub.parameterChangeFromControllerPort.subscribe(
-        [this, listener](int id, double value) {
-          auto item = parametersRegistry.getParameterItemById(id);
-          if (!item) {
-            return;
-          }
-          auto paramKey = item->paramKey;
-          listener(paramKey, value);
-        });
+        [this, listener](int id, double value) { listener(id, value); });
     return token;
   }
   void unsubscribeParameterChanges(int token) {
     parametersHub.parameterChangeFromControllerPort.unsubscribe(token);
   }
 
-  void applyParameterEditFromUi(std::string paramKey, double value,
+  void applyParameterEditFromUi(ParamId paramId, double value,
                                 ParameterEditState editState) {
-    auto idPtr = parametersRegistry.getIdByParamKey(paramKey);
-    if (idPtr == std::nullopt) {
-      return;
-    }
-    auto id = *idPtr;
-    parametersHub.setParameterFromUi(id, value, editState);
+    parametersHub.setParameterFromUi(paramId, value, editState);
   }
-  void getAllParameters(std::map<std::string, double> &parameters) {
+  void getAllParameters(std::map<ParamId, double> &parameters) {
     auto parameterItems = parametersRegistry.getParameterItems();
     for (const auto &item : parameterItems) {
-      parameters[item.paramKey] = parametersHub.getParameterValue(item.id);
+      parameters[item.id] = parametersHub.getParameterValue(item.id);
     }
+  }
+
+  std::optional<std::string> getParameterKeyById(ParamId id) {
+    return parametersRegistry.getParamKeyById(id);
+  }
+
+  std::optional<ParamId> getParameterIdByParamKey(std::string paramKey) {
+    return parametersRegistry.getIdByParamKey(paramKey);
+  }
+
+  const ParameterSpecArray &getParameterSpecs() {
+    return parametersRegistry.getParameterItems();
   }
 };
 
@@ -137,7 +136,7 @@ public:
   ControllerFacade &operator=(ControllerFacade &&) = delete;
 
   int subscribeParameterChange(
-      std::function<void(const std::string, double)> callback) override {
+      std::function<void(ParamId, double)> callback) override {
     return parameterService.subscribeParameterChanges(callback);
   }
 
@@ -145,12 +144,12 @@ public:
     parameterService.unsubscribeParameterChanges(token);
   }
 
-  void applyParameterEditFromUi(std::string paramKey, double value,
+  void applyParameterEditFromUi(ParamId id, double value,
                                 ParameterEditState editState) override {
-    parameterService.applyParameterEditFromUi(paramKey, value, editState);
+    parameterService.applyParameterEditFromUi(id, value, editState);
   }
 
-  void getAllParameters(std::map<std::string, double> &parameters) override {
+  void getAllParameters(std::map<ParamId, double> &parameters) override {
     parameterService.getAllParameters(parameters);
   }
 
@@ -182,12 +181,24 @@ public:
       mainLoopTimer.stop();
     }
   }
+
+  std::optional<std::string> getParameterKeyById(ParamId id) override {
+    return parameterService.getParameterKeyById(id);
+  }
+  std::optional<ParamId>
+  getParameterIdByParamKey(std::string paramKey) override {
+    return parameterService.getParameterIdByParamKey(paramKey);
+  }
+
+  const ParameterSpecArray &getParameterSpecs() override {
+    return parameterService.getParameterSpecs();
+  }
 };
 
 class DomainController {
   SynthesizerBase &synth;
   ParameterRegistry parametersRegistry;
-  ParametersStore parametersStore;
+  ParameterStore parametersStore;
   IControllerParameterPortal &controllerParameterPortal;
   ParametersHub parametersHub{parametersRegistry, parametersStore};
   ParameterNormalizationConverter parameterNormalizationConverter{

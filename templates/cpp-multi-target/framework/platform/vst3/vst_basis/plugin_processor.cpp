@@ -22,7 +22,7 @@ tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
 
   getAudioOutput(0)->setFlags(Vst::BusInfo::kDefaultActive);
 
-  initializeParameters(*synthInstance, parameterRegistry, parametersStore);
+  initializeParameters(*synthInstance, parameterRegistry, parameterStore);
 
   return kResultOk;
 }
@@ -56,7 +56,7 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
               ParameterSpecHelper::getUnnormalized(paramItem, value);
           // logger.log("parameter %d received in audio thread %f %f",
           //                    paramId, value, unnormalizedValue);
-          parametersStore.set(paramId, unnormalizedValue);
+          parameterStore.set(paramId, unnormalizedValue);
           synthInstance->setParameter(paramId, unnormalizedValue);
         }
       }
@@ -166,7 +166,7 @@ tresult PLUGIN_API PluginProcessor::getState(IBStream *state) {
   ProcessorState processorState{};
   processorState.parametersVersion = kParametersVersion;
   for (auto item : parameterRegistry.getParameterItems()) {
-    auto value = parametersStore.get(item.id);
+    auto value = parameterStore.get(item.id);
     processorState.parameters[item.paramKey] = value;
   }
 
@@ -187,7 +187,7 @@ tresult PLUGIN_API PluginProcessor::setState(IBStream *state) {
     auto paramItem = parameterRegistry.getParameterItemByParamKey(kv.first);
     if (!paramItem)
       continue;
-    parametersStore.set(paramItem->id, kv.second);
+    parameterStore.set(paramItem->id, kv.second);
     synthInstance->setParameter(paramItem->id, kv.second);
   }
 

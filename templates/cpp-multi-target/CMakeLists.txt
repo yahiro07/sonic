@@ -83,12 +83,12 @@ set(VST3_SDK_ROOT "${SMTG_VST3_LOCATION_DIR}")
 
 # ----------------
 
-# add_subdirectory(framework/platform/vst3)
+add_subdirectory(framework/platform/vst3)
 add_subdirectory(framework/platform/clap)
 # add_subdirectory(framework/platform/auv3)
 add_subdirectory(framework/plugin-view/webview)
 
 add_subdirectory(plugin)
 
-# add_subdirectory(variants/vst3)
+add_subdirectory(variants/vst3)
 add_subdirectory(variants/clap)

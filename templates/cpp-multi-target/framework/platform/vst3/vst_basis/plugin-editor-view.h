@@ -1,6 +1,8 @@
 #pragma once
-#include "../../../common/mac-web-view.h"
-#include "../../../domain/webview-bridge.h"
+#include "../../../core/editor-factory-registry.h"
+#include "../../../core/editor-interfaces.h"
+#include "pluginterfaces/base/funknown.h"
+#include <memory>
 #include <public.sdk/source/vst/vsteditcontroller.h>
 
 namespace vst_basis {
@@ -8,11 +10,34 @@ namespace vst_basis {
 using namespace sonic;
 using namespace Steinberg;
 
+static std::unique_ptr<IEditorInstance>
+setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
+  auto variantName = url.substr(0, url.find(":"));
+  if (variantName == "http" || variantName == "https") {
+    variantName = "webview";
+  }
+  printf("guiCreate called, variantName: %s\n", variantName.c_str());
+
+  auto editorFactory =
+      EditorFactoryRegistry::getInstance()->getEditorFactory(variantName);
+  if (!editorFactory) {
+    printf("editor factory not found for variant: %s\n", variantName.c_str());
+    return nullptr;
+  }
+  auto editorInstance = editorFactory(controllerFacade);
+  if (variantName == "webview") {
+    editorInstance->setup(url);
+  } else {
+    auto loadTargetSpec = url.substr(url.find(":") + 1);
+    editorInstance->setup(loadTargetSpec);
+  }
+  return editorInstance;
+}
+
 class PluginEditorView : public Vst::EditorView {
 private:
-  MacWebView webView;
+  std::unique_ptr<IEditorInstance> editorInstance;
   ViewRect viewRect{0, 0, 900, 600};
-  std::unique_ptr<WebViewBridge> webViewBridge;
 
 public:
   PluginEditorView(Vst::EditController *controller,
@@ -21,20 +46,13 @@ public:
       : Vst::EditorView(controller) {
     printf("WebViewEditorView::WebViewEditorView\n");
 
-    webView.loadUrl(editorPageUrl);
-    auto webViewIo = static_cast<IWebViewIo *>(&webView);
-    webViewBridge = std::unique_ptr<WebViewBridge>(
-        WebViewBridge::create(controllerFacade, *webViewIo));
-    webViewBridge->setup();
+    editorInstance = setupEditorInstance(editorPageUrl, controllerFacade);
   }
 
   ~PluginEditorView() override {
     printf("WebViewEditorView::~WebViewEditorView\n");
-    if (webViewBridge) {
-      webViewBridge->teardown();
-      webViewBridge.reset();
-    }
-    webView.removeFromParent();
+    editorInstance->teardown();
+    editorInstance.reset();
   }
 
   tresult PLUGIN_API isPlatformTypeSupported(FIDString type) override {
@@ -47,10 +65,10 @@ public:
   tresult PLUGIN_API attached(void *parent, FIDString type) override {
     printf("WebViewEditorView::attached: %p, %s\n", parent, type);
     if (FIDStringsEqual(type, kPlatformTypeNSView)) {
-      webView.attachToParent(parent);
-      webView.setFrame(viewRect.left, viewRect.top,
-                       viewRect.right - viewRect.left,
-                       viewRect.bottom - viewRect.top);
+      editorInstance->attachToParent(parent);
+      editorInstance->setFrame(viewRect.left, viewRect.top,
+                               viewRect.right - viewRect.left,
+                               viewRect.bottom - viewRect.top);
       return kResultOk;
     }
     return kResultFalse;
@@ -69,7 +87,9 @@ public:
   }
   tresult PLUGIN_API removed() override {
     printf("WebViewEditorView::removed\n");
-    webView.removeFromParent();
+    if (!editorInstance)
+      return kResultFalse;
+    editorInstance->removeFromParent();
     return kResultOk;
   }
 
@@ -80,9 +100,11 @@ public:
     printf("WebViewEditorView::onSize: %d, %d, %d, %d\n", newSize->left,
            newSize->top, newSize->right, newSize->bottom);
     viewRect = *newSize;
-    webView.setFrame(newSize->left, newSize->top,
-                     newSize->right - newSize->left,
-                     newSize->bottom - newSize->top);
+    if (!editorInstance)
+      return kResultFalse;
+    editorInstance->setFrame(newSize->left, newSize->top,
+                             newSize->right - newSize->left,
+                             newSize->bottom - newSize->top);
     return kResultOk;
   }
 };

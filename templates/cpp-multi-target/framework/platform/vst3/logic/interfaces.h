@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../domain/interfaces.h"
+#include "../../../core/editor-interfaces.h"
 #include "./events.h"
 #include <functional>
 
