@@ -1,9 +1,6 @@
 #pragma once
 
-#include <briq/editor.h>
-
-#include "../../framework/core/editor-interfaces.h"
-#include "../../framework/plugin-view/briq/briq-editor.h"
+#include <sonic/plugin-view/briq/briq-editor.h>
 
 namespace project1_gui_briq {
 

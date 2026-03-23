@@ -1,11 +1,9 @@
 
-#include "../framework/plugin-view/microui/microui-editor.h"
-#include "../framework/plugin-view/webview/webview-editor.h"
 #include "../native-ui/briq/briq-editor-view.h"
 #include "../native-ui/microui/microui-editor-view.h"
 #include "project1-synthesizer.h"
-#include <briq/editor.h>
-#include <stdio.h>
+#include <sonic/plugin-view/microui/microui-editor.h>
+#include <sonic/plugin-view/webview/webview-editor.h>
 
 sonic::SynthesizerBase *createSynthesizerInstance() {
   printf("project1-synthesizer: createSynthesizerInstance 0655\n");

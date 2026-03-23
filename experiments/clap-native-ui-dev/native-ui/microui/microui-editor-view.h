@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../framework/core/editor-interfaces.h"
-#include "../../framework/plugin-view/microui/microui-editor.h"
-#include "../../framework/plugin-view/microui/window-representor.h"
+#include <sonic/core/editor-interfaces.h>
+#include <sonic/plugin-view/microui/microui-editor.h>
+#include <sonic/plugin-view/microui/window-representor.h>
 
 namespace project1_gui {
 

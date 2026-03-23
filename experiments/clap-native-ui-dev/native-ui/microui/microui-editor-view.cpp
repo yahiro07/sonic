@@ -1,6 +1,6 @@
 #include "./microui-editor-view.h"
-#include "../../framework/plugin-view/microui/microui-view-adapter.h"
-#include "../../framework/plugin-view/microui/parameter-binding-helper.h"
+#include <sonic/plugin-view/microui/microui-view-adapter.h>
+#include <sonic/plugin-view/microui/parameter-binding-helper.h>
 
 namespace project1_gui {
 
