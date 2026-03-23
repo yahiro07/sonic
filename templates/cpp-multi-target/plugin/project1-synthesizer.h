@@ -1,5 +1,5 @@
-#include "../framework/api/synthesizer-base.h"
 #include <math.h>
+#include <sonic/api/synthesizer-base.h>
 
 namespace project1 {
 

@@ -7,7 +7,7 @@ if(APPLE)
                     ${VST3_SDK_ROOT}/public.sdk/source/main/moduleinit.cpp)
 endif()
 
-target_link_libraries(${NAME} PRIVATE plugin sonic_vst sdk plugin-view-webview)
+target_link_libraries(${NAME} PRIVATE plugin sonic_vst plugin-view-webview)
 
 set_target_properties(
   ${NAME}

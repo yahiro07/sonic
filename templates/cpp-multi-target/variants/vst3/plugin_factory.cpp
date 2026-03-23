@@ -1,7 +1,7 @@
-#include "../framework/api/synthesizer-base.h"
-#include "../framework/platform/vst3/vst_basis/plugin_controller.h"
-#include "../framework/platform/vst3/vst_basis/plugin_processor.h"
-#include "../framework/platform/vst3/vst_entry/vst_entry_wrapper.h"
+#include <sonic/api/synthesizer-base.h>
+#include <sonic/platform/vst3/vst_basis/plugin_controller.h>
+#include <sonic/platform/vst3/vst_basis/plugin_processor.h>
+#include <sonic/platform/vst3/vst_entry/vst_entry_wrapper.h>
 
 static sonic_vst::PluginMeta pluginMeta{
     .name = "MyPlugin",

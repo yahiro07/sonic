@@ -14,4 +14,4 @@ set_source_files_properties(mac-web-view.mm PROPERTIES COMPILE_FLAGS
 
 target_link_libraries(${NAME} PUBLIC "-framework Cocoa" "-framework WebKit")
 
-target_link_libraries(${NAME} PRIVATE glaze::glaze)
+target_link_libraries(${NAME} PRIVATE glaze::glaze sonic-headers)

@@ -26,4 +26,8 @@ set_source_files_properties(
   ${VST3_SDK_ROOT}/public.sdk/source/vst/hosting/module_mac.mm
   PROPERTIES COMPILE_FLAGS "-fobjc-arc")
 
-target_link_libraries(${NAME} PRIVATE sdk "-framework Cocoa" glaze::glaze)
+# target_link_libraries(${NAME} PRIVATE sdk "-framework Cocoa" glaze::glaze)
+
+target_link_libraries(${NAME} PRIVATE glaze::glaze)
+
+target_link_libraries(${NAME} PUBLIC sdk sonic-headers)

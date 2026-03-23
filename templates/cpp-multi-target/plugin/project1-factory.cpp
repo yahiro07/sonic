@@ -1,6 +1,6 @@
 
-#include "../framework/plugin-view/webview/webview-editor.h"
 #include "project1-synthesizer.h"
+#include <sonic/plugin-view/webview/webview-editor.h>
 #include <stdio.h>
 
 sonic::SynthesizerBase *createSynthesizerInstance() {
