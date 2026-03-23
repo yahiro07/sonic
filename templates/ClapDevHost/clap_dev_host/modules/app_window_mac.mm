@@ -113,7 +113,7 @@ void AppWindowMac::show() {
                                       backing:NSBackingStoreBuffered
                                         defer:NO];
 
-    [window setTitle:@"VST Dev Host"];
+    [window setTitle:@"Clap Dev Host"];
     [window center];
     NSView *contentView = [[NSView alloc]
         initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)];
