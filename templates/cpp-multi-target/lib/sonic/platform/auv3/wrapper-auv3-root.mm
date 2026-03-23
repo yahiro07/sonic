@@ -274,8 +274,6 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
   }
   printf("setupEditorInstance called, variantName: %s\n", variantName.c_str());
 
-  // void registerWebviewEditorFactory();
-
   auto editorFactory =
       EditorFactoryRegistry::getInstance()->getEditorFactory(variantName);
   if (!editorFactory) {

@@ -2,7 +2,7 @@
 
 set(NAME plugin-view-webview)
 
-add_library(${NAME} STATIC)
+add_library(${NAME} OBJECT)
 
 # target_compile_features(${NAME} PRIVATE cxx_std_23)
 
