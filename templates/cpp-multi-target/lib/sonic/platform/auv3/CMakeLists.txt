@@ -26,4 +26,4 @@ set_target_properties(
 # target_link_libraries( wrapper-auv3 PUBLIC plugin-view-webview "-framework
 # AudioToolbox" "-framework AVFoundation" "-framework CoreAudioKit")
 
-target_link_libraries(${NAME} PRIVATE sonic-headers)
+# target_link_libraries(${NAME} PRIVATE sonic-headers)
