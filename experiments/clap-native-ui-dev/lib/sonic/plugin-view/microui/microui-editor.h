@@ -11,8 +11,8 @@ public:
   virtual void teardown() = 0;
 };
 
-typedef IMicrouiEditor *(*MicrouiEditorFactoryFn)(
-    IWindowRepresentor &window, sonic::IControllerFacade &controllerFacade);
+using MicrouiEditorFactoryFn = std::function<IMicrouiEditor *(
+    IWindowRepresentor &window, sonic::IControllerFacade &controllerFacade)>;
 
 void registerMicrouiEditorFactory(
     std::string name,

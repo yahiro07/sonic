@@ -9,7 +9,11 @@ sonic::SynthesizerBase *createSynthesizerInstance() {
   printf("project1-synthesizer: createSynthesizerInstance 0655\n");
   sonic::registerWebviewEditorFactory();
   sonic_plugin_view_microui::registerMicrouiEditorFactory(
-      "default", project1_gui::createMicrouiEditor);
+      "default", [](sonic_plugin_view_microui::IWindowRepresentor &window,
+                    sonic::IControllerFacade &controllerFacade) {
+        return new project1_gui_microui::MicrouiEditorView(window,
+                                                           controllerFacade);
+      });
 
   sonic_plugin_view_briq::registerBriqEditorFactory(
       "default", [](briq::EditorIntegration &editorIntegration,

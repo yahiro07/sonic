@@ -2,12 +2,42 @@
 
 #include <sonic/core/editor-interfaces.h>
 #include <sonic/plugin-view/microui/microui-editor.h>
-#include <sonic/plugin-view/microui/window-representor.h>
+#include <sonic/plugin-view/microui/microui-view-adapter.h>
+#include <sonic/plugin-view/microui/parameter-binding-helper.h>
 
-namespace project1_gui {
+namespace project1_gui_microui {
 
-sonic_plugin_view_microui::IMicrouiEditor *
-createMicrouiEditor(sonic_plugin_view_microui::IWindowRepresentor &window,
-                    sonic::IControllerFacade &controllerFacade);
+struct Parameters {
+  int oscEnabled;
+  float oscWave;
+  float oscPitch;
+  float oscVolume;
+};
 
-} // namespace project1_gui
+class MicrouiEditorView : public sonic_plugin_view_microui::IMicrouiEditor {
+private:
+  sonic_plugin_view_microui::IWindowRepresentor &window;
+  sonic::IControllerFacade &controllerFacade;
+  mu_Context context{};
+  sonic_plugin_view_microui::MicrouiViewAdaptor viewAdaptor{window, context};
+  sonic_plugin_view_microui::ParameterBindingHelper binder{controllerFacade};
+
+  bool noteState = false;
+  Parameters parameters;
+
+public:
+  MicrouiEditorView(sonic_plugin_view_microui::IWindowRepresentor &window,
+                    sonic::IControllerFacade &controllerFacade)
+      : window(window), controllerFacade(controllerFacade) {}
+
+  ~MicrouiEditorView() override { teardown(); }
+
+  void setup() override;
+
+  void teardown() override;
+
+private:
+  void render();
+};
+
+} // namespace project1_gui_microui
