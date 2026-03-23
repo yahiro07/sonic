@@ -1,4 +1,4 @@
-project(plugin-view-webview LANGUAGES CXX OBJCXX)
+# project(plugin-view-webview LANGUAGES CXX OBJCXX)
 
 set(NAME plugin-view-webview)
 

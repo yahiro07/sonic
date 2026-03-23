@@ -8,19 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		3C4542DD2F68584C00965875 /* libplugin.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C4542D82F68583400965875 /* libplugin.a */; platformFilters = (macos, ); };
-		3C4542DE2F68585000965875 /* libwrapper-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C4542CD2F68554900965875 /* libwrapper-auv3.a */; platformFilters = (macos, ); };
-		3C4542EC2F68589E00965875 /* libplugin-view-webview.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C4542E92F68589300965875 /* libplugin-view-webview.a */; platformFilters = (macos, ); };
 		3CAA19122F5D89B800363E1C /* Project1Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3CAA19112F5D89B800363E1C /* Project1Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3CE5230D2F71594600BA9054 /* libwrapper-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CE5230A2F71592F00BA9054 /* libwrapper-auv3.a */; platformFilters = (macos, ); };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		3C4542CC2F68554900965875 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 3C4542C32F68554900965875 /* wrapper-auv3.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = DFE89BCAC52345B3B32979B3;
-			remoteInfo = "wrapper-auv3";
-		};
 		3C4542D72F68583400965875 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3C4542CE2F68583400965875 /* plugin.xcodeproj */;
@@ -28,33 +20,12 @@
 			remoteGlobalIDString = 511C1F785E3849059F22B435;
 			remoteInfo = plugin;
 		};
-		3C4542D92F68584000965875 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 3C4542C32F68554900965875 /* wrapper-auv3.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = FD35C23EC4B6482D06952A31;
-			remoteInfo = "wrapper-auv3";
-		};
 		3C4542DB2F68584400965875 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3C4542CE2F68583400965875 /* plugin.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = 66C7965AAAEC38F9C554361F;
+			remoteGlobalIDString = 4B9967246D50EEC3BC8BBCCD;
 			remoteInfo = plugin;
-		};
-		3C4542E82F68589300965875 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 3C4542DF2F68589300965875 /* plugin-view-webview.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 0C8CF36FE8264F238ACB5375;
-			remoteInfo = "plugin-view-webview";
-		};
-		3C4542EA2F68589900965875 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 3C4542DF2F68589300965875 /* plugin-view-webview.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 4C49353C2862514E7695EE85;
-			remoteInfo = "plugin-view-webview";
 		};
 		3CAA19132F5D89B800363E1C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -62,6 +33,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = 3CAA19102F5D89B800363E1C;
 			remoteInfo = Project1Extension;
+		};
+		3CE523092F71592F00BA9054 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3CE523002F71592F00BA9054 /* wrapper-auv3.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = DEACB9DA9AD547ABB822BFBF;
+			remoteInfo = "wrapper-auv3";
+		};
+		3CE5230B2F71593A00BA9054 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3CE523002F71592F00BA9054 /* wrapper-auv3.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = C0F87643B63A9FF1CADF1096;
+			remoteInfo = "wrapper-auv3";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -80,11 +65,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		3C4542C32F68554900965875 /* wrapper-auv3.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "wrapper-auv3.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build-xcode/framework/platform/auv3/wrapper-auv3.xcodeproj"; sourceTree = "<absolute>"; };
 		3C4542CE2F68583400965875 /* plugin.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = plugin.xcodeproj; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build-xcode/plugin/plugin.xcodeproj"; sourceTree = "<absolute>"; };
-		3C4542DF2F68589300965875 /* plugin-view-webview.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "plugin-view-webview.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build-xcode/framework/plugin-view/webview/plugin-view-webview.xcodeproj"; sourceTree = "<absolute>"; };
 		3CAA18EB2F5D89B700363E1C /* Project1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Project1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CAA19112F5D89B800363E1C /* Project1Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Project1Extension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3CE523002F71592F00BA9054 /* wrapper-auv3.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "wrapper-auv3.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build-xcode/lib/sonic/platform/auv3/wrapper-auv3.xcodeproj"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -125,8 +109,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3C4542EC2F68589E00965875 /* libplugin-view-webview.a in Frameworks */,
-				3C4542DE2F68585000965875 /* libwrapper-auv3.a in Frameworks */,
+				3CE5230D2F71594600BA9054 /* libwrapper-auv3.a in Frameworks */,
 				3C4542DD2F68584C00965875 /* libplugin.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -134,14 +117,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		3C4542C62F68554900965875 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				3C4542CD2F68554900965875 /* libwrapper-auv3.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		3C4542D12F68583400965875 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -150,20 +125,11 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		3C4542E22F68589300965875 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				3C4542E92F68589300965875 /* libplugin-view-webview.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		3CAA18E22F5D89B700363E1C = {
 			isa = PBXGroup;
 			children = (
-				3C4542DF2F68589300965875 /* plugin-view-webview.xcodeproj */,
+				3CE523002F71592F00BA9054 /* wrapper-auv3.xcodeproj */,
 				3C4542CE2F68583400965875 /* plugin.xcodeproj */,
-				3C4542C32F68554900965875 /* wrapper-auv3.xcodeproj */,
 				3CAA18ED2F5D89B700363E1C /* Project1 */,
 				3CAA19152F5D89B800363E1C /* Project1Extension */,
 				3CAA194D2F5DD6E700363E1C /* Frameworks */,
@@ -185,6 +151,14 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3CE523032F71592F00BA9054 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3CE5230A2F71592F00BA9054 /* libwrapper-auv3.a */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -225,9 +199,8 @@
 			buildRules = (
 			);
 			dependencies = (
-				3C4542EB2F68589900965875 /* PBXTargetDependency */,
+				3CE5230C2F71593A00BA9054 /* PBXTargetDependency */,
 				3C4542DC2F68584400965875 /* PBXTargetDependency */,
-				3C4542DA2F68584000965875 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3CAA19152F5D89B800363E1C /* Project1Extension */,
@@ -271,16 +244,12 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 3C4542E22F68589300965875 /* Products */;
-					ProjectRef = 3C4542DF2F68589300965875 /* plugin-view-webview.xcodeproj */;
-				},
-				{
 					ProductGroup = 3C4542D12F68583400965875 /* Products */;
 					ProjectRef = 3C4542CE2F68583400965875 /* plugin.xcodeproj */;
 				},
 				{
-					ProductGroup = 3C4542C62F68554900965875 /* Products */;
-					ProjectRef = 3C4542C32F68554900965875 /* wrapper-auv3.xcodeproj */;
+					ProductGroup = 3CE523032F71592F00BA9054 /* Products */;
+					ProjectRef = 3CE523002F71592F00BA9054 /* wrapper-auv3.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -292,13 +261,6 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		3C4542CD2F68554900965875 /* libwrapper-auv3.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = "libwrapper-auv3.a";
-			remoteRef = 3C4542CC2F68554900965875 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		3C4542D82F68583400965875 /* libplugin.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
@@ -306,11 +268,11 @@
 			remoteRef = 3C4542D72F68583400965875 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		3C4542E92F68589300965875 /* libplugin-view-webview.a */ = {
+		3CE5230A2F71592F00BA9054 /* libwrapper-auv3.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
-			path = "libplugin-view-webview.a";
-			remoteRef = 3C4542E82F68589300965875 /* PBXContainerItemProxy */;
+			path = "libwrapper-auv3.a";
+			remoteRef = 3CE523092F71592F00BA9054 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -350,25 +312,20 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		3C4542DA2F68584000965875 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "wrapper-auv3";
-			targetProxy = 3C4542D92F68584000965875 /* PBXContainerItemProxy */;
-		};
 		3C4542DC2F68584400965875 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = plugin;
 			targetProxy = 3C4542DB2F68584400965875 /* PBXContainerItemProxy */;
 		};
-		3C4542EB2F68589900965875 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "plugin-view-webview";
-			targetProxy = 3C4542EA2F68589900965875 /* PBXContainerItemProxy */;
-		};
 		3CAA19142F5D89B800363E1C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3CAA19102F5D89B800363E1C /* Project1Extension */;
 			targetProxy = 3CAA19132F5D89B800363E1C /* PBXContainerItemProxy */;
+		};
+		3CE5230C2F71593A00BA9054 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "wrapper-auv3";
+			targetProxy = 3CE5230B2F71593A00BA9054 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
