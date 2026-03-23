@@ -4,7 +4,7 @@
 #import <CoreAudioKit/AUViewController.h>
 #import <Foundation/Foundation.h>
 
-#import "wrapper-auv3-root.h"
+#import "headers/wrapper-auv3-root.h"
 
 // Keep the principal AUv3 UI entry point in the extension target and delegate
 // the actual AU/UI implementation to the static library.
