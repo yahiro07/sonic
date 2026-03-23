@@ -1,5 +1,5 @@
 #pragma once
-#include "synthesizer-base.h"
+#include "./synthesizer-base.h"
 
 namespace sonic {
 

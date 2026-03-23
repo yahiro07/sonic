@@ -1,19 +1,19 @@
 #include "./entry-controller.h"
-#include "../../api/synthesizer-base.h"
-#include "../../common/listener-port.h"
-#include "../../common/spsc-queue.h"
-#include "../../core/editor-factory-registry.h"
-#include "../../core/editor-interfaces.h"
-#include "../../core/parameter-builder-impl.h"
-#include "../../core/parameter-registry.h"
-#include "../../core/parameter-spec-helper.h"
-#include "../../core/parameter-spec-item.h"
-#include "../../core/parameter-store.h"
 #include "./clap-data-helper.h"
 #include "./events.h"
 #include <atomic>
 #include <cassert>
 #include <memory>
+#include <sonic/api/synthesizer-base.h>
+#include <sonic/common/listener-port.h>
+#include <sonic/common/spsc-queue.h>
+#include <sonic/core/editor-factory-registry.h>
+#include <sonic/core/editor-interfaces.h>
+#include <sonic/core/parameter-builder-impl.h>
+#include <sonic/core/parameter-registry.h>
+#include <sonic/core/parameter-spec-helper.h>
+#include <sonic/core/parameter-spec-item.h>
+#include <sonic/core/parameter-store.h>
 #include <string>
 
 namespace sonic {

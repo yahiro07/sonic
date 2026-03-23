@@ -1,7 +1,7 @@
 #pragma once
-#include "../../core/parameter-spec-item.h"
 #include "./events.h"
 #include "clap/ext/params.h"
+#include <sonic/core/parameter-spec-item.h>
 
 namespace sonic {
 

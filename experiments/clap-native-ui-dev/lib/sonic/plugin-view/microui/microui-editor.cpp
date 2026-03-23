@@ -1,7 +1,7 @@
 #include "microui-editor.h"
-#include "../../core/editor-factory-registry.h"
 #include "./window-representor.h"
 #include <memory>
+#include <sonic/core/editor-factory-registry.h>
 
 namespace sonic_plugin_view_microui {
 

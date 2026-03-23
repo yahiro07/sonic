@@ -15,7 +15,7 @@ get_filename_component(
   ABSOLUTE)
 add_subdirectory("${GLAZE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/glaze_build")
 
-add_subdirectory(framework)
+add_subdirectory(lib/sonic)
 
 add_subdirectory(plugin)
 

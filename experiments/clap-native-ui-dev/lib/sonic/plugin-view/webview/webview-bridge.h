@@ -1,6 +1,6 @@
 #pragma once
-#include "../../core/editor-interfaces.h"
 #include "./webview-io.h"
+#include <sonic/core/editor-interfaces.h>
 
 namespace sonic {
 

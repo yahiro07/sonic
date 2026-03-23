@@ -1,6 +1,6 @@
 #pragma once
-#include "../../core/types.h"
 #include <clap/clap.h>
+#include <sonic/core/types.h>
 
 namespace sonic {
 

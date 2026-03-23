@@ -1,6 +1,6 @@
 #pragma once
-#include "../../core/editor-interfaces.h"
 #include "./window-representor.h"
+#include <sonic/core/editor-interfaces.h>
 
 namespace sonic_plugin_view_microui {
 

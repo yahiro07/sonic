@@ -1,6 +1,6 @@
 #include "webview-bridge.h"
-#include "../../core/editor-interfaces.h"
 #include <glaze/glaze.hpp>
+#include <sonic/core/editor-interfaces.h>
 
 namespace sonic {
 

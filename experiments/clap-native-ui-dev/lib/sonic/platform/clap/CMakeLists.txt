@@ -7,4 +7,4 @@ add_library(${NAME} STATIC)
 target_sources(${NAME} PRIVATE clap-entry-wrapper.cpp clap-rootage.cpp
                                entry-controller.cpp)
 
-target_link_libraries(${NAME} PUBLIC clap)
+target_link_libraries(${NAME} PUBLIC sonic-headers clap)

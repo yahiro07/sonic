@@ -16,4 +16,4 @@ target_sources(plugin-view-briq PRIVATE briq-editor.cpp)
 
 target_include_directories(plugin-view-briq PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(plugin-view-briq PUBLIC briq-lib)
+target_link_libraries(plugin-view-briq PUBLIC sonic-headers briq-lib)

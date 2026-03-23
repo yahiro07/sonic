@@ -1,7 +1,7 @@
 #pragma once
-#include "../../core/editor-interfaces.h"
 #include <briq/editor.h>
 #include <functional>
+#include <sonic/core/editor-interfaces.h>
 
 namespace sonic_plugin_view_briq {
 

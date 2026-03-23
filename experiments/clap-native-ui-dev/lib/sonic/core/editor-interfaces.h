@@ -1,6 +1,6 @@
 #pragma once
-#include "../core/types.h"
 #include "./parameter-spec-item.h"
+#include "./types.h"
 #include <functional>
 #include <map>
 #include <optional>

@@ -1,6 +1,6 @@
 #pragma once
-#include "../api/synthesizer-base.h"
 #include <cstdint>
+#include <sonic/api/synthesizer-base.h>
 
 namespace sonic {
 

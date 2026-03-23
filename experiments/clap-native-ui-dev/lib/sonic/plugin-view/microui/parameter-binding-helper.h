@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../../core/editor-interfaces.h"
 #include <cmath>
 #include <functional>
 #include <optional>
+#include <sonic/core/editor-interfaces.h>
 
 namespace sonic_plugin_view_microui {
 

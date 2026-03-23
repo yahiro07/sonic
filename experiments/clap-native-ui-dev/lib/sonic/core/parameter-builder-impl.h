@@ -1,6 +1,6 @@
 #pragma once
-#include "../api/synthesizer-base.h"
 #include "./parameter-spec-item.h"
+#include <sonic/api/synthesizer-base.h>
 
 namespace sonic {
 

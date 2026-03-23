@@ -10,5 +10,7 @@ target_sources(${NAME} PRIVATE mac-web-view.mm webview-bridge.cpp
 set_source_files_properties(mac-web-view.mm PROPERTIES COMPILE_FLAGS
                                                        "-fobjc-arc")
 
+target_link_libraries(${NAME} PUBLIC sonic-headers)
+
 target_link_libraries(${NAME} PRIVATE "-framework Cocoa" "-framework WebKit"
                                       clap glaze::glaze)

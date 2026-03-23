@@ -1,5 +1,5 @@
 #include "briq-editor.h"
-#include "../../core/editor-factory-registry.h"
+#include <sonic/core/editor-factory-registry.h>
 
 #include <memory>
 
