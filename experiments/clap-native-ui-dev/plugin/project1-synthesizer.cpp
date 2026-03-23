@@ -100,8 +100,10 @@ std::string Project1Synthesizer::getEditorPageUrl() {
     return "app://local/index.html?debug=1";
     // app://local is mapped to the resources/www directory
     // return "app://local/index.html";
-  } else {
+  } else if (0) {
     return "microui:default";
+  } else {
+    return "briq:default";
   }
 }
 

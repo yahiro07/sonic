@@ -21,4 +21,6 @@ add_subdirectory(plugin)
 
 add_subdirectory(native-ui/microui)
 
+add_subdirectory(native-ui/briq)
+
 add_subdirectory(variants/clap)
