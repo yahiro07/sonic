@@ -20,19 +20,12 @@ else()
 endif()
 
 set(SMTG_RUN_VST_VALIDATOR OFF)
-# set(SONIC_USE_LOCAL_SDK OFF)
 
-option(SONIC_USE_LOCAL_SDK "Use vendored SDKs under dependencies/" ON)
+include(cmake/setup-sdks.cmake)
 
-if(SONIC_USE_LOCAL_SDK)
-  include(cmake/setup-sdks-dev.cmake)
-  add_subdirectory(framework/sonic)
-else()
-  include(cmake/setup-sdks.cmake)
-  add_subdirectory(
-    "${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
-    "${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")
-endif()
+add_subdirectory(framework/sonic)
+add_subdirectory("${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
+                 "${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")
 
 add_subdirectory(${SONIC_ROOT_DIR}/templates/_vst-dev-host/vst_dev_host
                  ${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)
@@ -40,6 +33,5 @@ add_subdirectory(${SONIC_ROOT_DIR}/templates/_clap-dev-host/clap_dev_host
                  ${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)
 
 add_subdirectory(plugin)
-
 add_subdirectory(variants/vst3)
 add_subdirectory(variants/clap)
