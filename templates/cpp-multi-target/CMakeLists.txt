@@ -83,7 +83,7 @@ set(VST3_SDK_ROOT "${SMTG_VST3_LOCATION_DIR}")
 
 # ----------------
 
-add_subdirectory(lib/sonic)
+add_subdirectory(framework/sonic)
 
 add_subdirectory(plugin)
 
