@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		3C4542DD2F68584C00965875 /* libplugin.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C4542D82F68583400965875 /* libplugin.a */; platformFilters = (macos, ); };
 		3CAA19122F5D89B800363E1C /* Project1Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3CAA19112F5D89B800363E1C /* Project1Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		3CE5230D2F71594600BA9054 /* libwrapper-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CE5230A2F71592F00BA9054 /* libwrapper-auv3.a */; platformFilters = (macos, ); };
+		3CD8107E2F72588C00D2E32D /* libwrapper-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CD8107B2F72587A00D2E32D /* libwrapper-auv3.a */; platformFilters = (macos, ); };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,18 +34,18 @@
 			remoteGlobalIDString = 3CAA19102F5D89B800363E1C;
 			remoteInfo = Project1Extension;
 		};
-		3CE523092F71592F00BA9054 /* PBXContainerItemProxy */ = {
+		3CD8107A2F72587A00D2E32D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 3CE523002F71592F00BA9054 /* wrapper-auv3.xcodeproj */;
+			containerPortal = 3CD810712F72587900D2E32D /* wrapper-auv3.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = DEACB9DA9AD547ABB822BFBF;
+			remoteGlobalIDString = 87F3832B3AA840DA874ADD3F;
 			remoteInfo = "wrapper-auv3";
 		};
-		3CE5230B2F71593A00BA9054 /* PBXContainerItemProxy */ = {
+		3CD8107C2F72588500D2E32D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 3CE523002F71592F00BA9054 /* wrapper-auv3.xcodeproj */;
+			containerPortal = 3CD810712F72587900D2E32D /* wrapper-auv3.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = C0F87643B63A9FF1CADF1096;
+			remoteGlobalIDString = 2127FB50481E2EE176BDEFCA;
 			remoteInfo = "wrapper-auv3";
 		};
 /* End PBXContainerItemProxy section */
@@ -68,7 +68,7 @@
 		3C4542CE2F68583400965875 /* plugin.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = plugin.xcodeproj; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build-xcode/plugin/plugin.xcodeproj"; sourceTree = "<absolute>"; };
 		3CAA18EB2F5D89B700363E1C /* Project1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Project1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CAA19112F5D89B800363E1C /* Project1Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Project1Extension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		3CE523002F71592F00BA9054 /* wrapper-auv3.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "wrapper-auv3.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build-xcode/lib/sonic/platform/auv3/wrapper-auv3.xcodeproj"; sourceTree = "<absolute>"; };
+		3CD810712F72587900D2E32D /* wrapper-auv3.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "wrapper-auv3.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build-xcode/framework/sonic/platform/auv3/wrapper-auv3.xcodeproj"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -109,7 +109,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3CE5230D2F71594600BA9054 /* libwrapper-auv3.a in Frameworks */,
+				3CD8107E2F72588C00D2E32D /* libwrapper-auv3.a in Frameworks */,
 				3C4542DD2F68584C00965875 /* libplugin.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -128,7 +128,7 @@
 		3CAA18E22F5D89B700363E1C = {
 			isa = PBXGroup;
 			children = (
-				3CE523002F71592F00BA9054 /* wrapper-auv3.xcodeproj */,
+				3CD810712F72587900D2E32D /* wrapper-auv3.xcodeproj */,
 				3C4542CE2F68583400965875 /* plugin.xcodeproj */,
 				3CAA18ED2F5D89B700363E1C /* Project1 */,
 				3CAA19152F5D89B800363E1C /* Project1Extension */,
@@ -153,10 +153,10 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		3CE523032F71592F00BA9054 /* Products */ = {
+		3CD810742F72587A00D2E32D /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3CE5230A2F71592F00BA9054 /* libwrapper-auv3.a */,
+				3CD8107B2F72587A00D2E32D /* libwrapper-auv3.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -199,7 +199,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				3CE5230C2F71593A00BA9054 /* PBXTargetDependency */,
+				3CD8107D2F72588500D2E32D /* PBXTargetDependency */,
 				3C4542DC2F68584400965875 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
@@ -248,8 +248,8 @@
 					ProjectRef = 3C4542CE2F68583400965875 /* plugin.xcodeproj */;
 				},
 				{
-					ProductGroup = 3CE523032F71592F00BA9054 /* Products */;
-					ProjectRef = 3CE523002F71592F00BA9054 /* wrapper-auv3.xcodeproj */;
+					ProductGroup = 3CD810742F72587A00D2E32D /* Products */;
+					ProjectRef = 3CD810712F72587900D2E32D /* wrapper-auv3.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -268,11 +268,11 @@
 			remoteRef = 3C4542D72F68583400965875 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		3CE5230A2F71592F00BA9054 /* libwrapper-auv3.a */ = {
+		3CD8107B2F72587A00D2E32D /* libwrapper-auv3.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
 			path = "libwrapper-auv3.a";
-			remoteRef = 3CE523092F71592F00BA9054 /* PBXContainerItemProxy */;
+			remoteRef = 3CD8107A2F72587A00D2E32D /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -322,10 +322,10 @@
 			target = 3CAA19102F5D89B800363E1C /* Project1Extension */;
 			targetProxy = 3CAA19132F5D89B800363E1C /* PBXContainerItemProxy */;
 		};
-		3CE5230C2F71593A00BA9054 /* PBXTargetDependency */ = {
+		3CD8107D2F72588500D2E32D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "wrapper-auv3";
-			targetProxy = 3CE5230B2F71593A00BA9054 /* PBXContainerItemProxy */;
+			targetProxy = 3CD8107C2F72588500D2E32D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -383,7 +383,7 @@
 					WebKit,
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1a.Project1aExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1b.Project1Extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
@@ -447,7 +447,7 @@
 					WebKit,
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1a.Project1aExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1b.Project1Extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
@@ -609,7 +609,7 @@
 					"-framework",
 					AVFoundation,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1a;
+				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -662,7 +662,7 @@
 					"-framework",
 					AVFoundation,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1a;
+				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;

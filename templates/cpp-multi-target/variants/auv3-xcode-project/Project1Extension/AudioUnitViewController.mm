@@ -18,8 +18,8 @@
         (AudioComponentDescription)componentDescription
                                       error:(NSError *_Nullable *_Nullable)
                                                 outError {
-  printf(
-      "AudioUnitViewController createAudioUnitWithComponentDescription 1421\n");
+  printf("AudioUnitViewController createAudioUnitWithComponentDescription "
+         "1439\n");
   WrapperAuv3AudioUnit *audioUnit = [[WrapperAuv3AudioUnit alloc]
       initWithComponentDescription:componentDescription
                            options:0
