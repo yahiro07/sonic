@@ -22,4 +22,15 @@ if(APPLE)
                MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
                MACOSX_BUNDLE_INFO_PLIST
                ${CMAKE_SOURCE_DIR}/cmake/base-info.plist.in)
+
+  set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/www)
+  # set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/frontend/dist)
+  add_custom_command(
+    TARGET ${NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:${NAME}>/../Resources"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PLUGIN_WWW_DIR}"
+            "$<TARGET_FILE_DIR:${NAME}>/../Resources/www"
+    VERBATIM)
 endif()
