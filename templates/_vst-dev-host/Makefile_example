@@ -1,21 +1,13 @@
 .PHONY: build
 
-default: build
-
-CMAKE_CONFIG_FLAGS := \
-	-DCMAKE_BUILD_TYPE=Debug \
-	-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-	-DSMTG_RUN_VST_VALIDATOR=OFF \
-	-DSONIC_USE_LOCAL_SDK=ON \
-
 prepare:
-	cmake -S . -B build $(CMAKE_CONFIG_FLAGS)
+	cmake --preset ninja
 
 build:
-	cmake --build build
+	cmake --build --preset ninja-debug
 
 run: build
-	build/bin/Debug/VstDevHost ../vst-simple/build/VST3/Debug/Project1.vst3
+	build/bin/VstDevHost ../vst-simple/build/VST3/Debug/Project1.vst3
 
 clean:
 	rm -rf build
