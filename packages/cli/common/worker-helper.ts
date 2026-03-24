@@ -42,6 +42,9 @@ export function workerHelper_copyProjectContentFiles(
         `source entry ${entry} does not exist in template ${templateName}`,
       );
     }
+    const destDir = path.dirname(destPath);
+    fs.mkdirSync(destDir, { recursive: true });
+
     if (fs.statSync(srcPath).isDirectory()) {
       fs.cpSync(srcPath, destPath, {
         recursive: true,
