@@ -5,13 +5,6 @@
       "name": "ninja",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build"
-    },
-    {
-      "name": "ninja-template-dev",
-      "inherits": ["ninja"],
-      "cacheVariables": {
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
     }
   ],
   "buildPresets": [

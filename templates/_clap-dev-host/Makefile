@@ -1,0 +1,13 @@
+.PHONY: build
+
+prepare:
+	cmake --preset ninja
+
+build:
+	cmake --build --preset ninja-debug
+
+run: build
+	sh ./run.sh
+
+clean:
+	rm -rf build .cache
