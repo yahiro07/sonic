@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3C4542DD2F68584C00965875 /* libplugin.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C4542D82F68583400965875 /* libplugin.a */; platformFilters = (macos, ); };
+		3C73227A2F72623600B86365 /* www in Resources */ = {isa = PBXBuildFile; fileRef = 3C7322792F72623600B86365 /* www */; };
 		3CAA19122F5D89B800363E1C /* Project1Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3CAA19112F5D89B800363E1C /* Project1Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3CD8107E2F72588C00D2E32D /* libwrapper-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CD8107B2F72587A00D2E32D /* libwrapper-auv3.a */; platformFilters = (macos, ); };
 /* End PBXBuildFile section */
@@ -66,6 +67,7 @@
 
 /* Begin PBXFileReference section */
 		3C4542CE2F68583400965875 /* plugin.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = plugin.xcodeproj; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build-xcode/plugin/plugin.xcodeproj"; sourceTree = "<absolute>"; };
+		3C7322792F72623600B86365 /* www */ = {isa = PBXFileReference; lastKnownFileType = folder; name = www; path = ../../www; sourceTree = "<group>"; };
 		3CAA18EB2F5D89B700363E1C /* Project1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Project1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CAA19112F5D89B800363E1C /* Project1Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Project1Extension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CD810712F72587900D2E32D /* wrapper-auv3.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "wrapper-auv3.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build-xcode/framework/sonic/platform/auv3/wrapper-auv3.xcodeproj"; sourceTree = "<absolute>"; };
@@ -128,6 +130,7 @@
 		3CAA18E22F5D89B700363E1C = {
 			isa = PBXGroup;
 			children = (
+				3C7322792F72623600B86365 /* www */,
 				3CD810712F72587900D2E32D /* wrapper-auv3.xcodeproj */,
 				3C4542CE2F68583400965875 /* plugin.xcodeproj */,
 				3CAA18ED2F5D89B700363E1C /* Project1 */,
@@ -289,6 +292,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C73227A2F72623600B86365 /* www in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

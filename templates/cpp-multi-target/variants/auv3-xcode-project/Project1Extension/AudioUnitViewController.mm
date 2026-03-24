@@ -20,6 +20,8 @@
                                                 outError {
   printf("AudioUnitViewController createAudioUnitWithComponentDescription "
          "1439\n");
+  printf("Loaded From: %s\n", [[NSBundle mainBundle].bundlePath UTF8String]);
+
   WrapperAuv3AudioUnit *audioUnit = [[WrapperAuv3AudioUnit alloc]
       initWithComponentDescription:componentDescription
                            options:0

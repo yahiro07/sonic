@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 sonic::SynthesizerBase *createSynthesizerInstance() {
-  printf("project1-synthesizer: createSynthesizerInstance 1434\n");
+  printf("project1-synthesizer: createSynthesizerInstance 1504\n");
   sonic::registerWebviewEditorFactory();
   return new project1::Project1Synthesizer();
 }
