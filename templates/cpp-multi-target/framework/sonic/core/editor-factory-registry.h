@@ -29,5 +29,14 @@ public:
     }
     return kv->second;
   }
+
+  static std::string getEditorVariantNameFromUrl(std::string url) {
+    auto variantName = url.substr(0, url.find(":"));
+    if (variantName == "http" || variantName == "https" ||
+        variantName == "app") {
+      variantName = "webview";
+    }
+    return variantName;
+  }
 };
 } // namespace sonic

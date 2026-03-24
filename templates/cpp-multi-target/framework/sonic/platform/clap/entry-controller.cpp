@@ -108,12 +108,7 @@ public:
 
   bool guiCreate() override {
     std::string url = synth->getEditorPageUrl();
-    auto variantName = url.substr(0, url.find(":"));
-    if (variantName == "http" || variantName == "https") {
-      variantName = "webview";
-    }
-    printf("guiCreate called, variantName: %s\n", variantName.c_str());
-
+    auto variantName = EditorFactoryRegistry::getEditorVariantNameFromUrl(url);
     auto editorFactory =
         EditorFactoryRegistry::getInstance()->getEditorFactory(variantName);
     if (!editorFactory) {

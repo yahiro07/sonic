@@ -268,12 +268,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 
 static std::unique_ptr<IEditorInstance>
 setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
-  auto variantName = url.substr(0, url.find(":"));
-  if (variantName == "http" || variantName == "https") {
-    variantName = "webview";
-  }
-  printf("setupEditorInstance called, variantName: %s\n", variantName.c_str());
-
+  auto variantName = EditorFactoryRegistry::getEditorVariantNameFromUrl(url);
   auto editorFactory =
       EditorFactoryRegistry::getInstance()->getEditorFactory(variantName);
   if (!editorFactory) {
