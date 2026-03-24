@@ -19,8 +19,6 @@ else()
   add_definitions(-DRELEASE=1)
 endif()
 
-set(SMTG_RUN_VST_VALIDATOR OFF)
-
 include(cmake/setup-sdks.cmake)
 
 add_subdirectory(framework/sonic)

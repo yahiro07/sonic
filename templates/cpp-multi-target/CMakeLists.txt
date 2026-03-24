@@ -19,7 +19,6 @@ else()
   add_definitions(-DRELEASE=1)
 endif()
 
-set(SMTG_RUN_VST_VALIDATOR OFF)
 # set(SONIC_USE_LOCAL_SDK OFF)
 
 option(SONIC_USE_LOCAL_SDK "Use vendored SDKs under dependencies/" ON)

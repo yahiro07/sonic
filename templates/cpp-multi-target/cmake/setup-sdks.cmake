@@ -33,9 +33,10 @@ add_subdirectory("${SONIC_ROOT_DIR}/dependencies/glaze"
 add_subdirectory("${SONIC_ROOT_DIR}/dependencies/clap"
                  "${CMAKE_CURRENT_BINARY_DIR}/clap")
 
-option(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES "Enable VST 3 Plug-in Examples" OFF)
-option(SMTG_ENABLE_VST3_HOSTING_EXAMPLES "Enable VST 3 Hosting Examples" OFF)
-option(SMTG_ENABLE_VSTGUI_SUPPORT "Enable VSTGUI Support" OFF)
+set(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES OFF)
+set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES OFF)
+set(SMTG_ENABLE_VSTGUI_SUPPORT OFF)
+set(SMTG_RUN_VST_VALIDATOR OFF)
 
 add_subdirectory("${SONIC_ROOT_DIR}/dependencies/vst3sdk"
                  "${CMAKE_CURRENT_BINARY_DIR}/vst3sdk")
