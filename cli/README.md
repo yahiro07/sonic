@@ -2,16 +2,19 @@
 
 Template scaffolding tool for sonic audio plugin framework.
 
-## Installation
+## Usage
+
+Install globally
 
 ```bash
 npm install -g sonic-shell
+sonic
 ```
 
-## Usage
+or execute directly with npx
 
 ```bash
-sonic
+npx sonic-shell
 ```
 
 CLI wizard starts and guides you through the process of creating a new project.
