@@ -1,15 +1,16 @@
 {
   "name": "sonic-shell",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Template scaffolding tool for sonic framework.",
   "author": "yahiro",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "sonic": "./bin/sonic.js"
+    "sonic": "bin/sonic.js"
   },
   "scripts": {
-    "build": "tsup entry/sonic.ts --format esm --clean --out-dir bin"
+    "dev": "CLI_DEBUG_TEMPLATE_WORKERS=1 tsx src/sonic.ts",
+    "build": "tsup src/sonic.ts --format esm --clean --out-dir bin"
   },
   "files": [
     "bin",
@@ -18,7 +19,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yahiro07/sonic.git"
+    "url": "git+https://github.com/yahiro07/sonic.git"
   },
   "bugs": {
     "url": "https://github.com/yahiro07/sonic/issues"
