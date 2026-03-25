@@ -169,6 +169,15 @@ function patchVstWrapper({ projectName, projectFolderPath }: TaskContext) {
   });
 }
 
+function patchClapWrapper({ projectName, projectFolderPath }: TaskContext) {
+  const projectNameKebab = casingToKebab(projectName);
+
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["wrapper/clap/CMakeLists.txt"],
+    replacements: [{ from: "project1-clap", to: `${projectNameKebab}-clap` }],
+  });
+}
+
 function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
   const keepConditionalLine = (_text: string) => {};
   const removeConditionalLine = (text: string) => {
@@ -257,6 +266,7 @@ function scaffoldProject(
     // applyTemplateCodeRenaming(taskContext);
     renamePluginSourceFiles(taskContext);
     patchVstWrapper(taskContext);
+    patchClapWrapper(taskContext);
   }
   return true;
 }
