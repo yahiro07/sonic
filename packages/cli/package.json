@@ -1,5 +1,9 @@
 {
-  "name": "cli",
+  "name": "sonic-shell",
+  "version": "0.0.1",
+  "description": "Template scaffolding tool for sonic framework.",
+  "author": "yahiro",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "sonic": "./bin/sonic.js"
@@ -9,15 +13,33 @@
   },
   "files": [
     "bin",
-    "templates"
+    "templates",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yahiro07/sonic.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yahiro07/sonic/issues"
+  },
+  "homepage": "https://github.com/yahiro07/sonic#readme",
+  "keywords": [
+    "audio",
+    "plugin",
+    "framework",
+    "vst",
+    "clap",
+    "auv3",
+    "template"
   ],
   "devDependencies": {
-    "@types/node": "^25.3.0",
+    "@types/node": "^25.5.0",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "dependencies": {
-    "@clack/prompts": "^1.0.1"
+    "@clack/prompts": "^1.1.0"
   }
 }
