@@ -1,0 +1,1 @@
+	./build/clap_dev_host/clap_dev_host ../clap-simple/build/my_clap_1/MyClap1.dylib

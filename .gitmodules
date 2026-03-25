@@ -4,3 +4,15 @@
 [submodule "glaze"]
 	path = dependencies/glaze
 	url = https://github.com/stephenberry/glaze.git
+[submodule "dependencies/vst3sdk/base"]
+	path = dependencies/vst3sdk/base
+	url = https://github.com/steinbergmedia/vst3_base
+[submodule "dependencies/vst3sdk/cmake"]
+	path = dependencies/vst3sdk/cmake
+	url = https://github.com/steinbergmedia/vst3_cmake
+[submodule "dependencies/vst3sdk/pluginterfaces"]
+	path = dependencies/vst3sdk/pluginterfaces
+	url = https://github.com/steinbergmedia/vst3_pluginterfaces
+[submodule "dependencies/vst3sdk/public.sdk"]
+	path = dependencies/vst3sdk/public.sdk
+	url = https://github.com/steinbergmedia/vst3_public_sdk

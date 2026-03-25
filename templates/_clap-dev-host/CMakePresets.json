@@ -1,0 +1,17 @@
+{
+  "version": 8,
+  "configurePresets": [
+    {
+      "name": "ninja",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "ninja-debug",
+      "configurePreset": "ninja",
+      "configuration": "Debug"
+    }
+  ]
+}

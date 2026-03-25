@@ -4,27 +4,55 @@
     {
       "name": "ninja",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
-      "cacheVariables": {
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      "binaryDir": "${sourceDir}/build/ninja",
+      "hidden": true
     },
     {
       "name": "xcode",
       "generator": "Xcode",
-      "binaryDir": "${sourceDir}/build-xcode"
+      "binaryDir": "${sourceDir}/build/xcode"
+    },
+    {
+      "name": "debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "hidden": true
+    },
+    {
+      "name": "release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "hidden": true
+    },
+    {
+      "name": "ninja-debug",
+      "inherits": [
+        "ninja",
+        "debug"
+      ]
+    },
+    {
+      "name": "ninja-release",
+      "inherits": [
+        "ninja",
+        "release"
+      ]
     }
   ],
   "buildPresets": [
     {
       "name": "ninja-debug",
-      "configurePreset": "ninja",
-      "configuration": "Debug"
+      "configurePreset": "ninja-debug"
     },
     {
-      "name": "xcode-debug",
-      "configurePreset": "xcode",
-      "configuration": "Debug"
+      "name": "ninja-release",
+      "configurePreset": "ninja-release"
+    },
+    {
+      "name": "xcode",
+      "configurePreset": "xcode"
     }
   ]
 }
