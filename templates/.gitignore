@@ -3,6 +3,8 @@ xcuserdata/
 xcshareddata/
 buildServer.json
 
+.local/
+build/
 .cache/
 cspell.json
 compile_flags.txt
