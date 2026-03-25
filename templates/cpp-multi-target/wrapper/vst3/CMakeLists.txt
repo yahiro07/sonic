@@ -1,5 +1,5 @@
 set(NAME project1-vst3)
-add_library(${NAME} MODULE version.h plugin_factory.cpp)
+add_library(${NAME} MODULE version.h plugin-factory.cpp)
 
 if(APPLE)
   target_sources(
@@ -7,7 +7,7 @@ if(APPLE)
                     ${VST3_SDK_ROOT}/public.sdk/source/main/moduleinit.cpp)
 endif()
 
-target_link_libraries(${NAME} PRIVATE plugin sonic_vst)
+target_link_libraries(${NAME} PRIVATE plugin-source platform-vst3)
 
 set_target_properties(
   ${NAME}

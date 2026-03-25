@@ -1,29 +1,17 @@
-set(HOST_SOURCES
-    main.cpp
-    modules/app_window_mac.mm
-    modules/audio_io_mac.cpp
-    modules/midi_input_mac.cpp
-    plugin_bridge/plugin_bridge.cpp
-)
+set(NAME clap_dev_host)
 
-add_executable(clap_dev_host ${HOST_SOURCES})
+add_executable(${NAME})
 
-target_include_directories(clap_dev_host PRIVATE 
-    .
-    ./modules
-    ./plugin_bridge
-    ${clap_SOURCE_DIR}/include
-)
+target_sources(
+  ${NAME} PRIVATE main.cpp modules/app_window_mac.mm modules/audio_io_mac.cpp
+                  modules/midi_input_mac.cpp plugin_bridge/plugin_bridge.cpp)
 
-if(APPLE)
-    target_link_libraries(clap_dev_host PRIVATE 
-        "-framework CoreAudio"
-        "-framework AudioToolbox"
-        "-framework CoreMIDI"
-        "-framework Cocoa"
-        "-framework QuartzCore"
-        dl
-    )
-elseif(UNIX)
-    target_link_libraries(clap_dev_host PRIVATE dl pthread)
-endif()
+target_link_libraries(
+  ${NAME}
+  PRIVATE clap
+          dl
+          "-framework CoreAudio"
+          "-framework AudioToolbox"
+          "-framework CoreMIDI"
+          "-framework Cocoa"
+          "-framework QuartzCore")

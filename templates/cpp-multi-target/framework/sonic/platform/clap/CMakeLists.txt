@@ -1,4 +1,4 @@
-set(NAME wrapper-clap)
+set(NAME platform-clap)
 
 add_library(${NAME} STATIC)
 

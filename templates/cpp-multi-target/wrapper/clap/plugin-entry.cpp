@@ -1,4 +1,3 @@
-#include "../../plugin/project1-synthesizer.h"
 #include <math.h>
 #include <sonic/platform/clap/clap-entry-wrapper.h>
 
