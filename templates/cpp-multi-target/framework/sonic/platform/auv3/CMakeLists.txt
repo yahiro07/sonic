@@ -1,4 +1,4 @@
-set(NAME wrapper-auv3)
+set(NAME platform-auv3)
 
 project(${NAME} LANGUAGES CXX OBJCXX)
 
