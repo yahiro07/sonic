@@ -1,5 +1,5 @@
 set(NAME project1-vst3)
-add_library(${NAME} MODULE version.h plugin_factory.cpp)
+add_library(${NAME} MODULE version.h plugin-factory.cpp)
 
 if(APPLE)
   target_sources(
