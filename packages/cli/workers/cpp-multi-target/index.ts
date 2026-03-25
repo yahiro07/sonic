@@ -1,9 +1,13 @@
 import {
+  casingToCapital,
+  casingToKebab,
+  casingToSnake,
   TemplateWorker,
   workerHelper_copyProjectContentFiles,
   workerHelper_copyProjectContentFiles_withRenaming,
   workerHelper_getNewProjectFolderPath,
   workerHelper_replaceStrings,
+  workerHelper_updateFileNamesWithPrefix,
 } from "@/common";
 import * as clackPrompts from "@clack/prompts";
 
@@ -11,6 +15,7 @@ type TemplateOptions = {
   includeFrameworkCode: boolean;
   includeDevHosts: boolean;
   includeEntryMakefile: boolean;
+  renameFiles: boolean;
 };
 
 async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
@@ -35,10 +40,18 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   if (clackPrompts.isCancel(includeEntryMakefile)) {
     return "cancelled";
   }
+  const renameFiles = await clackPrompts.confirm({
+    message: `Rename files?`,
+    initialValue: true,
+  });
+  if (clackPrompts.isCancel(renameFiles)) {
+    return "cancelled";
+  }
   return {
     includeFrameworkCode,
     includeDevHosts,
     includeEntryMakefile,
+    renameFiles,
   };
 }
 
@@ -46,15 +59,15 @@ type TaskContext = {
   projectName: string;
   templateName: string;
   options: TemplateOptions;
-  newFolderPath: string;
+  projectFolderPath: string;
 };
 
 function copyTemplateBaseFiles({ projectName, templateName }: TaskContext) {
   workerHelper_copyProjectContentFiles(projectName, templateName, [
     "cmake/base-info.plist.in",
     "cmake/setup-sdks.cmake",
-    "plugin",
-    "variants",
+    "source",
+    "wrapper",
     "www",
     ".clangd",
     ".gitignore",
@@ -78,39 +91,67 @@ function copyFrameworkCodeIfNeeded({
   }
 }
 
-// function applyTemplateCodeRenaming(projectName: string) {
-//   const newFolderPath = workerHelper_getNewProjectFolderPath(projectName);
+function renamePluginSourceFiles({
+  projectName,
+  projectFolderPath,
+}: TaskContext) {
+  const projectNameCapital = casingToCapital(projectName);
+  const projectNameKebab = casingToKebab(projectName);
+  const projectNameSnake = casingToSnake(projectName);
 
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: [
+      "source/project1-synthesizer.cpp",
+      "source/project1-synthesizer.h",
+      "source/project1-factory.cpp",
+    ],
+    replacements: [
+      {
+        from: "Project1Synthesizer",
+        to: `${projectNameCapital}Synthesizer`,
+      },
+      {
+        from: "project1-synthesizer.h",
+        to: `${projectNameKebab}-synthesizer.h`,
+      },
+      { from: `namespace project1`, to: `namespace ${projectNameSnake}` },
+      { from: `project1::`, to: `${projectNameSnake}::` },
+    ],
+  });
+
+  workerHelper_updateFileNamesWithPrefix(projectFolderPath, {
+    filePaths: [
+      "source/project1-synthesizer.cpp",
+      "source/project1-synthesizer.h",
+      "source/project1-factory.cpp",
+    ],
+    originalPrefix: "project1",
+    newPrefix: projectNameKebab,
+  });
+
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["source/CMakeLists.txt"],
+    replacements: [
+      {
+        from: "project1-synthesizer.cpp",
+        to: `${projectNameKebab}-synthesizer.cpp`,
+      },
+      {
+        from: "project1-factory.cpp",
+        to: `${projectNameKebab}-factory.cpp`,
+      },
+    ],
+  });
+}
+
+// function applyTemplateCodeRenaming({
+//   projectName,
+//   projectFolderPath,
+// }: TaskContext) {
 //   const projectNameSnake = casingToSnake(projectName);
 //   const projectNameCapital = casingToCapital(projectName);
 
-//   workerHelper_replaceStrings(newFolderPath, {
-//     filePaths: [
-//       "source/project1_synthesizer.cpp",
-//       "source/project1_synthesizer.h",
-//     ],
-//     replacements: [
-//       {
-//         from: "Project1Synthesizer",
-//         to: `${projectNameCapital}Synthesizer`,
-//       },
-//       {
-//         from: "project1_synthesizer.h",
-//         to: `${projectNameSnake}_synthesizer.h`,
-//       },
-//     ],
-//   });
-
-//   workerHelper_updateFileNamesWithPrefix(newFolderPath, {
-//     filePaths: [
-//       "source/project1_synthesizer.cpp",
-//       "source/project1_synthesizer.h",
-//     ],
-//     originalPrefix: "project1",
-//     newPrefix: projectNameSnake,
-//   });
-
-//   workerHelper_replaceStrings(newFolderPath, {
+//   workerHelper_replaceStrings(projectFolderPath, {
 //     filePaths: ["source/version.h"],
 //     replacements: [{ from: "Project1", to: projectNameCapital }],
 //   });
@@ -118,7 +159,7 @@ function copyFrameworkCodeIfNeeded({
 //   const processorCID = crypto.randomUUID().toUpperCase();
 //   const controllerCID = crypto.randomUUID().toUpperCase();
 
-//   workerHelper_replaceStrings(newFolderPath, {
+//   workerHelper_replaceStrings(projectFolderPath, {
 //     filePaths: ["source/plugin_factory.cpp"],
 //     replacements: [
 //       {
@@ -131,19 +172,8 @@ function copyFrameworkCodeIfNeeded({
 //     ],
 //   });
 
-//   workerHelper_replaceStrings(newFolderPath, {
-//     filePaths: ["CMakeLists.txt"],
-//     replacements: [
-//       {
-//         from: "project1_synthesizer.cpp",
-//         to: `${projectNameSnake}_synthesizer.cpp`,
-//       },
-//       { from: "Project1", to: projectNameCapital },
-//     ],
-//   });
-
-//   if (workerHelper_checkFileExists(newFolderPath, "Makefile")) {
-//     workerHelper_replaceStrings(newFolderPath, {
+//   if (workerHelper_checkFileExists(projectFolderPath, "Makefile")) {
+//     workerHelper_replaceStrings(projectFolderPath, {
 //       filePaths: ["Makefile"],
 //       replacements: [
 //         {
@@ -155,10 +185,10 @@ function copyFrameworkCodeIfNeeded({
 //   }
 // }
 
-function patchCMakeLists({ options, newFolderPath }: TaskContext) {
+function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
   const keepConditionalLine = (_text: string) => {};
   const removeConditionalLine = (text: string) => {
-    workerHelper_replaceStrings(newFolderPath, {
+    workerHelper_replaceStrings(projectFolderPath, {
       filePaths: ["CMakeLists.txt"],
       replacements: [{ from: text + "\n", to: "" }],
     });
@@ -194,7 +224,7 @@ function arrangeBuildWrapper({
   projectName,
   templateName,
   options,
-  newFolderPath,
+  projectFolderPath,
 }: TaskContext) {
   const hasMakefile = options.includeEntryMakefile;
   const hasRunScript = options.includeDevHosts;
@@ -209,7 +239,7 @@ function arrangeBuildWrapper({
     ]);
 
     if (!hasRunScript) {
-      workerHelper_replaceStrings(newFolderPath, {
+      workerHelper_replaceStrings(projectFolderPath, {
         filePaths: ["Makefile"],
         replacements: [
           {
@@ -233,12 +263,16 @@ function scaffoldProject(
     projectName,
     templateName,
     options,
-    newFolderPath: workerHelper_getNewProjectFolderPath(projectName),
+    projectFolderPath: workerHelper_getNewProjectFolderPath(projectName),
   };
   copyTemplateBaseFiles(taskContext);
   copyFrameworkCodeIfNeeded(taskContext);
   patchCMakeLists(taskContext);
   arrangeBuildWrapper(taskContext);
+  if (options.renameFiles) {
+    // applyTemplateCodeRenaming(taskContext);
+    renamePluginSourceFiles(taskContext);
+  }
   return true;
 }
 
