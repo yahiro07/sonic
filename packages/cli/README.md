@@ -1,6 +1,6 @@
 # sonic-shell
 
-Template scaffolding tool for sonic framework.
+Template scaffolding tool for sonic audio plugin framework.
 
 ## Installation
 
