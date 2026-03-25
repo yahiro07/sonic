@@ -133,7 +133,8 @@ export function workerHelper_replaceStrings(
   },
   checkReplaced = true,
 ) {
-  let fromKeysRemaining = new Set(spec.replacements.map((r) => r.from));
+  const replacements = spec.replacements.filter((it) => it.to !== it.from);
+  let fromKeysRemaining = new Set(replacements.map((r) => r.from));
 
   const fullPaths = spec.filePaths.map((filePath) =>
     path.join(folderPath, filePath),
@@ -144,7 +145,7 @@ export function workerHelper_replaceStrings(
     }
     let fileContent = fs.readFileSync(filePath, "utf-8");
     let replaced = false;
-    for (const replacement of spec.replacements) {
+    for (const replacement of replacements) {
       const original = fileContent;
       fileContent = fileContent.replaceAll(replacement.from, replacement.to);
       const thisReplaced = fileContent !== original;

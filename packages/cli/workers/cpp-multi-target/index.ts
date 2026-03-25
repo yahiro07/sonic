@@ -2,6 +2,7 @@ import {
   casingToCapital,
   casingToKebab,
   casingToSnake,
+  generateRandomString,
   TemplateWorker,
   workerHelper_copyProjectContentFiles,
   workerHelper_copyProjectContentFiles_withRenaming,
@@ -15,7 +16,8 @@ type TemplateOptions = {
   includeFrameworkCode: boolean;
   includeDevHosts: boolean;
   includeEntryMakefile: boolean;
-  renameFiles: boolean;
+  auManufacturer: string;
+  auSubtype: string;
 };
 
 async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
@@ -40,18 +42,34 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   if (clackPrompts.isCancel(includeEntryMakefile)) {
     return "cancelled";
   }
-  const renameFiles = await clackPrompts.confirm({
-    message: `Rename files?`,
-    initialValue: true,
+  const auManufacturerDefault = "Myco";
+  let auManufacturer = await clackPrompts.text({
+    message: `AUv3 Manufacturer Code`,
+    placeholder: auManufacturerDefault,
   });
-  if (clackPrompts.isCancel(renameFiles)) {
+  if (clackPrompts.isCancel(auManufacturer)) {
     return "cancelled";
+  }
+  if (auManufacturer == "") {
+    auManufacturer = auManufacturerDefault;
+  }
+  const auSubtypeDefault = generateRandomString("alphaNumeric", 4);
+  let auSubtype = await clackPrompts.text({
+    message: `AUv3 Subtype`,
+    placeholder: auSubtypeDefault,
+  });
+  if (clackPrompts.isCancel(auSubtype)) {
+    return "cancelled";
+  }
+  if (auSubtype == "") {
+    auSubtype = auSubtypeDefault;
   }
   return {
     includeFrameworkCode,
     includeDevHosts,
     includeEntryMakefile,
-    renameFiles,
+    auManufacturer,
+    auSubtype,
   };
 }
 
@@ -178,6 +196,75 @@ function patchClapWrapper({ projectName, projectFolderPath }: TaskContext) {
   });
 }
 
+function patchAuv3XcodeProject({
+  projectName,
+  templateName,
+  options,
+  projectFolderPath,
+}: TaskContext) {
+  workerHelper_copyProjectContentFiles(projectName, templateName, [
+    "wrapper/auv3-xcode-project/Project1",
+    "wrapper/auv3-xcode-project/Project1.xcodeproj/project.pbxproj",
+    "wrapper/auv3-xcode-project/Project1Extension",
+  ]);
+
+  const projectNameCapital = casingToCapital(projectName);
+  const extensionNameCapital = `${projectNameCapital}Extension`;
+
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["wrapper/auv3-xcode-project/Project1/Project1App.swift"],
+    replacements: [{ from: "Project1App", to: `${projectNameCapital}App` }],
+  });
+
+  const { auManufacturer, auSubtype } = options;
+
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: [
+      "wrapper/auv3-xcode-project/Project1/Model/AudioUnitHostModel.swift",
+    ],
+    replacements: [
+      {
+        from: `subType: String = "pj42"`,
+        to: `subType: String = "${auSubtype}"`,
+      },
+      {
+        from: `manufacturer: String = "Myco"`,
+        to: `manufacturer: String = "${auManufacturer}"`,
+      },
+    ],
+  });
+
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["wrapper/auv3-xcode-project/Project1Extension/info.plist"],
+    replacements: [
+      {
+        from: "<string>pj42</string>",
+        to: `<string>${auSubtype}</string>`,
+      },
+      {
+        from: "<string>Myco</string>",
+        to: `<string>${auManufacturer}</string>`,
+      },
+      {
+        from: "<string>Project1Extension</string>",
+        to: `<string>${extensionNameCapital}</string>`,
+      },
+    ],
+  });
+
+  workerHelper_updateFileNamesWithPrefix(projectFolderPath, {
+    filePaths: [
+      "wrapper/auv3-xcode-project/Project1/Project1App.swift",
+      "wrapper/auv3-xcode-project/Project1/Project1.entitlements",
+      "wrapper/auv3-xcode-project/Project1",
+      "wrapper/auv3-xcode-project/Project1.xcodeproj",
+      "wrapper/auv3-xcode-project/Project1Extension",
+    ],
+    originalPrefix: "Project1",
+    newPrefix: projectNameCapital,
+  });
+}
+
 function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
   const keepConditionalLine = (_text: string) => {};
   const removeConditionalLine = (text: string) => {
@@ -262,12 +349,10 @@ function scaffoldProject(
   copyFrameworkCodeIfNeeded(taskContext);
   patchCMakeLists(taskContext);
   arrangeBuildWrapper(taskContext);
-  if (options.renameFiles) {
-    // applyTemplateCodeRenaming(taskContext);
-    renamePluginSourceFiles(taskContext);
-    patchVstWrapper(taskContext);
-    patchClapWrapper(taskContext);
-  }
+  renamePluginSourceFiles(taskContext);
+  patchVstWrapper(taskContext);
+  patchClapWrapper(taskContext);
+  patchAuv3XcodeProject(taskContext);
   return true;
 }
 

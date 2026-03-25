@@ -14,9 +14,9 @@
 					<key>factoryFunction</key>
 					<string>AudioUnitViewController</string>
 					<key>manufacturer</key>
-					<string>Sonx</string>
+					<string>Myco</string>
 					<key>name</key>
-					<string>sonic: Project1Extension</string>
+					<string>Project1Extension</string>
 					<key>sandboxSafe</key>
 					<true/>
 					<key>subtype</key>
