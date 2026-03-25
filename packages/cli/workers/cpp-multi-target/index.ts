@@ -338,13 +338,13 @@ function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
 
   if (!hasVstDevHost) {
     removeConditionalLine(
-      `add_subdirectory(\${SONIC_ROOT_DIR}/templates/_vst-dev-host/vst_dev_host
+      `add_subdirectory(\${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
                  \${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)`,
     );
   }
   if (!hasClapDevHost) {
     removeConditionalLine(
-      `add_subdirectory(\${SONIC_ROOT_DIR}/templates/_clap-dev-host/clap_dev_host
+      `add_subdirectory(\${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
                  \${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)`,
     );
   }

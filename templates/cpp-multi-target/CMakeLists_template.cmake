@@ -25,9 +25,9 @@ add_subdirectory(framework/sonic)
 add_subdirectory("${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
                  "${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")
 
-add_subdirectory(${SONIC_ROOT_DIR}/templates/_vst-dev-host/vst_dev_host
+add_subdirectory(${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
                  ${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)
-add_subdirectory(${SONIC_ROOT_DIR}/templates/_clap-dev-host/clap_dev_host
+add_subdirectory(${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
                  ${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)
 
 add_subdirectory(plugin)
