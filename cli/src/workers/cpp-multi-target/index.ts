@@ -114,11 +114,11 @@ function copyTemplateBaseFiles({ projectName, templateName }: TaskContext) {
     "source",
     "www",
     ".clangd",
-    ".gitignore",
     "CMakePresets.json",
   ]);
 
   workerHelper_copyProjectContentFiles_withRenaming(projectName, templateName, [
+    { from: ".gitignore_template", to: ".gitignore" },
     { from: "CMakeLists_template.cmake", to: "CMakeLists.txt" },
   ]);
 }
