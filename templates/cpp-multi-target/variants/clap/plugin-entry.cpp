@@ -1,6 +1,6 @@
-#include "../../framework/platform/clap/clap-entry-wrapper.h"
 #include "../../plugin/project1-synthesizer.h"
 #include <math.h>
+#include <sonic/platform/clap/clap-entry-wrapper.h>
 
 sonic::PluginMeta meta = {
     .id = "com.my-company.my-plugin",

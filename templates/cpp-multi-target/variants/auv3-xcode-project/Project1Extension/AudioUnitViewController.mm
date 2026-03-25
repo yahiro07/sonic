@@ -1,8 +1,5 @@
 #import "./AudioUnitViewController.h"
 #include <Foundation/Foundation.h>
-#import <WebKit/WebKit.h>
-
-#import "../../../framework/plugin-view/webview/webview-editor.h"
 
 #if !__has_feature(objc_arc)
 #error "this code requires ARC. Enable -fobjc-arc for Objective-C sources."
@@ -20,8 +17,10 @@
         (AudioComponentDescription)componentDescription
                                       error:(NSError *_Nullable *_Nullable)
                                                 outError {
-  printf(
-      "AudioUnitViewController createAudioUnitWithComponentDescription 1421\n");
+  printf("AudioUnitViewController createAudioUnitWithComponentDescription "
+         "1439\n");
+  printf("Loaded From: %s\n", [[NSBundle mainBundle].bundlePath UTF8String]);
+
   WrapperAuv3AudioUnit *audioUnit = [[WrapperAuv3AudioUnit alloc]
       initWithComponentDescription:componentDescription
                            options:0
@@ -51,7 +50,6 @@
 - (void)ensureInitialized {
   if (self.audioUnit && !self.viewFrame) {
     printf("AudioUnitViewController initialize\n");
-    sonic::registerWebviewEditorFactory();
     self.viewFrame = [[WrapperAuv3ViewFrame alloc] init];
     [self.viewFrame connectViewToAudioUnit:self.audioUnit viewController:self];
   }
