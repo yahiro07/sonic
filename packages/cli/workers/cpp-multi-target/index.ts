@@ -144,46 +144,30 @@ function renamePluginSourceFiles({
   });
 }
 
-// function applyTemplateCodeRenaming({
-//   projectName,
-//   projectFolderPath,
-// }: TaskContext) {
-//   const projectNameSnake = casingToSnake(projectName);
-//   const projectNameCapital = casingToCapital(projectName);
+function patchVstWrapper({ projectName, projectFolderPath }: TaskContext) {
+  const projectNameCapital = casingToCapital(projectName);
+  const projectNameKebab = casingToKebab(projectName);
 
-//   workerHelper_replaceStrings(projectFolderPath, {
-//     filePaths: ["source/version.h"],
-//     replacements: [{ from: "Project1", to: projectNameCapital }],
-//   });
+  const processorCID = crypto.randomUUID().toUpperCase();
+  const controllerCID = crypto.randomUUID().toUpperCase();
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["wrapper/vst3/plugin-factory.cpp"],
+    replacements: [
+      { from: "E458F80E-DEED-40DB-AD59-2C739A7DA7A0", to: processorCID },
+      { from: "6BAD2674-0204-4522-8971-58C6296A4552", to: controllerCID },
+    ],
+  });
 
-//   const processorCID = crypto.randomUUID().toUpperCase();
-//   const controllerCID = crypto.randomUUID().toUpperCase();
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["wrapper/vst3/version.h"],
+    replacements: [{ from: "Project1", to: projectNameCapital }],
+  });
 
-//   workerHelper_replaceStrings(projectFolderPath, {
-//     filePaths: ["source/plugin_factory.cpp"],
-//     replacements: [
-//       {
-//         from: "project1_synthesizer.h",
-//         to: `${projectNameSnake}_synthesizer.h`,
-//       },
-//       { from: "MyPlugin", to: projectNameCapital },
-//       { from: "E458F80E-DEED-40DB-AD59-2C739A7DA7A0", to: processorCID },
-//       { from: "6BAD2674-0204-4522-8971-58C6296A4552", to: controllerCID },
-//     ],
-//   });
-
-//   if (workerHelper_checkFileExists(projectFolderPath, "Makefile")) {
-//     workerHelper_replaceStrings(projectFolderPath, {
-//       filePaths: ["Makefile"],
-//       replacements: [
-//         {
-//           from: "Project1.vst3",
-//           to: `${casingToCapital(projectName)}.vst3`,
-//         },
-//       ],
-//     });
-//   }
-// }
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["wrapper/vst3/CMakeLists.txt"],
+    replacements: [{ from: "project1-vst3", to: `${projectNameKebab}-vst3` }],
+  });
+}
 
 function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
   const keepConditionalLine = (_text: string) => {};
@@ -272,6 +256,7 @@ function scaffoldProject(
   if (options.renameFiles) {
     // applyTemplateCodeRenaming(taskContext);
     renamePluginSourceFiles(taskContext);
+    patchVstWrapper(taskContext);
   }
   return true;
 }
