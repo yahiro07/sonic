@@ -368,6 +368,15 @@ function arrangeBuildWrapper({
 
   if (hasRunScript) {
     workerHelper_copyProjectContentFiles(projectName, templateName, ["run.sh"]);
+
+    const projectNameKebab = casingToKebab(projectName);
+    workerHelper_replaceStrings(projectFolderPath, {
+      filePaths: ["run.sh"],
+      replacements: [
+        { from: "project1-vst3.vst3", to: `${projectNameKebab}-vst3.vst3` },
+        { from: "project1-clap.clap", to: `${projectNameKebab}-clap.clap` },
+      ],
+    });
   }
 
   if (hasMakefile) {
