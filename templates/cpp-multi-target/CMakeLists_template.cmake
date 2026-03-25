@@ -31,5 +31,5 @@ add_subdirectory(${SONIC_ROOT_DIR}/templates/_clap-dev-host/clap_dev_host
                  ${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)
 
 add_subdirectory(plugin)
-add_subdirectory(variants/vst3)
-add_subdirectory(variants/clap)
+add_subdirectory(wrapper/vst3)
+add_subdirectory(wrapper/clap)

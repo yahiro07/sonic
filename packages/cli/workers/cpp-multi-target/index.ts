@@ -13,6 +13,7 @@ import {
 import * as clackPrompts from "@clack/prompts";
 
 type TemplateOptions = {
+  platforms: ("vst3" | "clap" | "auv3")[];
   includeFrameworkCode: boolean;
   includeDevHosts: boolean;
   includeEntryMakefile: boolean;
@@ -21,6 +22,20 @@ type TemplateOptions = {
 };
 
 async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
+  const tmpPlatforms = await clackPrompts.multiselect({
+    message: "Pick target platforms",
+    options: [
+      { value: "vst3", label: "VST3" },
+      { value: "clap", label: "CLAP" },
+      { value: "auv3", label: "AUv3" },
+    ],
+    initialValues: ["vst3", "clap", "auv3"],
+  });
+  if (clackPrompts.isCancel(tmpPlatforms)) {
+    return "cancelled";
+  }
+  const platforms = tmpPlatforms as TemplateOptions["platforms"];
+
   const includeFrameworkCode = await clackPrompts.confirm({
     message: `Include framework source code?`,
     initialValue: false,
@@ -28,13 +43,18 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   if (clackPrompts.isCancel(includeFrameworkCode)) {
     return "cancelled";
   }
-  const includeDevHosts = await clackPrompts.confirm({
-    message: `Add VST3/CLAP development hosts?`,
-    initialValue: true,
-  });
-  if (clackPrompts.isCancel(includeDevHosts)) {
-    return "cancelled";
+
+  let includeDevHosts: boolean | symbol = false;
+  if (platforms.includes("vst3") || platforms.includes("clap")) {
+    includeDevHosts = await clackPrompts.confirm({
+      message: `Add VST3/CLAP development hosts?`,
+      initialValue: true,
+    });
+    if (clackPrompts.isCancel(includeDevHosts)) {
+      return "cancelled";
+    }
   }
+
   const includeEntryMakefile = await clackPrompts.confirm({
     message: `Add entry Makefile?`,
     initialValue: true,
@@ -42,34 +62,41 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   if (clackPrompts.isCancel(includeEntryMakefile)) {
     return "cancelled";
   }
-  const auManufacturerDefault = "Myco";
-  let auManufacturer = await clackPrompts.text({
-    message: `AUv3 Manufacturer Code`,
-    placeholder: auManufacturerDefault,
-  });
-  if (clackPrompts.isCancel(auManufacturer)) {
-    return "cancelled";
+
+  let auManufacturer: string | symbol = "";
+  let auSubtype: string | symbol = "";
+  if (platforms.includes("auv3")) {
+    const auManufacturerDefault = "Myco";
+    auManufacturer = await clackPrompts.text({
+      message: `AUv3 Manufacturer Code`,
+      placeholder: auManufacturerDefault,
+    });
+    if (clackPrompts.isCancel(auManufacturer)) {
+      return "cancelled";
+    }
+    if (auManufacturer == "") {
+      auManufacturer = auManufacturerDefault;
+    }
+    const auSubtypeDefault = generateRandomString("alphaNumeric", 4);
+    auSubtype = await clackPrompts.text({
+      message: `AUv3 Subtype`,
+      placeholder: auSubtypeDefault,
+    });
+    if (clackPrompts.isCancel(auSubtype)) {
+      return "cancelled";
+    }
+    if (auSubtype == "") {
+      auSubtype = auSubtypeDefault;
+    }
   }
-  if (auManufacturer == "") {
-    auManufacturer = auManufacturerDefault;
-  }
-  const auSubtypeDefault = generateRandomString("alphaNumeric", 4);
-  let auSubtype = await clackPrompts.text({
-    message: `AUv3 Subtype`,
-    placeholder: auSubtypeDefault,
-  });
-  if (clackPrompts.isCancel(auSubtype)) {
-    return "cancelled";
-  }
-  if (auSubtype == "") {
-    auSubtype = auSubtypeDefault;
-  }
+
   return {
     includeFrameworkCode,
     includeDevHosts,
     includeEntryMakefile,
     auManufacturer,
     auSubtype,
+    platforms,
   };
 }
 
@@ -85,7 +112,6 @@ function copyTemplateBaseFiles({ projectName, templateName }: TaskContext) {
     "cmake/base-info.plist.in",
     "cmake/setup-sdks.cmake",
     "source",
-    "wrapper",
     "www",
     ".clangd",
     ".gitignore",
@@ -162,7 +188,15 @@ function renamePluginSourceFiles({
   });
 }
 
-function patchVstWrapper({ projectName, projectFolderPath }: TaskContext) {
+function addVstWrapper({
+  projectName,
+  templateName,
+  projectFolderPath,
+}: TaskContext) {
+  workerHelper_copyProjectContentFiles(projectName, templateName, [
+    "wrapper/vst3",
+  ]);
+
   const projectNameCapital = casingToCapital(projectName);
   const projectNameKebab = casingToKebab(projectName);
 
@@ -187,8 +221,16 @@ function patchVstWrapper({ projectName, projectFolderPath }: TaskContext) {
   });
 }
 
-function patchClapWrapper({ projectName, projectFolderPath }: TaskContext) {
+function addClapWrapper({
+  projectName,
+  templateName,
+  projectFolderPath,
+}: TaskContext) {
   const projectNameKebab = casingToKebab(projectName);
+
+  workerHelper_copyProjectContentFiles(projectName, templateName, [
+    "wrapper/clap",
+  ]);
 
   workerHelper_replaceStrings(projectFolderPath, {
     filePaths: ["wrapper/clap/CMakeLists.txt"],
@@ -196,7 +238,7 @@ function patchClapWrapper({ projectName, projectFolderPath }: TaskContext) {
   });
 }
 
-function patchAuv3XcodeProject({
+function addAuv3XcodeProject({
   projectName,
   templateName,
   options,
@@ -288,15 +330,30 @@ function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
     );
   }
 
-  if (!options.includeDevHosts) {
+  const hasVst3 = options.platforms.includes("vst3");
+  const hasClap = options.platforms.includes("clap");
+
+  const hasVstDevHost = hasVst3 && options.includeDevHosts;
+  const hasClapDevHost = hasClap && options.includeDevHosts;
+
+  if (!hasVstDevHost) {
     removeConditionalLine(
       `add_subdirectory(\${SONIC_ROOT_DIR}/templates/_vst-dev-host/vst_dev_host
                  \${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)`,
     );
+  }
+  if (!hasClapDevHost) {
     removeConditionalLine(
       `add_subdirectory(\${SONIC_ROOT_DIR}/templates/_clap-dev-host/clap_dev_host
                  \${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)`,
     );
+  }
+
+  if (!hasVst3) {
+    removeConditionalLine(`add_subdirectory(wrapper/vst3)`);
+  }
+  if (!hasClap) {
+    removeConditionalLine(`add_subdirectory(wrapper/clap)`);
   }
 }
 
@@ -347,12 +404,18 @@ function scaffoldProject(
   };
   copyTemplateBaseFiles(taskContext);
   copyFrameworkCodeIfNeeded(taskContext);
+  renamePluginSourceFiles(taskContext);
+  if (options.platforms.includes("vst3")) {
+    addVstWrapper(taskContext);
+  }
+  if (options.platforms.includes("clap")) {
+    addClapWrapper(taskContext);
+  }
+  if (options.platforms.includes("auv3")) {
+    addAuv3XcodeProject(taskContext);
+  }
   patchCMakeLists(taskContext);
   arrangeBuildWrapper(taskContext);
-  renamePluginSourceFiles(taskContext);
-  patchVstWrapper(taskContext);
-  patchClapWrapper(taskContext);
-  patchAuv3XcodeProject(taskContext);
   return true;
 }
 
