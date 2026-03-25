@@ -7,4 +7,7 @@ build:
 	cmake --build --preset ninja-debug
 
 run: build
-	../VstDevHost/build/bin/Debug/VstDevHost ./build/lib/project1-vst3.vst3
+	sh ./run.sh
+
+clean:
+	rm -rf build

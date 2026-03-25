@@ -11,8 +11,8 @@ enum ParameterAddress {
 };
 
 void Project1Synthesizer::setupParameters(sonic::ParameterBuilder &builder) {
-  builder.addUnary(kOscEnabled, "gain", "Gain", 0.1);
-  builder.addEnum(kOscWave, "waveType", "Wave Type", "saw",
+  builder.addBool(kOscEnabled, "oscEnabled", "Enabled", true);
+  builder.addEnum(kOscWave, "oscWave", "Waveform", "saw",
                   {"saw", "square", "triangle", "sine"});
   builder.addUnary(kOscPitch, "oscPitch", "Pitch", 0.5);
   builder.addUnary(kOscVolume, "oscVolume", "Volume", 0.5);
@@ -51,8 +51,7 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
 
   float effectiveNoteNumber =
       (float)noteNumber + (oscPitch * 2.0f - 1.0f) * 12.0f;
-  float frequency =
-      440.0f * std::pow(2.0f, (effectiveNoteNumber - 69.0f) / 12.0f);
+  float frequency = 440.0f * pow(2.0f, (effectiveNoteNumber - 69.0f) / 12.0f);
   float phaseDelta = frequency / sampleRate;
 
   float gain = (oscEnabled && gateOn) ? oscVolume : 0.0f;
@@ -70,7 +69,7 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
     } else if (oscWave == OscWaveType::Triangle) {
       y = (phase < 0.5f ? 4.0f * phase - 1.0f : -4.0f * phase + 3.0f);
     } else if (oscWave == OscWaveType::Sine) {
-      y = std::sin(phase * 2.0f * (float)M_PI);
+      y = sin(phase * 2.0f * (float)M_PI);
     }
     bufferL[i] = y * gain;
   }
@@ -97,7 +96,7 @@ void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
 std::string Project1Synthesizer::getEditorPageUrl() {
   if (1) {
     return "http://localhost:3000?debug=1";
-  } else {
+  } else if (0) {
     return "app://local/index.html?debug=1";
     // app://local is mapped to the resources/www directory
     // return "app://local/index.html";
@@ -105,8 +104,3 @@ std::string Project1Synthesizer::getEditorPageUrl() {
 }
 
 } // namespace project1
-
-sonic::SynthesizerBase *createSynthesizerInstance() {
-  printf("project1-synthesizer: createSynthesizerInstance 0655\n");
-  return new project1::Project1Synthesizer();
-}
