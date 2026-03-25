@@ -144,7 +144,6 @@ async function createProject() {
     const { projectName, templateName } = baseOptions;
 
     const newProjectFolderPath = path.join(process.cwd(), projectName);
-    console.log({ newProjectFolderPath });
     if (fs.existsSync(newProjectFolderPath)) {
       fs.rmSync(newProjectFolderPath, { recursive: true });
     }
