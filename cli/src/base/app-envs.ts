@@ -25,7 +25,7 @@ export function appEnvs_getTemplatesFolderPath() {
   const packageRootFolderPath = appEnvs_getPackageRootFolderPath();
   if (appEnvs.isWorkerDev) {
     //for development, refer <sonic_repo_root>/templates directly
-    return path.join(packageRootFolderPath, "../../templates");
+    return path.join(packageRootFolderPath, "../templates");
   } else {
     //for production templates are bundled in the package
     return path.join(packageRootFolderPath, "templates");
