@@ -2,8 +2,9 @@
 import * as clackPrompts from "@clack/prompts";
 import fs from "fs";
 import path from "path";
-import { casingToCapital, incrementSuffix } from "@/common";
-import { templateEntries } from "./template-entries";
+import { casingToCapital, incrementSuffix } from "@/src/common";
+import { templateEntries } from "./workers/template-entries";
+import { appEnvs } from "@/src/base/app-envs";
 
 type InputCommand =
   | { type: "create" }
@@ -121,6 +122,7 @@ async function readBaseOptionsForDebug(): Promise<BaseOptions | "cancelled"> {
     })),
   });
   if (clackPrompts.isCancel(templateName)) return "cancelled";
+  //use the same default project name for debugging
   const projectNameDefault = `${casingToCapital(templateName)}1`;
   let projectName = await clackPrompts.text({
     message: "Enter project name",
@@ -132,11 +134,7 @@ async function readBaseOptionsForDebug(): Promise<BaseOptions | "cancelled"> {
 
 async function createProject() {
   try {
-    const isWorkerDev = process.env.CLI_TEMPLATE_WORKER_DEVELOPMENT;
-    if (isWorkerDev) {
-      console.log("isWorkerDev: true");
-    }
-    const baseOptions = isWorkerDev
+    const baseOptions = appEnvs.isWorkerDev
       ? await readBaseOptionsForDebug()
       : await readBaseOptions();
     if (baseOptions === "cancelled") {
@@ -146,6 +144,7 @@ async function createProject() {
     const { projectName, templateName } = baseOptions;
 
     const newProjectFolderPath = path.join(process.cwd(), projectName);
+    console.log({ newProjectFolderPath });
     if (fs.existsSync(newProjectFolderPath)) {
       fs.rmSync(newProjectFolderPath, { recursive: true });
     }
@@ -173,7 +172,10 @@ async function createProject() {
         return;
       }
     } catch (error) {
-      if (!isWorkerDev) {
+      if (appEnvs.isWorkerDev) {
+        //keep incomplete project folder for debugging
+      } else {
+        //cleanup incomplete project folder
         fs.rmSync(newProjectFolderPath, { recursive: true });
       }
       throw error;

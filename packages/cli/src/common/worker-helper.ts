@@ -1,14 +1,14 @@
+import { appEnvs_getTemplatesFolderPath } from "@/src/base/app-envs";
 import fs from "fs";
-import path, { dirname } from "path";
-import { fileURLToPath } from "url";
+import path from "path";
 
 export function workerHelper_getNewProjectFolderPath(projectName: string) {
   return path.join(process.cwd(), projectName);
 }
 
 export function workerHelper_getTemplateFolderPath(templateName: string) {
-  const binFolderPath = dirname(fileURLToPath(import.meta.url));
-  return path.join(binFolderPath, "../", "templates", templateName);
+  const templatesFolderPath = appEnvs_getTemplatesFolderPath();
+  return path.join(templatesFolderPath, templateName);
 }
 
 export function workerHelper_copyFile(srcPath: string, destPath: string) {
@@ -30,9 +30,8 @@ export function workerHelper_copyProjectContentFiles(
   entries: string[],
 ) {
   const templateFolderPath = workerHelper_getTemplateFolderPath(templateName);
-
-  const newProjectFolderPath = path.join(process.cwd(), projectName);
-  fs.mkdirSync(newProjectFolderPath, { recursive: true });
+  const newProjectFolderPath =
+    workerHelper_getNewProjectFolderPath(projectName);
 
   for (const entry of entries) {
     const srcPath = path.join(templateFolderPath, entry);
@@ -60,15 +59,9 @@ export function workerHelper_copyProjectContentFiles_withRenaming(
   templateName: string,
   entries: { from: string; to: string }[],
 ) {
-  const binFolderPath = dirname(fileURLToPath(import.meta.url));
-  const templateFolderPath = path.join(
-    binFolderPath,
-    "../",
-    "templates",
-    templateName,
-  );
-  const newProjectFolderPath = path.join(process.cwd(), projectName);
-  fs.mkdirSync(newProjectFolderPath, { recursive: true });
+  const templateFolderPath = workerHelper_getTemplateFolderPath(templateName);
+  const newProjectFolderPath =
+    workerHelper_getNewProjectFolderPath(projectName);
 
   for (const entry of entries) {
     const srcPath = path.join(templateFolderPath, entry.from);

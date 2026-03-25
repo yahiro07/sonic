@@ -9,7 +9,7 @@ import {
   workerHelper_getNewProjectFolderPath,
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
-} from "@/common";
+} from "@/src/common";
 import * as clackPrompts from "@clack/prompts";
 
 type TemplateOptions = {

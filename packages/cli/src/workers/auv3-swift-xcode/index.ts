@@ -6,7 +6,7 @@ import {
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
   workerHelper_getNewProjectFolderPath,
-} from "@/common";
+} from "@/src/common";
 
 function createTemplateWorker(): TemplateWorker {
   return {

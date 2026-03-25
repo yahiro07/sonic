@@ -9,7 +9,7 @@ import {
   workerHelper_relocateFile,
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
-} from "@/common";
+} from "@/src/common";
 import * as clackPrompts from "@clack/prompts";
 
 type BuildWrapperType = "none" | "cmakePresets" | "makefile";
