@@ -32,9 +32,7 @@ if(APPLE)
   add_custom_command(
     TARGET ${NAME}
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/resources"
             "$<TARGET_FILE_DIR:${NAME}>/../Resources"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PLUGIN_WWW_DIR}"
-            "$<TARGET_FILE_DIR:${NAME}>/../Resources/www"
     VERBATIM)
 endif()

@@ -33,10 +33,7 @@ if(NOT NODE_BUILD_RESULT EQUAL 0)
 endif()
 
 execute_process(COMMAND cp -r "../_common/www-vanilla"
-                        "${CMAKE_CURRENT_SOURCE_DIR}/resources/www-vanilla")
-
-# set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/resources/www-vanilla)
-set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/resources/www-bundles)
+                        "${CMAKE_CURRENT_SOURCE_DIR}/resources/")
 
 option(SONIC_USE_LOCAL_SDK "Use vendored SDKs under dependencies/" ON)
 if(SONIC_USE_LOCAL_SDK)

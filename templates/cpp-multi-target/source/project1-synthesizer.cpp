@@ -99,7 +99,8 @@ std::string Project1Synthesizer::getEditorPageUrl() {
   } else if (1) {
     // return "webview://local/index.html?debug=1";
     // webview://local is mapped to the resources/www directory
-    return "app://local/index.html";
+    return "app://www-bundles/index.html";
+    // return "app://www-vanilla/index.html";
   }
 }
 
