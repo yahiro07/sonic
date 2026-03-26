@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { casingToCapital, incrementSuffix } from "@/src/common";
 import { templateEntries } from "./workers/template-entries";
-import { appEnvs } from "@/src/base/app-envs";
+import { appEnvs, appEnvs_getPackageRootFolderPath } from "@/src/base/app-envs";
 
 type InputCommand =
   | { type: "create" }
@@ -52,7 +52,14 @@ async function handleInputCommand(inputCommand: InputCommand | undefined) {
     console.log("sonic --version");
     console.log("sonic --help");
   } else if (inputCommand.type === "version") {
-    console.log("sonic cli version 0.0.0-in-development");
+    try {
+      const rootPath = appEnvs_getPackageRootFolderPath();
+      const packageJsonPath = path.join(rootPath, "package.json");
+      const pkgJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+      console.log(`sonic cli version ${pkgJson.version}`);
+    } catch (e) {
+      console.log("sonic cli version (failed to read package.json)");
+    }
   } else if (inputCommand.type === "help") {
     console.log("supported commands:");
     console.log("sonic");

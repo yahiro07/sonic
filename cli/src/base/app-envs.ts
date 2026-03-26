@@ -9,7 +9,7 @@ export const appEnvs = {
   isWorkerDev,
 };
 
-function appEnvs_getPackageRootFolderPath() {
+export function appEnvs_getPackageRootFolderPath() {
   const entryPath = fs.realpathSync(process.argv[1]);
   const binFolderPath = path.dirname(entryPath);
   if (appEnvs.isWorkerDev) {
