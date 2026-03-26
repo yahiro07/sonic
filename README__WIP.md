@@ -152,6 +152,7 @@ Build required libraries for XCode project.
 
 ```bash
 cmake -B build -S . -G Xcode
+cmake --build build
 ```
 
 Open XCode project and build/debug.
