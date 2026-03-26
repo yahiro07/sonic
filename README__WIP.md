@@ -146,6 +146,21 @@ make run
 
 You can also use the provided CMake Presets when building from an IDE.
 
+## Debug AUv3
+
+Build required libraries for XCode project.
+
+```bash
+cmake -B build -S . -G Xcode
+```
+
+Open XCode project and build/debug.
+Set Development Team and bundle identifier in build settings.
+
+```bash
+open wrapper/auv3-xcode-project/CppMultiTarget1.xcodeproj
+```
+
 ## Development Flow
 
 1. Implement your DSP in `source/*-synthesizer.cpp`
