@@ -112,10 +112,11 @@ function copyTemplateBaseFiles({ projectName, templateName }: TaskContext) {
     "cmake/base-info.plist.in",
     "cmake/setup-sdks.cmake",
     "source",
-    "www",
     ".clangd",
     "CMakePresets.json",
   ]);
+
+  workerHelper_copyProjectContentFiles(projectName, "_common", ["www"]);
 
   workerHelper_copyProjectContentFiles_withRenaming(projectName, templateName, [
     { from: ".gitignore_template", to: ".gitignore" },
