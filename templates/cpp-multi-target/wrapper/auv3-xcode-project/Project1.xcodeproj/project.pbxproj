@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		3C0E94812F74E54B0052B2D9 /* libplatform-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C0E94712F74E51B0052B2D9 /* libplatform-auv3.a */; platformFilters = (macos, ); };
 		3C0E94822F74E54F0052B2D9 /* libplugin-source.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C0E947C2F74E5350052B2D9 /* libplugin-source.a */; platformFilters = (macos, ); };
-		3C0E94842F74E5710052B2D9 /* resources in Resources */ = {isa = PBXBuildFile; fileRef = 3C0E94832F74E5710052B2D9 /* resources */; };
+		3C0E94882F74F9DB0052B2D9 /* pages in Resources */ = {isa = PBXBuildFile; fileRef = 3C0E94872F74F9DB0052B2D9 /* pages */; };
 		3CAA19122F5D89B800363E1C /* Project1Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3CAA19112F5D89B800363E1C /* Project1Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -68,7 +68,7 @@
 /* Begin PBXFileReference section */
 		3C0E94672F74E51B0052B2D9 /* platform-auv3.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "platform-auv3.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build/xcode/framework/sonic/platform/auv3/platform-auv3.xcodeproj"; sourceTree = "<absolute>"; };
 		3C0E94722F74E5350052B2D9 /* plugin-source.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "plugin-source.xcodeproj"; path = "/Users/ore/Documents/projects/yahiro/sonic/templates/cpp-multi-target/build/xcode/source/plugin-source.xcodeproj"; sourceTree = "<absolute>"; };
-		3C0E94832F74E5710052B2D9 /* resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = resources; path = ../../resources; sourceTree = "<group>"; };
+		3C0E94872F74F9DB0052B2D9 /* pages */ = {isa = PBXFileReference; lastKnownFileType = folder; name = pages; path = ../../pages; sourceTree = "<group>"; };
 		3CAA18EB2F5D89B700363E1C /* Project1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Project1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CAA19112F5D89B800363E1C /* Project1Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Project1Extension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -138,7 +138,7 @@
 		3CAA18E22F5D89B700363E1C = {
 			isa = PBXGroup;
 			children = (
-				3C0E94832F74E5710052B2D9 /* resources */,
+				3C0E94872F74F9DB0052B2D9 /* pages */,
 				3C0E94722F74E5350052B2D9 /* plugin-source.xcodeproj */,
 				3C0E94672F74E51B0052B2D9 /* platform-auv3.xcodeproj */,
 				3CAA18ED2F5D89B700363E1C /* Project1 */,
@@ -292,7 +292,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3C0E94842F74E5710052B2D9 /* resources in Resources */,
+				3C0E94882F74F9DB0052B2D9 /* pages in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

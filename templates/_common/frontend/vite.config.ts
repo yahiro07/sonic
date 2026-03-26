@@ -7,7 +7,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [tailwindcss(), react(), tsconfigPaths()],
   build: {
-    outDir: "../resources/www-bundles",
+    outDir: "../pages/www-bundles",
     emptyOutDir: true,
   },
   server: {

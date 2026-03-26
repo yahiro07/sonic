@@ -20,7 +20,7 @@ else()
 endif()
 
 include(cmake/build-frontend.cmake)
-set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/resources/www-bundles)
+set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/pages/www-bundles)
 
 include(cmake/setup-sdks.cmake)
 
