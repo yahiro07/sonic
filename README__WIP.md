@@ -98,17 +98,27 @@ The generated project will have a structure like this:
 │   └── cpp-multi-target1-synthesizer.h
 ├── wrapper
 │   ├── auv3-xcode-project
+│   │   ├── CppMultiTarget1
+│   │   ├── CppMultiTarget1.xcodeproj
+│   │   └── CppMultiTarget1Extension
 │   ├── clap
+│   │   ├── CMakeLists.txt
+│   │   └── plugin-entry.cpp
 │   └── vst3
+│       ├── CMakeLists.txt
+│       ├── plugin-factory.cpp
+│       └── version.h
 └── www
     ├── assets
+    │   ├── index.css
+    │   └── index.js
     └── index.html
 
 ```
 
-- source contains the application (DSP) code
-- wrapper contains implementations for each plugin format
-- www contains the WebView-based UI
+- `source` contains the application (DSP) code
+- `wrapper` contains entry point for each plugin format
+- `www` contains the WebView-based UI
 
 ## Build
 
