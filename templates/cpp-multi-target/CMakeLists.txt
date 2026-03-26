@@ -19,10 +19,26 @@ else()
   add_definitions(-DRELEASE=1)
 endif()
 
-# set(SONIC_USE_LOCAL_SDK OFF)
+# build frontend
+set(FRONTEND_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources/www-bundles")
+execute_process(
+  COMMAND npx vite build --outDir ${FRONTEND_OUT_DIR}
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../_common/frontend"
+  RESULT_VARIABLE NODE_BUILD_RESULT)
+
+if(NOT NODE_BUILD_RESULT EQUAL 0)
+  message(
+    FATAL_ERROR
+      "frontend project build failed with exit code ${NODE_BUILD_RESULT}")
+endif()
+
+execute_process(COMMAND cp -r "../_common/www-vanilla"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/resources/www-vanilla")
+
+# set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/resources/www-vanilla)
+set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/resources/www-bundles)
 
 option(SONIC_USE_LOCAL_SDK "Use vendored SDKs under dependencies/" ON)
-
 if(SONIC_USE_LOCAL_SDK)
   include(cmake/setup-sdks-dev.cmake)
   add_subdirectory(framework/sonic)

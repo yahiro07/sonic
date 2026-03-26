@@ -23,8 +23,6 @@ if(APPLE)
                MACOSX_BUNDLE_INFO_PLIST
                ${CMAKE_SOURCE_DIR}/cmake/base-info.plist.in)
 
-  set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/www)
-  # set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/frontend/dist)
   add_custom_command(
     TARGET ${NAME}
     POST_BUILD
