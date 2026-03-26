@@ -96,10 +96,8 @@ void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
 std::string Project1Synthesizer::getEditorPageUrl() {
   if (0) {
     return "http://localhost:3000?debug=1";
-  } else if (1) {
-    // return "webview://local/index.html?debug=1";
-    // webview://local is mapped to the resources/www directory
-    return "app://local/index.html";
+  } else {
+    return "app://www-bundles/index.html";
   }
 }
 

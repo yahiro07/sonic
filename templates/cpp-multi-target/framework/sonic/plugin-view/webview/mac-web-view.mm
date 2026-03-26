@@ -9,7 +9,8 @@
 #include <string>
 
 #if !__has_feature(objc_arc)
-#error "mac-web-view.mm requires ARC. Enable -fobjc-arc for Objective-C++ sources."
+#error                                                                         \
+    "mac-web-view.mm requires ARC. Enable -fobjc-arc for Objective-C++ sources."
 #endif
 
 using namespace sonic;
@@ -42,10 +43,12 @@ using namespace sonic;
   NSString *host = url.host;
   NSString *relativePath = url.path;
 
-  if ([relativePath hasPrefix:@"/"])
+  if ([relativePath hasPrefix:@"/"]) {
     relativePath = [relativePath substringFromIndex:1];
-  NSString *fullPath =
-      [self.rootPath stringByAppendingPathComponent:relativePath];
+  }
+  NSString *fullPath = [self.rootPath stringByAppendingPathComponent:host];
+  fullPath = [fullPath stringByAppendingPathComponent:relativePath];
+
   NSData *data = [NSData dataWithContentsOfFile:fullPath];
   if (!data) {
     [urlSchemeTask didFailWithError:[NSError errorWithDomain:@"AppScheme"
@@ -112,7 +115,8 @@ MacWebView::MacWebView() : impl(new Impl()) {
 
   AppSchemeHandler *schemeHandler = [[AppSchemeHandler alloc] init];
   NSString *baseDir = ThisModuleDirPath();
-  NSString *root = [baseDir stringByAppendingPathComponent:@"../Resources/www"];
+  NSString *root =
+      [baseDir stringByAppendingPathComponent:@"../Resources/pages"];
   schemeHandler.rootPath = root;
   [config setURLSchemeHandler:schemeHandler forURLScheme:@"app"];
 

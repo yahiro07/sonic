@@ -20,7 +20,7 @@ else()
 endif()
 
 # build frontend
-set(FRONTEND_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources/www-bundles")
+set(FRONTEND_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pages/www-bundles")
 execute_process(
   COMMAND sh -c "npm install && npx vite build --outDir ${FRONTEND_OUT_DIR}"
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../_common/frontend"
@@ -33,10 +33,7 @@ if(NOT NODE_BUILD_RESULT EQUAL 0)
 endif()
 
 execute_process(COMMAND cp -r "../_common/www-vanilla"
-                        "${CMAKE_CURRENT_SOURCE_DIR}/resources/www-vanilla")
-
-# set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/resources/www-vanilla)
-set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/resources/www-bundles)
+                        "${CMAKE_CURRENT_SOURCE_DIR}/pages/")
 
 option(SONIC_USE_LOCAL_SDK "Use vendored SDKs under dependencies/" ON)
 if(SONIC_USE_LOCAL_SDK)
