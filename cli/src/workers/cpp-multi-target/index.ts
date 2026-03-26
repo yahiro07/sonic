@@ -14,6 +14,7 @@ import * as clackPrompts from "@clack/prompts";
 
 type TemplateOptions = {
   platforms: ("vst3" | "clap" | "auv3")[];
+  frontendVariant: "react" | "vanilla_minimum";
   includeFrameworkCode: boolean;
   includeDevHosts: boolean;
   includeEntryMakefile: boolean;
@@ -23,7 +24,7 @@ type TemplateOptions = {
 
 async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   const tmpPlatforms = await clackPrompts.multiselect({
-    message: "Pick target platforms",
+    message: "Select target platforms",
     options: [
       { value: "vst3", label: "VST3" },
       { value: "clap", label: "CLAP" },
@@ -35,6 +36,20 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     return "cancelled";
   }
   const platforms = tmpPlatforms as TemplateOptions["platforms"];
+
+  const _frontendVariant = await clackPrompts.select({
+    message: "Select frontend variation",
+    options: [
+      { value: "react", label: "React" },
+      { value: "vanilla_minimum", label: "Vanilla Minimum" },
+    ],
+    initialValue: "react",
+  });
+  if (clackPrompts.isCancel(_frontendVariant)) {
+    return "cancelled";
+  }
+  const frontendVariant =
+    _frontendVariant as TemplateOptions["frontendVariant"];
 
   const includeFrameworkCode = await clackPrompts.confirm({
     message: `Include framework source code?`,
@@ -91,12 +106,13 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   }
 
   return {
+    platforms,
+    frontendVariant,
     includeFrameworkCode,
     includeDevHosts,
     includeEntryMakefile,
     auManufacturer,
     auSubtype,
-    platforms,
   };
 }
 
@@ -116,8 +132,6 @@ function copyTemplateBaseFiles({ projectName, templateName }: TaskContext) {
     "CMakePresets.json",
   ]);
 
-  workerHelper_copyProjectContentFiles(projectName, "_common", ["www"]);
-
   workerHelper_copyProjectContentFiles_withRenaming(projectName, templateName, [
     { from: ".gitignore_template", to: ".gitignore" },
     { from: "CMakeLists_template.cmake", to: "CMakeLists.txt" },
@@ -132,6 +146,19 @@ function copyFrameworkCodeIfNeeded({
   if (options.includeFrameworkCode) {
     workerHelper_copyProjectContentFiles(projectName, templateName, [
       "framework",
+    ]);
+  }
+}
+
+function copyFrontend({ projectName, templateName, options }: TaskContext) {
+  if (options.frontendVariant === "react") {
+    workerHelper_copyProjectContentFiles(projectName, templateName, [
+      "cmake/build-frontend.cmake",
+    ]);
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
+  } else if (options.frontendVariant === "vanilla_minimum") {
+    workerHelper_copyProjectContentFiles_withRenaming(projectName, "_common", [
+      { from: "www-vanilla", to: "resources/www-vanilla" },
     ]);
   }
 }
@@ -309,7 +336,12 @@ function addAuv3XcodeProject({
 }
 
 function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
-  const keepConditionalLine = (_text: string) => {};
+  const replaceLine = (spec: { from: string; to: string }) => {
+    workerHelper_replaceStrings(projectFolderPath, {
+      filePaths: ["CMakeLists.txt"],
+      replacements: [spec],
+    });
+  };
   const removeConditionalLine = (text: string) => {
     workerHelper_replaceStrings(projectFolderPath, {
       filePaths: ["CMakeLists.txt"],
@@ -317,18 +349,20 @@ function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
     });
   };
 
+  if (options.frontendVariant === "vanilla_minimum") {
+    replaceLine({
+      from: `include(cmake/build-frontend.cmake)
+set(PLUGIN_WWW_DIR \${CMAKE_SOURCE_DIR}/resources/www-bundles)`,
+      to: `set(PLUGIN_WWW_DIR \${CMAKE_SOURCE_DIR}/resources/www-vanilla)`,
+    });
+  }
+
   if (options.includeFrameworkCode) {
-    keepConditionalLine(`add_subdirectory(framework/sonic)`);
-    removeConditionalLine(
-      `add_subdirectory("\${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
+    replaceLine({
+      from: `add_subdirectory("\${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
                  "\${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")`,
-    );
-  } else {
-    removeConditionalLine(`add_subdirectory(framework/sonic)`);
-    keepConditionalLine(
-      `add_subdirectory("\${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
-                 "\${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")`,
-    );
+      to: `add_subdirectory(framework/sonic)`,
+    });
   }
 
   const hasVst3 = options.platforms.includes("vst3");
@@ -414,6 +448,7 @@ function scaffoldProject(
   };
   copyTemplateBaseFiles(taskContext);
   copyFrameworkCodeIfNeeded(taskContext);
+  copyFrontend(taskContext);
   renamePluginSourceFiles(taskContext);
   if (options.platforms.includes("vst3")) {
     addVstWrapper(taskContext);

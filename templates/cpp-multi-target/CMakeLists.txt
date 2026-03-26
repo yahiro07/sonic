@@ -22,7 +22,7 @@ endif()
 # build frontend
 set(FRONTEND_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources/www-bundles")
 execute_process(
-  COMMAND npx vite build --outDir ${FRONTEND_OUT_DIR}
+  COMMAND sh -c "npm install && npx vite build --outDir ${FRONTEND_OUT_DIR}"
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../_common/frontend"
   RESULT_VARIABLE NODE_BUILD_RESULT)
 

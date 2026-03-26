@@ -19,9 +19,11 @@ else()
   add_definitions(-DRELEASE=1)
 endif()
 
+include(cmake/build-frontend.cmake)
+set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/resources/www-bundles)
+
 include(cmake/setup-sdks.cmake)
 
-add_subdirectory(framework/sonic)
 add_subdirectory("${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
                  "${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")
 
