@@ -19,17 +19,19 @@ else()
   add_definitions(-DRELEASE=1)
 endif()
 
+include(cmake/build-frontend.cmake)
+set(PLUGIN_WWW_DIR ${CMAKE_SOURCE_DIR}/resources/www-bundles)
+
 include(cmake/setup-sdks.cmake)
 
-add_subdirectory(framework/sonic)
 add_subdirectory("${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
                  "${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")
 
-add_subdirectory(${SONIC_ROOT_DIR}/templates/_vst-dev-host/vst_dev_host
+add_subdirectory(${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
                  ${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)
-add_subdirectory(${SONIC_ROOT_DIR}/templates/_clap-dev-host/clap_dev_host
+add_subdirectory(${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
                  ${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)
 
-add_subdirectory(plugin)
+add_subdirectory(source)
 add_subdirectory(wrapper/vst3)
 add_subdirectory(wrapper/clap)
