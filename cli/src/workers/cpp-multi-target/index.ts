@@ -158,15 +158,28 @@ function copyFrontend({ projectName, templateName, options }: TaskContext) {
     workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
   } else if (options.frontendVariant === "vanilla_minimum") {
     workerHelper_copyProjectContentFiles_withRenaming(projectName, "_common", [
-      { from: "www-vanilla", to: "resources/www-vanilla" },
+      { from: "www-vanilla", to: "pages/www-vanilla" },
     ]);
   }
 }
 
-function renamePluginSourceFiles({
+function patchPluginSourceFiles({
   projectName,
   projectFolderPath,
+  options,
 }: TaskContext) {
+  if (options.frontendVariant === "vanilla_minimum") {
+    workerHelper_replaceStrings(projectFolderPath, {
+      filePaths: ["source/project1-synthesizer.cpp"],
+      replacements: [
+        {
+          from: `return "app://www-bundles/index.html";`,
+          to: `return "app://www-vanilla/index.html";`,
+        },
+      ],
+    });
+  }
+
   const projectNameCapital = casingToCapital(projectName);
   const projectNameKebab = casingToKebab(projectName);
   const projectNameSnake = casingToSnake(projectName);
@@ -342,7 +355,7 @@ function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
       replacements: [spec],
     });
   };
-  const removeConditionalLine = (text: string) => {
+  const removeLine = (text: string) => {
     workerHelper_replaceStrings(projectFolderPath, {
       filePaths: ["CMakeLists.txt"],
       replacements: [{ from: text + "\n", to: "" }],
@@ -350,11 +363,7 @@ function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
   };
 
   if (options.frontendVariant === "vanilla_minimum") {
-    replaceLine({
-      from: `include(cmake/build-frontend.cmake)
-set(PLUGIN_WWW_DIR \${CMAKE_SOURCE_DIR}/resources/www-bundles)`,
-      to: `set(PLUGIN_WWW_DIR \${CMAKE_SOURCE_DIR}/resources/www-vanilla)`,
-    });
+    removeLine(`include(cmake/build-frontend.cmake)`);
   }
 
   if (options.includeFrameworkCode) {
@@ -372,23 +381,23 @@ set(PLUGIN_WWW_DIR \${CMAKE_SOURCE_DIR}/resources/www-bundles)`,
   const hasClapDevHost = hasClap && options.includeDevHosts;
 
   if (!hasVstDevHost) {
-    removeConditionalLine(
+    removeLine(
       `add_subdirectory(\${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
                  \${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)`,
     );
   }
   if (!hasClapDevHost) {
-    removeConditionalLine(
+    removeLine(
       `add_subdirectory(\${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
                  \${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)`,
     );
   }
 
   if (!hasVst3) {
-    removeConditionalLine(`add_subdirectory(wrapper/vst3)`);
+    removeLine(`add_subdirectory(wrapper/vst3)`);
   }
   if (!hasClap) {
-    removeConditionalLine(`add_subdirectory(wrapper/clap)`);
+    removeLine(`add_subdirectory(wrapper/clap)`);
   }
 }
 
@@ -449,7 +458,7 @@ function scaffoldProject(
   copyTemplateBaseFiles(taskContext);
   copyFrameworkCodeIfNeeded(taskContext);
   copyFrontend(taskContext);
-  renamePluginSourceFiles(taskContext);
+  patchPluginSourceFiles(taskContext);
   if (options.platforms.includes("vst3")) {
     addVstWrapper(taskContext);
   }
