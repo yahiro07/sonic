@@ -19,9 +19,9 @@ else()
   add_definitions(-DRELEASE=1)
 endif()
 
-include(cmake/build-frontend.cmake)
-
 include(cmake/setup-sdks.cmake)
+
+include(cmake/build-frontend.cmake)
 
 add_subdirectory("${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
                  "${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")
