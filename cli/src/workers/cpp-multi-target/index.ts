@@ -335,6 +335,18 @@ function addAuv3XcodeProject({
     ],
   });
 
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: [
+      "wrapper/auv3-xcode-project/Project1.xcodeproj/project.pbxproj",
+    ],
+    replacements: [
+      {
+        from: "Project1",
+        to: projectNameCapital,
+      },
+    ],
+  });
+
   workerHelper_updateFileNamesWithPrefix(projectFolderPath, {
     filePaths: [
       "wrapper/auv3-xcode-project/Project1/Project1App.swift",
