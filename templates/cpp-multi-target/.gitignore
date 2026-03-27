@@ -2,7 +2,7 @@ build/
 project.xcworkspace/
 xcuserdata/
 xcshareddata/
-pages/www-vanilla
-pages/www-bundles
+pages/
+
 
 
