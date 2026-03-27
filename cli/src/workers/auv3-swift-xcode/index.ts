@@ -11,14 +11,28 @@ import {
 import * as clackPrompts from "@clack/prompts";
 
 type TemplateOptions = {
+  frontendVariant: "react" | "vanilla_minimum";
   auManufacturer: string;
   auSubtype: string;
 };
 
 async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
+  const _frontendVariant = await clackPrompts.select({
+    message: "Select frontend variation",
+    options: [
+      { value: "react", label: "React" },
+      { value: "vanilla_minimum", label: "Vanilla Minimum" },
+    ],
+    initialValue: "react",
+  });
+  if (clackPrompts.isCancel(_frontendVariant)) {
+    return "cancelled";
+  }
+  const frontendVariant =
+    _frontendVariant as TemplateOptions["frontendVariant"];
+
   let auManufacturer: string | symbol = "";
   let auSubtype: string | symbol = "";
-
   const auManufacturerDefault = "Myco";
   auManufacturer = await clackPrompts.text({
     message: `AUv3 Manufacturer Code`,
@@ -43,6 +57,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   }
 
   return {
+    frontendVariant,
     auManufacturer,
     auSubtype,
   };
@@ -74,6 +89,21 @@ function instantiateProject({
     { from: ".gitignore_template", to: ".gitignore" },
   ]);
 
+  if (options.frontendVariant === "react") {
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
+  } else if (options.frontendVariant === "vanilla_minimum") {
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["pages"]);
+    workerHelper_replaceStrings(projectFolderPath, {
+      filePaths: ["Project1Extension/Root/MainContentView.swift"],
+      replacements: [
+        {
+          from: `webViewIo.loadURL("app://www-bundles/index.html")`,
+          to: `webViewIo.loadURL("app://www-vanilla/index.html")`,
+        },
+      ],
+    });
+  }
+
   const projectNameCapital = casingToCapital(projectName);
 
   const extensionNameCapital = `${projectNameCapital}Extension`;
@@ -88,7 +118,7 @@ function instantiateProject({
   workerHelper_replaceStrings(projectFolderPath, {
     filePaths: ["Project1/Model/AudioUnitHostModel.swift"],
     replacements: [
-      { from: `"prj1"`, to: `"${auSubtype}"` },
+      { from: `"prj2"`, to: `"${auSubtype}"` },
       { from: `"Myco"`, to: `"${auManufacturer}"` },
     ],
   });
@@ -97,7 +127,7 @@ function instantiateProject({
     filePaths: ["Project1Extension/info.plist"],
     replacements: [
       {
-        from: "<string>prj1</string>",
+        from: "<string>prj2</string>",
         to: `<string>${auSubtype}</string>`,
       },
       {
