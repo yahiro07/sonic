@@ -141,18 +141,15 @@ class MySchemeHandler: NSObject, WKURLSchemeHandler {
     // print("request url:", url.absoluteString)
     // print("url.path:", url.path)
 
-    let host = url.host ?? ""
-    let path = url.path
-
-    let relativePath = host + path
-
     let resourceURL = Bundle.main.resourceURL!
-    let fileURL = resourceURL.appendingPathComponent(relativePath)
+    let fileURL = resourceURL.appendingPathComponent("pages")
+      .appendingPathComponent(url.host ?? "")
+      .appendingPathComponent(url.path)
 
-    // print("Loading:", fileURL.path)
+    // print("Loading: \(fileURL.path)")
 
     guard let data = try? Data(contentsOf: fileURL) else {
-      logger.error("Failed to load file for URL: \(url), path: \(path)")
+      logger.error("Failed to load file for URL: \(url), path: \(fileURL.path)")
       urlSchemeTask.didFailWithError(NSError(domain: "file", code: 404))
       return
     }
