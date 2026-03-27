@@ -488,8 +488,6 @@ function scaffoldProject(
 function createTemplateWorker(): TemplateWorker {
   return {
     async createProject(projectName, templateName) {
-      console.log("cpp-multi-target worker");
-
       const templateOptions = await readTemplateOptions();
       if (templateOptions === "cancelled") {
         return "cancelled";
