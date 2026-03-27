@@ -7,6 +7,7 @@ import {
   workerHelper_updateFileNamesWithPrefix,
   workerHelper_getNewProjectFolderPath,
   workerHelper_copyProjectContentFiles_withRenaming,
+  workerHelper_buildFrontend,
 } from "@/src/common";
 import * as clackPrompts from "@clack/prompts";
 
@@ -14,6 +15,7 @@ type TemplateOptions = {
   frontendVariant: "react" | "vanilla_minimum";
   auManufacturer: string;
   auSubtype: string;
+  buildFrontend: boolean;
 };
 
 async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
@@ -56,10 +58,22 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     auSubtype = auSubtypeDefault;
   }
 
+  let buildFrontend = false;
+  if (frontendVariant === "react") {
+    const _buildFrontend = await clackPrompts.confirm({
+      message: "Build frontend now?",
+      initialValue: true,
+    });
+    if (clackPrompts.isCancel(_buildFrontend)) {
+      return "cancelled";
+    }
+    buildFrontend = _buildFrontend;
+  }
   return {
     frontendVariant,
     auManufacturer,
     auSubtype,
+    buildFrontend,
   };
 }
 
@@ -79,6 +93,7 @@ function instantiateProject({
   workerHelper_copyProjectContentFiles(projectName, templateName, [
     "Project1",
     "Project1.xcodeproj/project.pbxproj",
+    "Project1.xcodeproj/xcshareddata",
     "Project1Extension/Common",
     "Project1Extension/DSP",
     "Project1Extension/Root",
@@ -142,7 +157,11 @@ function instantiateProject({
   });
 
   workerHelper_replaceStrings(projectFolderPath, {
-    filePaths: ["Project1.xcodeproj/project.pbxproj"],
+    filePaths: [
+      "Project1.xcodeproj/project.pbxproj",
+      "Project1.xcodeproj/xcshareddata/xcschemes/Project1.xcscheme",
+      "Project1.xcodeproj/xcshareddata/xcschemes/Project1Extension.xcscheme",
+    ],
     replacements: [
       {
         from: "Project1",
@@ -156,6 +175,8 @@ function instantiateProject({
       "Project1/Project1App.swift",
       "Project1/Project1.entitlements",
       "Project1",
+      "Project1.xcodeproj/xcshareddata/xcschemes/Project1.xcscheme",
+      "Project1.xcodeproj/xcshareddata/xcschemes/Project1Extension.xcscheme",
       "Project1.xcodeproj",
       "Project1Extension/Common/Project1Extension-Bridging-Header.h",
       "Project1Extension",
@@ -163,6 +184,15 @@ function instantiateProject({
     originalPrefix: "Project1",
     newPrefix: projectNameCapital,
   });
+
+  if (options.frontendVariant === "react") {
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
+    if (options.buildFrontend) {
+      workerHelper_buildFrontend(projectFolderPath, "frontend");
+    }
+  } else {
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["pages"]);
+  }
 
   return true;
 }

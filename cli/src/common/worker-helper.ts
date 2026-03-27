@@ -1,4 +1,5 @@
 import { appEnvs_getTemplatesFolderPath } from "@/src/base/app-envs";
+import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
@@ -176,4 +177,15 @@ export function workerHelper_checkFileExists(
 ) {
   const filePath = path.join(folderPath, relativeFilePath);
   return fs.existsSync(filePath);
+}
+
+export function workerHelper_buildFrontend(
+  projectFolderPath: string,
+  relativeFrontendFolderPath: string,
+) {
+  const folderPath = path.join(projectFolderPath, relativeFrontendFolderPath);
+  console.log("npm install");
+  execSync("npm install", { cwd: folderPath, stdio: "inherit" });
+  console.log("npm run build");
+  execSync("npm run build", { cwd: folderPath, stdio: "inherit" });
 }
