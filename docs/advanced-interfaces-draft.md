@@ -1,16 +1,17 @@
 # AdvancedSynthesizerBase
 
-## 概要
+## Overview
 
-これは現在計画中の発展的な機能を持ったシンセサイザーのベースインターフェイスです。
-インターフェイスだけ考えています。これを満たすラッパー実装はまだありません(実装中です)
+This is the base interface for a synthesizer with advanced features currently in the planning stages.
+We are currently focusing solely on the interface. There is no wrapper implementation that meets these requirements yet (under development).
 
-以下の機能の追加を考えています
-- プラグインで内部的に利用するバイナリパラメータ
-- 複数バージョン間でのパラメータのマイグレーション
-- 音源側で持っている任意のバイト配列のデータをUIから取得する経路
+We are planning to add the following features:
 
-これにより、MSEG対応のLFO/EGの実装や、波形モニター,スペクトラムアナライザーなどのプラグイン実装に対応できるようにします。
+- Binary parameters used internally by plugins
+- Parameter migration between multiple versions
+- An interface to retrieve data from arrays held by the DSP core from the UI
+
+This will enable the implementation of MSEG LFO/EG, as well as plugins such as waveform monitors and spectrum analyzers.
 
 ```cpp
 
@@ -19,7 +20,7 @@ enum ParameterFlags : int {
   IsReadOnly = 1,
   IsHidden = 2,
   NonAutomatable = 4,
-  // ローカルパラメータ, ホスト側には公開しない, Stateやプリセットには保存される
+  // Local parameters; not exposed to the host; saved in State or presets
   IsLocal = 8,
 };
 
@@ -40,8 +41,8 @@ public:
   virtual void addBool(uint64_t address, Str identifier, Str label,
                        bool defaultValue, Str group = "",
                        ParameterFlags flags = ParameterFlags::None) = 0;
-  // 可変長のバイナリデータのパラメータ, MSEGのポイント配列などを想定
-  // ホスト側には公開されず内部的に管理する
+  // Variable-length binary data parameters, intended for things like MSEG point arrays.
+  // Not exposed to the host; managed internally.
   virtual void addBinary(uint64_t address, Str identifier,
                          const std::vector<uint8_t> &defaultValue) = 0;
 };
@@ -72,9 +73,9 @@ struct ProcessData {
 
 class TelemetryBuilder {
 public:
-  // diと配列サイズを指定してテレメトリデータのバッファを規定する, idの範囲は0~31
-  // 画面に表示する波形データやFFTのバッファなどを音源側からUIに送信するために使用する
-  // このサイズのバッファがフレームワーク側で確保され、ポーリングで使用される
+  // Define a buffer for telemetry data by specifying an ID and array size. IDs range from 0 to 31.
+  // Used to send data from the sound source to the UI, such as waveform data or FFT buffers for display.
+  // The framework allocates buffers of these sizes, which are used for polling.
   virtual void defineFloatArray(int id, uint32_t count) = 0;
 };
 
@@ -85,9 +86,9 @@ public:
   // virtual void setupParameters(ParameterBuilder &builder) = 0;
   // virtual void prepareProcessing(double sampleRate, uint32_t maxFrameCount) = 0;
 
-  // ローレベル寄りのprocessAudioExを使うかどうかのフラグ
-  // 有効にした場合、波形生成処理ではprocessAudioExが呼ばれ、
-  // precessAudio/setParameter/noteOn/noteOffは呼ばれなくなる
+  // Flag to determine whether to use the low-level processAudioEx.
+  // If enabled, processAudioEx will be called for waveform generation, and
+  // precessAudio/setParameter/noteOn/noteOff will not be called.
   virtual bool isProcessAudioExSupported() { return false; }
   //
   virtual void processAudioEx(float *bufferL, float *bufferR, uint32_t frames,
@@ -100,41 +101,43 @@ public:
   // virtual void noteOff(int32_t noteNumber) = 0;
   //
 
-  // バイナリパラメータの適用
+  // Apply binary parameters
   virtual void setBinaryParameter(uint64_t address, const uint8_t *dataBytes,
                                   int dataLength) {}
 
-  // ホストの演奏状態やテンポが変わったときに呼ばれるメソッド
+  // Called when the host's play state or tempo changes
   virtual void setHostPlayState(bool playing, double bpm) {}
 
-  // ユーザー定義のカスタムアクションを受け取るメソッド
-  // オーディオスレッドで呼ばれる想定, UI側から受けたメッセージの形式によってC++側で呼ばれるoverloadが変わる
+  // User-defined custom actions
+  // Called on the audio thread; the C++ overload called depends on the message format received from the UI
   virtual void handleCustomAction(int id, double param1, double param2) {}
   virtual void handleCustomAction(int id, uint8_t *dataBytes, int dataLength) {}
 
-  //UIから送った文字列を直接受け取る, UIスレッド上で受信する
+  // Receive strings sent from the UI directly; received on the UI thread
   // virtual void __underConsideration__handleDirectMessageFromUi(std::string msg) {}
-  // 音源側の単一値を取得するメソッド
+  // Get single values from the sound source
   // virtual double __underConsideration__pullSingleDataExposed(int id) {}
 
-  //テレメトリデータ定義の構築
+  // Define telemetry data structures
   virtual void setupTelemetries(TelemetryBuilder &builder) {};
-  //テレメトリデータを取得するメソッド, オーディオスレッド内で呼び出される
-  //UI側からポーリングして音源側のバイト列データを取得しWebViewにデータを送信する
+  // Retrieve telemetry data; called within the audio thread
+  // The UI polls to get byte array data from the sound source and send it to the WebView
   virtual bool readTelemetry(int id, float *buffer, uint32_t count) {}
 
-  // パラメータマイグレーション
-  //現在の最新のパラメータのバージョンを固定値(ハードコード)で返す
+  // Parameter migration
+  // Return the current latest parameter version as a fixed value (hardcoded)
   virtual int getParametersVersionLatest() { return 0; }
-  // プリセットやstateが読み込まれたときに呼び出される
-  // 音源の波形生成処理ではここでセットされた値を参照して処理を分岐して古いプリセットの互換性を維持する想定
+  // Called when presets or state are loaded
+  // The sound source's waveform generation process is expected to branch processing by referencing the values set here,
+  // thereby maintaining compatibility with older presets.
   virtual void setParametersVersion(int parametersVersion) {}
-  // プリセットやstateが読み込まれたときに呼び出される。読み出し時にパラメータセット自体を書き換える場合ここで処理する
-  // リニアパラメータのマッピングの変更や、Enumパラメーターへの値の追加時の対応などを行う想定
+  // Called when presets or state are loaded. If you intend to rewrite the parameter set itself during loading,
+  // handle the processing here.
+  // Expected to handle changes in linear parameter mappings, additions to Enum parameter values, etc.
   virtual void migrateParameters(std::map<uint64_t, double> &parameters,
                                  int parametersVersion) {}
 
-  // デフォルトのデータ永続化実装を上書きするハンドラ
+  // Override default state persistence implementation
   virtual bool isOverridingStatePersistence() { return false; }
   virtual void readStateOverride(BinaryStream &stream) {}
   virtual void writeStateOverride(BinaryStream &stream) {}
