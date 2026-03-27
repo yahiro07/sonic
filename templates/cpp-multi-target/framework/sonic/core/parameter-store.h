@@ -33,6 +33,10 @@ public:
   }
 };
 
+// todo: avoid using std::unordered_map since its lookup costs is
+// non-deterministic, instead use a custom container using std::vector<Entry>
+// with sorted by id and binary search for lookup
+
 class UnorderedMapParameterStore : public IParameterStore {
 private:
   std::unordered_map<uint32_t, double> parameters;
