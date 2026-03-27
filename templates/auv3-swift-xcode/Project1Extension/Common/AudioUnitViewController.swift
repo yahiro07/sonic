@@ -59,7 +59,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
     throws -> AUAudioUnit
   {
     return try DispatchQueue.main.sync {
-      logger.mark("createAudioUnitInternal")
+      logger.mark("createAudioUnit")
       logger.log("Loaded From: " + Bundle.main.bundlePath)
       try storageFileIO.debugLogDataLocation()
 
