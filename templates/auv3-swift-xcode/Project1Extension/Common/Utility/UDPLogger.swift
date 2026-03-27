@@ -31,8 +31,7 @@ import os
       }
     }
 
-    func pushLogItem(_ item: LogItem) {
-      let logLine = "(t:\(item.timestamp), s:\(item.subSystem), k:\(item.logKind)) \(item.message)"
+    func pushLogLine(_ logLine: String) {
       log(logLine)
     }
   }
@@ -41,7 +40,7 @@ import os
 
   class UDPLogger {
     init() {}
-    func pushLogItem(_ item: LogItem) {}
+    func pushLogLine(_ logLine: String) {}
   }
 
 #endif

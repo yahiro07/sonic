@@ -10,7 +10,7 @@ import Foundation
 
 struct LogItem {
   let timestamp: Double  //ms from epoch
-  let subSystem: String
+  let subsystem: String
   let logKind: String
   let message: String
 }
@@ -23,7 +23,7 @@ func formatTimestamp(_ timestamp: Double) -> String {
   return formatter.string(from: date)
 }
 
-let subSystemIcons: [String: String] = [
+let subsystemIcons: [String: String] = [
   "host": "🟣",
   "ext": "🔸",
   "ui": "🔹",
@@ -41,37 +41,41 @@ let logKindIcons: [String: String] = [
   class LoggerCore {
     let udpLogger = UDPLogger()
 
-    func pushLogItem(_ item: LogItem) {
-
+    func printLogLine(_ item: LogItem) {
       let ts = formatTimestamp(item.timestamp)
-      let ssIcon = subSystemIcons[item.subSystem] ?? ""
+      let ssIcon = subsystemIcons[item.subsystem] ?? ""
       let kindIcon = logKindIcons[item.logKind] ?? ""
+      let logLine = "\(ts) [\(ssIcon)\(item.subsystem)] \(kindIcon) \(item.message)"
+      print(logLine)
+    }
+    func pushLogItem(_ item: LogItem) {
+      printLogLine(item)
 
-      let logLine = "\(ts) [\(ssIcon)\(item.subSystem)] \(kindIcon) \(item.message)"
-      if true {
-        print(logLine)
-      }
-      if true {
-        udpLogger.pushLogItem(item)
-      }
+      let timestamp = item.timestamp
+      let subsystem = item.subsystem
+      let logKind = item.logKind
+      let message = item.message.replacingOccurrences(of: "\"", with: "\\\"")
+      let jsonText =
+        "{ \"timestamp\": \(timestamp), \"subsystem\": \"\(subsystem)\", \"logKind\": \"\(logKind)\", \"message\": \"\(message)\"}"
+      udpLogger.pushLogLine(jsonText)
     }
   }
   let loggerCore = LoggerCore()
 
   class LoggerEntry {
 
-    private let subSystem: String
+    private let subsystem: String
 
-    init(subSystem: String) {
-      self.subSystem = subSystem
+    init(subsystem: String) {
+      self.subsystem = subsystem
     }
 
     private func pushLog(_ logKind: String, _ message: String) {
-      loggerCore.pushLogItem(
-        LogItem(
-          timestamp: Date().timeIntervalSince1970 * 1000, subSystem: subSystem, logKind: logKind,
-          message: message
-        ))
+      let item = LogItem(
+        timestamp: Date().timeIntervalSince1970 * 1000, subsystem: subsystem, logKind: logKind,
+        message: message
+      )
+      loggerCore.pushLogItem(item)
     }
 
     func log(_ message: String) {
@@ -91,7 +95,7 @@ let logKindIcons: [String: String] = [
     }
   }
 
-  let logger = LoggerEntry(subSystem: "ext")
+  let logger = LoggerEntry(subsystem: "ext")
 
 #else
 
