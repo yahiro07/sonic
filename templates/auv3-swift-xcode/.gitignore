@@ -4,3 +4,6 @@ xcshareddata/
 buildServer.json
 pages/
 Makefile
+build/
+Project1Extension/compile_flags.txt
+.vscode/settings.json
