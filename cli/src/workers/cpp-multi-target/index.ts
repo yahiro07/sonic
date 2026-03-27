@@ -296,6 +296,7 @@ function addAuv3XcodeProject({
   workerHelper_copyProjectContentFiles(projectName, templateName, [
     "wrapper/auv3/Project1",
     "wrapper/auv3/Project1.xcodeproj/project.pbxproj",
+    "wrapper/auv3/Project1.xcodeproj/xcshareddata",
     "wrapper/auv3/Project1Extension",
   ]);
 
@@ -342,7 +343,11 @@ function addAuv3XcodeProject({
   });
 
   workerHelper_replaceStrings(projectFolderPath, {
-    filePaths: ["wrapper/auv3/Project1.xcodeproj/project.pbxproj"],
+    filePaths: [
+      "wrapper/auv3/Project1.xcodeproj/project.pbxproj",
+      "wrapper/auv3/Project1.xcodeproj/xcshareddata/xcschemes/Project1.xcscheme",
+      "wrapper/auv3/Project1.xcodeproj/xcshareddata/xcschemes/Project1Extension.xcscheme",
+    ],
     replacements: [
       {
         from: "Project1",
@@ -356,6 +361,8 @@ function addAuv3XcodeProject({
       "wrapper/auv3/Project1/Project1App.swift",
       "wrapper/auv3/Project1/Project1.entitlements",
       "wrapper/auv3/Project1",
+      "wrapper/auv3/Project1.xcodeproj/xcshareddata/xcschemes/Project1.xcscheme",
+      "wrapper/auv3/Project1.xcodeproj/xcshareddata/xcschemes/Project1Extension.xcscheme",
       "wrapper/auv3/Project1.xcodeproj",
       "wrapper/auv3/Project1Extension",
     ],
