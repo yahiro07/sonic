@@ -8,6 +8,7 @@ objective-c++
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks
 -F
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/PrivateFrameworks
+-I./Api
 -I./Common
 -I./Common/Events
 -I./Common/Parameters
