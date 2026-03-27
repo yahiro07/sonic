@@ -89,6 +89,6 @@ function createTemplateWorker(): TemplateWorker {
 
 export default {
   name: "auv3-swift-xcode",
-  description: "Audio Unit Simple Template",
+  description: "AUv3 template with Swift and Xcode",
   worker: createTemplateWorker(),
 };
