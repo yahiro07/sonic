@@ -95,7 +95,7 @@ The generated project will have a structure like this:
 │   ├── cpp-multi-target1-synthesizer.cpp
 │   └── cpp-multi-target1-synthesizer.h
 └── wrapper
-    ├── auv3-xcode-project
+    ├── auv3
     │   ├── CppMultiTarget1
     │   ├── CppMultiTarget1.xcodeproj
     │   └── CppMultiTarget1Extension
@@ -157,7 +157,7 @@ cmake --build --preset xcode
 Then open Xcode project in the source project tree.
 
 ```bash
-open wrapper/auv3-xcode-project/CppMultiTarget1.xcodeproj
+open wrapper/auv3/CppMultiTarget1.xcodeproj
 ```
 
 In the build phase, you need to set Development Team and bundle identifier in build settings.

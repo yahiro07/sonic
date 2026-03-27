@@ -157,9 +157,7 @@ function copyFrontend({ projectName, templateName, options }: TaskContext) {
     ]);
     workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
   } else if (options.frontendVariant === "vanilla_minimum") {
-    workerHelper_copyProjectContentFiles_withRenaming(projectName, "_common", [
-      { from: "www-vanilla", to: "pages/www-vanilla" },
-    ]);
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["pages"]);
   }
 }
 
@@ -258,7 +256,12 @@ function addVstWrapper({
 
   workerHelper_replaceStrings(projectFolderPath, {
     filePaths: ["wrapper/vst3/CMakeLists.txt"],
-    replacements: [{ from: "project1-vst3", to: `${projectNameKebab}-vst3` }],
+    replacements: [
+      {
+        from: `OUTPUT_NAME "project1"`,
+        to: `OUTPUT_NAME "${projectNameKebab}"`,
+      },
+    ],
   });
 }
 
@@ -275,7 +278,12 @@ function addClapWrapper({
 
   workerHelper_replaceStrings(projectFolderPath, {
     filePaths: ["wrapper/clap/CMakeLists.txt"],
-    replacements: [{ from: "project1-clap", to: `${projectNameKebab}-clap` }],
+    replacements: [
+      {
+        from: `OUTPUT_NAME "project1"`,
+        to: `OUTPUT_NAME "${projectNameKebab}"`,
+      },
+    ],
   });
 }
 
@@ -286,25 +294,23 @@ function addAuv3XcodeProject({
   projectFolderPath,
 }: TaskContext) {
   workerHelper_copyProjectContentFiles(projectName, templateName, [
-    "wrapper/auv3-xcode-project/Project1",
-    "wrapper/auv3-xcode-project/Project1.xcodeproj/project.pbxproj",
-    "wrapper/auv3-xcode-project/Project1Extension",
+    "wrapper/auv3/Project1",
+    "wrapper/auv3/Project1.xcodeproj/project.pbxproj",
+    "wrapper/auv3/Project1Extension",
   ]);
 
   const projectNameCapital = casingToCapital(projectName);
   const extensionNameCapital = `${projectNameCapital}Extension`;
 
   workerHelper_replaceStrings(projectFolderPath, {
-    filePaths: ["wrapper/auv3-xcode-project/Project1/Project1App.swift"],
+    filePaths: ["wrapper/auv3/Project1/Project1App.swift"],
     replacements: [{ from: "Project1App", to: `${projectNameCapital}App` }],
   });
 
   const { auManufacturer, auSubtype } = options;
 
   workerHelper_replaceStrings(projectFolderPath, {
-    filePaths: [
-      "wrapper/auv3-xcode-project/Project1/Model/AudioUnitHostModel.swift",
-    ],
+    filePaths: ["wrapper/auv3/Project1/Model/AudioUnitHostModel.swift"],
     replacements: [
       {
         from: `subType: String = "pj42"`,
@@ -318,7 +324,7 @@ function addAuv3XcodeProject({
   });
 
   workerHelper_replaceStrings(projectFolderPath, {
-    filePaths: ["wrapper/auv3-xcode-project/Project1Extension/info.plist"],
+    filePaths: ["wrapper/auv3/Project1Extension/info.plist"],
     replacements: [
       {
         from: "<string>pj42</string>",
@@ -336,9 +342,7 @@ function addAuv3XcodeProject({
   });
 
   workerHelper_replaceStrings(projectFolderPath, {
-    filePaths: [
-      "wrapper/auv3-xcode-project/Project1.xcodeproj/project.pbxproj",
-    ],
+    filePaths: ["wrapper/auv3/Project1.xcodeproj/project.pbxproj"],
     replacements: [
       {
         from: "Project1",
@@ -349,11 +353,11 @@ function addAuv3XcodeProject({
 
   workerHelper_updateFileNamesWithPrefix(projectFolderPath, {
     filePaths: [
-      "wrapper/auv3-xcode-project/Project1/Project1App.swift",
-      "wrapper/auv3-xcode-project/Project1/Project1.entitlements",
-      "wrapper/auv3-xcode-project/Project1",
-      "wrapper/auv3-xcode-project/Project1.xcodeproj",
-      "wrapper/auv3-xcode-project/Project1Extension",
+      "wrapper/auv3/Project1/Project1App.swift",
+      "wrapper/auv3/Project1/Project1.entitlements",
+      "wrapper/auv3/Project1",
+      "wrapper/auv3/Project1.xcodeproj",
+      "wrapper/auv3/Project1Extension",
     ],
     originalPrefix: "Project1",
     newPrefix: projectNameCapital,

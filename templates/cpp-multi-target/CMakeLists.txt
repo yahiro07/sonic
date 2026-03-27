@@ -19,6 +19,8 @@ else()
   add_definitions(-DRELEASE=1)
 endif()
 
+execute_process(COMMAND cp -r "../_common/pages" "${CMAKE_CURRENT_SOURCE_DIR}")
+
 # build frontend
 set(FRONTEND_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pages/www-bundles")
 execute_process(
@@ -31,9 +33,6 @@ if(NOT NODE_BUILD_RESULT EQUAL 0)
     FATAL_ERROR
       "frontend project build failed with exit code ${NODE_BUILD_RESULT}")
 endif()
-
-execute_process(COMMAND cp -r "../_common/www-vanilla"
-                        "${CMAKE_CURRENT_SOURCE_DIR}/pages/")
 
 option(SONIC_USE_LOCAL_SDK "Use vendored SDKs under dependencies/" ON)
 if(SONIC_USE_LOCAL_SDK)
