@@ -5,6 +5,13 @@
 #include <string_view>
 #include <vector>
 
+enum class ParameterFlags : int {
+  None = 0,
+  IsReadOnly = 1,
+  IsHidden = 2,
+  NonAutomatable = 4,
+};
+
 class ParameterBuilder {
 protected:
   using Str = std::string_view;
@@ -13,11 +20,13 @@ protected:
 public:
   virtual ~ParameterBuilder() = default;
   virtual void addUnary(uint32_t id, Str paramKey, Str label,
-                        double defaultValue) = 0;
+                        double defaultValue,
+                        ParameterFlags flags = ParameterFlags::None) = 0;
   virtual void addEnum(uint32_t id, Str paramKey, Str label,
-                       Str defaultValueString, StrVec valueStrings) = 0;
-  virtual void addBool(uint32_t id, Str paramKey, Str label,
-                       bool defaultValue) = 0;
+                       Str defaultValueString, StrVec valueStrings,
+                       ParameterFlags flags = ParameterFlags::None) = 0;
+  virtual void addBool(uint32_t id, Str paramKey, Str label, bool defaultValue,
+                       ParameterFlags flags = ParameterFlags::None) = 0;
 };
 
 class SynthesizerBase {

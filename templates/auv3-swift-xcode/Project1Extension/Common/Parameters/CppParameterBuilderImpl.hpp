@@ -17,6 +17,7 @@ struct CppParameterItem {
   double maxValue;
   std::vector<std::string> valueStrings; // For enum parameters
   CppParameterType type;
+  ParameterFlags flags;
 };
 
 class CppParameterBuilderImpl : public ParameterBuilder {
@@ -29,8 +30,8 @@ public:
     synthInstance->setupParameters(*this);
   }
 
-  void addUnary(ParamId id, Str paramKey, Str label,
-                double defaultValue) override {
+  void addUnary(ParamId id, Str paramKey, Str label, double defaultValue,
+                ParameterFlags flags) override {
     parameters.push_back({
         .id = id,
         .paramKey = std::string(paramKey),
@@ -40,11 +41,12 @@ public:
         .maxValue = 1.0,
         .valueStrings = {},
         .type = CppParameterType::Unary,
+        .flags = flags,
     });
   }
 
   void addEnum(ParamId id, Str paramKey, Str label, Str defaultValueString,
-               StrVec valueStrings) override {
+               StrVec valueStrings, ParameterFlags flags) override {
     parameters.push_back({
         .id = id,
         .paramKey = std::string(paramKey),
@@ -62,11 +64,12 @@ public:
         .valueStrings =
             std::vector<std::string>(valueStrings.begin(), valueStrings.end()),
         .type = CppParameterType::Enum,
+        .flags = flags,
     });
   }
 
-  void addBool(ParamId id, Str paramKey, Str label,
-               bool defaultValue) override {
+  void addBool(ParamId id, Str paramKey, Str label, bool defaultValue,
+               ParameterFlags flags) override {
     parameters.push_back({
         .id = id,
         .paramKey = std::string(paramKey),
@@ -76,6 +79,7 @@ public:
         .maxValue = 1.0,
         .valueStrings = {},
         .type = CppParameterType::Bool,
+        .flags = flags,
     });
   }
 };

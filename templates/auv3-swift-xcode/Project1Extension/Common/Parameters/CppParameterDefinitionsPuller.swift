@@ -1,6 +1,28 @@
 import AudioToolbox
 import Foundation
 
+func mapParameterFlags(_ flags: ParameterFlags, _ itemType: CppParameterType)
+  -> AudioUnitParameterOptions
+{
+  var resFlags: AudioUnitParameterOptions = []
+
+  if itemType == .Enum {
+    resFlags.insert(.flag_ValuesHaveStrings)
+  }
+  if flags.rawValue & ParameterFlags.IsHidden.rawValue == 0 {
+    resFlags.insert(.flag_IsReadable)
+
+    if flags.rawValue & ParameterFlags.IsReadOnly.rawValue == 0 {
+      resFlags.insert(.flag_IsWritable)
+    }
+  }
+
+  if flags.rawValue & ParameterFlags.NonAutomatable.rawValue == 0 {
+    resFlags.insert(.flag_CanRamp)
+  }
+  return resFlags
+}
+
 func pullParameterDefinitionsFromCppSide(_ synthInstanceHandle: SynthInstanceHandle)
   -> ParameterTreeSpec
 {
@@ -21,11 +43,7 @@ func pullParameterDefinitionsFromCppSide(_ synthInstanceHandle: SynthInstanceHan
           valueRange: Float(item.minValue)...Float(item.maxValue),
           defaultValue: Float(item.defaultValue),
           unitName: nil,
-          flags: item.type == .Enum
-            ? [
-              .flag_IsWritable, .flag_IsReadable,
-              .flag_ValuesHaveStrings,
-            ] : [.flag_IsWritable, .flag_IsReadable],
+          flags: mapParameterFlags(item.flags, item.type),
           valueStrings: item.valueStrings.empty()
             ? nil : item.valueStrings.map { String($0) },
           dependentParameters: nil
