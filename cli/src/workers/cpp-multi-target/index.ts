@@ -4,6 +4,7 @@ import {
   casingToSnake,
   generateRandomString,
   TemplateWorker,
+  workerHelper_buildFrontend,
   workerHelper_copyProjectContentFiles,
   workerHelper_copyProjectContentFiles_withRenaming,
   workerHelper_getNewProjectFolderPath,
@@ -20,6 +21,7 @@ type TemplateOptions = {
   includeEntryMakefile: boolean;
   auManufacturer: string;
   auSubtype: string;
+  buildFrontend: boolean;
 };
 
 async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
@@ -104,7 +106,17 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
       auSubtype = auSubtypeDefault;
     }
   }
-
+  let buildFrontend = false;
+  if (frontendVariant === "react") {
+    const _buildFrontend = await clackPrompts.confirm({
+      message: "Build frontend now?",
+      initialValue: true,
+    });
+    if (clackPrompts.isCancel(_buildFrontend)) {
+      return "cancelled";
+    }
+    buildFrontend = _buildFrontend;
+  }
   return {
     platforms,
     frontendVariant,
@@ -113,6 +125,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     includeEntryMakefile,
     auManufacturer,
     auSubtype,
+    buildFrontend,
   };
 }
 
@@ -147,17 +160,6 @@ function copyFrameworkCodeIfNeeded({
     workerHelper_copyProjectContentFiles(projectName, templateName, [
       "framework",
     ]);
-  }
-}
-
-function copyFrontend({ projectName, templateName, options }: TaskContext) {
-  if (options.frontendVariant === "react") {
-    workerHelper_copyProjectContentFiles(projectName, templateName, [
-      "cmake/build-frontend.cmake",
-    ]);
-    workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
-  } else if (options.frontendVariant === "vanilla_minimum") {
-    workerHelper_copyProjectContentFiles(projectName, "_common", ["pages"]);
   }
 }
 
@@ -385,10 +387,6 @@ function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
     });
   };
 
-  if (options.frontendVariant === "vanilla_minimum") {
-    removeLine(`include(cmake/build-frontend.cmake)`);
-  }
-
   if (options.includeFrameworkCode) {
     replaceLine({
       from: `add_subdirectory("\${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
@@ -467,6 +465,21 @@ function arrangeBuildWrapper({
   }
 }
 
+function setupFrontend({
+  projectName,
+  projectFolderPath,
+  options,
+}: TaskContext) {
+  if (options.frontendVariant === "react") {
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
+    if (options.buildFrontend) {
+      workerHelper_buildFrontend(projectFolderPath, "frontend");
+    }
+  } else {
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["pages"]);
+  }
+}
+
 function scaffoldProject(
   projectName: string,
   templateName: string,
@@ -480,7 +493,6 @@ function scaffoldProject(
   };
   copyTemplateBaseFiles(taskContext);
   copyFrameworkCodeIfNeeded(taskContext);
-  copyFrontend(taskContext);
   patchPluginSourceFiles(taskContext);
   if (options.platforms.includes("vst3")) {
     addVstWrapper(taskContext);
@@ -493,6 +505,7 @@ function scaffoldProject(
   }
   patchCMakeLists(taskContext);
   arrangeBuildWrapper(taskContext);
+  setupFrontend(taskContext);
   return true;
 }
 
