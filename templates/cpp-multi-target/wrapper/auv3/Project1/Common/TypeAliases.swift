@@ -1,20 +1,13 @@
-//
-//  TypeAliases.swift
-//  Project1
-//
-//  Created by ore on 2026/03/08.
-//
-
-import CoreMIDI
 import AudioToolbox
+import CoreMIDI
 
 #if os(iOS) || os(visionOS)
-import UIKit
+  import UIKit
 
-public typealias ViewController = UIViewController
+  public typealias ViewController = UIViewController
 #elseif os(macOS)
-import AppKit
+  import AppKit
 
-public typealias KitView = NSView
-public typealias ViewController = NSViewController
+  public typealias KitView = NSView
+  public typealias ViewController = NSViewController
 #endif
