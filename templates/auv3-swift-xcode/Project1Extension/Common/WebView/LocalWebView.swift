@@ -232,7 +232,7 @@ func commonWebViewSetup(
   }
 
 #elseif os(iOS)
-  // iOSではUIViewRepresentableを使用
+  // Use UIViewRepresentable on iOS
   struct LocalWebView: UIViewRepresentable {
 
     let onBind: (WebViewIoProtocol) -> Void

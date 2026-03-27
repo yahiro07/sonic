@@ -1,9 +1,9 @@
 import Combine
 
-//UI側からAudioUnitの機能にアクセスするためのインターフェイス
-//・UI上の鍵盤からのノートオン/ノートオフ
-//・ホストから送られたイベントの購読
-//の機能を提供する
+//An interface for accessing AudioUnit functionality from the UI
+//・Note-on/note-off events from the UI keyboard
+//・Subscription to events sent by the host
+//Provides these functions
 protocol AudioUnitPresenter {
   var isHostedInStandaloneApp: Bool { get }
   func noteOnFromUI(_ noteNumber: Int, velocity: Float)
@@ -52,9 +52,9 @@ final class AudioUnitPresenterImpl: AudioUnitPresenter {
     audioUnit?.applyParametersState(parametersVersion, parameters)
   }
 
-  //メインスレッドでタイマを使ってポーリングしてイベントを流す
-  //オーディオスレッド上で拾い上げたMIDIノートのイベントをメインスレッド上でUIに流す
-  //AudioUnitViewController側で一定周期でループを回してこれを呼ぶ想定
+  // Use a timer on the main thread to poll and send events
+  // Send MIDI note events captured on the audio thread to the UI on the main thread
+  // The AudioUnitViewController is expected to run a loop at regular intervals to call this method
   func drainEventsOnMainThread(maxCount: Int = 64) {
     var count = 0
     while count < maxCount, let event = audioUnit?.pullRTAudioPortalEventOne() {

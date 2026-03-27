@@ -11,7 +11,7 @@ private let jsonFloatFormatter: NumberFormatter = {
   return formatter
 }()
 
-//文字列化で小数点以下の桁数が無駄に多くならないようにする
+//Ensure that the number of decimal places doesn't become unnecessarily large when converting to a string
 func encodeFloatForJson(_ value: Float) -> NSDecimalNumber {
   if let str = jsonFloatFormatter.string(from: NSNumber(value: value)) {
     return NSDecimalNumber(string: str, locale: Locale(identifier: "en_US_POSIX"))
