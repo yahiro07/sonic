@@ -1,14 +1,14 @@
 // type MessageFromUi =
 //   | { type: "uiLoaded" }
-//   | { type: "beginEdit"; identifier: string }
-//   | { type: "performEdit"; identifier: string; value: number }
-//   | { type: "endEdit"; identifier: string }
-//   | { type: "instantEdit"; identifier: string; value: number }
+//   | { type: "beginEdit"; paramKey: string }
+//   | { type: "performEdit"; paramKey: string; value: number }
+//   | { type: "endEdit"; paramKey: string }
+//   | { type: "instantEdit"; paramKey: string; value: number }
 //   | { type: "noteOnRequest"; noteNumber: number }
 //   | { type: "noteOffRequest"; noteNumber: number };
 
 // type MessageFromApp =
-//   | { type: "setParameter"; identifier: string; value: number }
+//   | { type: "setParameter"; paramKey: string; value: number }
 //   | { type: "bulkSendParameters"; parameters: Record<string, number> }
 //   | { type: "hostNoteOn"; noteNumber: number }
 //   | { type: "hostNoteOff"; noteNumber: number };
@@ -49,7 +49,7 @@ pushLogLine("href: " + location.href);
 
 function addSlider(
   name,
-  identifier,
+  paramKey,
   defaultValue,
   min = 0,
   max = 1,
@@ -61,20 +61,20 @@ function addSlider(
   slider.max = max;
   slider.step = step;
   slider.value = defaultValue;
-  slider.id = identifier;
+  slider.id = paramKey;
   slider.onpointerdown = () => {
     //pointer capture would needed for more robust handling
-    sendMessage({ type: "beginEdit", identifier });
+    sendMessage({ type: "beginEdit", paramKey });
   };
   slider.oninput = () => {
     sendMessage({
       type: "performEdit",
-      identifier,
+      paramKey,
       value: parseFloat(slider.value),
     });
   };
   slider.onpointerup = () => {
-    sendMessage({ type: "endEdit", identifier });
+    sendMessage({ type: "endEdit", paramKey });
   };
 
   const label = document.createElement("label");
@@ -111,8 +111,8 @@ function addIndicator() {
   document.body.appendChild(div);
 }
 
-addSlider("Gain", "gain", 0.5);
-addSlider("Wave", "waveType", 0, 0, 3, 1);
+addSlider("Enabled", "oscEnabled", 1, 0, 1, 1);
+addSlider("Wave", "oscWave", 0, 0, 3, 1);
 addSlider("Pitch", "oscPitch", 0.5);
 addSlider("Volume", "oscVolume", 0.5);
 addNoteButton("Note(60)", 60);
@@ -120,23 +120,23 @@ addIndicator();
 
 sendMessage({ type: "uiLoaded" });
 
-sendMessage({
-  type: "setupPollingTelemetries",
-  targetBitFlags: 1,
-  timerIntervalMs: 1000,
-});
+// sendMessage({
+//   type: "setupPollingTelemetries",
+//   targetBitFlags: 1,
+//   timerIntervalMs: 1000,
+// });
 // sendMessage({ type: "stopPollingTelemetries" });
 
 window.pluginEditorCallback = (msg) => {
   pushLogLine("⇢ui", msg);
   if (msg.type === "setParameter") {
-    const slider = document.getElementById(msg.identifier);
+    const slider = document.getElementById(msg.paramKey);
     if (slider) {
       slider.value = msg.value;
     }
   } else if (msg.type === "bulkSendParameters") {
-    for (const [identifier, value] of Object.entries(msg.parameters)) {
-      const slider = document.getElementById(identifier);
+    for (const [paramKey, value] of Object.entries(msg.parameters)) {
+      const slider = document.getElementById(paramKey);
       if (slider) {
         slider.value = value;
       }
