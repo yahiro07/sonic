@@ -30,6 +30,8 @@ private:
 public:
   void initialize(int channelCount, double inSampleRate) {
     mSampleRate = inSampleRate;
+
+    mSynthInstance->prepareProcessing(mSampleRate, mMaxFramesToRender);
   }
 
   void deInitialize() {}
@@ -85,6 +87,8 @@ public:
     mMaxFramesToRender = maxFrames;
     mLeftBuffer.resize(maxFrames);
     mRightBuffer.resize(maxFrames);
+
+    mSynthInstance->prepareProcessing(mSampleRate, mMaxFramesToRender);
   }
 
   // MARK: - Musical Context
