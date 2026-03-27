@@ -1,0 +1,34 @@
+#pragma once
+
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <vector>
+
+class ParameterBuilder {
+protected:
+  using Str = std::string_view;
+  using StrVec = const std::vector<std::string> &;
+
+public:
+  virtual ~ParameterBuilder() = default;
+  virtual void addUnary(uint32_t id, Str paramKey, Str label,
+                        double defaultValue) = 0;
+  virtual void addEnum(uint32_t id, Str paramKey, Str label,
+                       Str defaultValueString, StrVec valueStrings) = 0;
+  virtual void addBool(uint32_t id, Str paramKey, Str label,
+                       bool defaultValue) = 0;
+};
+
+class SynthesizerBase {
+public:
+  virtual ~SynthesizerBase() = default;
+  virtual void setupParameters(ParameterBuilder &builder) = 0;
+  virtual void prepareProcessing(double sampleRate, uint32_t maxFrameCount) = 0;
+
+  virtual void setParameter(uint32_t id, double value) = 0;
+  virtual void noteOn(int noteNumber, double velocity) = 0;
+  virtual void noteOff(int noteNumber) = 0;
+  virtual void processAudio(float *bufferL, float *bufferR,
+                            uint32_t frames) = 0;
+};

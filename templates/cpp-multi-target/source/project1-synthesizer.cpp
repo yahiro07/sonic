@@ -18,6 +18,11 @@ void Project1Synthesizer::setupParameters(sonic::ParameterBuilder &builder) {
   builder.addUnary(kOscVolume, "oscVolume", "Volume", 0.5);
 }
 
+void Project1Synthesizer::prepareProcessing(double sampleRate,
+                                            uint32_t maxFrameCount) {
+  this->sampleRate = sampleRate;
+}
+
 void Project1Synthesizer::setParameter(uint32_t id, double value) {
   if (id == kOscEnabled) {
     oscEnabled = value;
@@ -30,9 +35,15 @@ void Project1Synthesizer::setParameter(uint32_t id, double value) {
   }
 }
 
-void Project1Synthesizer::prepareProcessing(double sampleRate,
-                                            uint32_t maxFrameCount) {
-  this->sampleRate = sampleRate;
+void Project1Synthesizer::noteOn(int noteNumber, double velocity) {
+  this->noteNumber = noteNumber;
+  this->gateOn = true;
+}
+
+void Project1Synthesizer::noteOff(int noteNumber) {
+  if (noteNumber == this->noteNumber) {
+    this->gateOn = false;
+  }
 }
 
 void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
@@ -74,17 +85,6 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
     bufferL[i] = y * gain;
   }
   memcpy(bufferR, bufferL, sizeof(float) * frames);
-}
-
-void Project1Synthesizer::noteOn(int noteNumber, double velocity) {
-  this->noteNumber = noteNumber;
-  this->gateOn = true;
-}
-
-void Project1Synthesizer::noteOff(int noteNumber) {
-  if (noteNumber == this->noteNumber) {
-    this->gateOn = false;
-  }
 }
 
 void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,

@@ -9,17 +9,17 @@ func pullParameterDefinitionsFromCppSide(_ synthInstanceHandle: SynthInstanceHan
 
   let parameterSpecs = ParameterTreeSpec {
     ParameterGroupSpec(
-      //nesting is not supported, all parameters are flattened into a single group
+      //currently nesting is not supported, all parameters are flattened into a single group
       identifier: "global",
       name: "Global",
       children: parameterBuilder.getItems().map { item in
         ParameterSpec(
-          address: item.address,
-          identifier: String(item.identifier),
+          address: UInt64(item.id),
+          identifier: String(item.paramKey),
           name: String(item.label),
           units: item.type == .Enum ? .indexed : (item.type == .Bool ? .boolean : .generic),
-          valueRange: item.minValue...item.maxValue,
-          defaultValue: item.defaultValue,
+          valueRange: Float(item.minValue)...Float(item.maxValue),
+          defaultValue: Float(item.defaultValue),
           unitName: nil,
           flags: item.type == .Enum
             ? [

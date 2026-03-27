@@ -129,8 +129,8 @@ public:
     memset(mLeftBuffer.data(), 0, sizeof(float) * frameCount);
     memset(mRightBuffer.data(), 0, sizeof(float) * frameCount);
 
-    mSynthInstance->process(mLeftBuffer.data(), mRightBuffer.data(),
-                            frameCount);
+    mSynthInstance->processAudio(mLeftBuffer.data(), mRightBuffer.data(),
+                                 frameCount);
 
     auto numChannels = outputBuffers.size();
     if (numChannels == 2) {
@@ -147,7 +147,7 @@ public:
 
   void noteOn(int noteNumber, double velocity) {
     if (mSynthInstance) {
-      mSynthInstance->noteOn(noteNumber, static_cast<float>(velocity));
+      mSynthInstance->noteOn(noteNumber, velocity);
     }
   }
 
