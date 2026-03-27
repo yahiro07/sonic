@@ -12,7 +12,7 @@ target_link_libraries(${NAME} PRIVATE plugin-source platform-vst3)
 set_target_properties(
   ${NAME}
   PROPERTIES PREFIX ""
-             OUTPUT_NAME "project1-vst3"
+             OUTPUT_NAME "project1"
              BUNDLE True
              BUNDLE_EXTENSION vst3)
 

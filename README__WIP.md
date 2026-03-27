@@ -125,7 +125,7 @@ VST3 and CLAP plugins are generated in `build/ninja/lib/Debug/`.
 ## Testing with DevHost
 
 ```bash
-./build/ninja/bin/Debug/VstDevHost ./build/ninja/lib/Debug/CppMultiTarget1-vst3.vst3
+./build/ninja/bin/Debug/VstDevHost ./build/ninja/lib/Debug/CppMultiTarget1.vst3
 ```
 
 CLI development host is started. The host loads the plugin and displays its UI.

@@ -4,7 +4,7 @@ add_library(${NAME} MODULE plugin-entry.cpp)
 set_target_properties(
   ${NAME}
   PROPERTIES PREFIX ""
-             OUTPUT_NAME "project1-clap"
+             OUTPUT_NAME "project1"
              BUNDLE True
              BUNDLE_EXTENSION clap)
 

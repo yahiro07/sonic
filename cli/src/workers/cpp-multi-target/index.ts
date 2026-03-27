@@ -429,8 +429,8 @@ function arrangeBuildWrapper({
     workerHelper_replaceStrings(projectFolderPath, {
       filePaths: ["run.sh"],
       replacements: [
-        { from: "project1-vst3.vst3", to: `${projectNameKebab}-vst3.vst3` },
-        { from: "project1-clap.clap", to: `${projectNameKebab}-clap.clap` },
+        { from: "project1.vst3", to: `${projectNameKebab}.vst3` },
+        { from: "project1.clap", to: `${projectNameKebab}.clap` },
       ],
     });
   }
