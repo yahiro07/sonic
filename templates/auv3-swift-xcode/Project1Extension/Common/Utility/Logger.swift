@@ -11,7 +11,7 @@ import Foundation
 struct LogItem {
   let timestamp: Double  //ms from epoch
   let subSystem: String
-  let kind: String
+  let logKind: String
   let message: String
 }
 
@@ -45,7 +45,7 @@ let logKindIcons: [String: String] = [
 
       let ts = formatTimestamp(item.timestamp)
       let ssIcon = subSystemIcons[item.subSystem] ?? ""
-      let kindIcon = logKindIcons[item.kind] ?? ""
+      let kindIcon = logKindIcons[item.logKind] ?? ""
 
       let logLine = "\(ts) [\(ssIcon)\(item.subSystem)] \(kindIcon) \(item.message)"
       if true {
@@ -66,10 +66,10 @@ let logKindIcons: [String: String] = [
       self.subSystem = subSystem
     }
 
-    private func pushLog(_ kind: String, _ message: String) {
+    private func pushLog(_ logKind: String, _ message: String) {
       loggerCore.pushLogItem(
         LogItem(
-          timestamp: Date().timeIntervalSince1970 * 1000, subSystem: subSystem, kind: kind,
+          timestamp: Date().timeIntervalSince1970 * 1000, subSystem: subSystem, logKind: logKind,
           message: message
         ))
     }

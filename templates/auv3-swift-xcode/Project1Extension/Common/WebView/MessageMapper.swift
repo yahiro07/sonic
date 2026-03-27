@@ -22,24 +22,30 @@ func encodeFloatForJson(_ value: Float) -> NSDecimalNumber {
 func mapMessageFromUI_fromDictionary(_ dict: [String: Any]) -> MessageFromUI? {
   guard let type = dict["type"] as? String else { return nil }
   switch type {
-  case "putLogItem":
-    if let timeStamp = dict["timeStamp"] as? Double,
-      let kind = dict["kind"] as? String,
+  case "log":
+    if let timestamp = dict["timestamp"] as? Double,
+      let logKind = dict["logKind"] as? String,
       let message = dict["message"] as? String
     {
-      return .putLogItem(timeStamp: timeStamp, kind: kind, message: message)
+      return .putLogItem(timestamp: timestamp, logKind: logKind, message: message)
     }
   case "uiLoaded":
     return .uiLoaded
-  case "beginParameterEdit":
+  case "beginEdit":
     if let paramKey = dict["paramKey"] as? String {
       return .beginParameterEdit(paramKey: paramKey)
     }
-  case "endParameterEdit":
+  case "performEdit":
+    if let paramKey = dict["paramKey"] as? String,
+      let value = dict["value"] as? Double
+    {
+      return .setParameter(paramKey: paramKey, value: Float(value))
+    }
+  case "endEdit":
     if let paramKey = dict["paramKey"] as? String {
       return .endParameterEdit(paramKey: paramKey)
     }
-  case "setParameter":
+  case "instantEdit":
     if let paramKey = dict["paramKey"] as? String,
       let value = dict["value"] as? Double
     {

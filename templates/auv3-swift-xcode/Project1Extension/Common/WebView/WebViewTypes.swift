@@ -1,7 +1,7 @@
 import Combine
 
 enum MessageFromUI {
-  case putLogItem(timeStamp: Double, kind: String, message: String)
+  case putLogItem(timestamp: Double, logKind: String, message: String)
   //UI読み込み完了時の通知,このあとプラグイン本体から初期パラメタを送信する
   case uiLoaded
   //UI操作で変更されたパラメタをプラグイン本体に送信

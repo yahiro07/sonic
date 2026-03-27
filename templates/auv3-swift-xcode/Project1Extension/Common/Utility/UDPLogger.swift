@@ -32,7 +32,7 @@ import os
     }
 
     func pushLogItem(_ item: LogItem) {
-      let logLine = "(t:\(item.timestamp), s:\(item.subSystem), k:\(item.kind)) \(item.message)"
+      let logLine = "(t:\(item.timestamp), s:\(item.subSystem), k:\(item.logKind)) \(item.message)"
       log(logLine)
     }
   }

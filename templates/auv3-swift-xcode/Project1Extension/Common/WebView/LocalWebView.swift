@@ -28,9 +28,9 @@ private func serializeDictionaryToJsonString(_ dict: [String: Any]) -> String {
 private func sendMessageToWebViewRaw(webView: WKWebView, jsDataDictionary: JsDataDictionary) {
   let jsStringifiedData = serializeDictionaryToJsonString(jsDataDictionary)
   // logger.log("sending message to UI: \(jsStringifiedData)")
-  //window.putMessageFromApp()を呼び出す
+  //window.pluginEditorCallback()を呼び出す
   let jsCode =
-    "window.putMessageFromApp && window.putMessageFromApp(\(jsStringifiedData));"
+    "window.pluginEditorCallback && window.pluginEditorCallback(\(jsStringifiedData));"
   webView.evaluateJavaScript(jsCode)
 }
 
@@ -197,7 +197,7 @@ func commonWebViewSetup(
     ScriptMessageHandler { [weak coordinator] dict in
       coordinator?.dispatchFromUI(dict)
     },
-    name: "putMessageFromUI"
+    name: "pluginEditor"
   )
   config.userContentController = userContentController
 
