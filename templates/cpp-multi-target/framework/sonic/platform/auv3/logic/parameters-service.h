@@ -116,6 +116,26 @@ public:
   const ParameterSpecArray &getParameterSpecs() {
     return parameterRegistry.getParameterItems();
   }
+
+  void getAllParametersForPersist(std::map<std::string, double> &parameters) {
+    auto parameterItems = parameterRegistry.getParameterItems();
+    for (const auto &item : parameterItems) {
+      parameters[item.paramKey] =
+          parameterTreeWrapper.getParameterValue(item.id);
+    }
+  }
+  void
+  setAllParametersFromPersist(const std::map<std::string, double> &parameters) {
+    auto parameterItems = parameterRegistry.getParameterItems();
+    for (const auto &item : parameterItems) {
+      auto it = parameters.find(item.paramKey);
+      if (it != parameters.end()) {
+        parameterTreeWrapper.setParameterValue(
+            item.id, it->second, ptObserverToken,
+            ParameterAutomationEventType::Value);
+      }
+    }
+  }
 };
 
 } // namespace sonic

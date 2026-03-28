@@ -5,8 +5,8 @@ project(${NAME} LANGUAGES CXX OBJCXX)
 add_library(${NAME} STATIC)
 
 target_sources(
-  ${NAME} PRIVATE ../../common/logger.cpp ./support/parameter-tree-wrapper.mm
-                  ./wrapper-auv3-root.mm)
+  ${NAME} PRIVATE ../../common/logger.cpp ../../core/persistence.cpp
+                  ./support/parameter-tree-wrapper.mm ./wrapper-auv3-root.mm)
 
 target_compile_options(
   ${NAME} PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>
@@ -23,4 +23,4 @@ set_target_properties(
              XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
              XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_WEAK YES)
 
-target_link_libraries(${NAME} PRIVATE sonic-headers)
+target_link_libraries(${NAME} PRIVATE sonic-headers glaze::glaze)

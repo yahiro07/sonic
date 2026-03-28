@@ -203,6 +203,25 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
   return [block copy];
 }
 
+- (NSDictionary<NSString *, id> *)fullState {
+  printf("fullState\n");
+  std::vector<uint8_t> buffer;
+  _entryController->writeStateBuffer(buffer);
+  NSData *data = [NSData dataWithBytes:buffer.data() length:buffer.size()];
+  return [NSDictionary dictionaryWithObject:data forKey:@"state"];
+}
+
+- (void)setFullState:(NSDictionary<NSString *, id> *)state {
+  printf("setFullState\n");
+  NSData *data = [state objectForKey:@"state"];
+  if (!data) {
+    return;
+  }
+  std::vector<uint8_t> buffer(data.length);
+  [data getBytes:buffer.data() length:data.length];
+  _entryController->readStateBuffer(buffer);
+}
+
 - (void)viewAdded {
   self.activeViewCount += 1;
   if (self.activeViewCount == 1) {

@@ -11,6 +11,7 @@
 #include <sonic/core/parameter-builder-impl.h>
 #include <sonic/core/parameter-registry.h>
 #include <sonic/core/parameter-store.h>
+#include <sonic/core/persistence.h>
 #include <vector>
 
 namespace sonic {
@@ -101,5 +102,18 @@ public:
   }
 
   IControllerFacade &getControllerFacade() { return controllerFacade; }
+
+  void writeStateBuffer(std::vector<uint8_t> &buffer) {
+    PersistStateData data;
+    parameterService.getAllParametersForPersist(data.parameters);
+    serializePersistState(data, buffer);
+  }
+
+  void readStateBuffer(const std::vector<uint8_t> &buffer) {
+    PersistStateData data;
+    if (deserializePersistState(buffer, data)) {
+      parameterService.setAllParametersFromPersist(data.parameters);
+    }
+  }
 };
 }; // namespace sonic
