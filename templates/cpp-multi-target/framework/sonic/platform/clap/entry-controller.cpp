@@ -100,6 +100,10 @@ public:
     std::vector<uint8_t> buffer;
     domainController.writeStateBuffer(buffer);
     uint32_t byteCount = buffer.size();
+    if (byteCount >= 1000000) {
+      printf("State size is too large %d/%d\n", byteCount, 1000000);
+      return false;
+    }
     if (stream->write(stream, &byteCount, sizeof(byteCount)) !=
         sizeof(byteCount)) {
       printf("Failed to write state size to stream\n");
@@ -117,6 +121,10 @@ public:
     if (stream->read(stream, &byteCount, sizeof(byteCount)) !=
         sizeof(byteCount)) {
       printf("Failed to read state size from stream\n");
+      return false;
+    }
+    if (byteCount >= 1000000) {
+      printf("State size is too large %d/%d\n", byteCount, 1000000);
       return false;
     }
     std::vector<uint8_t> buffer(byteCount);

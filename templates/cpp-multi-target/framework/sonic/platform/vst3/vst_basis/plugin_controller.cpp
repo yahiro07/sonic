@@ -68,17 +68,17 @@ tresult PLUGIN_API PluginController::terminate() {
   return EditControllerEx1::terminate();
 }
 
-tresult PLUGIN_API PluginController::setComponentState(IBStream *state) {
+tresult PLUGIN_API PluginController::setComponentState(IBStream *stream) {
   logger.log("PluginController::setComponentState");
-  if (!state)
+  if (!stream)
     return kResultFalse;
 
-  ProcessorState processorState;
-  auto ok = processorStateHelper_readState(state, processorState);
+  PersistStateData data;
+  auto ok = processorStateHelper_readState(stream, data);
   if (!ok) {
     return kResultFalse;
   }
-  for (auto &kv : processorState.parameters) {
+  for (auto &kv : data.parameters) {
     auto paramItem = parameterRegistry.getParameterItemByParamKey(kv.first);
     if (!paramItem)
       continue;
