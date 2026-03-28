@@ -7,6 +7,7 @@
 #include <sonic/core/parameter-registry.h>
 #include <sonic/core/parameter-spec-helper.h>
 #include <sonic/core/parameter-store.h>
+#include <sonic/core/persistence.h>
 
 namespace sonic {
 
@@ -105,6 +106,23 @@ public:
 
   const ParameterSpecArray &getParameterSpecs() {
     return parametersRegistry.getParameterItems();
+  }
+
+  void getAllParametersForPersist(std::map<std::string, double> &parameters) {
+    auto parameterItems = parametersRegistry.getParameterItems();
+    for (const auto &item : parameterItems) {
+      parameters[item.paramKey] = parametersHub.getParameterValue(item.id);
+    }
+  }
+  void
+  setAllParametersFromPersist(const std::map<std::string, double> &parameters) {
+    auto parameterItems = parametersRegistry.getParameterItems();
+    for (const auto &item : parameterItems) {
+      auto it = parameters.find(item.paramKey);
+      if (it != parameters.end()) {
+        parametersHub.setParameterFromHost(item.id, it->second);
+      }
+    }
   }
 };
 
@@ -270,6 +288,19 @@ public:
       } else if (e.type == DownstreamEventType::HostNote) {
         noteService.hostNotePort.call(e.note.noteNumber, e.note.velocity);
       }
+    }
+  }
+
+  void writeStateBuffer(std::vector<uint8_t> &buffer) {
+    PersistStateData data;
+    parameterService.getAllParametersForPersist(data.parameters);
+    serializePersistState(data, buffer);
+  }
+
+  void readStateBuffer(const std::vector<uint8_t> &buffer) {
+    PersistStateData data;
+    if (deserializePersistState(buffer, data)) {
+      parameterService.setAllParametersFromPersist(data.parameters);
     }
   }
 };

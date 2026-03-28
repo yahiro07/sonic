@@ -25,6 +25,9 @@ public:
                                 clap_param_info_t *info) const = 0;
   virtual double getParameterValue(clap_id id) = 0;
 
+  virtual bool saveState(const clap_ostream_t *stream) = 0;
+  virtual bool loadState(const clap_istream_t *stream) = 0;
+
   virtual bool guiCreate() = 0;
   virtual void guiDestroy() = 0;
   virtual bool guiSetParent(const clap_window_t *window) = 0;
