@@ -1,3 +1,4 @@
+import * as clackPrompts from "@clack/prompts";
 import {
   casingToCapital,
   casingToKebab,
@@ -11,7 +12,6 @@ import {
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
 } from "@/src/common";
-import * as clackPrompts from "@clack/prompts";
 
 type TemplateOptions = {
   platforms: ("vst3" | "clap" | "auv3")[];
@@ -91,7 +91,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     if (clackPrompts.isCancel(auManufacturer)) {
       return "cancelled";
     }
-    if (auManufacturer == "") {
+    if (auManufacturer === "") {
       auManufacturer = auManufacturerDefault;
     }
     const auSubtypeDefault = generateRandomString("alphaNumeric", 4);
@@ -102,7 +102,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     if (clackPrompts.isCancel(auSubtype)) {
       return "cancelled";
     }
-    if (auSubtype == "") {
+    if (auSubtype === "") {
       auSubtype = auSubtypeDefault;
     }
   }
@@ -445,9 +445,11 @@ function arrangeBuildWrapper({
   }
 
   if (hasMakefile) {
-    workerHelper_copyProjectContentFiles(projectName, templateName, [
-      "Makefile",
-    ]);
+    workerHelper_copyProjectContentFiles_withRenaming(
+      projectName,
+      templateName,
+      [{ from: "Makefile_template", to: "Makefile" }],
+    );
 
     if (!hasRunScript) {
       workerHelper_replaceStrings(projectFolderPath, {

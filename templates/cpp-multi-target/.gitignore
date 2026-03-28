@@ -2,6 +2,7 @@ build/
 project.xcworkspace/
 xcuserdata/
 pages/
+Makefile
 
 
 
