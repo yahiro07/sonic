@@ -1,6 +1,7 @@
 #include "./plugin_controller.h"
 #include "../support/processor_state_helper.h"
 #include "./plugin-editor-view.h"
+#include "sonic/api/synthesizer-base.h"
 #include <base/source/fstring.h>
 #include <sonic/common/logger.h>
 #include <sonic/core/parameter-spec-helper.h>
@@ -15,10 +16,10 @@ using ParameterItem = sonic::ParameterSpecItem;
 static int getParameterVstFlags(const ParameterItem *item) {
   auto flags = 0;
   flags |= Steinberg::Vst::ParameterInfo::kCanAutomate;
-  if (item->flags & ParameterFlags::IsReadOnly) {
+  if ((item->flags & ParameterFlags::IsReadOnly) > ParameterFlags::None) {
     flags |= Steinberg::Vst::ParameterInfo::kIsReadOnly;
   }
-  if (item->flags & ParameterFlags::IsHidden) {
+  if ((item->flags & ParameterFlags::IsHidden) > ParameterFlags::None) {
     flags |= Steinberg::Vst::ParameterInfo::kIsHidden;
   }
   return flags;
