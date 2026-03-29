@@ -1,4 +1,5 @@
 #include "plugin_bridge.h"
+#include "../modules/logger.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/gui/iplugview.h"
@@ -230,14 +231,14 @@ static bool disconnectComponentAndController(IComponent *component,
 }
 
 bool PluginBridge::loadPlugin(const std::string &path) {
-  printf("PluginBridge::loadPlugin: %s\n", path.c_str());
+  logger.log("PluginBridge::loadPlugin: %s", path.c_str());
 
   unloadPlugin();
 
   std::string errorDescription;
   module = VST3::Hosting::Module::create(path, errorDescription);
   if (!module) {
-    printf("Failed to load module: %s\n", errorDescription.c_str());
+    logger.error("Failed to load module: %s", errorDescription.c_str());
     return false;
   }
 
@@ -253,7 +254,7 @@ bool PluginBridge::loadPlugin(const std::string &path) {
   }
 
   if (!found) {
-    printf("No audio effect class found in plugin\n");
+    logger.error("No audio effect class found in plugin");
     return false;
   }
 
@@ -264,26 +265,26 @@ bool PluginBridge::loadPlugin(const std::string &path) {
 
   component = factory.createInstance<IComponent>(audioEffectClassInfo.ID());
   if (!component) {
-    printf("Failed to create component instance\n");
+    logger.error("Failed to create component instance");
     return false;
   }
 
   {
     FUnknownPtr<IPluginBase> plugBase(component);
     if (!plugBase) {
-      printf("Component does not support IPluginBase\n");
+      logger.error("Component does not support IPluginBase");
     } else {
       const auto initResult = plugBase->initialize(&hostApp);
       if (initResult != kResultOk && initResult != kResultTrue) {
-        printf("Component initialize failed: %d\n",
-               static_cast<int>(initResult));
+        logger.error("Component initialize failed: %d",
+                     static_cast<int>(initResult));
       }
     }
   }
 
   audioProcessor = FUnknownPtr<IAudioProcessor>(component);
   if (!audioProcessor) {
-    printf("Component does not support IAudioProcessor\n");
+    logger.error("Component does not support IAudioProcessor");
   }
 
   // Controller: either the component is also a controller, or we create one
@@ -299,22 +300,22 @@ bool PluginBridge::loadPlugin(const std::string &path) {
         editController =
             factory.createInstance<IEditController>(VST3::UID(controllerCID));
         if (!editController) {
-          printf("Failed to create edit controller instance\n");
+          logger.error("Failed to create edit controller instance");
         } else {
           FUnknownPtr<IPluginBase> plugBase(editController);
           if (!plugBase) {
-            printf("Controller does not support IPluginBase\n");
+            logger.error("Controller does not support IPluginBase");
           } else {
             const auto initResult = plugBase->initialize(&hostApp);
             if (initResult != kResultOk && initResult != kResultTrue) {
-              printf("Controller initialize failed: %d\n",
-                     static_cast<int>(initResult));
+              logger.error("Controller initialize failed: %d",
+                           static_cast<int>(initResult));
             }
           }
         }
       } else {
-        printf(
-            "Component did not provide controller class ID (no controller)\n");
+        logger.error(
+            "Component did not provide controller class ID (no controller)");
       }
     }
   }
@@ -341,7 +342,7 @@ void PluginBridge::createEditor(void *ownerViewHandle) {
 
   plugView = editController->createView(ViewType::kEditor);
   if (!plugView) {
-    printf("Failed to create IPlugView\n");
+    logger.error("Failed to create IPlugView");
     return;
   }
 
@@ -358,11 +359,11 @@ void PluginBridge::createEditor(void *ownerViewHandle) {
 
   ViewRect rect;
   if (plugView->getSize(&rect) != kResultTrue) {
-    printf("Failed to get view size\n");
+    logger.error("Failed to get view size");
   }
 
   if (plugView->attached(ownerViewHandle, kPlatformTypeNSView) != kResultTrue) {
-    printf("Failed to attach view to owner\n");
+    logger.error("Failed to attach view to owner");
     plugView->release();
     plugView = nullptr;
   }
@@ -383,7 +384,7 @@ void PluginBridge::unloadPlugin() {
     return;
   }
 
-  printf("Unloading plugin\n");
+  logger.log("Unloading plugin");
   closeEditor();
 
   // Stop audio processing first.
@@ -443,7 +444,7 @@ void PluginBridge::unloadPlugin() {
   isConnected = false;
   isActive = false;
   isProcessing = false;
-  printf("Unloading plugin...done\n");
+  logger.log("Unloading plugin...done");
 }
 
 void PluginBridge::prepareAudio(double sampleRate, int maxBlockSize) {

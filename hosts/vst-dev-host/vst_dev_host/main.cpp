@@ -1,15 +1,19 @@
 #include "./modules/app_window_mac.h"
 #include "./modules/audio_io_mac.h"
+#include "./modules/logger.h"
 #include "./modules/midi_input_mac.h"
 #include "./modules/midi_packet_helper.h"
 #include "./modules/spsc_queue.h"
 #include "./vst/plugin_bridge.h"
 #include "pluginterfaces/base/ftypes.h"
 #include "pluginterfaces/base/funknown.h"
+#include <chrono>
 #include <filesystem>
 #include <signal.h>
 #include <stdio.h>
 #include <string>
+#include <thread>
+#include <unistd.h>
 
 namespace vst_dev_host {
 
@@ -93,11 +97,13 @@ class Application {
 
 public:
   void run(const std::string &pluginPath, bool smoke = false) {
-    printf("VstDevHost 0048\n");
+    logger.start();
+    logger.trace("VstDevHost");
 
     // Handle ctrl+c
     signal(SIGINT, [](int) {
-      printf("\nCaught SIGINT, stopping...\n");
+      printf("\n");
+      logger.log("Caught SIGINT, stopping...");
       // On macOS, we can stop the NSApp run loop
       extern void mac_stop_app();
       mac_stop_app();
@@ -105,11 +111,11 @@ public:
 
     std::filesystem::path path(pluginPath);
     auto vstPath = std::filesystem::absolute(path).lexically_normal().string();
-    printf("Loading plugin: %s\n", vstPath.c_str());
+    logger.log("Loading plugin: %s", vstPath.c_str());
 
     auto loaded = pluginBridge.loadPlugin(vstPath);
     if (!loaded) {
-      printf("Failed to load plugin: %s\n", vstPath.c_str());
+      logger.error("Failed to load plugin: %s", vstPath.c_str());
       return;
     }
 
@@ -144,14 +150,15 @@ public:
 
     if (audioDevices.size() > 0) {
       auto initialDeviceKey = audioDevices[0].deviceKey;
-      printf("Opening Audio Device: %s\n", audioDevices[0].displayName.c_str());
+      logger.log("Opening Audio Device: %s",
+                 audioDevices[0].displayName.c_str());
       openAudioIo(initialDeviceKey);
       window.refreshAudioDeviceListMenu(audioDevices, initialDeviceKey);
     }
     if (midiDevices.size() > 0) {
       auto initialDeviceKey = midiDevices[0].deviceKey;
-      printf("Opening MIDI Input Device: %s\n",
-             midiDevices[0].displayName.c_str());
+      logger.log("Opening MIDI Input Device: %s",
+                 midiDevices[0].displayName.c_str());
       openMidiInput(initialDeviceKey);
       window.refreshMidiInputDeviceListMenu(midiDevices, initialDeviceKey);
     }
@@ -170,7 +177,8 @@ public:
         });
 
     pluginBridge.subscribeParameterEdit([this](uint32_t paramId, double value) {
-      printf("Parameter edited: paramId=%d, value=%.02f\n", paramId, value);
+      // logger.log("Parameter edited: paramId=%d, value=%.02f\n", paramId,
+      // value);
       this->inputEventQueue.push(InputEvent{
           .type = InputEventType::ParameterChange,
           .id = paramId,
@@ -180,7 +188,7 @@ public:
 
     window.loop();
 
-    printf("window closed, exiting...\n");
+    logger.log("window closed, exiting...");
     pluginBridge.unsubscribeParameterEdit();
     pluginBridge.unsubscribeEditorSizeChangeRequest();
     midiIn.close();
@@ -191,13 +199,16 @@ public:
 
     pluginBridge.closeEditor();
     pluginBridge.unloadPlugin();
-    printf("cleanup done\n");
+    logger.log("cleanup done");
+    // sleep a bit to wait logs to be sent
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    logger.stop();
   }
 };
 
 } // namespace vst_dev_host
 
-int app0Entry(int argc, char **argv) {
+int main(int argc, char **argv) {
   vst_dev_host::Application app;
 
   if (argc >= 2 && argv && argv[1]) {

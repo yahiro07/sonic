@@ -5,10 +5,9 @@ target_sources(
   PRIVATE modules/midi_input_mac.cpp
           modules/audio_io_mac.cpp
           modules/app_window_mac.mm
+          modules/logger.cpp
           vst/plugin_bridge.cpp
           main.cpp
-          app0_mac_devices.cpp
-          app1_plugin_interfacing.cpp
           ${VST3_SDK_ROOT}/public.sdk/source/vst/hosting/plugprovider.cpp
           ${VST3_SDK_ROOT}/public.sdk/source/vst/hosting/module_mac.mm)
 
