@@ -1,4 +1,5 @@
 #include "project1-synthesizer.h"
+#include <sonic/common/logger.h>
 #include <stdio.h>
 
 namespace project1 {
@@ -36,11 +37,13 @@ void Project1Synthesizer::setParameter(uint32_t id, double value) {
 }
 
 void Project1Synthesizer::noteOn(int noteNumber, double velocity) {
+  sonic::logger.log("noteOn %d", noteNumber);
   this->noteNumber = noteNumber;
   this->gateOn = true;
 }
 
 void Project1Synthesizer::noteOff(int noteNumber) {
+  sonic::logger.log("noteOff %d", noteNumber);
   if (noteNumber == this->noteNumber) {
     this->gateOn = false;
   }
