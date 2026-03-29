@@ -178,8 +178,6 @@ public:
     pluginBridge.closeEditor();
     pluginBridge.unloadPlugin();
     logger.log("cleanup done");
-    // sleep a bit to wait logs to be sent
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     logger.stop();
   }
 };

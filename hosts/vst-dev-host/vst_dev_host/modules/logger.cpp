@@ -201,6 +201,9 @@ public:
     });
   }
   void stop() {
+    // sleep a bit to wait logs to be sent
+    std::this_thread::sleep_for(std::chrono::milliseconds(4));
+
     running = false;
     if (worker.joinable()) {
       worker.join();
