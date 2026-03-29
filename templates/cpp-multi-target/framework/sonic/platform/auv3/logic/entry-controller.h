@@ -3,6 +3,7 @@
 #include "./events.h"
 #include "./note-service.h"
 #include "./parameters-service.h"
+#include "sonic/core/parameter-spec-helper.h"
 #include <cstdlib>
 #include <cstring>
 #include <sonic/api/synthesizer-base.h>
@@ -15,16 +16,6 @@
 #include <vector>
 
 namespace sonic {
-
-static int getMaxIdFromParameterItems(const ParameterSpecArray &items) {
-  int maxId = 0;
-  for (const auto &item : items) {
-    if (item.id > maxId) {
-      maxId = item.id;
-    }
-  }
-  return maxId;
-}
 
 class EntryController {
 private:
@@ -55,7 +46,8 @@ public:
 
   void initialize() {
     auto parameterItems = parametersRegistry.getParameterItems();
-    auto maxId = getMaxIdFromParameterItems(parameterItems);
+    auto maxId =
+        ParameterSpecHelper::getMaxIdFromParameterItems(parameterItems);
     parameterStore.setup(maxId);
     for (const auto &item : parameterItems) {
       parameterStore.set(item.id, item.defaultValue);
