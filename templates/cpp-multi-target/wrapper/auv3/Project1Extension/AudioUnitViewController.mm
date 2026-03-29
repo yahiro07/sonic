@@ -18,6 +18,7 @@
                                       error:(NSError *_Nullable *_Nullable)
                                                 outError {
   [LoggerWrapper start];
+  [LoggerWrapper trace:@"----------------------------------------"];
   [LoggerWrapper
       trace:@"AudioUnitViewController createAudioUnitWithComponentDescription"];
   auto bundleId = [[NSBundle mainBundle] bundleIdentifier];

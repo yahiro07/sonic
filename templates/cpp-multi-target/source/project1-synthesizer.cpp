@@ -27,7 +27,9 @@ void Project1Synthesizer::prepareProcessing(double sampleRate,
 }
 
 void Project1Synthesizer::setParameter(uint32_t id, double value) {
-  sonic::logger.log("setParameter id: %d, value: %f", id, value);
+  if (id < 4) {
+    sonic::logger.log("setParameter id: %d, value: %f", id, value);
+  }
   if (id == kOscEnabled) {
     oscEnabled = value;
   } else if (id == kOscWave) {
