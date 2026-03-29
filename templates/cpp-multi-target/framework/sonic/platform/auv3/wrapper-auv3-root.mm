@@ -10,6 +10,7 @@
 #include <memory>
 #import <sonic/api/synthesizer-base.h>
 #import <sonic/common/logger.h>
+#include <sonic/common/udp-log-emitter.h>
 #include <sonic/core/editor-factory-registry.h>
 #import <sonic/core/editor-interfaces.h>
 
@@ -356,6 +357,9 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
 //------------------------------------------------------------
 
 @implementation LoggerWrapper
++ (void)enableUdpLogEmitter {
+  sonic::logger.setExtraEmitter(new sonic::UdpLogEmitter());
+}
 + (void)start {
   sonic::logger.start();
 }

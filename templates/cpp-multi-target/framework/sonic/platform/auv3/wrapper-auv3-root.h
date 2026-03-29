@@ -13,6 +13,7 @@
 @end
 
 @interface LoggerWrapper : NSObject
++ (void)enableUdpLogEmitter;
 + (void)start;
 + (void)stop;
 + (void)trace:(NSString *)message;
