@@ -1,5 +1,6 @@
 #include "./modules/app_window_mac.h"
 #include "./modules/audio_io_mac.h"
+#include "./modules/logger.h"
 #include "./modules/midi_input_mac.h"
 #include "./modules/midi_packet_helper.h"
 #include "./modules/spsc_queue.h"
@@ -69,11 +70,13 @@ class Application {
 
 public:
   void run(const std::string &pluginPath, bool smoke = false) {
-    printf("ClapDevHost\n");
+    logger.start();
+    logger.trace("ClapDevHost");
 
     // Handle ctrl+c
     signal(SIGINT, [](int) {
-      printf("\nCaught SIGINT, stopping...\n");
+      printf("\n");
+      logger.log("Caught SIGINT, stopping...");
       // On macOS, we can stop the NSApp run loop
       extern void mac_stop_app();
       mac_stop_app();
@@ -92,16 +95,16 @@ public:
     }
 
     auto vstPath = std::filesystem::absolute(path).lexically_normal().string();
-    printf("Loading plugin: %s\n", vstPath.c_str());
+    logger.log("Loading plugin: %s", vstPath.c_str());
 
     if (!std::filesystem::exists(vstPath)) {
-      printf("Error: Plugin file does not exist: %s\n", vstPath.c_str());
+      logger.error("Error: Plugin file does not exist: %s", vstPath.c_str());
       return;
     }
 
     auto loaded = pluginBridge.loadPlugin(vstPath);
     if (!loaded) {
-      printf("Failed to load plugin: %s\n", vstPath.c_str());
+      logger.error("Failed to load plugin: %s", vstPath.c_str());
       return;
     }
 
@@ -136,14 +139,15 @@ public:
 
     if (audioDevices.size() > 0) {
       auto initialDeviceKey = audioDevices[0].deviceKey;
-      printf("Opening Audio Device: %s\n", audioDevices[0].displayName.c_str());
+      logger.log("Opening Audio Device: %s",
+                 audioDevices[0].displayName.c_str());
       openAudioIo(initialDeviceKey);
       window.refreshAudioDeviceListMenu(audioDevices, initialDeviceKey);
     }
     if (midiDevices.size() > 0) {
       auto initialDeviceKey = midiDevices[0].deviceKey;
-      printf("Opening MIDI Input Device: %s\n",
-             midiDevices[0].displayName.c_str());
+      logger.log("Opening MIDI Input Device: %s",
+                 midiDevices[0].displayName.c_str());
       openMidiInput(initialDeviceKey);
       window.refreshMidiInputDeviceListMenu(midiDevices, initialDeviceKey);
     }
@@ -162,7 +166,8 @@ public:
         });
 
     pluginBridge.subscribeParameterEdit([this](uint32_t paramId, double value) {
-      printf("Parameter edited: paramId=%d, value=%.02f\n", paramId, value);
+      // logger.log("Parameter edited: paramId=%d, value=%.02f", paramId,
+      // value);
       this->inputEventQueue.push(InputEvent{
           .type = InputEventType::ParameterChange,
           .id = paramId,
@@ -172,7 +177,7 @@ public:
 
     window.loop();
 
-    printf("window closed, exiting...\n");
+    logger.log("window closed, exiting...");
     pluginBridge.unsubscribeParameterEdit();
     pluginBridge.unsubscribeEditorSizeChangeRequest();
     midiIn.close();
@@ -183,7 +188,8 @@ public:
 
     pluginBridge.closeEditor();
     pluginBridge.unloadPlugin();
-    printf("cleanup done\n");
+    logger.log("cleanup done");
+    logger.stop();
   }
 };
 
