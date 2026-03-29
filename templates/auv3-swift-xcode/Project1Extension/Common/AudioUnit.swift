@@ -6,13 +6,13 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
   // C++ Objects
   var kernel = DSPKernel()
   var processHelper: AUProcessHelper?
-  var parameterStore = ParameterStore()
 
   private var outputBus: AUAudioUnitBus?
   private var _outputBusses: AUAudioUnitBusArray!
 
   private var format: AVAudioFormat
 
+  let parameterStore = ParameterStore()
   let stateKvs = StateKvs()
   private(set) var isHostedInStandaloneApp: Bool = false
   private(set) var currentPresetParametersVersion: Int = 0
