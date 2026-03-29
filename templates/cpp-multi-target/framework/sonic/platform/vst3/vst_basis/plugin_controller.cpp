@@ -106,7 +106,6 @@ tresult PLUGIN_API PluginController::getParamValueByString(
 }
 
 tresult PLUGIN_API PluginController::notify(Vst::IMessage *message) {
-  logger.log("PluginController::notify");
   auto consumed = controllerSideMessagePort.applyMessageReceived(message);
   if (consumed) {
     return kResultOk;
