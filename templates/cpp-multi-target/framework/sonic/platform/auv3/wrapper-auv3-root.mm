@@ -149,6 +149,8 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
           } else {
             synthPtr->noteOff(e.note.noteNumber);
           }
+        } else if (e.type == UpstreamEventType::ParameterChange) {
+          synthPtr->setParameter(e.parameter.id, e.parameter.value);
         }
       }
     }

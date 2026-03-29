@@ -34,7 +34,7 @@ private:
   ParameterService parameterService;
   NoteService noteService;
   ControllerFacade controllerFacade;
-  ParameterStore parameterStore; // parameters in audio thread
+  ParameterStore parameterStore; // parameters in main thread
 
   SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
   SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
@@ -62,12 +62,15 @@ public:
     }
     parameterTreeWrapper.setImplementorValueObserver(
         [this](uint64_t address, double value) {
-          auto id = (int32_t)address;
+          auto id = (uint32_t)address;
           this->parameterStore.set(id, value);
-          this->synth.setParameter(id, value);
+          this->upstreamEventQueue.push(UpstreamEvent{
+              .type = UpstreamEventType::ParameterChange,
+              .parameter = {id, value},
+          });
         });
     parameterTreeWrapper.setImplementorValueProvider([this](uint64_t address) {
-      auto id = (int32_t)address;
+      auto id = (uint32_t)address;
       return parameterStore.get(id);
     });
 
