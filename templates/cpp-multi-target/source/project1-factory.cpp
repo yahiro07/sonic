@@ -5,8 +5,7 @@
 #include <stdio.h>
 
 sonic::SynthesizerBase *createSynthesizerInstance() {
-  sonic::logger.trace("----------------------------------------");
-  sonic::logger.info("createSynthesizerInstance");
+  sonic::logger.trace("createSynthesizerInstance");
   sonic::registerWebviewEditorFactory();
   return new project1::Project1Synthesizer();
 }
