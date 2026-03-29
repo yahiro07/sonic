@@ -115,16 +115,25 @@ static const std::unordered_map<std::string, std::string> logKindIcons = {
     {"error", "📛"},
 };
 
-// 00:00:00.000
-static std::string formatTimestamp(double timestamp) {
-  auto totalMs = static_cast<int64_t>(timestamp);
-  auto h = totalMs / (1000 * 60 * 60);
-  auto m = (totalMs % (1000 * 60 * 60)) / (1000 * 60);
-  auto s = (totalMs % (1000 * 60)) / 1000;
-  auto ms = totalMs % 1000;
+// 00:00:00.000, from midnight of today
+static std::string formatTimestamp(double timestampMsFromEpoch) {
+
+  time_t nowSec = static_cast<time_t>(timestampMsFromEpoch / 1000.0);
+  struct tm t = *localtime(&nowSec);
+  t.tm_hour = 0;
+  t.tm_min = 0;
+  t.tm_sec = 0;
+  double midnightMs = static_cast<double>(mktime(&t)) * 1000.0;
+
+  long long totalMs = static_cast<long long>(timestampMsFromEpoch - midnightMs);
+  int ms = totalMs % 1000;
+  long long totalSec = totalMs / 1000;
+  int sec = totalSec % 60;
+  int min = (totalSec / 60) % 60;
+  int hour = static_cast<int>(totalSec / 3600);
   char buf[16];
-  snprintf(buf, sizeof(buf), "%02d:%02d:%02d.%03d", h, m, s, ms);
-  return std::string(buf);
+  snprintf(buf, sizeof(buf), "%02d:%02d:%02d.%03d", hour, min, sec, ms);
+  return buf;
 }
 
 static void printLogInternal(const LogItem &item) {
