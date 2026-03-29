@@ -7,6 +7,7 @@ target_sources(
   PRIVATE ${VST3_SDK_ROOT}/public.sdk/source/vst/hosting/plugprovider.cpp
           ${VST3_SDK_ROOT}/public.sdk/source/vst/hosting/module_mac.mm
           ../../common/logger.cpp
+          ../../common/udp-log-emitter.cpp
           ../../core/persistence.cpp
           support/parameter_change_notifier.cpp
           support/processor_state_helper.cpp

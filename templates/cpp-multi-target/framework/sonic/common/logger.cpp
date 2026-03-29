@@ -1,13 +1,10 @@
 #include "./logger.h"
 #include "./spsc-queue.h"
-#include <arpa/inet.h>
 #include <atomic>
 #include <cstring>
 #include <memory>
 #include <string>
-#include <sys/socket.h>
 #include <thread>
-#include <unistd.h>
 #include <unordered_map>
 
 namespace sonic {
@@ -26,6 +23,58 @@ struct LogItem {
   std::string logKind;
   std::string message;
 };
+
+static std::string logKindToString(LogKind logKind) {
+  switch (logKind) {
+  case LogKind::Trace:
+    return "trace";
+  case LogKind::Info:
+    return "info";
+  case LogKind::Log:
+    return "log";
+  case LogKind::Warn:
+    return "warn";
+  case LogKind::Error:
+    return "error";
+  }
+}
+
+static const std::unordered_map<std::string, std::string> subsystemIcons = {
+    {"host", "🟣"},
+    {"ext", "🔸"},
+    {"ui", "🔹"},
+    {"dsp", "🔺"},
+};
+
+static const std::unordered_map<std::string, std::string> logKindIcons = {
+    {"trace", "🔽"},
+    //
+    {"info", "◻️"},
+    {"log", "▫️"},
+    {"warn", "⚠️"},
+    {"error", "📛"},
+};
+
+// 00:00:00.000, from midnight of today
+static std::string formatTimestamp(double timestampMsFromEpoch) {
+
+  time_t nowSec = static_cast<time_t>(timestampMsFromEpoch / 1000.0);
+  struct tm t = *localtime(&nowSec);
+  t.tm_hour = 0;
+  t.tm_min = 0;
+  t.tm_sec = 0;
+  double midnightMs = static_cast<double>(mktime(&t)) * 1000.0;
+
+  long long totalMs = static_cast<long long>(timestampMsFromEpoch - midnightMs);
+  int ms = totalMs % 1000;
+  long long totalSec = totalMs / 1000;
+  int sec = totalSec % 60;
+  int min = (totalSec / 60) % 60;
+  int hour = static_cast<int>(totalSec / 3600);
+  char buf[16];
+  snprintf(buf, sizeof(buf), "%02d:%02d:%02d.%03d", hour, min, sec, ms);
+  return buf;
+}
 
 static std::string jsonEscapeString(const std::string &input) {
   std::string out;
@@ -73,21 +122,6 @@ static std::string jsonEscapeString(const std::string &input) {
   return out;
 }
 
-static std::string logKindToString(LogKind logKind) {
-  switch (logKind) {
-  case LogKind::Trace:
-    return "trace";
-  case LogKind::Info:
-    return "info";
-  case LogKind::Log:
-    return "log";
-  case LogKind::Warn:
-    return "warn";
-  case LogKind::Error:
-    return "error";
-  }
-}
-
 static std::string serializeLogItem(const LogItem &item) {
   const auto escapedMessage = jsonEscapeString(item.message);
 
@@ -97,43 +131,6 @@ static std::string serializeLogItem(const LogItem &item) {
                         "\", \"logKind\": \"" + item.logKind +
                         "\", \"message\": \"" + escapedMessage + "\"}";
   return jsonStr;
-}
-
-static const std::unordered_map<std::string, std::string> subsystemIcons = {
-    {"host", "🟣"},
-    {"ext", "🔸"},
-    {"ui", "🔹"},
-    {"dsp", "🔺"},
-};
-
-static const std::unordered_map<std::string, std::string> logKindIcons = {
-    {"trace", "🔽"},
-    //
-    {"info", "◻️"},
-    {"log", "▫️"},
-    {"warn", "⚠️"},
-    {"error", "📛"},
-};
-
-// 00:00:00.000, from midnight of today
-static std::string formatTimestamp(double timestampMsFromEpoch) {
-
-  time_t nowSec = static_cast<time_t>(timestampMsFromEpoch / 1000.0);
-  struct tm t = *localtime(&nowSec);
-  t.tm_hour = 0;
-  t.tm_min = 0;
-  t.tm_sec = 0;
-  double midnightMs = static_cast<double>(mktime(&t)) * 1000.0;
-
-  long long totalMs = static_cast<long long>(timestampMsFromEpoch - midnightMs);
-  int ms = totalMs % 1000;
-  long long totalSec = totalMs / 1000;
-  int sec = totalSec % 60;
-  int min = (totalSec / 60) % 60;
-  int hour = static_cast<int>(totalSec / 3600);
-  char buf[16];
-  snprintf(buf, sizeof(buf), "%02d:%02d:%02d.%03d", hour, min, sec, ms);
-  return buf;
 }
 
 static void printLogInternal(const LogItem &item) {
@@ -151,21 +148,18 @@ static double getSystemTimestamp() {
 }
 
 // audio thread safe logger implementation
-// show logs in terminal
-// send logs to local udp logger server at 127.0.0.1:9001
 class Logger::LoggerImpl {
 private:
   std::string subsystem;
   std::thread worker;
   std::atomic<bool> running{false};
-  int sock = -1;
-  struct sockaddr_in addr;
   struct Message {
     LogKind logKind;
     double timestamp;
     char data[256];
   };
   SPSCQueue<Message, 32> queue;
+  std::unique_ptr<LogEmitter> extraEmitter = nullptr;
 
 public:
   LoggerImpl(std::string subsystem) : subsystem(subsystem) {}
@@ -179,14 +173,11 @@ public:
 
   std::string &getSubsystem() { return subsystem; }
 
+  void setExtraEmitter(LogEmitter *emitter) { extraEmitter.reset(emitter); }
+
   void start() {
     if (running.exchange(true))
       return;
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(9001);
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
     worker = std::thread([this]() {
       while (running.load(std::memory_order_relaxed)) {
         Message msg;
@@ -205,10 +196,6 @@ public:
     if (worker.joinable()) {
       worker.join();
     }
-    if (sock >= 0) {
-      close(sock);
-      sock = -1;
-    }
   }
 
   void logRaw(const char *logKind, const char *subsystem, double timestamp,
@@ -222,10 +209,10 @@ public:
         .logKind = logKind,
         .message = message,
     };
-    auto jsonStr = serializeLogItem(logItem);
-
-    sendto(sock, jsonStr.c_str(), jsonStr.size(), 0, (struct sockaddr *)&addr,
-           sizeof(addr));
+    if (extraEmitter) {
+      auto jsonStr = serializeLogItem(logItem);
+      extraEmitter->emit(jsonStr);
+    }
     printLogInternal(logItem);
   }
 
@@ -247,6 +234,10 @@ Logger::Logger(std::string subsystem)
     : impl(std::make_unique<LoggerImpl>(subsystem)) {}
 
 Logger::~Logger() { stop(); }
+
+void Logger::setExtraEmitter(LogEmitter *emitter) {
+  impl->setExtraEmitter(emitter);
+}
 
 void Logger::start() { impl->start(); }
 

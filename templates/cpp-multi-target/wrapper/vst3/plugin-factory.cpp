@@ -1,4 +1,5 @@
 #include <sonic/api/synthesizer-base.h>
+#include <sonic/common/udp-log-emitter.h>
 #include <sonic/platform/vst3/vst_basis/plugin_controller.h>
 #include <sonic/platform/vst3/vst_basis/plugin_processor.h>
 #include <sonic/platform/vst3/vst_entry/vst_entry_wrapper.h>
@@ -15,6 +16,7 @@ static sonic_vst::PluginMeta pluginMeta{
 };
 
 VstFactoryResult GetPluginFactory() {
+  sonic::logger.setExtraEmitter(new sonic::UdpLogEmitter());
   return sonic_vst::GetPluginFactoryInternal(
       createSynthesizerInstance, vst_basis::PluginProcessor::createInstance,
       vst_basis::PluginController::createInstance, pluginMeta);
