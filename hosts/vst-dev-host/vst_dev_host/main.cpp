@@ -27,28 +27,6 @@ class Application {
 
   SPSCQueue<InputEvent, 256> inputEventQueue;
   InputEvent drainedEvents[256];
-  // double sampleRate = 0.0;
-  // float phase = 0.0f;
-
-  // void audioPrepareFn(double sampleRate, int maxFrameLength) {
-  //   printf("sampleRate:%.0f, bufferSize:%d\n", sampleRate, maxFrameLength);
-  //   this->sampleRate = sampleRate;
-  // }
-
-  // void audioProcessFn(float *bufferL, float *bufferR, int nframes) {
-  //   if (sampleRate == 0.0)
-  //     return;
-  //   float delta = 440.0f / (float)sampleRate;
-  //   for (int i = 0; i < nframes; i++) {
-  //     phase += delta;
-  //     if (phase > 1.0)
-  //       phase -= 1.0;
-  //     // auto y = sin(phase * 2.0 * M_PI);
-  //     float y = (randF() * 2.0f - 1.0f) * 0.2f;
-  //     bufferL[i] = y;
-  //     bufferR[i] = y;
-  //   }
-  // }
 
   void handleMidiShortMessage(const unsigned char *message, size_t length) {
     auto status = message[0];
