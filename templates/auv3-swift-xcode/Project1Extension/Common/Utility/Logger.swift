@@ -1,10 +1,9 @@
 // enum LogKind {
+//   case trace
+//   case info
 //   case log
-//   case mark
 //   case warn
 //   case error
-//   case mute
-//   case unmute
 // }
 import Foundation
 
@@ -31,8 +30,9 @@ let subsystemIcons: [String: String] = [
 ]
 
 let logKindIcons: [String: String] = [
-  "log": "",
-  "mark": "🔽",
+  "trace": "🔽",
+  "info": "◻️",
+  "log": "▫️",
   "warn": "⚠️",
   "error": "📛",
 ]
@@ -78,12 +78,16 @@ let logKindIcons: [String: String] = [
       loggerCore.pushLogItem(item)
     }
 
-    func log(_ message: String) {
-      pushLog("log", message)
+    func trace(_ message: String) {
+      pushLog("trace", message)
     }
 
-    func mark(_ message: String) {
-      pushLog("mark", message)
+    func info(_ message: String) {
+      pushLog("info", message)
+    }
+
+    func log(_ message: String) {
+      pushLog("log", message)
     }
 
     func warn(_ message: String) {

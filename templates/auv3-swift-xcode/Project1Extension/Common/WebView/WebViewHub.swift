@@ -20,7 +20,7 @@ class WebViewHub {
   init(
     _ viewAccessibleResources: ViewAccessibleResources
   ) {
-    logger.mark("BasicWebViewHub init")
+    logger.info("BasicWebViewHub init")
     self.flatParameterTree = FlatObservableParameters(
       parameterTree: ObservableAUParameterGroup(viewAccessibleResources.parameterTree))
     self.audioUnitPresenter = viewAccessibleResources.audioUnitPresenter
@@ -61,7 +61,7 @@ class WebViewHub {
       loggerCore.pushLogItem(
         LogItem(timestamp: timestamp, subsystem: "ui", logKind: logKind, message: message))
     case .uiLoaded:
-      logger.mark("received UI loaded")
+      logger.info("received UI loaded")
       uiReady = true
       if audioUnitPresenter.isHostedInStandaloneApp {
         sendMessageToUI(.standaloneAppFlag)
@@ -170,7 +170,7 @@ class WebViewHub {
   }
 
   func bindWebViewIo(_ webViewIo: WebViewIoProtocol) {
-    logger.mark("bindWebViewIo")
+    logger.info("bindWebViewIo")
     self.webViewIo = webViewIo
 
     webViewIoSubscription?.cancel()

@@ -171,7 +171,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
 
   public override var fullState: [String: Any]? {
     get {
-      logger.mark("fullSaving saving")
+      logger.info("fllState saving")
       let baseState = super.fullState
       var state: [String: Any] = [
         "type": componentDescription.componentType,
@@ -187,7 +187,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
     }
 
     set(newValue) {
-      logger.mark("fullState restoration")
+      logger.info("fullState restoration")
       guard let state = newValue else { return }
       if let flag = state["MySynth1.hostedInStandaloneApp"] as? Bool {
         self.isHostedInStandaloneApp = flag

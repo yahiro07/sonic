@@ -58,7 +58,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   }
 
   public override func viewDidLoad() {
-    logger.mark("viewDidLoad")
+    logger.trace("viewDidLoad")
     super.viewDidLoad()
     guard let audioUnit = self.audioUnit else {
       return
@@ -75,7 +75,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
     let type = osTypeString(Int(componentDescription.componentType))
     let subType = osTypeString(Int(componentDescription.componentSubType))
     let manufacturer = osTypeString(Int(componentDescription.componentManufacturer))
-    logger.mark("createAudioUnit")
+    logger.trace("createAudioUnit")
     logger.log("Loaded From: \(bundlePath)")
     logger.log("Bundle ID: \(bundleID)")
     logger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
@@ -126,7 +126,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   }
 
   private func configureSwiftUIView(audioUnit: AUAudioUnit) {
-    logger.mark("configureSwiftUIView")
+    logger.info("configureSwiftUIView")
 
     if let host = hostingController {
       host.removeFromParent()
