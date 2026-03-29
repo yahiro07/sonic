@@ -99,6 +99,9 @@ static double getSystemTimestamp() {
          1000;
 }
 
+// audio thread safe logger implementation
+// show logs in terminal
+// send logs to local udp logger server at 127.0.0.1:9001
 class Logger::LoggerImpl {
 private:
   std::thread worker;
@@ -154,6 +157,9 @@ public:
 
   void logRaw(const char *logKind, const char *subsystem, double timestamp,
               const char *message) {
+    if (running.load(std::memory_order_relaxed) == false) {
+      return;
+    }
     auto item = UdpLoggerLogItem{
         .timestamp = timestamp,
         .subsystem = subsystem,
@@ -174,6 +180,9 @@ public:
   }
 
   void logVA(LogKind logKind, const char *fmt, va_list args) {
+    if (running.load(std::memory_order_relaxed) == false) {
+      return;
+    }
     Message msg{
         .logKind = logKind,
         .timestamp = getSystemTimestamp(),
