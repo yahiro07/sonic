@@ -27,6 +27,7 @@ void Project1Synthesizer::prepareProcessing(double sampleRate,
 }
 
 void Project1Synthesizer::setParameter(uint32_t id, double value) {
+  sonic::logger.log("setParameter id: %d, value: %f", id, value);
   if (id == kOscEnabled) {
     oscEnabled = value;
   } else if (id == kOscWave) {
@@ -99,7 +100,7 @@ void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
 }
 
 std::string Project1Synthesizer::getEditorPageUrl() {
-  if (0) {
+  if (1) {
     return "http://localhost:3000?debug=1";
   } else {
     return "app://www-bundles/index.html?debug=1";
