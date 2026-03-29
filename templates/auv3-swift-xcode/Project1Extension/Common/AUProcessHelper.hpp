@@ -4,14 +4,17 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 
+#include "AudioProcessorEvent.hpp"
 #include "DSPKernel.hpp"
-#include "RealtimeHostEventQueue.hpp"
+#include "RealtimeHostEvent.hpp"
+#include "SPSCQueue.hpp"
 #include <vector>
 
 // MARK:- AUProcessHelper Utility Class
 class AUProcessHelper {
 private:
-  RealtimeHostEventQueue realtimeHostEventQueue;
+  SPSCQueue<RealtimeHostEvent, 256> realtimeHostEventQueue;
+  SPSCQueue<AudioProcessorEvent, 256> audioProcessorEventQueue;
   DSPKernel &mKernel;
   std::vector<float *> mOutputBuffers;
 
@@ -28,6 +31,20 @@ public:
 
   // MARK: - MIDI Protocol
   MIDIProtocolID AudioUnitMIDIProtocol() const { return kMIDIProtocol_2_0; }
+
+  void pushParameterChange(uint64_t address, float value) {
+    audioProcessorEventQueue.push(
+        {AudioProcessorEventType::Parameter, address, value});
+  }
+
+  void drainProcessorEvents() {
+    AudioProcessorEvent e;
+    while (audioProcessorEventQueue.pop(e)) {
+      if (e.type == AudioProcessorEventType::Parameter) {
+        mKernel.setParameter(e.address, e.value);
+      }
+    }
+  }
 
   // Block which subclassers must provide to implement rendering.
   AUInternalRenderBlock internalRenderBlock() {
@@ -61,6 +78,7 @@ public:
 
        See the description of the canProcessInPlace property.
        */
+      drainProcessorEvents();
       processWithEvents(outputData, timestamp, frameCount,
                         realtimeEventListHead);
 
@@ -142,25 +160,12 @@ private:
   }
 
   void handleOneEvent(AUEventSampleTime now, AURenderEvent const *event) {
-    switch (event->head.eventType) {
-    case AURenderEventParameter: {
-      handleParameterEvent(now, event->parameter);
-      break;
-    }
-
-    case AURenderEventMIDIEventList: {
+    if (event->head.eventType == AURenderEventParameter) {
+      mKernel.setParameter(event->parameter.parameterAddress,
+                           event->parameter.value);
+    } else if (event->head.eventType == AURenderEventMIDIEventList) {
       handleMIDIEventList(now, &event->MIDIEventsList);
-      break;
     }
-
-    default:
-      break;
-    }
-  }
-
-  void handleParameterEvent(AUEventSampleTime now,
-                            AUParameterEvent const &parameterEvent) {
-    mKernel.setParameter(parameterEvent.parameterAddress, parameterEvent.value);
   }
 
   void handleMIDIEventList(AUEventSampleTime now,
@@ -169,13 +174,8 @@ private:
                       MIDIUniversalMessage message) {
       auto thisObject = static_cast<AUProcessHelper *>(context);
 
-      switch (message.type) {
-      case kMIDIMessageTypeChannelVoice2: {
+      if (message.type == kMIDIMessageTypeChannelVoice2) {
         thisObject->handleMIDI2VoiceMessage(message);
-      } break;
-
-      default:
-        break;
       }
     };
 

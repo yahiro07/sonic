@@ -6,6 +6,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
   // C++ Objects
   var kernel = DSPKernel()
   var processHelper: AUProcessHelper?
+  var parameterStore = ParameterStore()
 
   private var outputBus: AUAudioUnitBus?
   private var _outputBusses: AUAudioUnitBusArray!
@@ -118,10 +119,10 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
     let maxAddress = parameterTree.allParameters.map { $0.address }.max() ?? 0
     let capacity64 = maxAddress &+ 1
     let capacity = UInt32(min(capacity64, UInt64(UInt32.max)))
-    kernel.setParameterCapacity(capacity)
+    parameterStore.setParameterCapacity(capacity)
 
-    // Set the Parameter default values before setting up the parameter callbacks
     for param in parameterTree.allParameters {
+      parameterStore.setParameter(param.address, param.value)
       kernel.setParameter(param.address, param.value)
     }
 
@@ -129,17 +130,13 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
   }
 
   private func setupParameterCallbacks() {
-    // implementorValueObserver is called when a parameter changes value.
     parameterTree?.implementorValueObserver = { [weak self] param, value -> Void in
-      self?.kernel.setParameter(param.address, value)
+      self?.parameterStore.setParameter(param.address, value)
+      self?.processHelper?.pushParameterChange(param.address, value)
     }
-
-    // implementorValueProvider is called when the value needs to be refreshed.
     parameterTree?.implementorValueProvider = { [weak self] param in
-      return self!.kernel.getParameter(param.address)
+      return self?.parameterStore.getParameter(param.address) ?? 0.0
     }
-
-    // A function to provide string representations of parameter values.
     parameterTree?.implementorStringFromValueCallback = { param, valuePtr in
       guard let value = valuePtr?.pointee else {
         return "-"

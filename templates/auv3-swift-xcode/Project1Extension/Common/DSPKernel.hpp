@@ -23,7 +23,6 @@ private:
   AUAudioFrameCount mMaxFramesToRender = 1024;
 
   SynthesizerBase *mSynthInstance = nullptr;
-  std::vector<AUValue> mParameterValues;
   std::vector<float> mLeftBuffer;
   std::vector<float> mRightBuffer;
 
@@ -51,33 +50,12 @@ public:
 
   void setBypass(bool shouldBypass) { mBypassed = shouldBypass; }
 
-  void setParameterCapacity(uint32_t capacity) {
-    if (capacity > 4096) {
-      capacity = 4096; // Arbitrary limit to prevent excessive memory usage
-    }
-    mParameterValues.assign(static_cast<size_t>(capacity), 0.f);
-  }
-
   // MARK: - Parameter Getter / Setter
   // Add a case for each parameter
   void setParameter(AUParameterAddress address, AUValue value) {
-    auto index = static_cast<size_t>(address);
-    if (index < mParameterValues.size()) {
-      std::atomic_ref<AUValue>(mParameterValues[index])
-          .store(value, std::memory_order_relaxed);
-    }
     if (mSynthInstance) {
       mSynthInstance->setParameter(address, value);
     }
-  }
-
-  AUValue getParameter(AUParameterAddress address) {
-    auto index = static_cast<size_t>(address);
-    if (index < mParameterValues.size()) {
-      return std::atomic_ref<AUValue>(mParameterValues[index])
-          .load(std::memory_order_relaxed);
-    }
-    return 0.f;
   }
 
   // MARK: - Max Frames
