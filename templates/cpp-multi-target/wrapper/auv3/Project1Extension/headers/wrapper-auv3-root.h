@@ -11,3 +11,13 @@
                 viewController:(AUViewController *)viewController;
 - (void)disconnectViewFromAudioUnit;
 @end
+
+@interface LoggerWrapper : NSObject
++ (void)start;
++ (void)stop;
++ (void)trace:(NSString *)message;
++ (void)info:(NSString *)message;
++ (void)log:(NSString *)message;
++ (void)warn:(NSString *)message;
++ (void)error:(NSString *)message;
+@end
