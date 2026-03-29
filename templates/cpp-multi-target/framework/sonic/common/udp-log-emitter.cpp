@@ -1,4 +1,5 @@
 #include "udp-log-emitter.h"
+#include "sonic/common/logger.h"
 #include <arpa/inet.h>
 #include <cstring>
 #include <string>
@@ -11,14 +12,17 @@ class UdpLogEmitter::UdpLogEmitterImpl {
 private:
   int port;
   int sock = -1;
-  struct sockaddr_in addr {};
+  struct sockaddr_in addr{};
 
 public:
   UdpLogEmitterImpl(int port) : port(port) {}
   ~UdpLogEmitterImpl() noexcept {
-    if (sock >= 0) {
-      close(sock);
-      sock = -1;
+    try {
+      if (sock >= 0) {
+        close(sock);
+        sock = -1;
+      }
+    } catch (...) {
     }
   }
 
@@ -45,5 +49,7 @@ UdpLogEmitter::UdpLogEmitter(int port)
 UdpLogEmitter::~UdpLogEmitter() {}
 
 void UdpLogEmitter::emit(std::string &jsonStr) { impl->emit(jsonStr); }
+
+LogEmitter *createUdpLogEmitter() { return new UdpLogEmitter(); }
 
 } // namespace sonic

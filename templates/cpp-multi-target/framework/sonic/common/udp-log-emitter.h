@@ -10,6 +10,9 @@ public:
   void emit(std::string &jsonStr) override;
 
 private:
+  UdpLogEmitter(const UdpLogEmitter &) = delete;
+  UdpLogEmitter &operator=(const UdpLogEmitter &) = delete;
+
   class UdpLogEmitterImpl;
   std::unique_ptr<UdpLogEmitterImpl> impl;
 };

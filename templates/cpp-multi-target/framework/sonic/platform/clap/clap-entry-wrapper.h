@@ -1,6 +1,7 @@
 #pragma once
 
 #include <clap/clap.h>
+#include <sonic/common/logger.h>
 #include <sonic/core/types.h>
 
 namespace sonic {
@@ -20,6 +21,6 @@ typedef sonic::IPluginSynthesizer *(*SynthesizerInitializerFn)();
 
 const clap_plugin_entry_t &
 setupClapPluginEntry(SynthesizerInitializerFn synthInitializer,
-                     const PluginMeta &meta);
+                     const PluginMeta &meta, LogEmitter *logEmitter = nullptr);
 
 } // namespace sonic

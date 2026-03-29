@@ -3,8 +3,10 @@ set(NAME platform-clap)
 add_library(${NAME} STATIC)
 
 target_sources(
-  ${NAME} PRIVATE ../../common/logger.cpp ../../core/persistence.cpp
-                  clap-entry-wrapper.cpp entry-controller.cpp)
+  ${NAME}
+  PRIVATE ../../common/logger.cpp ../../common/udp-log-emitter.cpp
+          ../../core/persistence.cpp clap-entry-wrapper.cpp
+          entry-controller.cpp)
 
 target_link_libraries(${NAME} PUBLIC clap sonic-headers)
 

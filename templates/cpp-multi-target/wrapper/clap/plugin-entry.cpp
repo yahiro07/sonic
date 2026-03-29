@@ -1,4 +1,5 @@
 #include <math.h>
+#include <sonic/common/udp-log-emitter.h>
 #include <sonic/platform/clap/clap-entry-wrapper.h>
 
 sonic::PluginMeta meta = {
@@ -12,5 +13,5 @@ sonic::PluginMeta meta = {
     .description = "Example CLAP plugin.",
 };
 
-extern "C" const clap_plugin_entry_t clap_entry =
-    sonic::setupClapPluginEntry(createSynthesizerInstance, meta);
+extern "C" const clap_plugin_entry_t clap_entry = sonic::setupClapPluginEntry(
+    createSynthesizerInstance, meta, new sonic::UdpLogEmitter());

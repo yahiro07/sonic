@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <sonic/common/logger.h>
+#include <sonic/common/udp-log-emitter.h>
 #include <string.h>
 
 namespace sonic {
@@ -302,7 +303,16 @@ static const clap_plugin_t pluginClass = {
 };
 
 struct ClapFactoryGlobals {
+private:
+  ClapFactoryGlobals(const ClapFactoryGlobals &) = delete;
+  ClapFactoryGlobals &operator=(const ClapFactoryGlobals &) = delete;
+
+public:
+  ClapFactoryGlobals() {}
+  ~ClapFactoryGlobals() = default;
   SynthesizerInitializerFn fnCreateSynthesizerInstance;
+  LogEmitter *logEmitter = nullptr;
+  // LogEmitterFactoryFn logEmitterFactory = nullptr;
 };
 static ClapFactoryGlobals &getClapFactoryGlobals() {
   static ClapFactoryGlobals globals;
@@ -328,8 +338,15 @@ static const clap_plugin_factory_t pluginFactory = {
         return nullptr;
       }
 
-      auto synthInstance =
-          getClapFactoryGlobals().fnCreateSynthesizerInstance();
+      auto &globals = getClapFactoryGlobals();
+      if (!globals.fnCreateSynthesizerInstance) {
+        return nullptr;
+      }
+
+      auto synthInstance = globals.fnCreateSynthesizerInstance();
+      if (!synthInstance) {
+        return nullptr;
+      }
       auto entryController = EntryController::create(synthInstance);
       PlugBasis *plugBasis = entryController;
       if (!plugBasis) {
@@ -345,6 +362,10 @@ static const clap_plugin_factory_t pluginFactory = {
 static const clap_plugin_entry_t clapEntry = {
     .clap_version = CLAP_VERSION_INIT,
     .init = [](const char *path) -> bool {
+      auto &globals = getClapFactoryGlobals();
+      if (globals.logEmitter) {
+        logger.setExtraEmitter(globals.logEmitter);
+      }
       logger.start();
       return true;
     },
@@ -357,9 +378,11 @@ static const clap_plugin_entry_t clapEntry = {
 
 const clap_plugin_entry_t &
 setupClapPluginEntry(SynthesizerInitializerFn synthInitializer,
-                     const PluginMeta &meta) {
+                     const PluginMeta &meta, LogEmitter *logEmitter) {
   overwriteDescriptor(meta);
-  getClapFactoryGlobals().fnCreateSynthesizerInstance = synthInitializer;
+  auto &globals = getClapFactoryGlobals();
+  globals.fnCreateSynthesizerInstance = synthInitializer;
+  globals.logEmitter = logEmitter;
   return clapEntry;
 }
 
