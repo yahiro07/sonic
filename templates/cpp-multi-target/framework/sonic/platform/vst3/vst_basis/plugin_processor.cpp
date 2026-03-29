@@ -10,7 +10,7 @@
 namespace vst_basis {
 
 tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
-  printf("PluginProcessor::initialize\n");
+  logger.trace("PluginProcessor::initialize");
   tresult result = AudioEffect::initialize(context);
   if (result != kResultOk) {
     return result;

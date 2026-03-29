@@ -41,7 +41,7 @@ using namespace sonic;
 
 - (void)setupSynth {
   logger.start();
-  logger.mark("setupSynth 1318");
+  logger.trace("setupSynth 1318");
   _synth.reset(createSynthesizerInstance());
   auto parameterItems = EntryController::preGenerateParameterItems(*_synth);
   _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);

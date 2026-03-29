@@ -35,9 +35,9 @@ function createLogFormatter() {
   };
 
   const logKindIcons: Record<string, string> = {
+    trace: "🔽",
+    info: "◻️",
     log: "▫️",
-    info: "ℹ️",
-    mark: "🔽",
     warn: "⚠️",
     error: "📛",
   };

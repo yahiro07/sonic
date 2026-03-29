@@ -12,7 +12,7 @@
 namespace sonic {
 
 enum class LogKind {
-  Mark,
+  Trace,
   Info,
   Log,
   Warn,
@@ -76,8 +76,8 @@ static std::string jsonEscapeString(const std::string &input) {
 
 std::string logKindToString(LogKind logKind) {
   switch (logKind) {
-  case LogKind::Mark:
-    return "mark";
+  case LogKind::Trace:
+    return "trace";
   case LogKind::Info:
     return "info";
   case LogKind::Log:
@@ -201,10 +201,10 @@ void Logger::start() { impl->start(); }
 
 void Logger::stop() { impl->stop(); }
 
-void Logger::mark(const char *fmt, ...) {
+void Logger::trace(const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
-  impl->logVA(LogKind::Mark, fmt, args);
+  impl->logVA(LogKind::Trace, fmt, args);
   va_end(args);
 }
 

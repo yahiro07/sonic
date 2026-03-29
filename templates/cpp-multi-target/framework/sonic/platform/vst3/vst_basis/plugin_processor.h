@@ -29,7 +29,7 @@ private:
 public:
   PluginProcessor() {
     logger.start();
-    logger.log("PluginProcessor constructor 1541");
+    logger.trace("PluginProcessor constructor");
     setControllerClass(gPluginFactoryGlobalHolder.controllerCID);
   }
 
