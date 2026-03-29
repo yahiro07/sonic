@@ -13,4 +13,4 @@ sonic::PluginMeta meta = {
 };
 
 extern "C" const clap_plugin_entry_t clap_entry =
-    createClapPluginEntry(createSynthesizerInstance, meta);
+    sonic::setupClapPluginEntry(createSynthesizerInstance, meta);
