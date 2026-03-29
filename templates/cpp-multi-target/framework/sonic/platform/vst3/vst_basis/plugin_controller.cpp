@@ -39,7 +39,6 @@ tresult PLUGIN_API PluginController::terminate() {
 }
 
 tresult PLUGIN_API PluginController::setComponentState(IBStream *stream) {
-  logger.log("PluginController::setComponentState");
   if (!stream)
     return kResultFalse;
 

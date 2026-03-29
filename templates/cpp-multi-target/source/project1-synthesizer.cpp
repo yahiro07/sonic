@@ -21,6 +21,8 @@ void Project1Synthesizer::setupParameters(sonic::ParameterBuilder &builder) {
 
 void Project1Synthesizer::prepareProcessing(double sampleRate,
                                             uint32_t maxFrameCount) {
+  sonic::logger.log("prepareProcessing sampleRate: %f, maxFrameCount: %d",
+                    sampleRate, maxFrameCount);
   this->sampleRate = sampleRate;
 }
 
@@ -100,7 +102,7 @@ std::string Project1Synthesizer::getEditorPageUrl() {
   if (0) {
     return "http://localhost:3000?debug=1";
   } else {
-    return "app://www-bundles/index.html";
+    return "app://www-bundles/index.html?debug=1";
   }
 }
 
