@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
+#include <unordered_map>
 
 namespace sonic {
 
@@ -17,11 +18,9 @@ enum class LogKind {
   Log,
   Warn,
   Error,
-  Mute,
-  Unmute,
 };
 
-struct UdpLoggerLogItem {
+struct LogItem {
   double timestamp;
   std::string subsystem;
   std::string logKind;
@@ -74,7 +73,7 @@ static std::string jsonEscapeString(const std::string &input) {
   return out;
 }
 
-std::string logKindToString(LogKind logKind) {
+static std::string logKindToString(LogKind logKind) {
   switch (logKind) {
   case LogKind::Trace:
     return "trace";
@@ -86,11 +85,54 @@ std::string logKindToString(LogKind logKind) {
     return "warn";
   case LogKind::Error:
     return "error";
-  case LogKind::Mute:
-    return "mute";
-  case LogKind::Unmute:
-    return "unmute";
   }
+}
+
+static std::string serializeLogItem(const LogItem &item) {
+  const auto escapedMessage = jsonEscapeString(item.message);
+
+  auto timeStampStr = std::to_string(item.timestamp);
+  std::string jsonStr = "{\"timestamp\": " + timeStampStr +
+                        ", \"subsystem\": \"" + item.subsystem +
+                        "\", \"logKind\": \"" + item.logKind +
+                        "\", \"message\": \"" + escapedMessage + "\"}";
+  return jsonStr;
+}
+
+static const std::unordered_map<std::string, std::string> subsystemIcons = {
+    {"host", "🟣"},
+    {"ext", "🔸"},
+    {"ui", "🔹"},
+    {"dsp", "🔺"},
+};
+
+static const std::unordered_map<std::string, std::string> logKindIcons = {
+    {"trace", "🔽"},
+    //
+    {"info", "◻️"},
+    {"log", "▫️"},
+    {"warn", "⚠️"},
+    {"error", "📛"},
+};
+
+// 00:00:00.000
+static std::string formatTimestamp(double timestamp) {
+  auto totalMs = static_cast<int64_t>(timestamp);
+  auto h = totalMs / (1000 * 60 * 60);
+  auto m = (totalMs % (1000 * 60 * 60)) / (1000 * 60);
+  auto s = (totalMs % (1000 * 60)) / 1000;
+  auto ms = totalMs % 1000;
+  char buf[16];
+  snprintf(buf, sizeof(buf), "%02d:%02d:%02d.%03d", h, m, s, ms);
+  return std::string(buf);
+}
+
+static void printLogInternal(const LogItem &item) {
+  auto ts = formatTimestamp(item.timestamp);
+  auto ssIcon = subsystemIcons.at(item.subsystem);
+  auto kindIcon = logKindIcons.at(item.logKind);
+  printf("%s [%s %s] %s %s\n", ts.c_str(), ssIcon.c_str(),
+         item.subsystem.c_str(), kindIcon.c_str(), item.message.c_str());
 }
 
 static double getSystemTimestamp() {
@@ -104,6 +146,7 @@ static double getSystemTimestamp() {
 // send logs to local udp logger server at 127.0.0.1:9001
 class Logger::LoggerImpl {
 private:
+  std::string subsystem;
   std::thread worker;
   std::atomic<bool> running{false};
   int sock = -1;
@@ -116,6 +159,7 @@ private:
   SPSCQueue<Message, 32> queue;
 
 public:
+  LoggerImpl(std::string subsystem) : subsystem(subsystem) {}
   ~LoggerImpl() noexcept {
     try {
       stop();
@@ -123,6 +167,8 @@ public:
       // best-effort: destructors must not throw
     }
   }
+
+  std::string &getSubsystem() { return subsystem; }
 
   void start() {
     if (running.exchange(true))
@@ -137,7 +183,8 @@ public:
         Message msg;
         if (queue.pop(msg)) {
           auto logKindStr = logKindToString(msg.logKind);
-          logRaw(logKindStr.c_str(), "ext", msg.timestamp, msg.data);
+          logRaw(logKindStr.c_str(), subsystem.c_str(), msg.timestamp,
+                 msg.data);
         } else {
           std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
@@ -160,23 +207,17 @@ public:
     if (running.load(std::memory_order_relaxed) == false) {
       return;
     }
-    auto item = UdpLoggerLogItem{
+    auto logItem = LogItem{
         .timestamp = timestamp,
         .subsystem = subsystem,
         .logKind = logKind,
         .message = message,
     };
+    auto jsonStr = serializeLogItem(logItem);
 
-    const auto escapedMessage = jsonEscapeString(item.message);
-
-    auto timeStampStr = std::to_string(item.timestamp);
-    std::string jsonStr = "{\"timestamp\": " + timeStampStr +
-                          ", \"subsystem\": \"" + item.subsystem +
-                          "\", \"logKind\": \"" + item.logKind +
-                          "\", \"message\": \"" + escapedMessage + "\"}";
     sendto(sock, jsonStr.c_str(), jsonStr.size(), 0, (struct sockaddr *)&addr,
            sizeof(addr));
-    printf("%s\n", item.message.c_str());
+    printLogInternal(logItem);
   }
 
   void logVA(LogKind logKind, const char *fmt, va_list args) {
@@ -193,7 +234,8 @@ public:
 };
 
 #if !defined(NDEBUG)
-Logger::Logger() : impl(std::make_unique<LoggerImpl>()) {}
+Logger::Logger(std::string subsystem)
+    : impl(std::make_unique<LoggerImpl>(subsystem)) {}
 
 Logger::~Logger() { stop(); }
 
@@ -236,7 +278,8 @@ void Logger::error(const char *fmt, ...) {
 }
 
 void Logger::directLogNonRT(const char *message) {
-  impl->logRaw("log", "ext", getSystemTimestamp(), message);
+  auto subsystem = impl->getSubsystem();
+  impl->logRaw("log", subsystem.c_str(), getSystemTimestamp(), message);
 }
 
 void Logger::forwardUiLog(const char *logKind, double timestamp,
@@ -254,12 +297,23 @@ void Logger::start() {}
 
 void Logger::stop() {}
 
+void Logger::trace(const char *fmt, ...) {}
+
+void Logger::info(const char *fmt, ...) {}
+
 void Logger::log(const char *fmt, ...) {}
+
+void Logger::warn(const char *fmt, ...) {}
+
+void Logger::error(const char *fmt, ...) {}
 
 void Logger::directLogNonRT(const char *message) {}
 
+void Logger::forwardUiLog(const char *logKind, double timestamp,
+                          const char *message) {}
+
 #endif
 
-Logger logger;
+Logger logger("ext");
 
 } // namespace sonic

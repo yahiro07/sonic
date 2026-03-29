@@ -5,7 +5,7 @@ namespace sonic {
 
 class Logger {
 public:
-  Logger();
+  Logger(std::string subsystem);
   ~Logger();
   Logger(const Logger &) = delete;
   Logger &operator=(const Logger &) = delete;
