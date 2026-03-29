@@ -117,7 +117,7 @@ private:
   }
 
   void handleMessageFromWebView(const std::string &jsonStr) {
-    printf("message: %s\n", jsonStr.c_str());
+    // printf("message: %s\n", jsonStr.c_str());
 
     RxMessageVariant rxMessage;
     auto ec = glz::read_json<RxMessageVariant>(rxMessage, jsonStr);
@@ -127,7 +127,7 @@ private:
     if (auto *m = std::get_if<RxMsgLog>(&rxMessage)) {
       logger.forwardUiLog(m->logKind.c_str(), m->timestamp, m->message.c_str());
     } else if (auto *m = std::get_if<RxMsgUiLoaded>(&rxMessage)) {
-      printf("ui loaded\n");
+      // printf("ui loaded\n");
       std::map<ParamId, double> rawParameters;
       controllerFacade.getAllParameters(rawParameters);
       std::map<std::string, double> parameters;

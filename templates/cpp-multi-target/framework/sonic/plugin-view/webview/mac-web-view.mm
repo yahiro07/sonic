@@ -143,7 +143,7 @@ MacWebView::MacWebView() : impl(new Impl()) {
     if (nsMessage == nil) {
       return;
     }
-    printf("MacWebView::messageReceiver: %s\n", nsMessage.UTF8String);
+    // printf("MacWebView::messageReceiver: %s\n", nsMessage.UTF8String);
     std::string messageCppStr = [nsMessage UTF8String];
     impl->messageReceiver(messageCppStr);
   };
@@ -176,7 +176,7 @@ MacWebView::~MacWebView() {
 }
 
 void MacWebView::attachToParent(void *parent) {
-  printf("MacWebView::attachToParent\n");
+  // printf("MacWebView::attachToParent\n");
   NSView *parentView = (__bridge NSView *)parent;
   if (!parentView || !impl->webView) {
     return;
@@ -194,7 +194,7 @@ void MacWebView::removeFromParent() {
 }
 
 void MacWebView::setFrame(int x, int y, int width, int height) {
-  printf("MacWebView::setFrame: %d, %d, %d, %d\n", x, y, width, height);
+  // printf("MacWebView::setFrame: %d, %d, %d, %d\n", x, y, width, height);
   if (!impl->webView) {
     return;
   }
@@ -203,7 +203,7 @@ void MacWebView::setFrame(int x, int y, int width, int height) {
 }
 
 void MacWebView::loadUrl(const std::string &urlCppStr) {
-  printf("MacWebView::loadUrl: %s\n", urlCppStr.c_str());
+  // printf("MacWebView::loadUrl: %s\n", urlCppStr.c_str());
   if (!impl->webView) {
     return;
   }
@@ -225,8 +225,8 @@ void MacWebView::sendMessage(const std::string &message) {
       // stringWithFormat:@"window.dispatchEvent(new CustomEvent('native-message', {detail: %@}))",
       stringWithFormat:@"window.pluginEditorCallback && window.pluginEditorCallback(%@)",
                        nsMessage];
-  printf("MacWebView::sendMessage: %s\n", jsCode.UTF8String);
   // clang-format on
+  // printf("MacWebView::sendMessage: %s\n", jsCode.UTF8String);
   dispatch_async(dispatch_get_main_queue(), ^{
     [impl->webView evaluateJavaScript:jsCode completionHandler:nil];
   });

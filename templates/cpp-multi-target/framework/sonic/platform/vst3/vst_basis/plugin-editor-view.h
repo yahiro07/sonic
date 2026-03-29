@@ -2,6 +2,7 @@
 #include "pluginterfaces/base/funknown.h"
 #include <memory>
 #include <public.sdk/source/vst/vsteditcontroller.h>
+#include <sonic/common/logger.h>
 #include <sonic/core/editor-factory-registry.h>
 #include <sonic/core/editor-interfaces.h>
 
@@ -16,7 +17,8 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
   auto editorFactory =
       EditorFactoryRegistry::getInstance()->getEditorFactory(variantName);
   if (!editorFactory) {
-    printf("editor factory not found for variant: %s\n", variantName.c_str());
+    sonic::logger.error("editor factory not found for variant: %s",
+                        variantName.c_str());
     return nullptr;
   }
   auto editorInstance = editorFactory(controllerFacade);
@@ -39,26 +41,26 @@ public:
                    IControllerFacade &controllerFacade,
                    std::string editorPageUrl)
       : Vst::EditorView(controller) {
-    printf("WebViewEditorView::WebViewEditorView\n");
+    // printf("WebViewEditorView::WebViewEditorView\n");
 
     editorInstance = setupEditorInstance(editorPageUrl, controllerFacade);
   }
 
   ~PluginEditorView() override {
-    printf("WebViewEditorView::~WebViewEditorView\n");
+    // printf("WebViewEditorView::~WebViewEditorView\n");
     editorInstance->teardown();
     editorInstance.reset();
   }
 
   tresult PLUGIN_API isPlatformTypeSupported(FIDString type) override {
-    printf("WebViewEditorView::isPlatformTypeSupported: %s\n", type);
+    // printf("WebViewEditorView::isPlatformTypeSupported: %s\n", type);
     if (FIDStringsEqual(type, kPlatformTypeNSView)) {
       return kResultTrue;
     }
     return kResultFalse;
   }
   tresult PLUGIN_API attached(void *parent, FIDString type) override {
-    printf("WebViewEditorView::attached: %p, %s\n", parent, type);
+    // printf("WebViewEditorView::attached: %p, %s\n", parent, type);
     if (FIDStringsEqual(type, kPlatformTypeNSView)) {
       editorInstance->attachToParent(parent);
       editorInstance->setFrame(viewRect.left, viewRect.top,
@@ -76,12 +78,12 @@ public:
       return kInvalidArgument;
     }
     *size = viewRect;
-    printf("WebViewEditorView::getSize: %d, %d, %d, %d\n", size->left,
-           size->top, size->right, size->bottom);
+    // printf("WebViewEditorView::getSize: %d, %d, %d, %d\n", size->left,
+    //        size->top, size->right, size->bottom);
     return kResultOk;
   }
   tresult PLUGIN_API removed() override {
-    printf("WebViewEditorView::removed\n");
+    // printf("WebViewEditorView::removed\n");
     if (!editorInstance)
       return kResultFalse;
     editorInstance->removeFromParent();
@@ -92,8 +94,8 @@ public:
     if (!newSize) {
       return kInvalidArgument;
     }
-    printf("WebViewEditorView::onSize: %d, %d, %d, %d\n", newSize->left,
-           newSize->top, newSize->right, newSize->bottom);
+    // printf("WebViewEditorView::onSize: %d, %d, %d, %d\n", newSize->left,
+    //        newSize->top, newSize->right, newSize->bottom);
     viewRect = *newSize;
     if (!editorInstance)
       return kResultFalse;
