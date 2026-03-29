@@ -7,7 +7,7 @@
 
 namespace sonic {
 
-class ParameterService {
+class ParametersService {
 private:
   ParameterTreeWrapper &parameterTreeWrapper;
   ParameterRegistry &parameterRegistry;
@@ -36,12 +36,12 @@ private:
   }
 
 public:
-  ParameterService(ParameterTreeWrapper &parameterTreeWrapper,
-                   ParameterRegistry &parameterRegistry)
+  ParametersService(ParameterTreeWrapper &parameterTreeWrapper,
+                    ParameterRegistry &parameterRegistry)
       : parameterTreeWrapper(parameterTreeWrapper),
         parameterRegistry(parameterRegistry) {}
 
-  ~ParameterService() { stopObserve(); }
+  ~ParametersService() { stopObserve(); }
 
   int subscribeToParameterChanges(
       std::function<void(ParamId, double)> listener) {

@@ -31,7 +31,7 @@ private:
   ParameterRegistry parametersRegistry;
   SynthesizerBase &synth;
   ParameterTreeWrapper &parameterTreeWrapper;
-  ParameterService parameterService;
+  ParametersService parameterService;
   NoteService noteService;
   ControllerFacade controllerFacade;
   ParameterStore parameterStore; // parameters in main thread
