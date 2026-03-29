@@ -298,7 +298,7 @@ void Logger::forwardUiLog(const char *logKind, double timestamp,
 
 #else
 
-Logger::Logger() {}
+Logger::Logger(std::string subsystem) {}
 
 Logger::~Logger() {}
 
