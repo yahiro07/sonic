@@ -3,7 +3,7 @@ import { SelectorPad } from "@/components/SelectorPad";
 import { TogglePad } from "@/components/TogglePad";
 import { ToneButton } from "@/components/ToneButton";
 import { waveTypeOptions } from "@/presenter/parameters";
-import { useUiPresenter } from "@/presenter/ui-preseter-context";
+import { useUiPresenter } from "@/presenter/ui-presenter-context";
 import { useState } from "react";
 
 const ControlsContent = () => {
