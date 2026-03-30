@@ -231,7 +231,7 @@ static bool disconnectComponentAndController(IComponent *component,
 }
 
 bool PluginBridge::loadPlugin(const std::string &path) {
-  logger.log("PluginBridge::loadPlugin: %s", path.c_str());
+  // logger.log("PluginBridge::loadPlugin: %s", path.c_str());
 
   unloadPlugin();
 

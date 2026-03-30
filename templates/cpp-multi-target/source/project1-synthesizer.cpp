@@ -102,7 +102,7 @@ void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
 }
 
 std::string Project1Synthesizer::getEditorPageUrl() {
-  if (1) {
+  if (0) {
     return "http://localhost:3000?debug=1";
   } else {
     return "app://www-bundles/index.html?debug=1";
