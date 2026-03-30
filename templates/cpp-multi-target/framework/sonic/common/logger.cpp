@@ -229,7 +229,7 @@ public:
   }
 };
 
-#if !defined(NDEBUG)
+#if defined(SONIC_DEBUG_LOGS)
 Logger::Logger(std::string subsystem)
     : impl(std::make_unique<LoggerImpl>(subsystem)) {}
 
@@ -292,6 +292,8 @@ void Logger::forwardUiLog(const char *logKind, double timestamp,
 Logger::Logger(std::string subsystem) {}
 
 Logger::~Logger() {}
+
+void Logger::setExtraEmitter(LogEmitter *emitter) {}
 
 void Logger::start() {}
 
