@@ -163,7 +163,9 @@ void AudioIoMac::open(
   format.mSampleRate = sampleRate;
   format.mFormatID = kAudioFormatLinearPCM;
   format.mFormatFlags =
-      kAudioFormatFlagsNativeFloatPacked | kAudioFormatFlagIsNonInterleaved;
+      static_cast<AudioFormatFlags>(kAudioFormatFlagsNativeFloatPacked) |
+      static_cast<AudioFormatFlags>(kAudioFormatFlagIsNonInterleaved);
+
   format.mBytesPerPacket = 4;
   format.mFramesPerPacket = 1;
   format.mBytesPerFrame = 4;
