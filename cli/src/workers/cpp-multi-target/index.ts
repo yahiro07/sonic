@@ -9,6 +9,7 @@ import {
   workerHelper_copyProjectContentFiles,
   workerHelper_copyProjectContentFiles_withRenaming,
   workerHelper_getNewProjectFolderPath,
+  workerHelper_removeStringLines,
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
 } from "@/src/common";
@@ -210,6 +211,26 @@ function patchPluginSourceFiles({
           from: `return "app://www-bundles/index.html?debug=1";`,
           to: `return "app://www-bundles/index.html";`,
         },
+      ],
+    });
+    workerHelper_removeStringLines(projectFolderPath, {
+      filePaths: ["source/project1-synthesizer.cpp"],
+      strings: [
+        `#include <sonic/common/logger.h>`,
+        `  sonic::logger.log("prepareProcessing sampleRate: %f, maxFrameCount: %d",
+                    sampleRate, maxFrameCount);`,
+        `  if (id < 4) {
+    sonic::logger.log("setParameter id: %d, value: %f", id, value);
+  }`,
+        `  sonic::logger.log("noteOn %d", noteNumber);`,
+        `  sonic::logger.log("noteOff %d", noteNumber);`,
+      ],
+    });
+    workerHelper_removeStringLines(projectFolderPath, {
+      filePaths: ["source/project1-factory.cpp"],
+      strings: [
+        `#include <sonic/common/logger.h>`,
+        `  sonic::logger.trace("createSynthesizerInstance");`,
       ],
     });
   }

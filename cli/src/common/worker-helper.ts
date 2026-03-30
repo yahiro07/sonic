@@ -159,6 +159,24 @@ export function workerHelper_replaceStrings(
   }
 }
 
+export function workerHelper_removeStringLines(
+  folderPath: string,
+  spec: {
+    filePaths: string[];
+    strings: string[];
+  },
+  checkReplaced = true,
+) {
+  workerHelper_replaceStrings(
+    folderPath,
+    {
+      filePaths: spec.filePaths,
+      replacements: spec.strings.map((s) => ({ from: s + "\n", to: "" })),
+    },
+    checkReplaced,
+  );
+}
+
 export function workerHelper_relocateFile(
   folderPath: string,
   spec: { from: string; to: string },
