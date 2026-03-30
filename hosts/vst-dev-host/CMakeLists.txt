@@ -48,4 +48,13 @@ set(VST3_SDK_ROOT "${SMTG_VST3_LOCATION_DIR}")
 
 # ----------------
 
+option(SONIC_DEBUG_LOGS "Enable logging" OFF)
+option(SONIC_DEBUG_USE_UDP_LOGGER "Enable UDP logging" OFF)
+if(SONIC_DEBUG_LOGS)
+  add_compile_definitions(SONIC_DEBUG_LOGS)
+endif()
+if(SONIC_DEBUG_USE_UDP_LOGGER)
+  add_compile_definitions(SONIC_DEBUG_USE_UDP_LOGGER)
+endif()
+
 add_subdirectory(vst_dev_host)

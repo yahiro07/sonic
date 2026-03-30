@@ -3,7 +3,6 @@
 #include <arpa/inet.h>
 #include <atomic>
 #include <cstring>
-#include <memory>
 #include <string>
 #include <sys/socket.h>
 #include <thread>
@@ -27,52 +26,6 @@ struct LogItem {
   std::string message;
 };
 
-static std::string jsonEscapeString(const std::string &input) {
-  std::string out;
-  out.reserve(input.size());
-
-  auto hexDigit = [](unsigned int v) -> char {
-    return static_cast<char>(v < 10 ? ('0' + v) : ('a' + (v - 10)));
-  };
-
-  for (unsigned char c : input) {
-    switch (c) {
-    case '\\':
-      out += "\\\\";
-      break;
-    case '"':
-      out += "\\\"";
-      break;
-    case '\b':
-      out += "\\b";
-      break;
-    case '\f':
-      out += "\\f";
-      break;
-    case '\n':
-      out += "\\n";
-      break;
-    case '\r':
-      out += "\\r";
-      break;
-    case '\t':
-      out += "\\t";
-      break;
-    default:
-      if (c < 0x20) {
-        out += "\\u00";
-        out += hexDigit((c >> 4) & 0xF);
-        out += hexDigit(c & 0xF);
-      } else {
-        out += static_cast<char>(c);
-      }
-      break;
-    }
-  }
-
-  return out;
-}
-
 static std::string logKindToString(LogKind logKind) {
   switch (logKind) {
   case LogKind::Trace:
@@ -88,6 +41,47 @@ static std::string logKindToString(LogKind logKind) {
   }
 }
 
+class ILogEmitter {
+public:
+  virtual ~ILogEmitter() = default;
+  virtual void emitLogItem(LogItem &item) = 0;
+};
+
+namespace udp_log_emitter {
+
+static std::string jsonEscapeString(const std::string &input) {
+  std::string out;
+  out.reserve(input.size());
+
+  auto hexDigit = [](unsigned int v) -> char {
+    return static_cast<char>(v < 10 ? ('0' + v) : ('a' + (v - 10)));
+  };
+  for (unsigned char c : input) {
+    if (c == '\\') {
+      out += "\\\\";
+    } else if (c == '"') {
+      out += "\\\"";
+    } else if (c == '\b') {
+      out += "\\b";
+    } else if (c == '\f') {
+      out += "\\f";
+    } else if (c == '\n') {
+      out += "\\n";
+    } else if (c == '\r') {
+      out += "\\r";
+    } else if (c == '\t') {
+      out += "\\t";
+    } else if (c < 0x20) {
+      out += "\\u00";
+      out += hexDigit((c >> 4) & 0xF);
+      out += hexDigit(c & 0xF);
+    } else {
+      out += static_cast<char>(c);
+    }
+  }
+  return out;
+}
+
 static std::string serializeLogItem(const LogItem &item) {
   const auto escapedMessage = jsonEscapeString(item.message);
 
@@ -98,6 +92,40 @@ static std::string serializeLogItem(const LogItem &item) {
                         "\", \"message\": \"" + escapedMessage + "\"}";
   return jsonStr;
 }
+
+class UdpLogEmitter : public ILogEmitter {
+private:
+  int port;
+  int sock = -1;
+  struct sockaddr_in addr{};
+
+public:
+  UdpLogEmitter(int port = 9001) : port(port) {}
+  ~UdpLogEmitter() {
+    if (sock >= 0) {
+      close(sock);
+      sock = -1;
+    }
+  }
+  void emitLogItem(LogItem &item) override {
+    if (sock < 0) {
+      sock = socket(AF_INET, SOCK_DGRAM, 0);
+      if (sock < 0) {
+        return;
+      }
+      addr.sin_family = AF_INET;
+      addr.sin_port = htons(port);
+      addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    }
+    auto jsonStr = serializeLogItem(item);
+    sendto(sock, jsonStr.c_str(), jsonStr.size(), 0, (struct sockaddr *)&addr,
+           sizeof(addr));
+  }
+};
+
+} // namespace udp_log_emitter
+
+namespace stdout_log_emitter {
 
 static const std::unordered_map<std::string, std::string> subsystemIcons = {
     {"host", "🟣"},
@@ -144,6 +172,8 @@ static void printLogInternal(const LogItem &item) {
          item.subsystem.c_str(), kindIcon.c_str(), item.message.c_str());
 }
 
+} // namespace stdout_log_emitter
+
 static double getSystemTimestamp() {
   return static_cast<double>(
              std::chrono::system_clock::now().time_since_epoch().count()) /
@@ -152,14 +182,13 @@ static double getSystemTimestamp() {
 
 // audio thread safe logger implementation
 // show logs in terminal
-// send logs to local udp logger server at 127.0.0.1:9001
+// (optional) send logs to local udp logger server at 127.0.0.1:9001
 class Logger::LoggerImpl {
 private:
+  udp_log_emitter::UdpLogEmitter udpLogEmitter;
   std::string subsystem;
   std::thread worker;
   std::atomic<bool> running{false};
-  int sock = -1;
-  struct sockaddr_in addr;
   struct Message {
     LogKind logKind;
     double timestamp;
@@ -169,24 +198,13 @@ private:
 
 public:
   LoggerImpl(std::string subsystem) : subsystem(subsystem) {}
-  ~LoggerImpl() noexcept {
-    try {
-      stop();
-    } catch (...) {
-      // best-effort: destructors must not throw
-    }
-  }
+  ~LoggerImpl() { stop(); }
 
   std::string &getSubsystem() { return subsystem; }
 
   void start() {
     if (running.exchange(true))
       return;
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(9001);
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
     worker = std::thread([this]() {
       while (running.load(std::memory_order_relaxed)) {
         Message msg;
@@ -206,11 +224,10 @@ public:
 
     running = false;
     if (worker.joinable()) {
-      worker.join();
-    }
-    if (sock >= 0) {
-      close(sock);
-      sock = -1;
+      try {
+        worker.join();
+      } catch (...) {
+      }
     }
   }
 
@@ -225,11 +242,10 @@ public:
         .logKind = logKind,
         .message = message,
     };
-    auto jsonStr = serializeLogItem(logItem);
-
-    sendto(sock, jsonStr.c_str(), jsonStr.size(), 0, (struct sockaddr *)&addr,
-           sizeof(addr));
-    printLogInternal(logItem);
+#ifdef SONIC_DEBUG_USE_UDP_LOGGER
+    udpLogEmitter.emitLogItem(logItem);
+#endif
+    stdout_log_emitter::printLogInternal(logItem);
   }
 
   void logVA(LogKind logKind, const char *fmt, va_list args) {
@@ -245,7 +261,7 @@ public:
   }
 };
 
-#if !defined(NDEBUG)
+#if defined(SONIC_DEBUG_LOGS)
 Logger::Logger(std::string subsystem)
     : impl(std::make_unique<LoggerImpl>(subsystem)) {}
 
@@ -294,14 +310,9 @@ void Logger::directLogNonRT(const char *message) {
   impl->logRaw("log", subsystem.c_str(), getSystemTimestamp(), message);
 }
 
-void Logger::forwardUiLog(const char *logKind, double timestamp,
-                          const char *message) {
-  impl->logRaw(logKind, "ui", timestamp, message);
-}
-
 #else
 
-Logger::Logger() {}
+Logger::Logger(std::string subsystem) {}
 
 Logger::~Logger() {}
 
@@ -309,20 +320,47 @@ void Logger::start() {}
 
 void Logger::stop() {}
 
-void Logger::trace(const char *fmt, ...) {}
+void Logger::trace(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  vprintf(fmt, args);
+  va_end(args);
+  printf("\n");
+}
 
-void Logger::info(const char *fmt, ...) {}
+void Logger::info(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  vprintf(fmt, args);
+  va_end(args);
+  printf("\n");
+}
 
-void Logger::log(const char *fmt, ...) {}
+void Logger::log(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  vprintf(fmt, args);
+  va_end(args);
+  printf("\n");
+}
 
-void Logger::warn(const char *fmt, ...) {}
+void Logger::warn(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  vprintf(fmt, args);
+  va_end(args);
+  printf("\n");
+}
 
-void Logger::error(const char *fmt, ...) {}
+void Logger::error(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  vprintf(fmt, args);
+  va_end(args);
+  printf("\n");
+}
 
-void Logger::directLogNonRT(const char *message) {}
-
-void Logger::forwardUiLog(const char *logKind, double timestamp,
-                          const char *message) {}
+void Logger::directLogNonRT(const char *message) { printf("%s\n", message); }
 
 #endif
 

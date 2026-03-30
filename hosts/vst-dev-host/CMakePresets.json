@@ -4,7 +4,11 @@
     {
       "name": "ninja",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build"
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "SONIC_DEBUG_LOGS": "ON",
+        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"
+      }
     }
   ],
   "buildPresets": [

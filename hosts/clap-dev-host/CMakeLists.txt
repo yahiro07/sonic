@@ -18,4 +18,13 @@ FetchContent_Declare(
   UPDATES_DISCONNECTED TRUE)
 FetchContent_MakeAvailable(clap)
 
+option(SONIC_DEBUG_LOGS "Enable logging" OFF)
+option(SONIC_DEBUG_USE_UDP_LOGGER "Enable UDP logging" OFF)
+if(SONIC_DEBUG_LOGS)
+  add_compile_definitions(SONIC_DEBUG_LOGS)
+endif()
+if(SONIC_DEBUG_USE_UDP_LOGGER)
+  add_compile_definitions(SONIC_DEBUG_USE_UDP_LOGGER)
+endif()
+
 add_subdirectory(clap_dev_host)
