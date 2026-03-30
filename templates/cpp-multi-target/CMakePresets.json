@@ -31,7 +31,11 @@
       "inherits": [
         "ninja",
         "debug"
-      ]
+      ],
+      "cacheVariables": {
+        "SONIC_DEBUG_LOGS": "ON",
+        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"
+      }
     },
     {
       "name": "ninja-release",
