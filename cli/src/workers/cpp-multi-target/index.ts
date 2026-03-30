@@ -578,45 +578,25 @@ function applyLoggingOptionsToCMakePresets({
   options,
 }: TaskContext) {
   if (options.loggingOption === "none") {
-    workerHelper_replaceStrings(projectFolderPath, {
+    workerHelper_removeStringLines(projectFolderPath, {
       filePaths: ["CMakePresets.json"],
-      replacements: [
-        {
-          from: `    {
-      "name": "ninja-debug",
-      "inherits": [
-        "ninja",
-        "debug"
-      ],
+      strings: [
+        `,
       "cacheVariables": {
         "SONIC_DEBUG_LOGS": "ON",
         "SONIC_DEBUG_USE_UDP_LOGGER": "ON"
-      }
-    }`,
-          to: `    {
-      "name": "ninja-debug",
-      "inherits": [
-        "ninja",
-        "debug"
-      ]
-    }`,
-        },
+      }`,
       ],
+      keepTrailingNewLineAsIs: true,
     });
   } else if (!options.useUdpLogger) {
-    workerHelper_replaceStrings(projectFolderPath, {
+    workerHelper_removeStringLines(projectFolderPath, {
       filePaths: ["CMakePresets.json"],
-      replacements: [
-        {
-          from: `      "cacheVariables": {
-        "SONIC_DEBUG_LOGS": "ON",
-        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"
-      }`,
-          to: `      "cacheVariables": {
-        "SONIC_DEBUG_LOGS": "ON"
-      }`,
-        },
+      strings: [
+        `,
+        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"`,
       ],
+      keepTrailingNewLineAsIs: true,
     });
   }
 }

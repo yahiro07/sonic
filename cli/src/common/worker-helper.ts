@@ -164,6 +164,7 @@ export function workerHelper_removeStringLines(
   spec: {
     filePaths: string[];
     strings: string[];
+    keepTrailingNewLineAsIs?: boolean;
   },
   checkReplaced = true,
 ) {
@@ -171,7 +172,10 @@ export function workerHelper_removeStringLines(
     folderPath,
     {
       filePaths: spec.filePaths,
-      replacements: spec.strings.map((s) => ({ from: s + "\n", to: "" })),
+      replacements: spec.strings.map((s) => ({
+        from: s + (spec.keepTrailingNewLineAsIs ? "" : "\n"),
+        to: "",
+      })),
     },
     checkReplaced,
   );
