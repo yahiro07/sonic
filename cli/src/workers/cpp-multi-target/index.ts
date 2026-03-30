@@ -450,9 +450,9 @@ function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
     });
   };
   const removeLine = (text: string) => {
-    workerHelper_replaceStrings(projectFolderPath, {
+    workerHelper_removeStringLines(projectFolderPath, {
       filePaths: ["CMakeLists.txt"],
-      replacements: [{ from: text + "\n", to: "" }],
+      strings: [text],
     });
   };
 
@@ -472,14 +472,14 @@ function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
 
   if (!hasVstDevHost) {
     removeLine(
-      `add_subdirectory(\${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
-                 \${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)`,
+      `  add_subdirectory(\${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
+                   \${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)`,
     );
   }
   if (!hasClapDevHost) {
     removeLine(
-      `add_subdirectory(\${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
-                 \${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)`,
+      `  add_subdirectory(\${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
+                   \${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)`,
     );
   }
 
