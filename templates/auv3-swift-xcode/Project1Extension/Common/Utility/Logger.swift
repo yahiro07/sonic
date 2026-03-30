@@ -23,7 +23,7 @@ func formatTimestamp(_ timestamp: Double) -> String {
 }
 
 let subsystemIcons: [String: String] = [
-  "host": "🟣",
+  "host": "🧊",
   "ext": "🔸",
   "ui": "🔹",
   "dsp": "🔺",

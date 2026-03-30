@@ -128,7 +128,7 @@ public:
 namespace stdout_log_emitter {
 
 static const std::unordered_map<std::string, std::string> subsystemIcons = {
-    {"host", "🟣"},
+    {"host", "🧊"},
     {"ext", "🔸"},
     {"ui", "🔹"},
     {"dsp", "🔺"},

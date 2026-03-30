@@ -28,7 +28,7 @@ type LogItemEx = LogItem & {
 
 function createLogFormatter() {
   const subsystemIcons: Record<string, string> = {
-    host: "🟣",
+    host: "🧊",
     ext: "🔸",
     ui: "🔹",
     dsp: "🔺",

@@ -40,7 +40,7 @@ static std::string logKindToString(LogKind logKind) {
 }
 
 static const std::unordered_map<std::string, std::string> subsystemIcons = {
-    {"host", "🟣"},
+    {"host", "🧊"},
     {"ext", "🔸"},
     {"ui", "🔹"},
     {"dsp", "🔺"},
