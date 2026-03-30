@@ -5,12 +5,20 @@
       "name": "ninja",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
-      "hidden": true
+      "hidden": true,
+      "cacheVariables": {
+        "SONIC_DEBUG_LOGS": "ON",
+        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"
+      }
     },
     {
       "name": "xcode",
       "generator": "Xcode",
-      "binaryDir": "${sourceDir}/build/${presetName}"
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "SONIC_DEBUG_LOGS": "ON",
+        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"
+      }
     },
     {
       "name": "debug",
@@ -31,11 +39,7 @@
       "inherits": [
         "ninja",
         "debug"
-      ],
-      "cacheVariables": {
-        "SONIC_DEBUG_LOGS": "ON",
-        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"
-      }
+      ]
     },
     {
       "name": "ninja-release",

@@ -4,6 +4,9 @@ target_include_directories(sonic-headers INTERFACE ${SONIC_PUBLIC_INCLUDE_DIR})
 
 add_subdirectory(platform/vst3)
 add_subdirectory(platform/clap)
-add_subdirectory(platform/auv3)
+
+if(XCODE)
+  add_subdirectory(platform/auv3)
+endif()
 
 add_subdirectory(plugin-view/webview)
