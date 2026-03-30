@@ -21,8 +21,8 @@ if(NOT XCODE)
   endif()
 endif()
 
-execute_process(COMMAND cp -r "../_common/pages" "${CMAKE_CURRENT_SOURCE_DIR}")
-
+execute_process(COMMAND cp -r "${CMAKE_CURRENT_SOURCE_DIR}/../_common/pages"
+                        "${CMAKE_CURRENT_SOURCE_DIR}")
 # build frontend
 set(FRONTEND_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pages/www-bundles")
 execute_process(
