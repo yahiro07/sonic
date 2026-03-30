@@ -87,7 +87,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     message: "Select logging option",
     options: [
       { value: "none", label: "None" },
-      { value: "normal", label: "Normal" },
+      { value: "normal", label: "Minimum" },
       { value: "detailed", label: "Detailed" },
     ],
     initialValue: "normal",
@@ -214,6 +214,15 @@ function patchPluginSourceFiles({
       ],
     });
     workerHelper_removeStringLines(projectFolderPath, {
+      filePaths: ["source/project1-factory.cpp"],
+      strings: [
+        `#include <sonic/common/logger.h>`,
+        `  sonic::logger.trace("createSynthesizerInstance");`,
+      ],
+    });
+  }
+  if (options.loggingOption !== "detailed") {
+    workerHelper_removeStringLines(projectFolderPath, {
       filePaths: ["source/project1-synthesizer.cpp"],
       strings: [
         `#include <sonic/common/logger.h>`,
@@ -224,13 +233,6 @@ function patchPluginSourceFiles({
   }`,
         `  sonic::logger.log("noteOn %d", noteNumber);`,
         `  sonic::logger.log("noteOff %d", noteNumber);`,
-      ],
-    });
-    workerHelper_removeStringLines(projectFolderPath, {
-      filePaths: ["source/project1-factory.cpp"],
-      strings: [
-        `#include <sonic/common/logger.h>`,
-        `  sonic::logger.trace("createSynthesizerInstance");`,
       ],
     });
   }
@@ -541,6 +543,28 @@ function setupFrontend({
 }: TaskContext) {
   if (options.frontendVariant === "react") {
     workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
+
+    if (options.loggingOption === "none") {
+      workerHelper_removeStringLines(projectFolderPath, {
+        filePaths: ["frontend/src/main.tsx"],
+        strings: [
+          `import { logger } from "@/bridge/logger";`,
+          `  logger.info("frontend start");
+  logger.log(\`at \${location.href}\`);`,
+        ],
+      });
+    }
+    if (options.loggingOption !== "detailed") {
+      workerHelper_removeStringLines(projectFolderPath, {
+        filePaths: ["frontend/src/bridge/core-bridge.ts"],
+        strings: [
+          `import { logger } from "@/bridge/logger";`,
+          `  logger.log("⇠ui", msg);`,
+          `  logger.log("⇢ui", msg);`,
+        ],
+      });
+    }
+
     if (options.buildFrontend) {
       workerHelper_buildFrontend(projectFolderPath, "frontend");
     }
@@ -622,8 +646,8 @@ function scaffoldProject(
   }
   patchCMakeLists(taskContext);
   arrangeBuildWrapper(taskContext);
-  setupFrontend(taskContext);
   applyLoggingOptionsToCMakePresets(taskContext);
+  setupFrontend(taskContext);
   return true;
 }
 
