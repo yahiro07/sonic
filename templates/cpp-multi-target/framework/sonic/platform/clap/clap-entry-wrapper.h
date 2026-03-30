@@ -21,6 +21,6 @@ typedef sonic::IPluginSynthesizer *(*SynthesizerInitializerFn)();
 
 const clap_plugin_entry_t &
 setupClapPluginEntry(SynthesizerInitializerFn synthInitializer,
-                     const PluginMeta &meta, LogEmitter *logEmitter = nullptr);
+                     const PluginMeta &meta);
 
 } // namespace sonic

@@ -311,8 +311,6 @@ public:
   ClapFactoryGlobals() {}
   ~ClapFactoryGlobals() = default;
   SynthesizerInitializerFn fnCreateSynthesizerInstance;
-  LogEmitter *logEmitter = nullptr;
-  // LogEmitterFactoryFn logEmitterFactory = nullptr;
 };
 static ClapFactoryGlobals &getClapFactoryGlobals() {
   static ClapFactoryGlobals globals;
@@ -363,9 +361,10 @@ static const clap_plugin_entry_t clapEntry = {
     .clap_version = CLAP_VERSION_INIT,
     .init = [](const char *path) -> bool {
       auto &globals = getClapFactoryGlobals();
-      if (globals.logEmitter) {
-        logger.setExtraEmitter(globals.logEmitter);
-      }
+
+#ifdef SONIC_DEBUG_USE_UDP_LOGGER
+      logger.setExtraEmitter(new sonic::UdpLogEmitter());
+#endif
       logger.start();
       return true;
     },
@@ -378,11 +377,10 @@ static const clap_plugin_entry_t clapEntry = {
 
 const clap_plugin_entry_t &
 setupClapPluginEntry(SynthesizerInitializerFn synthInitializer,
-                     const PluginMeta &meta, LogEmitter *logEmitter) {
+                     const PluginMeta &meta) {
   overwriteDescriptor(meta);
   auto &globals = getClapFactoryGlobals();
   globals.fnCreateSynthesizerInstance = synthInitializer;
-  globals.logEmitter = logEmitter;
   return clapEntry;
 }
 
