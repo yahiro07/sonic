@@ -22,6 +22,8 @@ type TemplateOptions = {
   auManufacturer: string;
   auSubtype: string;
   buildFrontend: boolean;
+  loggingOption: "none" | "normal" | "detailed";
+  useUdpLogger: boolean;
 };
 
 async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
@@ -80,6 +82,32 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     return "cancelled";
   }
 
+  const _loggingOption = await clackPrompts.select({
+    message: "Select logging option",
+    options: [
+      { value: "none", label: "None" },
+      { value: "normal", label: "Normal" },
+      { value: "detailed", label: "Detailed" },
+    ],
+    initialValue: "normal",
+  });
+  if (clackPrompts.isCancel(_loggingOption)) {
+    return "cancelled";
+  }
+  const loggingOption = _loggingOption as TemplateOptions["loggingOption"];
+
+  let useUdpLogger = false;
+  if (loggingOption !== "none") {
+    const _useUdpLogger = await clackPrompts.confirm({
+      message: "Use UDP logger?",
+      initialValue: false,
+    });
+    if (clackPrompts.isCancel(_useUdpLogger)) {
+      return "cancelled";
+    }
+    useUdpLogger = _useUdpLogger;
+  }
+
   let auManufacturer: string | symbol = "";
   let auSubtype: string | symbol = "";
   if (platforms.includes("auv3")) {
@@ -126,6 +154,8 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     auManufacturer,
     auSubtype,
     buildFrontend,
+    loggingOption,
+    useUdpLogger,
   };
 }
 
@@ -482,6 +512,51 @@ function setupFrontend({
   }
 }
 
+function applyLoggingOptions({ projectFolderPath, options }: TaskContext) {
+  if (options.loggingOption === "none") {
+    workerHelper_replaceStrings(projectFolderPath, {
+      filePaths: ["CMakePresets.json"],
+      replacements: [
+        {
+          from: `    {
+      "name": "ninja-debug",
+      "inherits": [
+        "ninja",
+        "debug"
+      ],
+      "cacheVariables": {
+        "SONIC_DEBUG_LOGS": "ON",
+        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"
+      }
+    }`,
+          to: `    {
+      "name": "ninja-debug",
+      "inherits": [
+        "ninja",
+        "debug"
+      ]
+    }`,
+        },
+      ],
+    });
+  } else if (!options.useUdpLogger) {
+    workerHelper_replaceStrings(projectFolderPath, {
+      filePaths: ["CMakePresets.json"],
+      replacements: [
+        {
+          from: `      "cacheVariables": {
+        "SONIC_DEBUG_LOGS": "ON",
+        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"
+      }`,
+          to: `      "cacheVariables": {
+        "SONIC_DEBUG_LOGS": "ON"
+      }`,
+        },
+      ],
+    });
+  }
+}
+
 function scaffoldProject(
   projectName: string,
   templateName: string,
@@ -508,6 +583,7 @@ function scaffoldProject(
   patchCMakeLists(taskContext);
   arrangeBuildWrapper(taskContext);
   setupFrontend(taskContext);
+  applyLoggingOptions(taskContext);
   return true;
 }
 
