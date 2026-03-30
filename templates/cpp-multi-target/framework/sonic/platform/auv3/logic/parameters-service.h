@@ -25,7 +25,7 @@ private:
             listener(paramId, value);
           }
         });
-    printf("startObserve, observerToken: %p\n", ptObserverToken);
+    // printf("startObserve, observerToken: %p\n", ptObserverToken);
   }
 
   void stopObserve() {

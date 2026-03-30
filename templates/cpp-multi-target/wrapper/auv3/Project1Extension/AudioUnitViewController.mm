@@ -18,7 +18,7 @@
         (AudioComponentDescription)componentDescription
                                       error:(NSError *_Nullable *_Nullable)
                                                 outError {
-  [LoggerWrapper enableUdpLogEmitter];
+
   [LoggerWrapper start];
   [LoggerWrapper trace:@"----------------------------------------"];
   [LoggerWrapper
