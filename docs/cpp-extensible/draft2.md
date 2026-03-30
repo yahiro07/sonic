@@ -36,7 +36,7 @@ We will provide two interfaces: one that simply relays the list of events from t
 ## Modules Structure
 
 ```cpp
-//framework
+// framework
 enum ParameterFlags : int {
   None = 0,
   IsReadOnly = 1,
@@ -137,6 +137,7 @@ public:
 };
 
 class IMainController {
+  virtual IAudioProcessor *createAudioProcessor() = 0;
 
   virtual void setupParameters(ParameterBuilder &builder) = 0;
 
@@ -166,14 +167,15 @@ public:
   // implementation is provided by framework
 };
 
-class IPluginFactory {
-  virtual IAudioProcessor *createAudioProcessor() = 0;
-  virtual IMainController *createMainController(IControllerKernel &kernel) = 0;
-};
-IPluginFactory *createPluginFactory();
-
 //----------
 // user code
+
+class Project1AudioProcessor : public IAdvancedAudioProcessor {
+public:
+  void prepareProcessing(double sampleRate, uint32_t maxFrameCount) override {}
+  void processAudio(float *bufferL, float *bufferR, uint32_t frames,
+                    const ProcessData *data) override {}
+};
 
 class Project1AudioProcessor : public IAdvancedAudioProcessor {
 public:
@@ -188,6 +190,10 @@ private:
 
 public:
   Project1Controller(IControllerKernel &kernel) : kernel(kernel) {}
+
+  IAudioProcessor *createAudioProcessor() override {
+    return new Project1AudioProcessor();
+  }
 
   void setupParameters(ParameterBuilder &builder) override {}
 
@@ -218,15 +224,8 @@ public:
   }
 };
 
-class Project1Factory : public IPluginFactory {
-public:
-  IAudioProcessor *createAudioProcessor() override {
-    return new Project1AudioProcessor();
-  }
-  IMainController *createMainController(IControllerKernel &kernel) override {
-    return new Project1Controller(kernel);
-  }
-};
+IMainController *createMainController(IControllerKernel &kernel) {
+  return new Project1Controller(kernel);
+}
 
-IPluginFactory *createPluginFactory() { return new Project1Factory(); }
 ```
