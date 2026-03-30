@@ -1,5 +1,5 @@
 #include "udp-log-emitter.h"
-#include "sonic/common/logger.h"
+#include "logger.h"
 #include <arpa/inet.h>
 #include <cstring>
 #include <string>
@@ -16,13 +16,10 @@ private:
 
 public:
   UdpLogEmitterImpl(int port) : port(port) {}
-  ~UdpLogEmitterImpl() noexcept {
-    try {
-      if (sock >= 0) {
-        close(sock);
-        sock = -1;
-      }
-    } catch (...) {
+  ~UdpLogEmitterImpl() {
+    if (sock >= 0) {
+      close(sock);
+      sock = -1;
     }
   }
 
@@ -39,8 +36,6 @@ public:
     sendto(sock, jsonStr.c_str(), jsonStr.size(), 0, (struct sockaddr *)&addr,
            sizeof(addr));
   }
-
-  void stop() {}
 };
 
 UdpLogEmitter::UdpLogEmitter(int port)

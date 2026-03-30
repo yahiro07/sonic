@@ -163,13 +163,7 @@ private:
 
 public:
   LoggerImpl(std::string subsystem) : subsystem(subsystem) {}
-  ~LoggerImpl() noexcept {
-    try {
-      stop();
-    } catch (...) {
-      // best-effort: destructors must not throw
-    }
-  }
+  ~LoggerImpl() { stop(); }
 
   std::string &getSubsystem() { return subsystem; }
 
@@ -194,7 +188,10 @@ public:
   void stop() {
     running = false;
     if (worker.joinable()) {
-      worker.join();
+      try {
+        worker.join();
+      } catch (...) {
+      }
     }
   }
 
