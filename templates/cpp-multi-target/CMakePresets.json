@@ -4,13 +4,13 @@
     {
       "name": "ninja",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "hidden": true
     },
     {
       "name": "xcode",
       "generator": "Xcode",
-      "binaryDir": "${sourceDir}/build/xcode"
+      "binaryDir": "${sourceDir}/build/${presetName}"
     },
     {
       "name": "debug",
