@@ -198,13 +198,29 @@ function patchPluginSourceFiles({
   projectFolderPath,
   options,
 }: TaskContext) {
+  if (options.loggingOption === "none") {
+    workerHelper_replaceStrings(projectFolderPath, {
+      filePaths: ["source/project1-synthesizer.cpp"],
+      replacements: [
+        {
+          from: `return "http://localhost:3000?debug=1";`,
+          to: `return "http://localhost:3000";`,
+        },
+        {
+          from: `return "app://www-bundles/index.html?debug=1";`,
+          to: `return "app://www-bundles/index.html";`,
+        },
+      ],
+    });
+  }
+
   if (options.frontendVariant === "vanilla_minimum") {
     workerHelper_replaceStrings(projectFolderPath, {
       filePaths: ["source/project1-synthesizer.cpp"],
       replacements: [
         {
-          from: `return "app://www-bundles/index.html";`,
-          to: `return "app://www-vanilla/index.html";`,
+          from: `app://www-bundles/index.html`,
+          to: `app://www-vanilla/index.html`,
         },
       ],
     });
@@ -512,7 +528,10 @@ function setupFrontend({
   }
 }
 
-function applyLoggingOptions({ projectFolderPath, options }: TaskContext) {
+function applyLoggingOptionsToCMakePresets({
+  projectFolderPath,
+  options,
+}: TaskContext) {
   if (options.loggingOption === "none") {
     workerHelper_replaceStrings(projectFolderPath, {
       filePaths: ["CMakePresets.json"],
@@ -583,7 +602,7 @@ function scaffoldProject(
   patchCMakeLists(taskContext);
   arrangeBuildWrapper(taskContext);
   setupFrontend(taskContext);
-  applyLoggingOptions(taskContext);
+  applyLoggingOptionsToCMakePresets(taskContext);
   return true;
 }
 
