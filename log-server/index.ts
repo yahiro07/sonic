@@ -215,7 +215,7 @@ async function start() {
   `,
       );
     } else {
-      console.log(`log server running on port ${configs.udpPortForApp}`);
+      console.log(`udp log server running on port ${configs.udpPortForApp}`);
     }
   } catch (err) {
     console.error("Failed to start log server:", err);
