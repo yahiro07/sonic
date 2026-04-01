@@ -18,7 +18,7 @@ public:
   virtual void processAudio(float *bufferL, float *bufferR,
                             uint32_t frames) = 0;
 
-  virtual void getDesiredEditorSize(uint32_t &width, uint32_t &height) = 0;
+  virtual std::pair<int, int> getDesiredEditorSize() = 0;
   virtual std::string getEditorPageUrl() = 0;
 };
 ```
@@ -107,10 +107,10 @@ The wrapper divides the audio into frames at the boundaries of sample-level even
 ### getDesiredEditorSize
 
 ```cpp
-virtual void getDesiredEditorSize(uint32_t &width, uint32_t &height) = 0;
+virtual std::pair<int, int> getDesiredEditorSize() = 0;
 ```
 
-Returns the width and height you want the UI to display when it first appears. Please specify the desired dimensions in `width` and `height`.
+Returns the width and height you want the UI to display when it first appears. Please specify the desired dimensions. First element of the pair is width, second element is height.
 
 ### getEditorPageUrl
 
@@ -228,9 +228,9 @@ The key used for grouping parameter sets. Parameters with the same key are treat
 ```cpp
 enum ParameterFlags : int {
   None = 0,
-  IsReadOnly = 1 << 0,
-  IsHidden = 1 << 1,
-  NonAutomatable = 1 << 2,
+  IsReadOnly = 1,
+  IsHidden = 2,
+  NonAutomatable = 4,
 };
 ```
 

@@ -53,7 +53,7 @@ function showCommandsAvailable() {
   if (process.env._ && process.env._.includes('npx')) {
     command = 'npx sonic-shell';
   }
-  console.log("supported invocations:");
+  console.log("supported commands:");
   console.log(command);
   console.log(`${command} create`);
   console.log(`${command} logger`);
