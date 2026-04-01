@@ -89,6 +89,27 @@ using namespace sonic;
 }
 @end
 
+@interface PluginWKWebView : WKWebView
+@end
+
+@implementation PluginWKWebView
+
+// Send the first click directly to the WebView's internal component
+- (BOOL)acceptsFirstMouse:(NSEvent *)event {
+  return YES;
+}
+
+// Request focus immediately after being attached to the plugin host window
+- (void)viewDidMoveToWindow {
+  [super viewDidMoveToWindow];
+  if (self.window) {
+    [self.window setAcceptsMouseMovedEvents:YES];
+    [self.window makeFirstResponder:self];
+  }
+}
+
+@end
+
 static NSString *ThisModuleDirPath() {
   Dl_info info{};
   if (dladdr((const void *)&ThisModuleDirPath, &info) == 0 || !info.dli_fname) {
@@ -152,8 +173,8 @@ MacWebView::MacWebView() : impl(new Impl()) {
                                             name:@"pluginEditor"];
   config.userContentController = userContentController;
 
-  WKWebView *webView = [[WKWebView alloc] initWithFrame:CGRectZero
-                                          configuration:config];
+  PluginWKWebView *webView = [[PluginWKWebView alloc] initWithFrame:CGRectZero
+                                                      configuration:config];
   impl->webView = webView;
 
   if (@available(macOS 13.3, *)) {
