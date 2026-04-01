@@ -5,9 +5,11 @@ import path from "path";
 import { casingToCapital, incrementSuffix } from "@/src/common";
 import { templateEntries } from "./workers/template-entries";
 import { appEnvs, appEnvs_getPackageRootFolderPath } from "@/src/base/app-envs";
+import childProcess from "child_process";
 
 type InputCommand =
   | { type: "create" }
+  | { type: "logger" }
   | { type: "help" }
   | { type: "version" }
   | { type: "cancelled" };
@@ -17,6 +19,7 @@ async function chooseOperation(): Promise<InputCommand> {
     message: "Select an operation",
     options: [
       { value: "create", hint: "Create a new project" },
+      { value: "logger", hint: "Start local log server" },
       { value: "help", hint: "Show help" },
       { value: "version", hint: "Show version" },
       { value: "cancelled", label: "cancel", hint: "Cancel operation" },
@@ -35,6 +38,8 @@ async function parseArgs(args: string[]): Promise<InputCommand | undefined> {
     return await chooseOperation();
   } else if (len === 1 && firstArg === "create") {
     return { type: "create" };
+  } else if (len === 1 && firstArg === "logger") {
+    return { type: "logger" };
   } else if (len == 1 && (firstArg === "version" || firstArg === "--version")) {
     return { type: "version" };
   } else if (len == 1 && (firstArg === "help" || firstArg === "--help")) {
@@ -49,6 +54,7 @@ async function handleInputCommand(inputCommand: InputCommand | undefined) {
     console.log("invocation should be one of:");
     console.log("sonic");
     console.log("sonic create");
+    console.log("sonic logger");
     console.log("sonic --version");
     console.log("sonic --help");
   } else if (inputCommand.type === "version") {
@@ -64,13 +70,28 @@ async function handleInputCommand(inputCommand: InputCommand | undefined) {
     console.log("supported commands:");
     console.log("sonic");
     console.log("sonic create");
+    console.log("sonic logger");
     console.log("sonic --version");
     console.log("sonic --help");
   } else if (inputCommand.type === "create") {
     await createProject();
   } else if (inputCommand.type === "cancelled") {
     console.log("operation cancelled.");
+  } else if (inputCommand.type === "logger") {
+    const rootPath = appEnvs_getPackageRootFolderPath();
+    const logServerJsPath = path.join(rootPath, "log-server.js");
+    if (!fs.existsSync(logServerJsPath)) {
+      console.error("log-server.js not found.");
+      return;
+    }
+    const logServerProcess = childProcess.spawn("node", [logServerJsPath], {
+      stdio: "inherit",
+    });
+    logServerProcess.on("close", (code) => {
+      console.log(`log server exited with code ${code}`);
+    });
   }
+
 }
 
 type BaseOptions = {
