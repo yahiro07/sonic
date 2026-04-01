@@ -15,7 +15,8 @@
   "files": [
     "bin",
     "templates",
-    "README.md"
+    "README.md",
+    "log-server.js"
   ],
   "repository": {
     "type": "git",
