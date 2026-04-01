@@ -10,8 +10,9 @@ private:
 public:
   std::vector<ParameterItem> getItems() { return parameters; }
 
-  void addUnary(uint64_t address, Str identifier, Str label,
-                double defaultValue, Str group, ParameterFlags flags);
+  void addFloat(uint64_t address, Str identifier, Str label,
+                double defaultValue, double minValue, double maxValue,
+                Str group, ParameterFlags flags);
   void addEnum(uint64_t address, Str identifier, Str label,
                Str defaultValueString, StrVec valueStrings, Str group,
                ParameterFlags flags);

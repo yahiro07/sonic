@@ -11,15 +11,16 @@ private:
 public:
   std::vector<ParameterSpecItem> getItems() { return parameters; }
 
-  void addUnary(uint32_t id, Str paramKey, Str label, double defaultValue,
-                Str group, ParameterFlags flags) override {
+  void addFloat(uint32_t id, Str paramKey, Str label, double defaultValue,
+                double minValue, double maxValue, Str group,
+                ParameterFlags flags) override {
     parameters.push_back({
         .id = id,
         .paramKey = std::string(paramKey),
         .label = std::string(label),
         .defaultValue = defaultValue,
-        .minValue = 0.0,
-        .maxValue = 1.0,
+        .minValue = minValue,
+        .maxValue = maxValue,
         .valueStrings = {},
         .type = ParameterType::Unary,
         .group = std::string(group),

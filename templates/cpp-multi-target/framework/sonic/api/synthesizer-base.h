@@ -20,8 +20,9 @@ protected:
 
 public:
   virtual ~ParameterBuilder() = default;
-  virtual void addUnary(uint32_t id, Str paramKey, Str label,
-                        double defaultValue, Str group = "",
+  virtual void addFloat(uint32_t id, Str paramKey, Str label,
+                        double defaultValue, double minValue = 0.0,
+                        double maxValue = 1.0, Str group = "",
                         ParameterFlags flags = ParameterFlags::None) = 0;
   virtual void addEnum(uint32_t id, Str paramKey, Str label,
                        Str defaultValueString, StrVec valueStrings,

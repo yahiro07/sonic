@@ -30,15 +30,16 @@ public:
     synthInstance->setupParameters(*this);
   }
 
-  void addUnary(ParamId id, Str paramKey, Str label, double defaultValue,
+  void addFloat(ParamId id, Str paramKey, Str label, double defaultValue,
+                double minValue, double maxValue, Str group,
                 ParameterFlags flags) override {
     parameters.push_back({
         .id = id,
         .paramKey = std::string(paramKey),
         .label = std::string(label),
         .defaultValue = defaultValue,
-        .minValue = 0.0,
-        .maxValue = 1.0,
+        .minValue = minValue,
+        .maxValue = maxValue,
         .valueStrings = {},
         .type = CppParameterType::Unary,
         .flags = flags,

@@ -50,8 +50,8 @@ void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addBool(kOscEnabled, "oscEnabled", "Osc Enabled", true);
   builder.addEnum(kOscWave, "oscWave", "Wave Type", "Saw",
                   {"Saw", "Square", "Triangle", "Sine"});
-  builder.addUnary(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
-  builder.addUnary(kOscVolume, "oscVolume", "OSC Volume", 0.5);
+  builder.addFloat(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
+  builder.addFloat(kOscVolume, "oscVolume", "OSC Volume", 0.5);
 }
 ```
 
@@ -160,8 +160,9 @@ protected:
 
 public:
   virtual ~ParameterBuilder() = default;
-  virtual void addUnary(uint32_t id, Str paramKey, Str label,
-                        double defaultValue, Str group = "",
+  virtual void addFloat(uint32_t id, Str paramKey, Str label,
+                        double defaultValue, double minValue = 0.0,
+                        double maxValue = 1.0, Str group = "",
                         ParameterFlags flags = ParameterFlags::None) = 0;
   virtual void addEnum(uint32_t id, Str paramKey, Str label,
                        Str defaultValueString, StrVec valueStrings,
@@ -179,17 +180,17 @@ void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addBool(kOscEnabled, "oscEnabled", "Osc Enabled", true);
   builder.addEnum(kOscWave, "oscWave", "Wave Type", "Saw",
                   {"Saw", "Square", "Triangle", "Sine"});
-  builder.addUnary(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
-  builder.addUnary(kOscVolume, "oscVolume", "OSC Volume", 0.5);
+  builder.addFloat(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
+  builder.addFloat(kOscVolume, "oscVolume", "OSC Volume", 0.5);
 ```
 
 Each parameter has an ID, key, label, default value, group, and flags.
 
 ### Parameter Types
 
-#### Unary Parameter
+#### Float Parameter
 
-A parameter with a continuous real value in the range of 0.0 to 1.0.
+A parameter with a continuous real value.
 
 #### Enum Parameter
 
