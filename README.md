@@ -1,8 +1,6 @@
 # Sonic
 
-WebView-based audio plugin framework.
-
-Sonic is an audio plugin framework that supports VST3, CLAP, and AUv3.
+Sonic is an audio plugin framework that uses WebView for the UI. It supports multiple plugin formats such as VST3, CLAP, and AUv3.
 
 It is designed around the use of a WebView, with simple JSON based messaging between the UI and DSP processing. The audio engine is implemented in C++, while the UI is intended to be built using frameworks such as React or Vue.
 
