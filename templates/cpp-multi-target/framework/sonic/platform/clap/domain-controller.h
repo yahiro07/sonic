@@ -55,13 +55,13 @@ public:
   double getParameterValue(ParamId id) { return parameterStore.get(id); }
 };
 
-class ParameterService {
+class ParametersService {
   ParameterRegistry &parametersRegistry;
   ParametersHub &parametersHub;
 
 public:
-  ParameterService(ParameterRegistry &parametersRegistry,
-                   ParametersHub &parametersHub)
+  ParametersService(ParameterRegistry &parametersRegistry,
+                    ParametersHub &parametersHub)
       : parametersRegistry(parametersRegistry), parametersHub(parametersHub) {}
 
   int subscribeParameterChanges(std::function<void(ParamId, double)> listener) {
@@ -136,11 +136,12 @@ public:
 };
 
 class ControllerFacade : public IControllerFacade {
-  ParameterService &parameterService;
+  ParametersService &parameterService;
   NoteService &noteService;
 
 public:
-  ControllerFacade(ParameterService &parameterService, NoteService &noteService)
+  ControllerFacade(ParametersService &parameterService,
+                   NoteService &noteService)
       : parameterService(parameterService), noteService(noteService) {}
 
   int subscribeParameterChange(
@@ -239,7 +240,7 @@ public:
   ParameterRegistry parametersRegistry;
   ParameterStore parameterStore; // parameters in main thread
   ParametersHub parametersHub{parameterStore};
-  ParameterService parameterService{parametersRegistry, parametersHub};
+  ParametersService parameterService{parametersRegistry, parametersHub};
   NoteService noteService;
   ControllerFacade controllerFacade{parameterService, noteService};
 

@@ -41,13 +41,13 @@ public:
   double getParameterValue(ParamId id) { return parameterStore.get(id); }
 };
 
-class ParameterService {
+class ParametersService {
   ParameterRegistry &parametersRegistry;
   ParametersHub &parametersHub;
 
 public:
-  ParameterService(ParameterRegistry &parametersRegistry,
-                   ParametersHub &parametersHub)
+  ParametersService(ParameterRegistry &parametersRegistry,
+                    ParametersHub &parametersHub)
       : parametersRegistry(parametersRegistry), parametersHub(parametersHub) {}
 
   int subscribeParameterChanges(std::function<void(ParamId, double)> listener) {
@@ -118,15 +118,15 @@ public:
 };
 
 class ControllerFacade : public IControllerFacade {
-  ParameterService &parameterService;
+  ParametersService &parameterService;
   NoteService &noteService;
   IMainLoopTimer &mainLoopTimer;
 
   int viewCount = 0;
 
 public:
-  ControllerFacade(ParameterService &parameterService, NoteService &noteService,
-                   IMainLoopTimer &mainLoopTimer)
+  ControllerFacade(ParametersService &parameterService,
+                   NoteService &noteService, IMainLoopTimer &mainLoopTimer)
       : parameterService(parameterService), noteService(noteService),
         mainLoopTimer(mainLoopTimer) {}
 
@@ -205,7 +205,7 @@ class DomainController {
       parametersRegistry};
   NoteService noteService;
   IControllerSideMessagePort &messagePort;
-  ParameterService parameterService{parametersRegistry, parametersHub};
+  ParametersService parameterService{parametersRegistry, parametersHub};
   IMainLoopTimer &mainLoopTimer;
   ControllerFacade controllerFacade{parameterService, noteService,
                                     mainLoopTimer};

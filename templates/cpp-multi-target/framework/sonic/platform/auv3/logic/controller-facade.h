@@ -8,11 +8,12 @@ namespace sonic {
 
 class ControllerFacade : public IControllerFacade {
 private:
-  ParameterService &parameterService;
+  ParametersService &parameterService;
   NoteService &noteService;
 
 public:
-  ControllerFacade(ParameterService &parameterService, NoteService &noteService)
+  ControllerFacade(ParametersService &parameterService,
+                   NoteService &noteService)
       : parameterService(parameterService), noteService(noteService) {}
 
   int subscribeParameterChange(

@@ -3,6 +3,7 @@
 #include "./events.h"
 #include "./note-service.h"
 #include "./parameters-service.h"
+#include "sonic/core/parameter-spec-helper.h"
 #include <cstdlib>
 #include <cstring>
 #include <sonic/api/synthesizer-base.h>
@@ -16,25 +17,15 @@
 
 namespace sonic {
 
-static int getMaxIdFromParameterItems(const ParameterSpecArray &items) {
-  int maxId = 0;
-  for (const auto &item : items) {
-    if (item.id > maxId) {
-      maxId = item.id;
-    }
-  }
-  return maxId;
-}
-
 class EntryController {
 private:
   ParameterRegistry parametersRegistry;
   SynthesizerBase &synth;
   ParameterTreeWrapper &parameterTreeWrapper;
-  ParameterService parameterService;
+  ParametersService parameterService;
   NoteService noteService;
   ControllerFacade controllerFacade;
-  ParameterStore parameterStore; // parameters in audio thread
+  ParameterStore parameterStore; // parameters in main thread
 
   SPSCQueue<UpstreamEvent, 32> upstreamEventQueue;
   SPSCQueue<DownstreamEvent, 32> downstreamEventQueue;
@@ -55,19 +46,23 @@ public:
 
   void initialize() {
     auto parameterItems = parametersRegistry.getParameterItems();
-    auto maxId = getMaxIdFromParameterItems(parameterItems);
+    auto maxId =
+        ParameterSpecHelper::getMaxIdFromParameterItems(parameterItems);
     parameterStore.setup(maxId);
     for (const auto &item : parameterItems) {
       parameterStore.set(item.id, item.defaultValue);
     }
     parameterTreeWrapper.setImplementorValueObserver(
         [this](uint64_t address, double value) {
-          auto id = (int32_t)address;
+          auto id = (uint32_t)address;
           this->parameterStore.set(id, value);
-          this->synth.setParameter(id, value);
+          this->upstreamEventQueue.push(UpstreamEvent{
+              .type = UpstreamEventType::ParameterChange,
+              .parameter = {id, value},
+          });
         });
     parameterTreeWrapper.setImplementorValueProvider([this](uint64_t address) {
-      auto id = (int32_t)address;
+      auto id = (uint32_t)address;
       return parameterStore.get(id);
     });
 

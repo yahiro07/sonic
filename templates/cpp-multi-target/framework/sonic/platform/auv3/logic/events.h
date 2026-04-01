@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 
 namespace sonic {
 
@@ -20,6 +21,7 @@ struct DownstreamEvent {
 
 enum class UpstreamEventType {
   NoteRequest,
+  ParameterChange,
 };
 
 struct UpstreamEvent {
@@ -29,6 +31,10 @@ struct UpstreamEvent {
       int noteNumber;
       double velocity; // 0 for note off
     } note;
+    struct {
+      uint32_t id;
+      double value;
+    } parameter;
   };
 };
 } // namespace sonic
