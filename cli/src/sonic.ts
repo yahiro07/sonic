@@ -48,15 +48,22 @@ async function parseArgs(args: string[]): Promise<InputCommand | undefined> {
   return undefined;
 }
 
+function showCommandsAvailable() {
+  let command = 'sonic';
+  if (process.env._ && process.env._.includes('npx')) {
+    command = 'npx sonic-shell';
+  }
+  console.log("supported invocations:");
+  console.log(command);
+  console.log(`${command} create`);
+  console.log(`${command} logger`);
+  console.log(`${command} help`);
+  console.log(`${command} version`);
+}
+
 async function handleInputCommand(inputCommand: InputCommand | undefined) {
   if (!inputCommand) {
     console.log("incompatible command.");
-    console.log("invocation should be one of:");
-    console.log("sonic");
-    console.log("sonic create");
-    console.log("sonic logger");
-    console.log("sonic --version");
-    console.log("sonic --help");
   } else if (inputCommand.type === "version") {
     try {
       const rootPath = appEnvs_getPackageRootFolderPath();
@@ -67,12 +74,7 @@ async function handleInputCommand(inputCommand: InputCommand | undefined) {
       console.log("sonic cli version (failed to read package.json)");
     }
   } else if (inputCommand.type === "help") {
-    console.log("supported commands:");
-    console.log("sonic");
-    console.log("sonic create");
-    console.log("sonic logger");
-    console.log("sonic --version");
-    console.log("sonic --help");
+    showCommandsAvailable();
   } else if (inputCommand.type === "create") {
     await createProject();
   } else if (inputCommand.type === "cancelled") {
