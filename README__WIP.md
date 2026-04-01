@@ -4,7 +4,7 @@ WebView-based audio plugin framework.
 
 Sonic is an audio plugin framework that supports VST3, CLAP, and AUv3.
 
-It is designed around the use of a WebView, enabling smooth parameter communication between the UI and DSP processing. The audio engine is implemented in C++, while the UI is intended to be built using frameworks such as React or Vue.
+It is designed around the use of a WebView, with simple JSON based messaging between the UI and DSP processing. The audio engine is implemented in C++, while the UI is intended to be built using frameworks such as React or Vue.
 
 A scaffolding tool is available via npm, allowing you to quickly generate a template project. The framework also includes a CLI-based development host for loading and displaying VST3 and CLAP plugins, making it easy to test plugins directly from the terminal.
 
@@ -17,7 +17,7 @@ The framework provides two variant of templates:
 
 The core synthesizer API is shared across targets, with multiple wrapper implementations built on top of it.
 
-When developing AUv3 plugins, using the exact same codebase as VST3/CLAP can sometimes limit fine-grained control. To address this, Sonic provides multiple templates so you can choose the most appropriate implementation for each target and maintain flexibility.
+When developing AUv3 plugins, using the exact same codebase as VST3/CLAP can sometimes limit fine-grained control. To address this, Sonic provides multiple templates so you can choose appropriate implementation for each target and maintain flexibility.
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ Build step requires the following tools:
 - Xcode (for AUv3)
 - GNU Make (optional, for convenience)
 
-If you already have an environment capable of building VST3 or CLAP plugins with CMake, you should be able to build Sonic template projects without additional setup.
+For generated C++ projects, if you already have an environment capable of building VST3 or CLAP plugins with CMake, you should be able to build it without additional setup.
 
 ## Project Generation
 
@@ -68,7 +68,7 @@ Sonic Framework CLI
 │  Minimum
 │
 ◇  Use UDP logger?
-│  No
+│  Yes
 │
 ◇  AUv3 Manufacturer Code
 │  Myco
@@ -140,13 +140,16 @@ VST3 and CLAP plugins are generated in `build/ninja-debug/lib/Debug/`.
 
 ## Testing with DevHost
 
+If you opt-in DevHost option during project setup, the debug host is included in the build and ready to use. To debug the plugin with the host, run the command below.
+
 ```bash
 ./build/ninja-debug/bin/Debug/VstDevHost ./build/ninja-debug/lib/Debug/cpp-multi-target1.vst3
 ```
 
+This command is also can be run from `sh ./run.sh`.
+
 CLI development host is started. The host loads the plugin and displays its UI.
 Default audio input/output and Midi keyboard input are available.
-This command is also can be run from `sh ./run.sh`.
 
 ## Quick Run
 
@@ -205,7 +208,7 @@ public:
 
 `source/*-synthesizer.h` and `source/*-synthesizer.cpp` extend this abstract class and provide plugin core implementation.
 
-For the detailed information, please refer to [docs/basic-interfaces.md](docs/cpp-multi-target/basic-interfaces.md).
+For the detailed information, please refer to [docs/cpp-multi-target/basic-interfaces.md](docs/cpp-multi-target/basic-interfaces.md).
 
 ## Webview Messaging
 
@@ -237,7 +240,7 @@ window.pluginEditorCallback = (msg: MessageFromApp) => {
 
 Communication between C++ and WebView is done using JSON objects.
 
-For the detailed information, please refer to [docs/webview-messaging.md](docs/cpp-multi-target/webview-messaging.md).
+For the detailed information, please refer to [docs/cpp-multi-target/webview-messaging.md](docs/cpp-multi-target/webview-messaging.md).
 
 ## Development Flow
 
