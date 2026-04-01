@@ -1,10 +1,3 @@
-//
-//  SimplePlayEngine.swift
-//  Project1
-//
-//  Created by ore on 2026/02/21.
-//
-
 @preconcurrency import AVFAudio
 import AVFoundation
 import CoreAudioKit

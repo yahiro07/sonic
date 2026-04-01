@@ -1,6 +1,28 @@
 import AudioToolbox
 import Foundation
 
+func mapParameterFlags(_ flags: ParameterFlags, _ itemType: CppParameterType)
+  -> AudioUnitParameterOptions
+{
+  var resFlags: AudioUnitParameterOptions = []
+
+  if itemType == .Enum {
+    resFlags.insert(.flag_ValuesHaveStrings)
+  }
+  if flags.rawValue & ParameterFlags.IsHidden.rawValue == 0 {
+    resFlags.insert(.flag_IsReadable)
+
+    if flags.rawValue & ParameterFlags.IsReadOnly.rawValue == 0 {
+      resFlags.insert(.flag_IsWritable)
+    }
+  }
+
+  if flags.rawValue & ParameterFlags.NonAutomatable.rawValue == 0 {
+    resFlags.insert(.flag_CanRamp)
+  }
+  return resFlags
+}
+
 func pullParameterDefinitionsFromCppSide(_ synthInstanceHandle: SynthInstanceHandle)
   -> ParameterTreeSpec
 {
@@ -9,23 +31,19 @@ func pullParameterDefinitionsFromCppSide(_ synthInstanceHandle: SynthInstanceHan
 
   let parameterSpecs = ParameterTreeSpec {
     ParameterGroupSpec(
-      //nesting is not supported, all parameters are flattened into a single group
+      //currently nesting is not supported, all parameters are flattened into a single group
       identifier: "global",
       name: "Global",
       children: parameterBuilder.getItems().map { item in
         ParameterSpec(
-          address: item.address,
-          identifier: String(item.identifier),
+          address: UInt64(item.id),
+          identifier: String(item.paramKey),
           name: String(item.label),
           units: item.type == .Enum ? .indexed : (item.type == .Bool ? .boolean : .generic),
-          valueRange: item.minValue...item.maxValue,
-          defaultValue: item.defaultValue,
+          valueRange: Float(item.minValue)...Float(item.maxValue),
+          defaultValue: Float(item.defaultValue),
           unitName: nil,
-          flags: item.type == .Enum
-            ? [
-              .flag_IsWritable, .flag_IsReadable,
-              .flag_ValuesHaveStrings,
-            ] : [.flag_IsWritable, .flag_IsReadable],
+          flags: mapParameterFlags(item.flags, item.type),
           valueStrings: item.valueStrings.empty()
             ? nil : item.valueStrings.map { String($0) },
           dependentParameters: nil

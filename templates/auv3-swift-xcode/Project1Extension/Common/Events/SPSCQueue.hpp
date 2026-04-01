@@ -10,8 +10,9 @@ class SPSCQueue {
                 "Capacity must be power of two");
 
 private:
-  // Swiftからインポートされるヘッダでstd::atomic<uint32_t>を使うとビルドエラーになる
-  // Clangのimporterが型を解釈できず落ちている(?)std::atomic_ref<uint32_t>は問題ない
+  // Using `std::atomic<uint32_t>` in headers imported from Swift causes a build
+  // error Clang's importer cannot parse the type and crashes (?)
+  // `std::atomic_ref<uint32_t>` works fine
   // std::atomic<uint32_t> readIndex{0};
   // std::atomic<uint32_t> writeIndex{0};
   uint32_t _readIndex = 0;

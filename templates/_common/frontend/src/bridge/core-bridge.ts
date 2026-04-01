@@ -18,7 +18,7 @@ type MessageFromApp =
 const windowTyped = window as unknown as {
   webkit?: {
     messageHandlers: {
-      pluginEditor: {
+      pluginEditor?: {
         postMessage: (msg: string | object) => void;
       };
     };
@@ -31,7 +31,7 @@ const listeners: Set<EditorBridgeMessageLister> = new Set();
 
 function sendMessage(msg: MessageFromUi) {
   logger.log("⇠ui", msg);
-  windowTyped.webkit?.messageHandlers.pluginEditor.postMessage(msg);
+  windowTyped.webkit?.messageHandlers.pluginEditor?.postMessage(msg);
 }
 
 function subscribe(listener: EditorBridgeMessageLister): () => void {

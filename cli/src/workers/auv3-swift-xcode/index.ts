@@ -7,18 +7,34 @@ import {
   workerHelper_updateFileNamesWithPrefix,
   workerHelper_getNewProjectFolderPath,
   workerHelper_copyProjectContentFiles_withRenaming,
+  workerHelper_buildFrontend,
 } from "@/src/common";
 import * as clackPrompts from "@clack/prompts";
 
 type TemplateOptions = {
+  frontendVariant: "react" | "vanilla_minimum";
   auManufacturer: string;
   auSubtype: string;
+  buildFrontend: boolean;
 };
 
 async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
+  const _frontendVariant = await clackPrompts.select({
+    message: "Select frontend variation",
+    options: [
+      { value: "react", label: "React" },
+      { value: "vanilla_minimum", label: "Vanilla Minimum" },
+    ],
+    initialValue: "react",
+  });
+  if (clackPrompts.isCancel(_frontendVariant)) {
+    return "cancelled";
+  }
+  const frontendVariant =
+    _frontendVariant as TemplateOptions["frontendVariant"];
+
   let auManufacturer: string | symbol = "";
   let auSubtype: string | symbol = "";
-
   const auManufacturerDefault = "Myco";
   auManufacturer = await clackPrompts.text({
     message: `AUv3 Manufacturer Code`,
@@ -42,9 +58,22 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     auSubtype = auSubtypeDefault;
   }
 
+  let buildFrontend = false;
+  if (frontendVariant === "react") {
+    const _buildFrontend = await clackPrompts.confirm({
+      message: "Build frontend now?",
+      initialValue: true,
+    });
+    if (clackPrompts.isCancel(_buildFrontend)) {
+      return "cancelled";
+    }
+    buildFrontend = _buildFrontend;
+  }
   return {
+    frontendVariant,
     auManufacturer,
     auSubtype,
+    buildFrontend,
   };
 }
 
@@ -64,6 +93,7 @@ function instantiateProject({
   workerHelper_copyProjectContentFiles(projectName, templateName, [
     "Project1",
     "Project1.xcodeproj/project.pbxproj",
+    "Project1.xcodeproj/xcshareddata",
     "Project1Extension/Common",
     "Project1Extension/DSP",
     "Project1Extension/Root",
@@ -73,6 +103,21 @@ function instantiateProject({
   workerHelper_copyProjectContentFiles_withRenaming(projectName, templateName, [
     { from: ".gitignore_template", to: ".gitignore" },
   ]);
+
+  if (options.frontendVariant === "react") {
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
+  } else if (options.frontendVariant === "vanilla_minimum") {
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["pages"]);
+    workerHelper_replaceStrings(projectFolderPath, {
+      filePaths: ["Project1Extension/Root/MainContentView.swift"],
+      replacements: [
+        {
+          from: `webViewIo.loadURL("app://www-bundles/index.html")`,
+          to: `webViewIo.loadURL("app://www-vanilla/index.html")`,
+        },
+      ],
+    });
+  }
 
   const projectNameCapital = casingToCapital(projectName);
 
@@ -88,7 +133,7 @@ function instantiateProject({
   workerHelper_replaceStrings(projectFolderPath, {
     filePaths: ["Project1/Model/AudioUnitHostModel.swift"],
     replacements: [
-      { from: `"prj1"`, to: `"${auSubtype}"` },
+      { from: `"prj2"`, to: `"${auSubtype}"` },
       { from: `"Myco"`, to: `"${auManufacturer}"` },
     ],
   });
@@ -97,7 +142,7 @@ function instantiateProject({
     filePaths: ["Project1Extension/info.plist"],
     replacements: [
       {
-        from: "<string>prj1</string>",
+        from: "<string>prj2</string>",
         to: `<string>${auSubtype}</string>`,
       },
       {
@@ -112,7 +157,11 @@ function instantiateProject({
   });
 
   workerHelper_replaceStrings(projectFolderPath, {
-    filePaths: ["Project1.xcodeproj/project.pbxproj"],
+    filePaths: [
+      "Project1.xcodeproj/project.pbxproj",
+      "Project1.xcodeproj/xcshareddata/xcschemes/Project1.xcscheme",
+      "Project1.xcodeproj/xcshareddata/xcschemes/Project1Extension.xcscheme",
+    ],
     replacements: [
       {
         from: "Project1",
@@ -126,6 +175,8 @@ function instantiateProject({
       "Project1/Project1App.swift",
       "Project1/Project1.entitlements",
       "Project1",
+      "Project1.xcodeproj/xcshareddata/xcschemes/Project1.xcscheme",
+      "Project1.xcodeproj/xcshareddata/xcschemes/Project1Extension.xcscheme",
       "Project1.xcodeproj",
       "Project1Extension/Common/Project1Extension-Bridging-Header.h",
       "Project1Extension",
@@ -133,6 +184,15 @@ function instantiateProject({
     originalPrefix: "Project1",
     newPrefix: projectNameCapital,
   });
+
+  if (options.frontendVariant === "react") {
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
+    if (options.buildFrontend) {
+      workerHelper_buildFrontend(projectFolderPath, "frontend");
+    }
+  } else {
+    workerHelper_copyProjectContentFiles(projectName, "_common", ["pages"]);
+  }
 
   return true;
 }

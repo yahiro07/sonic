@@ -1,16 +1,16 @@
 import Combine
 
 enum MessageFromUI {
-  case putLogItem(timeStamp: Double, kind: String, message: String)
-  //UI読み込み完了時の通知,このあとプラグイン本体から初期パラメタを送信する
+  case putLogItem(timestamp: Double, logKind: String, message: String)
+  //Notification when the UI has finished loading; the plugin will then send the initial parameters
   case uiLoaded
-  //UI操作で変更されたパラメタをプラグイン本体に送信
+  //Send parameters changed via UI operations to the plugin
   case beginParameterEdit(paramKey: String)
   case endParameterEdit(paramKey: String)
   case setParameter(paramKey: String, value: Float)
-  //UIからパラメタセットを受け取り,必要ならマイグレーションを適用してparameterTreeに反映する,プリセットロード用
+  //Receives a parameter set from the UI, applies migrations if necessary, and updates the parameterTree; for loading presets
   case loadFullParameters(parametersVersion: Int, parameters: [String: Float])
-  //UIに含まれる鍵盤などからのプラグイン本体に送るノートオンオフ要求
+  //Note on/off requests sent from the keyboard and other UI elements to the plugin
   case noteOnRequest(noteNumber: Int)
   case noteOffRequest(noteNumber: Int)
   //
@@ -23,10 +23,10 @@ enum MessageFromUI {
 }
 
 enum MessageFromApp {
-  //ホストやプラグイン本体で変更されたパラメタをUIに送信
+  //Send parameters modified by the host or the plugin itself to the UI
   case setParameter(paramKey: String, value: Float)
   case bulkSendParameters(params: [String: Float])
-  //ホストから送られたノートをUI側で受け取るメッセージ
+  //A message represents notes sent from the host
   case hostNoteOn(noteNumber: Int, velocity: Float)
   case hostNoteOff(noteNumber: Int)
   case standaloneAppFlag

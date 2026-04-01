@@ -28,9 +28,9 @@ private func serializeDictionaryToJsonString(_ dict: [String: Any]) -> String {
 private func sendMessageToWebViewRaw(webView: WKWebView, jsDataDictionary: JsDataDictionary) {
   let jsStringifiedData = serializeDictionaryToJsonString(jsDataDictionary)
   // logger.log("sending message to UI: \(jsStringifiedData)")
-  //window.putMessageFromApp()を呼び出す
+  //window.pluginEditorCallback()を呼び出す
   let jsCode =
-    "window.putMessageFromApp && window.putMessageFromApp(\(jsStringifiedData));"
+    "window.pluginEditorCallback && window.pluginEditorCallback(\(jsStringifiedData));"
   webView.evaluateJavaScript(jsCode)
 }
 
@@ -141,18 +141,15 @@ class MySchemeHandler: NSObject, WKURLSchemeHandler {
     // print("request url:", url.absoluteString)
     // print("url.path:", url.path)
 
-    let host = url.host ?? ""
-    let path = url.path
-
-    let relativePath = host + path
-
     let resourceURL = Bundle.main.resourceURL!
-    let fileURL = resourceURL.appendingPathComponent(relativePath)
+    let fileURL = resourceURL.appendingPathComponent("pages")
+      .appendingPathComponent(url.host ?? "")
+      .appendingPathComponent(url.path)
 
-    // print("Loading:", fileURL.path)
+    // print("Loading: \(fileURL.path)")
 
     guard let data = try? Data(contentsOf: fileURL) else {
-      logger.error("Failed to load file for URL: \(url), path: \(path)")
+      logger.error("Failed to load file for URL: \(url), path: \(fileURL.path)")
       urlSchemeTask.didFailWithError(NSError(domain: "file", code: 404))
       return
     }
@@ -200,7 +197,7 @@ func commonWebViewSetup(
     ScriptMessageHandler { [weak coordinator] dict in
       coordinator?.dispatchFromUI(dict)
     },
-    name: "putMessageFromUI"
+    name: "pluginEditor"
   )
   config.userContentController = userContentController
 
@@ -235,7 +232,7 @@ func commonWebViewSetup(
   }
 
 #elseif os(iOS)
-  // iOSではUIViewRepresentableを使用
+  // Use UIViewRepresentable on iOS
   struct LocalWebView: UIViewRepresentable {
 
     let onBind: (WebViewIoProtocol) -> Void
