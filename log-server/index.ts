@@ -194,26 +194,29 @@ async function setupHttpServerForUi() {
 }
 
 async function start() {
-  console.log("log server");
-
   try {
+    const withHttp = process.argv.includes("--with-http");
     const udpApp = await setupUdpServerForApp();
-    const httpServer = await setupHttpServerForUi();
+    const httpServer = withHttp ? await setupHttpServerForUi() : undefined;
 
     const shutdown = () => {
       udpApp.close();
-      httpServer.close();
+      httpServer?.close();
     };
 
     process.once("SIGINT", shutdown);
     process.once("SIGTERM", shutdown);
 
-    console.log(
-      `Log server running:
+    if (httpServer) {
+      console.log(
+        `Log server running:
     UDP_PORT_FOR_APP : ${configs.udpPortForApp}
     HTTP_PORT_FOR_UI : ${configs.httpPortForUi}
   `,
-    );
+      );
+    } else {
+      console.log(`log server running on port ${configs.udpPortForApp}`);
+    }
   } catch (err) {
     console.error("Failed to start log server:", err);
     process.exitCode = 1;
