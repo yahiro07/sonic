@@ -1,4 +1,5 @@
 #include "project1-synthesizer.h"
+#include <sonic/common/logger.h>
 #include <stdio.h>
 
 namespace project1 {
@@ -20,10 +21,15 @@ void Project1Synthesizer::setupParameters(sonic::ParameterBuilder &builder) {
 
 void Project1Synthesizer::prepareProcessing(double sampleRate,
                                             uint32_t maxFrameCount) {
+  sonic::logger.log("prepareProcessing sampleRate: %f, maxFrameCount: %d",
+                    sampleRate, maxFrameCount);
   this->sampleRate = sampleRate;
 }
 
 void Project1Synthesizer::setParameter(uint32_t id, double value) {
+  if (id < 4) {
+    sonic::logger.log("setParameter id: %d, value: %f", id, value);
+  }
   if (id == kOscEnabled) {
     oscEnabled = value;
   } else if (id == kOscWave) {
@@ -36,11 +42,13 @@ void Project1Synthesizer::setParameter(uint32_t id, double value) {
 }
 
 void Project1Synthesizer::noteOn(int noteNumber, double velocity) {
+  sonic::logger.log("noteOn %d", noteNumber);
   this->noteNumber = noteNumber;
   this->gateOn = true;
 }
 
 void Project1Synthesizer::noteOff(int noteNumber) {
+  sonic::logger.log("noteOff %d", noteNumber);
   if (noteNumber == this->noteNumber) {
     this->gateOn = false;
   }
@@ -94,10 +102,10 @@ void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
 }
 
 std::string Project1Synthesizer::getEditorPageUrl() {
-  if (0) {
+  if (1) {
     return "http://localhost:3000?debug=1";
   } else {
-    return "app://www-bundles/index.html";
+    return "app://www-bundles/index.html?debug=1";
   }
 }
 

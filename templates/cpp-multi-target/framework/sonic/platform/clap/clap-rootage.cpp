@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <sonic/common/logger.h>
 #include <string.h>
 
 namespace sonic {
@@ -331,8 +332,11 @@ static const clap_plugin_factory_t pluginFactory = {
 
 static const clap_plugin_entry_t clapEntry = {
     .clap_version = CLAP_VERSION_INIT,
-    .init = [](const char *path) -> bool { return true; },
-    .deinit = []() {},
+    .init = [](const char *path) -> bool {
+      logger.start();
+      return true;
+    },
+    .deinit = []() { logger.stop(); },
     .get_factory = [](const char *factoryID) -> const void * {
       return strcmp(factoryID, CLAP_PLUGIN_FACTORY_ID) ? nullptr
                                                        : &pluginFactory;

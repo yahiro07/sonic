@@ -16,7 +16,7 @@ if (isDebug) {
 
 let postFailed = false;
 
-type LogKind = "log" | "mark" | "warn" | "error" | "mute" | "unmute";
+type LogKind = "trace" | "info" | "log" | "warn" | "error" | "mute" | "unmute";
 
 type LogItem = {
   timestamp: number;
@@ -34,8 +34,9 @@ function createLogFormatter() {
   // };
 
   const logKindIcons: Record<string, string> = {
-    log: "",
-    mark: "🔽",
+    trace: "🔽",
+    info: "◻️",
+    log: "▫️",
     warn: "⚠️",
     error: "📛",
   };
@@ -155,11 +156,14 @@ function createLoggerEntry() {
   }
 
   return {
+        trace(...args: LogArguments) {
+      pushLog("trace", args);
+    },
+    info(...args: LogArguments) { 
+      pushLog("info", args);
+    },
     log(...args: LogArguments) {
       pushLog("log", args);
-    },
-    mark(...args: LogArguments) {
-      pushLog("mark", args);
     },
     warn(...args: LogArguments) {
       pushLog("warn", args);

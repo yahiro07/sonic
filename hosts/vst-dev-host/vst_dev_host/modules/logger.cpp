@@ -1,5 +1,5 @@
 #include "./logger.h"
-#include "./spsc-queue.h"
+#include "./spsc_queue.h"
 #include <arpa/inet.h>
 #include <atomic>
 #include <cstring>
@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <unordered_map>
 
-namespace sonic {
+namespace vst_dev_host {
 
 enum class LogKind {
   Trace,
@@ -201,6 +201,9 @@ public:
     });
   }
   void stop() {
+    // sleep a bit to wait logs to be sent
+    std::this_thread::sleep_for(std::chrono::milliseconds(4));
+
     running = false;
     if (worker.joinable()) {
       worker.join();
@@ -298,7 +301,7 @@ void Logger::forwardUiLog(const char *logKind, double timestamp,
 
 #else
 
-Logger::Logger(std::string subsystem) {}
+Logger::Logger() {}
 
 Logger::~Logger() {}
 
@@ -323,6 +326,6 @@ void Logger::forwardUiLog(const char *logKind, double timestamp,
 
 #endif
 
-Logger logger("ext");
+Logger logger("host");
 
-} // namespace sonic
+} // namespace vst_dev_host

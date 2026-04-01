@@ -39,7 +39,6 @@ tresult PLUGIN_API PluginController::terminate() {
 }
 
 tresult PLUGIN_API PluginController::setComponentState(IBStream *stream) {
-  logger.log("PluginController::setComponentState");
   if (!stream)
     return kResultFalse;
 
@@ -106,7 +105,6 @@ tresult PLUGIN_API PluginController::getParamValueByString(
 }
 
 tresult PLUGIN_API PluginController::notify(Vst::IMessage *message) {
-  logger.log("PluginController::notify");
   auto consumed = controllerSideMessagePort.applyMessageReceived(message);
   if (consumed) {
     return kResultOk;

@@ -10,7 +10,6 @@
 namespace vst_basis {
 
 tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
-  printf("PluginProcessor::initialize\n");
   tresult result = AudioEffect::initialize(context);
   if (result != kResultOk) {
     return result;
@@ -32,7 +31,6 @@ tresult PLUGIN_API PluginProcessor::terminate() {
 }
 
 tresult PLUGIN_API PluginProcessor::setActive(TBool state) {
-  printf("PluginProcessor::setActive %d\n", state);
   return AudioEffect::setActive(state);
 }
 
@@ -137,8 +135,6 @@ tresult PLUGIN_API PluginProcessor::process(Vst::ProcessData &data) {
 
 tresult PLUGIN_API
 PluginProcessor::setupProcessing(Vst::ProcessSetup &newSetup) {
-  printf("setupProcessing sampleRate: %f, maxSamplesPerBlock: %d\n",
-         newSetup.sampleRate, newSetup.maxSamplesPerBlock);
   synthInstance->prepareProcessing(newSetup.sampleRate,
                                    newSetup.maxSamplesPerBlock);
   return AudioEffect::setupProcessing(newSetup);
@@ -158,7 +154,6 @@ PluginProcessor::canProcessSampleSize(int32 symbolicSampleSize) {
 }
 
 tresult PLUGIN_API PluginProcessor::getState(IBStream *stream) {
-  logger.log("PluginProcessor::getState");
   if (!stream)
     return kResultFalse;
   PersistStateData data;

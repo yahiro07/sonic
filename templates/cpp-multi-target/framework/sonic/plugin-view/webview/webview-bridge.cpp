@@ -1,5 +1,6 @@
 #include "webview-bridge.h"
 #include <glaze/glaze.hpp>
+#include <sonic/common/logger.h>
 #include <sonic/core/editor-interfaces.h>
 
 namespace sonic {
@@ -116,7 +117,7 @@ private:
   }
 
   void handleMessageFromWebView(const std::string &jsonStr) {
-    printf("message: %s\n", jsonStr.c_str());
+    // printf("message: %s\n", jsonStr.c_str());
 
     RxMessageVariant rxMessage;
     auto ec = glz::read_json<RxMessageVariant>(rxMessage, jsonStr);
@@ -124,10 +125,9 @@ private:
       return;
 
     if (auto *m = std::get_if<RxMsgLog>(&rxMessage)) {
-      printf("log from webview: [%s] %s\n", m->logKind.c_str(),
-             m->message.c_str());
+      logger.forwardUiLog(m->logKind.c_str(), m->timestamp, m->message.c_str());
     } else if (auto *m = std::get_if<RxMsgUiLoaded>(&rxMessage)) {
-      printf("ui loaded\n");
+      // printf("ui loaded\n");
       std::map<ParamId, double> rawParameters;
       controllerFacade.getAllParameters(rawParameters);
       std::map<std::string, double> parameters;

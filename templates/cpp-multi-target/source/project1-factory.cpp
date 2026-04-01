@@ -1,10 +1,11 @@
 
 #include "project1-synthesizer.h"
+#include <sonic/common/logger.h>
 #include <sonic/plugin-view/webview/webview-editor.h>
 #include <stdio.h>
 
 sonic::SynthesizerBase *createSynthesizerInstance() {
-  printf("project1-synthesizer: createSynthesizerInstance 1504\n");
+  sonic::logger.trace("createSynthesizerInstance");
   sonic::registerWebviewEditorFactory();
   return new project1::Project1Synthesizer();
 }

@@ -40,8 +40,7 @@ using namespace sonic;
 @synthesize parameterTree = _parameterTree;
 
 - (void)setupSynth {
-  logger.start();
-  logger.mark("setupSynth 1318");
+  // logger.trace("setupSynth");
   _synth.reset(createSynthesizerInstance());
   auto parameterItems = EntryController::preGenerateParameterItems(*_synth);
   _parameterTree = createAUParameterTreeFromParameterItems(parameterItems);
@@ -50,8 +49,6 @@ using namespace sonic;
   _entryController.reset(
       new EntryController(*_synth, parameterItems, *_parameterTreeWrapper));
   _entryController->initialize();
-
-  printf("setupSynth, done\n");
 }
 
 - (IControllerFacade *)getControllerFacade {
@@ -62,7 +59,7 @@ using namespace sonic;
     initWithComponentDescription:(AudioComponentDescription)componentDescription
                          options:(AudioComponentInstantiationOptions)options
                            error:(NSError **)outError {
-  printf("initWithComponentDescription\n");
+  // logger.log("initWithComponentDescription");
   self = [super initWithComponentDescription:componentDescription
                                      options:options
                                        error:outError];
@@ -81,7 +78,6 @@ using namespace sonic;
   _entryController.reset();
   _parameterTreeWrapper.reset();
   _synth.reset();
-  logger.stop();
 }
 
 - (void)setupBuses {
@@ -115,8 +111,8 @@ using namespace sonic;
 - (BOOL)allocateRenderResourcesAndReturnError:(NSError *_Nullable *)outError {
   auto sampleRate = self.outputBusses[0].format.sampleRate;
   auto maxFrameLength = self.maximumFramesToRender;
-  printf("call prepareProcessing, sampleRate: %f, maxFrameLength: %u\n",
-         sampleRate, maxFrameLength);
+  // logger.log("call prepareProcessing, sampleRate: %f, maxFrameLength: %u",
+  //            sampleRate, maxFrameLength);
   _synth->prepareProcessing(sampleRate, maxFrameLength);
   return [super allocateRenderResourcesAndReturnError:outError];
 }
@@ -204,7 +200,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 }
 
 - (NSDictionary<NSString *, id> *)fullState {
-  printf("fullState\n");
+  // logger.log("fullState");
   std::vector<uint8_t> buffer;
   _entryController->writeStateBuffer(buffer);
   NSData *data = [NSData dataWithBytes:buffer.data() length:buffer.size()];
@@ -212,7 +208,7 @@ static void debugFillNoise(float *bufferL, float *bufferR, uint32_t frames) {
 }
 
 - (void)setFullState:(NSDictionary<NSString *, id> *)state {
-  printf("setFullState\n");
+  // logger.log("setFullState");
   NSData *data = [state objectForKey:@"state"];
   if (!data) {
     return;
@@ -291,7 +287,8 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
   auto editorFactory =
       EditorFactoryRegistry::getInstance()->getEditorFactory(variantName);
   if (!editorFactory) {
-    printf("editor factory not found for variant: %s\n", variantName.c_str());
+    logger.error("editor factory not found for variant: %s",
+                 variantName.c_str());
     return nullptr;
   }
   auto editorInstance = editorFactory(controllerFacade);
@@ -306,7 +303,7 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
 
 - (void)connectViewToAudioUnit:(WrapperAuv3AudioUnit *)audioUnit
                 viewController:(AUViewController *)viewController {
-  printf("WrapperAuv3ViewFrame connectViewToAudioUnit\n");
+  // logger.log("WrapperAuv3ViewFrame connectViewToAudioUnit");
 
   _audioUnit = audioUnit;
 
@@ -335,8 +332,7 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
 }
 
 - (void)disconnectViewFromAudioUnit {
-  printf("WrapperAuv3ViewFrame disconnectViewFromAudioUnit\n");
-
+  // logger.log("WrapperAuv3ViewFrame disconnectViewFromAudioUnit");
   if (_audioUnit) {
     [_audioUnit viewRemoved];
     _audioUnit = nil;
@@ -351,6 +347,33 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
 
 - (void)dealloc {
   [self disconnectViewFromAudioUnit];
+}
+
+@end
+
+//------------------------------------------------------------
+
+@implementation LoggerWrapper
++ (void)start {
+  sonic::logger.start();
+}
++ (void)stop {
+  sonic::logger.stop();
+}
++ (void)trace:(NSString *)message {
+  sonic::logger.trace("%s", [message UTF8String]);
+}
++ (void)info:(NSString *)message {
+  sonic::logger.info("%s", [message UTF8String]);
+}
++ (void)log:(NSString *)message {
+  sonic::logger.log("%s", [message UTF8String]);
+}
++ (void)warn:(NSString *)message {
+  sonic::logger.warn("%s", [message UTF8String]);
+}
++ (void)error:(NSString *)message {
+  sonic::logger.error("%s", [message UTF8String]);
 }
 
 @end

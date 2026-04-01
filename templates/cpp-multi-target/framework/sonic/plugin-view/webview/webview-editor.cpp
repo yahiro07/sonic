@@ -49,7 +49,7 @@ void registerWebviewEditorFactory() {
     };
     EditorFactoryRegistry::getInstance()->registerEditorVariant("webview",
                                                                 factoryFn);
-    printf("webview editor factory registered\n");
+    // printf("webview editor factory registered\n");
     return true;
   }();
 }

@@ -4,6 +4,7 @@
 #include "./processor-adapter.h"
 #include <cassert>
 #include <cstdint>
+#include <sonic/common/logger.h>
 #include <sonic/core/editor-factory-registry.h>
 #include <sonic/core/parameter-builder-impl.h>
 #include <vector>
@@ -48,7 +49,7 @@ public:
   EntryControllerImpl(IPluginSynthesizer *synth) : synth(std::move(synth)) {}
 
   void initialize() override {
-    printf("EntryControllerImpl::initialize called\n");
+    // printf("EntryControllerImpl::initialize called\n");
 
     hostCallbackRequester.initialize(host, hostParams);
 
@@ -101,16 +102,16 @@ public:
     domainController.writeStateBuffer(buffer);
     uint32_t byteCount = buffer.size();
     if (byteCount >= 1000000) {
-      printf("State size is too large %d/%d\n", byteCount, 1000000);
+      logger.error("State size is too large %d/%d", byteCount, 1000000);
       return false;
     }
     if (stream->write(stream, &byteCount, sizeof(byteCount)) !=
         sizeof(byteCount)) {
-      printf("Failed to write state size to stream\n");
+      logger.error("Failed to write state size to stream");
       return false;
     }
     if (stream->write(stream, buffer.data(), buffer.size()) != buffer.size()) {
-      printf("Failed to write state to stream\n");
+      logger.error("Failed to write state to stream");
       return false;
     }
     return true;
@@ -120,16 +121,16 @@ public:
     uint32_t byteCount;
     if (stream->read(stream, &byteCount, sizeof(byteCount)) !=
         sizeof(byteCount)) {
-      printf("Failed to read state size from stream\n");
+      logger.error("Failed to read state size from stream");
       return false;
     }
     if (byteCount >= 1000000) {
-      printf("State size is too large %d/%d\n", byteCount, 1000000);
+      logger.error("State size is too large %d/%d", byteCount, 1000000);
       return false;
     }
     std::vector<uint8_t> buffer(byteCount);
     if (stream->read(stream, buffer.data(), byteCount) != byteCount) {
-      printf("Failed to read state from stream\n");
+      logger.error("Failed to read state from stream");
       return false;
     }
     domainController.readStateBuffer(buffer);
@@ -154,7 +155,8 @@ public:
     auto editorFactory =
         EditorFactoryRegistry::getInstance()->getEditorFactory(variantName);
     if (!editorFactory) {
-      printf("editor factory not found for variant: %s\n", variantName.c_str());
+      logger.error("editor factory not found for variant: %s",
+                   variantName.c_str());
       return false;
     }
     editorInstance = editorFactory(domainController.controllerFacade);

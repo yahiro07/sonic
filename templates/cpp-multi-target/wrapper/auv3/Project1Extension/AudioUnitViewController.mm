@@ -17,12 +17,16 @@
         (AudioComponentDescription)componentDescription
                                       error:(NSError *_Nullable *_Nullable)
                                                 outError {
-  printf("AudioUnitViewController createAudioUnitWithComponentDescription "
-         "2259\n");
+  [LoggerWrapper start];
+  [LoggerWrapper trace:@"----------------------------------------"];
+  [LoggerWrapper
+      trace:@"AudioUnitViewController createAudioUnitWithComponentDescription"];
   auto bundleId = [[NSBundle mainBundle] bundleIdentifier];
   auto bundlePath = [[NSBundle mainBundle] bundlePath];
-  printf("Bundle ID: %s\n", [bundleId UTF8String]);
-  printf("Loaded From: %s\n", [bundlePath UTF8String]);
+  [LoggerWrapper
+      log:[NSString stringWithFormat:@"Bundle ID: %s", [bundleId UTF8String]]];
+  [LoggerWrapper log:[NSString stringWithFormat:@"Loaded From: %s",
+                                                [bundlePath UTF8String]]];
 
   WrapperAuv3AudioUnit *audioUnit = [[WrapperAuv3AudioUnit alloc]
       initWithComponentDescription:componentDescription
@@ -36,14 +40,14 @@
 }
 
 - (void)loadView {
-  printf("AudioUnitViewController loadView\n");
+  // printf("AudioUnitViewController loadView\n");
   self.view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
   self.view.wantsLayer = YES;
   self.view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 }
 
 - (void)viewDidLoad {
-  printf("AudioUnitViewController viewDidLoad\n");
+  // printf("AudioUnitViewController viewDidLoad\n");
   [super viewDidLoad];
   [self ensureInitialized];
 }
@@ -52,7 +56,7 @@
 
 - (void)ensureInitialized {
   if (self.audioUnit && !self.viewFrame) {
-    printf("AudioUnitViewController initialize\n");
+    // printf("AudioUnitViewController initialize\n");
     self.viewFrame = [[WrapperAuv3ViewFrame alloc] init];
     [self.viewFrame connectViewToAudioUnit:self.audioUnit viewController:self];
   }
@@ -62,6 +66,7 @@
   if (self.viewFrame) {
     [self.viewFrame disconnectViewFromAudioUnit];
   }
+  [LoggerWrapper stop];
 }
 
 @end
