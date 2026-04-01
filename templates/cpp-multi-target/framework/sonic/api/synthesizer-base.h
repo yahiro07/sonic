@@ -45,7 +45,7 @@ public:
   virtual void processAudio(float *bufferL, float *bufferR,
                             uint32_t frames) = 0;
 
-  virtual void getDesiredEditorSize(uint32_t &width, uint32_t &height) = 0;
+  virtual std::pair<int, int> getDesiredEditorSize() = 0;
   virtual std::string getEditorPageUrl() = 0;
 };
 

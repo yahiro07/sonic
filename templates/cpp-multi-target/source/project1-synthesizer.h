@@ -23,7 +23,7 @@ public:
   void noteOff(int noteNumber) override;
   void processAudio(float *bufferL, float *bufferR, uint32_t frames) override;
 
-  void getDesiredEditorSize(uint32_t &width, uint32_t &height) override;
+  std::pair<int, int> getDesiredEditorSize() override;
   std::string getEditorPageUrl() override;
 
 private:

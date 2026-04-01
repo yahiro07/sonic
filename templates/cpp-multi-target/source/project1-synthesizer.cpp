@@ -95,10 +95,8 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
   memcpy(bufferR, bufferL, sizeof(float) * frames);
 }
 
-void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
-                                               uint32_t &height) {
-  width = 800;
-  height = 600;
+std::pair<int, int> Project1Synthesizer::getDesiredEditorSize() {
+  return {800, 600};
 }
 
 std::string Project1Synthesizer::getEditorPageUrl() {

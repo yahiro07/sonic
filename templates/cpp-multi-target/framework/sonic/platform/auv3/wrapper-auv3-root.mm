@@ -324,10 +324,8 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
   _editorInstance = setupEditorInstance(url, *controllerFacade);
   _editorInstance->attachToParent((__bridge void *)root);
 
-  uint32_t width = 0;
-  uint32_t height = 0;
-  synth->getDesiredEditorSize(width, height);
-  if (width && height) {
+  auto [width, height] = synth->getDesiredEditorSize();
+  if (width > 0 && height > 0) {
     viewController.preferredContentSize = NSMakeSize(width, height);
   }
 
