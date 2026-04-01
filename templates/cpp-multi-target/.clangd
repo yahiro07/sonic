@@ -1,5 +1,5 @@
 CompileFlags:
-  CompilationDatabase: build/ninja
+  CompilationDatabase: build/ninja-debug
 ---
 If:
   PathMatch: ^xcode-project/Project1/Project1Extension/.*\.mm$
