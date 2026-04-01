@@ -1,6 +1,8 @@
 #include "./plugin_controller.h"
+#include "../support/controller-parameter-helper.h"
 #include "../support/processor_state_helper.h"
 #include "./plugin-editor-view.h"
+#include "sonic/api/synthesizer-base.h"
 #include <base/source/fstring.h>
 #include <sonic/common/logger.h>
 #include <sonic/core/parameter-spec-helper.h>
@@ -11,37 +13,6 @@ using namespace sonic_vst;
 using namespace sonic;
 
 using ParameterItem = sonic::ParameterSpecItem;
-
-static int getParameterVstFlags(const ParameterItem *item) {
-  auto flags = 0;
-  flags |= Steinberg::Vst::ParameterInfo::kCanAutomate;
-  if (item->flags & ParameterFlags::IsReadOnly) {
-    flags |= Steinberg::Vst::ParameterInfo::kIsReadOnly;
-  }
-  if (item->flags & ParameterFlags::IsHidden) {
-    flags |= Steinberg::Vst::ParameterInfo::kIsHidden;
-  }
-  return flags;
-}
-static void addVstParameter(Steinberg::Vst::ParameterContainer &vstParameters,
-                            const ParameterItem &item) {
-  auto step = ParameterSpecHelper::getStepCount(&item);
-  auto normDefaultValue =
-      ParameterSpecHelper::getNormalized(&item, item.defaultValue);
-  auto flags = getParameterVstFlags(&item);
-
-  Steinberg::String paramName;
-  paramName.fromUTF8(
-      reinterpret_cast<const Steinberg::char8 *>(item.label.c_str()));
-
-  vstParameters.addParameter(paramName.text16(), // name
-                             nullptr,            // units
-                             step,             // step count (0 for continuous)
-                             normDefaultValue, // default value (normalized)
-                             flags,            // flags
-                             item.id           // tag (ID)
-  );
-}
 
 tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
   tresult result = EditControllerEx1::initialize(context);
@@ -54,7 +25,7 @@ tresult PLUGIN_API PluginController::initialize(FUnknown *context) {
     auto parameterItems = parameterBuilder.getItems();
     parameterRegistry.addParameters(parameterItems, 0x7FFFFFFE);
     for (auto &item : parameterItems) {
-      addVstParameter(this->parameters, item);
+      addVstControllerParameter(this->parameters, item);
     }
     controllerParameterPortal.startObserve();
   }
@@ -67,17 +38,17 @@ tresult PLUGIN_API PluginController::terminate() {
   return EditControllerEx1::terminate();
 }
 
-tresult PLUGIN_API PluginController::setComponentState(IBStream *state) {
+tresult PLUGIN_API PluginController::setComponentState(IBStream *stream) {
   logger.log("PluginController::setComponentState");
-  if (!state)
+  if (!stream)
     return kResultFalse;
 
-  ProcessorState processorState;
-  auto ok = processorStateHelper_readState(state, processorState);
+  PersistStateData data;
+  auto ok = processorStateHelper_readState(stream, data);
   if (!ok) {
     return kResultFalse;
   }
-  for (auto &kv : processorState.parameters) {
+  for (auto &kv : data.parameters) {
     auto paramItem = parameterRegistry.getParameterItemByParamKey(kv.first);
     if (!paramItem)
       continue;

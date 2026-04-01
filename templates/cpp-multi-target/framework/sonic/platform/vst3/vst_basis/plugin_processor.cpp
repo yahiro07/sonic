@@ -1,6 +1,7 @@
 #include "./plugin_processor.h"
 #include "../logic/parameters-initializer.h"
 #include "../support/processor_state_helper.h"
+#include "sonic/core/persistence.h"
 #include <pluginterfaces/vst/ivstevents.h>
 #include <pluginterfaces/vst/ivstparameterchanges.h>
 #include <sonic/common/logger.h>
@@ -8,7 +9,6 @@
 
 namespace vst_basis {
 
-float randF() { return (float)rand() / (float)RAND_MAX; }
 tresult PLUGIN_API PluginProcessor::initialize(FUnknown *context) {
   printf("PluginProcessor::initialize\n");
   tresult result = AudioEffect::initialize(context);
@@ -157,33 +157,29 @@ PluginProcessor::canProcessSampleSize(int32 symbolicSampleSize) {
   return kResultFalse;
 }
 
-tresult PLUGIN_API PluginProcessor::getState(IBStream *state) {
+tresult PLUGIN_API PluginProcessor::getState(IBStream *stream) {
   logger.log("PluginProcessor::getState");
-  if (!state)
+  if (!stream)
     return kResultFalse;
-
-  constexpr int kParametersVersion = 1;
-  ProcessorState processorState{};
-  processorState.parametersVersion = kParametersVersion;
+  PersistStateData data;
   for (auto item : parameterRegistry.getParameterItems()) {
     auto value = parameterStore.get(item.id);
-    processorState.parameters[item.paramKey] = value;
+    data.parameters[item.paramKey] = value;
   }
-
-  processorStateHelper_writeState(state, processorState);
+  processorStateHelper_writeState(stream, data);
   return kResultOk;
 }
 
-tresult PLUGIN_API PluginProcessor::setState(IBStream *state) {
-  if (!state)
+tresult PLUGIN_API PluginProcessor::setState(IBStream *stream) {
+  if (!stream)
     return kResultFalse;
 
-  ProcessorState processorState;
-  auto ok = processorStateHelper_readState(state, processorState);
+  PersistStateData data;
+  auto ok = processorStateHelper_readState(stream, data);
   if (!ok) {
     return kResultFalse;
   }
-  for (auto &kv : processorState.parameters) {
+  for (auto &kv : data.parameters) {
     auto paramItem = parameterRegistry.getParameterItemByParamKey(kv.first);
     if (!paramItem)
       continue;

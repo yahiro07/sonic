@@ -1,19 +1,13 @@
 #pragma once
 #include <pluginterfaces/base/ibstream.h>
-#include <string>
-#include <unordered_map>
+#include <sonic/core/persistence.h>
 
 namespace sonic_vst {
 
-typedef struct {
-  int parametersVersion;
-  std::unordered_map<std::string, double> parameters;
-} ProcessorState;
+bool processorStateHelper_readState(Steinberg::IBStream *stream,
+                                    sonic::PersistStateData &data);
 
-bool processorStateHelper_readState(Steinberg::IBStream *state,
-                                    ProcessorState &processorState);
-
-bool processorStateHelper_writeState(Steinberg::IBStream *state,
-                                     const ProcessorState &processorState);
+bool processorStateHelper_writeState(Steinberg::IBStream *stream,
+                                     const sonic::PersistStateData &data);
 
 } // namespace sonic_vst

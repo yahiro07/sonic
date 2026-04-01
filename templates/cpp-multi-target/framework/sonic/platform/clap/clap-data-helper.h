@@ -7,13 +7,13 @@ namespace sonic {
 
 static clap_param_info_flags mapParameterFlags(ParameterFlags flags) {
   clap_param_info_flags clapFlags = 0;
-  if (flags & ParameterFlags::IsReadOnly) {
+  if ((flags & ParameterFlags::IsReadOnly) > ParameterFlags::None) {
     clapFlags |= CLAP_PARAM_IS_READONLY;
   }
-  if (flags & ParameterFlags::IsHidden) {
+  if ((flags & ParameterFlags::IsHidden) > ParameterFlags::None) {
     clapFlags |= CLAP_PARAM_IS_HIDDEN;
   }
-  if (!(flags & ParameterFlags::NonAutomatable)) {
+  if ((flags & ParameterFlags::NonAutomatable) == ParameterFlags::None) {
     clapFlags |= CLAP_PARAM_IS_AUTOMATABLE;
   }
   return clapFlags;

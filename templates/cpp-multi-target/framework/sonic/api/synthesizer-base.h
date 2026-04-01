@@ -6,15 +6,12 @@
 
 namespace sonic {
 
-enum class ParameterFlags : int {
+enum class ParameterFlags : uint32_t {
   None = 0,
-  IsReadOnly = 1 << 0,
-  IsHidden = 1 << 1,
-  NonAutomatable = 1 << 2,
+  IsReadOnly = 1,
+  IsHidden = 2,
+  NonAutomatable = 4,
 };
-static ParameterFlags operator|(ParameterFlags a, ParameterFlags b) {
-  return static_cast<ParameterFlags>(static_cast<int>(a) | static_cast<int>(b));
-}
 
 class ParameterBuilder {
 protected:

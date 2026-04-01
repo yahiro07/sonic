@@ -183,6 +183,20 @@ static const clap_plugin_timer_support_t extensionTimerSupport = {
         },
 };
 
+static const clap_plugin_state_t extensionState = {
+    .save = [](const clap_plugin_t *plugin,
+               const clap_ostream_t *stream) -> bool {
+      auto plug = getPluginData(plugin);
+      return plug->saveState(stream);
+    },
+
+    .load = [](const clap_plugin_t *plugin,
+               const clap_istream_t *stream) -> bool {
+      auto plug = getPluginData(plugin);
+      return plug->loadState(stream);
+    },
+};
+
 static const char *const pluginFeatures[] = {
     CLAP_PLUGIN_FEATURE_INSTRUMENT,
     CLAP_PLUGIN_FEATURE_SYNTHESIZER,
@@ -259,6 +273,8 @@ static const clap_plugin_t pluginClass = {
         return &extensionGUI;
       if (0 == strcmp(id, CLAP_EXT_TIMER_SUPPORT))
         return &extensionTimerSupport;
+      if (0 == strcmp(id, CLAP_EXT_STATE))
+        return &extensionState;
       return nullptr;
     },
 

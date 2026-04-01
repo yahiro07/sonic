@@ -3,8 +3,10 @@
 #include "./domain-controller.h"
 #include "./processor-adapter.h"
 #include <cassert>
+#include <cstdint>
 #include <sonic/core/editor-factory-registry.h>
 #include <sonic/core/parameter-builder-impl.h>
+#include <vector>
 
 namespace sonic {
 
@@ -92,6 +94,46 @@ public:
 
   double getParameterValue(clap_id id) override {
     return domainController.parameterStore.get(id);
+  }
+
+  bool saveState(const clap_ostream_t *stream) override {
+    std::vector<uint8_t> buffer;
+    domainController.writeStateBuffer(buffer);
+    uint32_t byteCount = buffer.size();
+    if (byteCount >= 1000000) {
+      printf("State size is too large %d/%d\n", byteCount, 1000000);
+      return false;
+    }
+    if (stream->write(stream, &byteCount, sizeof(byteCount)) !=
+        sizeof(byteCount)) {
+      printf("Failed to write state size to stream\n");
+      return false;
+    }
+    if (stream->write(stream, buffer.data(), buffer.size()) != buffer.size()) {
+      printf("Failed to write state to stream\n");
+      return false;
+    }
+    return true;
+  }
+
+  bool loadState(const clap_istream_t *stream) override {
+    uint32_t byteCount;
+    if (stream->read(stream, &byteCount, sizeof(byteCount)) !=
+        sizeof(byteCount)) {
+      printf("Failed to read state size from stream\n");
+      return false;
+    }
+    if (byteCount >= 1000000) {
+      printf("State size is too large %d/%d\n", byteCount, 1000000);
+      return false;
+    }
+    std::vector<uint8_t> buffer(byteCount);
+    if (stream->read(stream, buffer.data(), byteCount) != byteCount) {
+      printf("Failed to read state from stream\n");
+      return false;
+    }
+    domainController.readStateBuffer(buffer);
+    return true;
   }
 
   void onTimer(clap_id timerId) override {

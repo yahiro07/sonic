@@ -183,7 +183,7 @@ public:
 
 `source/*-synthesizer.h` and `source/*-synthesizer.cpp` extend this abstract class and provide plugin core implementation.
 
-For the detailed information, please refer to [docs/basic-interfaces.md](docs/basic-interfaces.md).
+For the detailed information, please refer to [docs/basic-interfaces.md](docs/cpp-multi-target/basic-interfaces.md).
 
 ## Webview Messaging
 
@@ -215,7 +215,7 @@ window.pluginEditorCallback = (msg: MessageFromApp) => {
 
 Communication between C++ and WebView is done using JSON objects.
 
-For the detailed information, please refer to [docs/webview-messaging.md](docs/webview-messaging.md).
+For the detailed information, please refer to [docs/webview-messaging.md](docs/cpp-multi-target/webview-messaging.md).
 
 ## Development Flow
 

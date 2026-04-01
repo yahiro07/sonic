@@ -3,8 +3,19 @@ import CoreAudioKit
 import SwiftUI
 import os
 
-private let log = Logger(
+private let systemLogger = Logger(
   subsystem: "net.miqsel.synth2511.Project1Extension", category: "AudioUnitViewController")
+
+func osTypeString(_ value: Int) -> String {
+  let n = Int(value)
+  var s = ""
+  for i in (0..<4).reversed() {
+    let shift = i * 8
+    let char = UnicodeScalar((n >> shift) & 0xFF)!
+    s.append(Character(char))
+  }
+  return s
+}
 
 @MainActor
 public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
@@ -58,16 +69,31 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   nonisolated public func createAudioUnit(with componentDescription: AudioComponentDescription)
     throws -> AUAudioUnit
   {
+
+    let bundlePath = Bundle.main.bundlePath
+    let bundleID = Bundle.main.bundleIdentifier ?? "unknown"
+    let type = osTypeString(Int(componentDescription.componentType))
+    let subType = osTypeString(Int(componentDescription.componentSubType))
+    let manufacturer = osTypeString(Int(componentDescription.componentManufacturer))
+    logger.mark("createAudioUnit")
+    logger.log("Loaded From: \(bundlePath)")
+    logger.log("Bundle ID: \(bundleID)")
+    logger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
+
+    systemLogger.log("createAudioUnit")
+    systemLogger.log("Loaded From: \(bundlePath)")
+    systemLogger.log("Bundle ID: \(bundleID)")
+    systemLogger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
+
     return try DispatchQueue.main.sync {
-      logger.mark("createAudioUnit")
-      logger.log("Loaded From: " + Bundle.main.bundlePath)
+
       try storageFileIO.debugLogDataLocation()
 
       audioUnit = try AudioUnit(
         componentDescription: componentDescription, options: [])
 
       guard let audioUnit = self.audioUnit else {
-        log.error("Unable to create AudioUnit")
+        systemLogger.error("Unable to create AudioUnit")
         return audioUnit!
       }
 
