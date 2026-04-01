@@ -101,7 +101,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   if (loggingOption !== "none") {
     const _useUdpLogger = await clackPrompts.confirm({
       message: "Use UDP logger?",
-      initialValue: false,
+      initialValue: true,
     });
     if (clackPrompts.isCancel(_useUdpLogger)) {
       return "cancelled";
