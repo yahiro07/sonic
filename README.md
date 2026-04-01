@@ -4,7 +4,7 @@ WebView-based audio plugin framework.
 
 Sonic is an audio plugin framework that supports VST3, CLAP, and AUv3.
 
-It is designed around the use of a WebView, enabling smooth parameter communication between the UI and DSP processing. The audio engine is implemented in C++, while the UI is intended to be built using frameworks such as React or Vue.
+It is designed around the use of a WebView, with simple JSON based messaging between the UI and DSP processing. The audio engine is implemented in C++, while the UI is intended to be built using frameworks such as React or Vue.
 
 A scaffolding tool is available via npm, allowing you to quickly generate a template project. The framework also includes a CLI-based development host for loading and displaying VST3 and CLAP plugins, making it easy to test plugins directly from the terminal.
 
@@ -17,7 +17,7 @@ The framework provides two variant of templates:
 
 The core synthesizer API is shared across targets, with multiple wrapper implementations built on top of it.
 
-When developing AUv3 plugins, using the exact same codebase as VST3/CLAP can sometimes limit fine-grained control. To address this, Sonic provides multiple templates so you can choose the most appropriate implementation for each target and maintain flexibility.
+When developing AUv3 plugins, using the exact same codebase as VST3/CLAP can sometimes limit fine-grained control. To address this, Sonic provides multiple templates so you can choose appropriate implementation for each target and maintain flexibility.
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ Build step requires the following tools:
 - Xcode (for AUv3)
 - GNU Make (optional, for convenience)
 
-If you already have an environment capable of building VST3 or CLAP plugins with CMake, you should be able to build Sonic template projects without additional setup.
+For generated C++ projects, if you already have an environment capable of building VST3 or CLAP plugins with CMake, you should be able to build it without additional setup.
 
 ## Project Generation
 
@@ -64,11 +64,21 @@ Sonic Framework CLI
 ◇  Add entry Makefile?
 │  Yes
 │
+◇  Select logging option
+│  Minimum
+│
+◇  Use UDP logger?
+│  Yes
+│
 ◇  AUv3 Manufacturer Code
 │  Myco
 │
 ◇  AUv3 Subtype
 │  abcd
+│
+◇  Build frontend now?
+│  Yes
+npm install
 project MyPlugin created.
 
 ```
@@ -88,6 +98,10 @@ The generated project will have a structure like this:
 │   ├── tsconfig.json
 │   └── vite.config.ts
 ├── Makefile
+├── pages
+│   └── www-bundles
+│       ├── assets
+│       └── index.html
 ├── run.sh
 ├── source
 │   ├── CMakeLists.txt
@@ -109,28 +123,33 @@ The generated project will have a structure like this:
 ```
 
 - `frontend` contains the WebView-based UI
+- `pages/www-bundles` contains the build result bundles for frontend
 - `source` contains the application (DSP) code
 - `wrapper` contains entry point for each plugin format
 
 ## Build
 
 ```bash
+cd CppMultiTarget1
 cmake --preset ninja-debug
 cmake --build --preset ninja-debug
 ```
 
 The build steps include fetching SDKs and building the frontend.
-VST3 and CLAP plugins are generated in `build/ninja/lib/Debug/`.
+VST3 and CLAP plugins are generated in `build/ninja-debug/lib/Debug/`.
 
 ## Testing with DevHost
 
+If you opt-in DevHost option during project setup, the debug host is included in the build and ready to use. To debug the plugin with the host, run the command below.
+
 ```bash
-./build/ninja/bin/Debug/VstDevHost ./build/ninja/lib/Debug/CppMultiTarget1.vst3
+./build/ninja-debug/bin/Debug/VstDevHost ./build/ninja-debug/lib/Debug/cpp-multi-target1.vst3
 ```
+
+This command is also can be run from `sh ./run.sh`.
 
 CLI development host is started. The host loads the plugin and displays its UI.
 Default audio input/output and Midi keyboard input are available.
-This command is also can be run from `sh ./run.sh`.
 
 ## Quick Run
 
@@ -151,7 +170,6 @@ Build and generate static library projects first.
 
 ```bash
 cmake --preset xcode
-cmake --build --preset xcode
 ```
 
 Then open Xcode project in the source project tree.
@@ -160,7 +178,14 @@ Then open Xcode project in the source project tree.
 open wrapper/auv3/CppMultiTarget1.xcodeproj
 ```
 
-In the build phase, you need to set Development Team and bundle identifier in build settings.
+Before debug the project, you need to set Development Team and bundle identifier in build settings.
+
+There are two schemes
+
+- CppMultiTarget1
+- CppMultiTarget1Extension
+
+It is recommended to use CppMultiTarget1Extension scheme for debugging plugins.
 
 ## C++ Synthesizer Interface
 
@@ -176,14 +201,14 @@ public:
   virtual void noteOn(int noteNumber, double velocity) = 0;
   virtual void noteOff(int noteNumber) = 0;
 
-  virtual void getDesiredEditorSize(uint32_t &width, uint32_t &height) = 0;
+  virtual std::pair<int, int> getDesiredEditorSize() = 0;
   virtual std::string getEditorPageUrl() = 0;
 };
 ```
 
 `source/*-synthesizer.h` and `source/*-synthesizer.cpp` extend this abstract class and provide plugin core implementation.
 
-For the detailed information, please refer to [docs/basic-interfaces.md](docs/cpp-multi-target/basic-interfaces.md).
+For the detailed information, please refer to [docs/cpp-multi-target/basic-interfaces.md](docs/cpp-multi-target/basic-interfaces.md).
 
 ## Webview Messaging
 
@@ -215,7 +240,7 @@ window.pluginEditorCallback = (msg: MessageFromApp) => {
 
 Communication between C++ and WebView is done using JSON objects.
 
-For the detailed information, please refer to [docs/webview-messaging.md](docs/cpp-multi-target/webview-messaging.md).
+For the detailed information, please refer to [docs/cpp-multi-target/webview-messaging.md](docs/cpp-multi-target/webview-messaging.md).
 
 ## Development Flow
 
@@ -229,6 +254,18 @@ For the detailed information, please refer to [docs/webview-messaging.md](docs/c
 Projects generated by the sonic-shell CLI tool do not depend on the CLI afterward. You can continue development independently as a standard CMake project.
 
 The generated CMakeLists.txt includes code that uses FetchContent to retrieve the Sonic repository. Downloaded files are stored in `~/.sonic/repos/<tag>`, including the VST3 and CLAP SDKs. These are treated as a cache, so it is safe to delete them if needed.
+
+## UDP local log server
+
+If you opted in UDP logger option during project setup, debug logs are sent to UDP log server. This is useful when you debug plugins loaded onto DAW.
+
+To start the log server, run
+
+```bash
+npx sonic-shell logger
+```
+
+This command starts a UDP server at `localhost:9001` and shows logs from plugins.
 
 ## License
 

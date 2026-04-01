@@ -4,6 +4,7 @@
 #include "../vst_entry/vst_entry_wrapper.h"
 #include <public.sdk/source/vst/vstaudioeffect.h>
 #include <sonic/common/logger.h>
+#include <sonic/common/udp-log-emitter.h>
 #include <sonic/core/parameter-registry.h>
 #include <sonic/core/parameter-store.h>
 
@@ -28,6 +29,9 @@ private:
 
 public:
   PluginProcessor() {
+#ifdef SONIC_DEBUG_USE_UDP_LOGGER
+    logger.setExtraEmitter(new sonic::UdpLogEmitter());
+#endif
     logger.start();
     setControllerClass(gPluginFactoryGlobalHolder.controllerCID);
   }

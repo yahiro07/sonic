@@ -188,7 +188,7 @@ public:
 
     pluginBridge.closeEditor();
     pluginBridge.unloadPlugin();
-    logger.log("cleanup done");
+    logger.log("cleanup done\n\n");
     logger.stop();
   }
 };

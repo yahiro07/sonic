@@ -18,7 +18,7 @@ public:
   virtual void processAudio(float *bufferL, float *bufferR,
                             uint32_t frames) = 0;
 
-  virtual void getDesiredEditorSize(uint32_t &width, uint32_t &height) = 0;
+  virtual std::pair<int, int> getDesiredEditorSize() = 0;
   virtual std::string getEditorPageUrl() = 0;
 };
 ```
@@ -50,8 +50,8 @@ void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addBool(kOscEnabled, "oscEnabled", "Osc Enabled", true);
   builder.addEnum(kOscWave, "oscWave", "Wave Type", "Saw",
                   {"Saw", "Square", "Triangle", "Sine"});
-  builder.addUnary(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
-  builder.addUnary(kOscVolume, "oscVolume", "OSC Volume", 0.5);
+  builder.addFloat(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
+  builder.addFloat(kOscVolume, "oscVolume", "OSC Volume", 0.5);
 }
 ```
 
@@ -107,10 +107,10 @@ The wrapper divides the audio into frames at the boundaries of sample-level even
 ### getDesiredEditorSize
 
 ```cpp
-virtual void getDesiredEditorSize(uint32_t &width, uint32_t &height) = 0;
+virtual std::pair<int, int> getDesiredEditorSize() = 0;
 ```
 
-Returns the width and height you want the UI to display when it first appears. Please specify the desired dimensions in `width` and `height`.
+Returns the width and height you want the UI to display when it first appears. Please specify the desired dimensions. First element of the pair is width, second element is height.
 
 ### getEditorPageUrl
 
@@ -160,8 +160,9 @@ protected:
 
 public:
   virtual ~ParameterBuilder() = default;
-  virtual void addUnary(uint32_t id, Str paramKey, Str label,
-                        double defaultValue, Str group = "",
+  virtual void addFloat(uint32_t id, Str paramKey, Str label,
+                        double defaultValue, double minValue = 0.0,
+                        double maxValue = 1.0, Str group = "",
                         ParameterFlags flags = ParameterFlags::None) = 0;
   virtual void addEnum(uint32_t id, Str paramKey, Str label,
                        Str defaultValueString, StrVec valueStrings,
@@ -179,17 +180,17 @@ void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addBool(kOscEnabled, "oscEnabled", "Osc Enabled", true);
   builder.addEnum(kOscWave, "oscWave", "Wave Type", "Saw",
                   {"Saw", "Square", "Triangle", "Sine"});
-  builder.addUnary(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
-  builder.addUnary(kOscVolume, "oscVolume", "OSC Volume", 0.5);
+  builder.addFloat(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
+  builder.addFloat(kOscVolume, "oscVolume", "OSC Volume", 0.5);
 ```
 
 Each parameter has an ID, key, label, default value, group, and flags.
 
 ### Parameter Types
 
-#### Unary Parameter
+#### Float Parameter
 
-A parameter with a continuous real value in the range of 0.0 to 1.0.
+A parameter with a continuous real value.
 
 #### Enum Parameter
 
@@ -227,9 +228,9 @@ The key used for grouping parameter sets. Parameters with the same key are treat
 ```cpp
 enum ParameterFlags : int {
   None = 0,
-  IsReadOnly = 1 << 0,
-  IsHidden = 1 << 1,
-  NonAutomatable = 1 << 2,
+  IsReadOnly = 1,
+  IsHidden = 2,
+  NonAutomatable = 4,
 };
 ```
 

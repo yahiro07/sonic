@@ -31,19 +31,20 @@ protected:
 
 public:
   virtual ~ParameterBuilder() = default;
-  virtual void addUnary(uint64_t address, Str identifier, Str label,
-                        double defaultValue, Str group = "",
+  virtual void addFloat(uint32_t id, Str paramKey, Str label,
+                        double defaultValue, double minValue = 0.0,
+                        double maxValue = 1.0, Str group = "",
                         ParameterFlags flags = ParameterFlags::None) = 0;
-  virtual void addEnum(uint64_t address, Str identifier, Str label,
+  virtual void addEnum(uint32_t id, Str paramKey, Str label,
                        Str defaultValueString, StrVec valueStrings,
                        Str group = "",
                        ParameterFlags flags = ParameterFlags::None) = 0;
-  virtual void addBool(uint64_t address, Str identifier, Str label,
+  virtual void addBool(uint32_t id, Str paramKey, Str label,
                        bool defaultValue, Str group = "",
                        ParameterFlags flags = ParameterFlags::None) = 0;
   // Variable-length binary data parameters, intended for things like MSEG point arrays.
   // Not exposed to the host; managed internally.
-  virtual void addBinary(uint64_t address, Str identifier,
+  virtual void addBinary(uint32_t id, Str paramKey,
                          const std::vector<uint8_t> &defaultValue) = 0;
 };
 
@@ -96,13 +97,13 @@ public:
 
   //declared in base class
   // virtual void processAudio(float *bufferL, float *bufferR, uint32_t frames) = 0;
-  // virtual void setParameter(uint64_t address, double value) = 0;
+  // virtual void setParameter(uint32_t id, double value) = 0;
   // virtual void noteOn(int32_t noteNumber, double velocity) = 0;
   // virtual void noteOff(int32_t noteNumber) = 0;
   //
 
   // Apply binary parameters
-  virtual void setBinaryParameter(uint64_t address, const uint8_t *dataBytes,
+  virtual void setBinaryParameter(uint32_t id, const uint8_t *dataBytes,
                                   int dataLength) {}
 
   // Called when the host's play state or tempo changes
@@ -134,7 +135,7 @@ public:
   // Called when presets or state are loaded. If you intend to rewrite the parameter set itself during loading,
   // handle the processing here.
   // Expected to handle changes in linear parameter mappings, additions to Enum parameter values, etc.
-  virtual void migrateParameters(std::map<uint64_t, double> &parameters,
+  virtual void migrateParameters(std::map<uint32_t, double> &parameters,
                                  int parametersVersion) {}
 
   // Override default state persistence implementation

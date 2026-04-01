@@ -8,12 +8,27 @@
 
 /* Begin PBXBuildFile section */
 		3C0E94882F74F9DB0052B2D9 /* pages in Resources */ = {isa = PBXBuildFile; fileRef = 3C0E94872F74F9DB0052B2D9 /* pages */; };
+		3C4FBECD2F7B0E0E00AA6FC0 /* libplugin-view-webview.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C4FBECA2F7B0DEF00AA6FC0 /* libplugin-view-webview.a */; platformFilters = (macos, ); };
 		3C6586E42F75114C00543C29 /* libplatform-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C6586E12F75112C00543C29 /* libplatform-auv3.a */; platformFilters = (macos, ); };
 		3C6586F02F75117D00543C29 /* libplugin-source.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C6586ED2F75116900543C29 /* libplugin-source.a */; platformFilters = (macos, ); };
 		3CAA19122F5D89B800363E1C /* Project1Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3CAA19112F5D89B800363E1C /* Project1Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		3C4FBEC92F7B0DEF00AA6FC0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3C4FBEBC2F7B0DEF00AA6FC0 /* plugin-view-webview.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8D99ACD018C449A2B01F8E3E;
+			remoteInfo = "plugin-view-webview";
+		};
+		3C4FBECB2F7B0E0500AA6FC0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3C4FBEBC2F7B0DEF00AA6FC0 /* plugin-view-webview.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CC0D95BF574AA0D960C9F965;
+			remoteInfo = "plugin-view-webview";
+		};
 		3C6586E02F75112C00543C29 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3C6586D92F75112C00543C29 /* platform-auv3.xcodeproj */;
@@ -67,6 +82,7 @@
 
 /* Begin PBXFileReference section */
 		3C0E94872F74F9DB0052B2D9 /* pages */ = {isa = PBXFileReference; lastKnownFileType = folder; name = pages; path = ../../pages; sourceTree = "<group>"; };
+		3C4FBEBC2F7B0DEF00AA6FC0 /* plugin-view-webview.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "plugin-view-webview.xcodeproj"; path = "../../build/xcode/framework/sonic/plugin-view/webview/plugin-view-webview.xcodeproj"; sourceTree = "<group>"; };
 		3C6586D92F75112C00543C29 /* platform-auv3.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "platform-auv3.xcodeproj"; path = "../../build/xcode/framework/sonic/platform/auv3/platform-auv3.xcodeproj"; sourceTree = "<group>"; };
 		3C6586E52F75116900543C29 /* plugin-source.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "plugin-source.xcodeproj"; path = "../../build/xcode/source/plugin-source.xcodeproj"; sourceTree = "<group>"; };
 		3CAA18EB2F5D89B700363E1C /* Project1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Project1.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -111,6 +127,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C4FBECD2F7B0E0E00AA6FC0 /* libplugin-view-webview.a in Frameworks */,
 				3C6586F02F75117D00543C29 /* libplugin-source.a in Frameworks */,
 				3C6586E42F75114C00543C29 /* libplatform-auv3.a in Frameworks */,
 			);
@@ -119,6 +136,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3C4FBEBD2F7B0DEF00AA6FC0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3C4FBECA2F7B0DEF00AA6FC0 /* libplugin-view-webview.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		3C6586DA2F75112C00543C29 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -158,6 +183,7 @@
 		3CAA194D2F5DD6E700363E1C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				3C4FBEBC2F7B0DEF00AA6FC0 /* plugin-view-webview.xcodeproj */,
 				3C6586E52F75116900543C29 /* plugin-source.xcodeproj */,
 				3C6586D92F75112C00543C29 /* platform-auv3.xcodeproj */,
 			);
@@ -202,6 +228,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				3C4FBECC2F7B0E0500AA6FC0 /* PBXTargetDependency */,
 				3C6586EF2F75117700543C29 /* PBXTargetDependency */,
 				3C6586E32F75114400543C29 /* PBXTargetDependency */,
 			);
@@ -254,6 +281,10 @@
 					ProductGroup = 3C6586E62F75116900543C29 /* Products */;
 					ProjectRef = 3C6586E52F75116900543C29 /* plugin-source.xcodeproj */;
 				},
+				{
+					ProductGroup = 3C4FBEBD2F7B0DEF00AA6FC0 /* Products */;
+					ProjectRef = 3C4FBEBC2F7B0DEF00AA6FC0 /* plugin-view-webview.xcodeproj */;
+				},
 			);
 			projectRoot = "";
 			targets = (
@@ -264,6 +295,13 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		3C4FBECA2F7B0DEF00AA6FC0 /* libplugin-view-webview.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libplugin-view-webview.a";
+			remoteRef = 3C4FBEC92F7B0DEF00AA6FC0 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		3C6586E12F75112C00543C29 /* libplatform-auv3.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
@@ -316,6 +354,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		3C4FBECC2F7B0E0500AA6FC0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "plugin-view-webview";
+			targetProxy = 3C4FBECB2F7B0E0500AA6FC0 /* PBXContainerItemProxy */;
+		};
 		3C6586E32F75114400543C29 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "platform-auv3";

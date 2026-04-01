@@ -2,16 +2,17 @@
 
 namespace sonic_common {
 
-void ParameterBuilderImpl::addUnary(uint64_t address, Str identifier, Str label,
-                                    double defaultValue, Str group,
+void ParameterBuilderImpl::addFloat(uint64_t address, Str identifier, Str label,
+                                    double defaultValue, double minValue,
+                                    double maxValue, Str group,
                                     ParameterFlags flags) {
   parameters.push_back({
       .address = address,
       .identifier = std::string(identifier),
       .label = std::string(label),
       .defaultValue = defaultValue,
-      .minValue = 0.0,
-      .maxValue = 1.0,
+      .minValue = minValue,
+      .maxValue = maxValue,
       .valueStrings = {},
       .type = ParameterType::Unary,
       .group = std::string(group),

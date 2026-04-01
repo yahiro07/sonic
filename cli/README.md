@@ -4,15 +4,6 @@ Template scaffolding tool for sonic audio plugin framework.
 
 ## Usage
 
-Install globally
-
-```bash
-npm install -g sonic-shell
-sonic
-```
-
-or execute directly with npx
-
 ```bash
 npx sonic-shell
 ```

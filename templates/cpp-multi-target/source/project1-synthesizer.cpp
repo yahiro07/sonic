@@ -15,8 +15,8 @@ void Project1Synthesizer::setupParameters(sonic::ParameterBuilder &builder) {
   builder.addBool(kOscEnabled, "oscEnabled", "Enabled", true);
   builder.addEnum(kOscWave, "oscWave", "Waveform", "saw",
                   {"saw", "square", "triangle", "sine"});
-  builder.addUnary(kOscPitch, "oscPitch", "Pitch", 0.5);
-  builder.addUnary(kOscVolume, "oscVolume", "Volume", 0.5);
+  builder.addFloat(kOscPitch, "oscPitch", "Pitch", 0.5);
+  builder.addFloat(kOscVolume, "oscVolume", "Volume", 0.5);
 }
 
 void Project1Synthesizer::prepareProcessing(double sampleRate,
@@ -95,14 +95,12 @@ void Project1Synthesizer::processAudio(float *bufferL, float *bufferR,
   memcpy(bufferR, bufferL, sizeof(float) * frames);
 }
 
-void Project1Synthesizer::getDesiredEditorSize(uint32_t &width,
-                                               uint32_t &height) {
-  width = 800;
-  height = 600;
+std::pair<int, int> Project1Synthesizer::getDesiredEditorSize() {
+  return {800, 600};
 }
 
 std::string Project1Synthesizer::getEditorPageUrl() {
-  if (1) {
+  if (0) {
     return "http://localhost:3000?debug=1";
   } else {
     return "app://www-bundles/index.html?debug=1";

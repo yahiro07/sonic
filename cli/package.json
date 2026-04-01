@@ -1,6 +1,6 @@
 {
   "name": "sonic-shell",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Template scaffolding tool for sonic framework.",
   "author": "yahiro",
   "license": "MIT",
@@ -15,7 +15,8 @@
   "files": [
     "bin",
     "templates",
-    "README.md"
+    "README.md",
+    "log-server.js"
   ],
   "repository": {
     "type": "git",

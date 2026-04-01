@@ -5,8 +5,10 @@ project(${NAME} LANGUAGES CXX OBJCXX)
 add_library(${NAME} STATIC)
 
 target_sources(
-  ${NAME} PRIVATE ../../common/logger.cpp ../../core/persistence.cpp
-                  ./support/parameter-tree-wrapper.mm ./wrapper-auv3-root.mm)
+  ${NAME}
+  PRIVATE ../../common/logger.cpp ../../common/udp-log-emitter.cpp
+          ../../core/persistence.cpp ./support/parameter-tree-wrapper.mm
+          ./wrapper-auv3-root.mm)
 
 target_compile_options(
   ${NAME} PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>

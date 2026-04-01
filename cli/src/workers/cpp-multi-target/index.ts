@@ -9,6 +9,7 @@ import {
   workerHelper_copyProjectContentFiles,
   workerHelper_copyProjectContentFiles_withRenaming,
   workerHelper_getNewProjectFolderPath,
+  workerHelper_removeStringLines,
   workerHelper_replaceStrings,
   workerHelper_updateFileNamesWithPrefix,
 } from "@/src/common";
@@ -22,6 +23,8 @@ type TemplateOptions = {
   auManufacturer: string;
   auSubtype: string;
   buildFrontend: boolean;
+  loggingOption: "none" | "normal" | "detailed";
+  useUdpLogger: boolean;
 };
 
 async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
@@ -80,6 +83,32 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     return "cancelled";
   }
 
+  const _loggingOption = await clackPrompts.select({
+    message: "Select logging option",
+    options: [
+      { value: "none", label: "None" },
+      { value: "normal", label: "Minimum" },
+      { value: "detailed", label: "Detailed" },
+    ],
+    initialValue: "normal",
+  });
+  if (clackPrompts.isCancel(_loggingOption)) {
+    return "cancelled";
+  }
+  const loggingOption = _loggingOption as TemplateOptions["loggingOption"];
+
+  let useUdpLogger = false;
+  if (loggingOption !== "none") {
+    const _useUdpLogger = await clackPrompts.confirm({
+      message: "Use UDP logger?",
+      initialValue: true,
+    });
+    if (clackPrompts.isCancel(_useUdpLogger)) {
+      return "cancelled";
+    }
+    useUdpLogger = _useUdpLogger;
+  }
+
   let auManufacturer: string | symbol = "";
   let auSubtype: string | symbol = "";
   if (platforms.includes("auv3")) {
@@ -126,6 +155,8 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     auManufacturer,
     auSubtype,
     buildFrontend,
+    loggingOption,
+    useUdpLogger,
   };
 }
 
@@ -168,13 +199,51 @@ function patchPluginSourceFiles({
   projectFolderPath,
   options,
 }: TaskContext) {
+  if (options.loggingOption === "none") {
+    workerHelper_replaceStrings(projectFolderPath, {
+      filePaths: ["source/project1-synthesizer.cpp"],
+      replacements: [
+        {
+          from: `return "http://localhost:3000?debug=1";`,
+          to: `return "http://localhost:3000";`,
+        },
+        {
+          from: `return "app://www-bundles/index.html?debug=1";`,
+          to: `return "app://www-bundles/index.html";`,
+        },
+      ],
+    });
+    workerHelper_removeStringLines(projectFolderPath, {
+      filePaths: ["source/project1-factory.cpp"],
+      strings: [
+        `#include <sonic/common/logger.h>`,
+        `  sonic::logger.trace("createSynthesizerInstance");`,
+      ],
+    });
+  }
+  if (options.loggingOption !== "detailed") {
+    workerHelper_removeStringLines(projectFolderPath, {
+      filePaths: ["source/project1-synthesizer.cpp"],
+      strings: [
+        `#include <sonic/common/logger.h>`,
+        `  sonic::logger.log("prepareProcessing sampleRate: %f, maxFrameCount: %d",
+                    sampleRate, maxFrameCount);`,
+        `  if (id < 4) {
+    sonic::logger.log("setParameter id: %d, value: %f", id, value);
+  }`,
+        `  sonic::logger.log("noteOn %d", noteNumber);`,
+        `  sonic::logger.log("noteOff %d", noteNumber);`,
+      ],
+    });
+  }
+
   if (options.frontendVariant === "vanilla_minimum") {
     workerHelper_replaceStrings(projectFolderPath, {
       filePaths: ["source/project1-synthesizer.cpp"],
       replacements: [
         {
-          from: `return "app://www-bundles/index.html";`,
-          to: `return "app://www-vanilla/index.html";`,
+          from: `app://www-bundles/index.html`,
+          to: `app://www-vanilla/index.html`,
         },
       ],
     });
@@ -381,9 +450,9 @@ function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
     });
   };
   const removeLine = (text: string) => {
-    workerHelper_replaceStrings(projectFolderPath, {
+    workerHelper_removeStringLines(projectFolderPath, {
       filePaths: ["CMakeLists.txt"],
-      replacements: [{ from: text + "\n", to: "" }],
+      strings: [text],
     });
   };
 
@@ -403,14 +472,14 @@ function patchCMakeLists({ options, projectFolderPath }: TaskContext) {
 
   if (!hasVstDevHost) {
     removeLine(
-      `add_subdirectory(\${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
-                 \${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)`,
+      `  add_subdirectory(\${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
+                   \${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)`,
     );
   }
   if (!hasClapDevHost) {
     removeLine(
-      `add_subdirectory(\${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
-                 \${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)`,
+      `  add_subdirectory(\${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
+                   \${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)`,
     );
   }
 
@@ -474,11 +543,61 @@ function setupFrontend({
 }: TaskContext) {
   if (options.frontendVariant === "react") {
     workerHelper_copyProjectContentFiles(projectName, "_common", ["frontend"]);
+
+    if (options.loggingOption === "none") {
+      workerHelper_removeStringLines(projectFolderPath, {
+        filePaths: ["frontend/src/main.tsx"],
+        strings: [
+          `import { logger } from "@/bridge/logger";`,
+          `  logger.info("frontend start");
+  logger.log(\`at \${location.href}\`);`,
+        ],
+      });
+    }
+    if (options.loggingOption !== "detailed") {
+      workerHelper_removeStringLines(projectFolderPath, {
+        filePaths: ["frontend/src/bridge/core-bridge.ts"],
+        strings: [
+          `import { logger } from "@/bridge/logger";`,
+          `  logger.log("⇠ui", msg);`,
+          `  logger.log("⇢ui", msg);`,
+        ],
+      });
+    }
+
     if (options.buildFrontend) {
       workerHelper_buildFrontend(projectFolderPath, "frontend");
     }
   } else {
     workerHelper_copyProjectContentFiles(projectName, "_common", ["pages"]);
+  }
+}
+
+function applyLoggingOptionsToCMakePresets({
+  projectFolderPath,
+  options,
+}: TaskContext) {
+  if (options.loggingOption === "none") {
+    workerHelper_removeStringLines(projectFolderPath, {
+      filePaths: ["CMakePresets.json"],
+      strings: [
+        `,
+      "cacheVariables": {
+        "SONIC_DEBUG_LOGS": "ON",
+        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"
+      }`,
+      ],
+      keepTrailingNewLineAsIs: true,
+    });
+  } else if (!options.useUdpLogger) {
+    workerHelper_removeStringLines(projectFolderPath, {
+      filePaths: ["CMakePresets.json"],
+      strings: [
+        `,
+        "SONIC_DEBUG_USE_UDP_LOGGER": "ON"`,
+      ],
+      keepTrailingNewLineAsIs: true,
+    });
   }
 }
 
@@ -507,6 +626,7 @@ function scaffoldProject(
   }
   patchCMakeLists(taskContext);
   arrangeBuildWrapper(taskContext);
+  applyLoggingOptionsToCMakePresets(taskContext);
   setupFrontend(taskContext);
   return true;
 }

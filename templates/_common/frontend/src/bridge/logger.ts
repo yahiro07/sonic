@@ -27,7 +27,7 @@ type LogItem = {
 
 function createLogFormatter() {
   // const subsystemIcons: Record<string, string> = {
-  //   host: "🟣",
+  //   host: "🧊",
   //   ext: "🔸",
   //   ui: "🔹",
   //   dsp: "🔺",
@@ -156,10 +156,10 @@ function createLoggerEntry() {
   }
 
   return {
-        trace(...args: LogArguments) {
+    trace(...args: LogArguments) {
       pushLog("trace", args);
     },
-    info(...args: LogArguments) { 
+    info(...args: LogArguments) {
       pushLog("info", args);
     },
     log(...args: LogArguments) {

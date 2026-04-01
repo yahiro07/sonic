@@ -33,19 +33,12 @@ function pushLogLine(...args) {
   logArea.scrollTop = logArea.scrollHeight;
 }
 
-if (!window.webkit) {
-  pushLogLine("incompatible environment, window.webkit is not available");
-}
-
 function sendMessage(msg) {
   if (window.webkit) {
     pushLogLine("⇠ui", msg);
     window.webkit.messageHandlers.pluginEditor.postMessage(msg);
   }
 }
-
-pushLogLine("hello from js");
-pushLogLine("href: " + location.href);
 
 function addSlider(
   name,
@@ -111,6 +104,12 @@ function addIndicator() {
   document.body.appendChild(div);
 }
 
+if (!window.webkit) {
+  pushLogLine("incompatible environment, window.webkit is not available");
+}
+pushLogLine("sonic vanilla minimum frontend example");
+pushLogLine("running at: " + location.href);
+
 addSlider("Enabled", "oscEnabled", 1, 0, 1, 1);
 addSlider("Wave", "oscWave", 0, 0, 3, 1);
 addSlider("Pitch", "oscPitch", 0.5);
@@ -119,13 +118,6 @@ addNoteButton("Note(60)", 60);
 addIndicator();
 
 sendMessage({ type: "uiLoaded" });
-
-// sendMessage({
-//   type: "setupPollingTelemetries",
-//   targetBitFlags: 1,
-//   timerIntervalMs: 1000,
-// });
-// sendMessage({ type: "stopPollingTelemetries" });
 
 window.pluginEditorCallback = (msg) => {
   pushLogLine("⇢ui", msg);

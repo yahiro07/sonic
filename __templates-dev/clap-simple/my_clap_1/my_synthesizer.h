@@ -16,11 +16,11 @@ private:
 
 public:
   void setupParameters(ParameterBuilder &builder) override {
-    builder.addUnary(0, "gain", "Gain", 0.5);
+    builder.addFloat(0, "gain", "Gain", 0.5);
     builder.addEnum(1, "waveType", "Wave Type", "saw",
                     {"saw", "square", "triangle", "sine"});
-    builder.addUnary(2, "oscPitch", "Pitch", 0.5);
-    builder.addUnary(3, "oscVolume", "Volume", 0.5);
+    builder.addFloat(2, "oscPitch", "Pitch", 0.5);
+    builder.addFloat(3, "oscVolume", "Volume", 0.5);
   }
 
   void setParameter(uint64_t address, double value) override {

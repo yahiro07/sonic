@@ -14,8 +14,8 @@ void Project1Synthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addBool(kOscEnabled, "oscEnabled", "Osc Enabled", true);
   builder.addEnum(kOscWave, "oscWave", "Wave Type", "Saw",
                   {"Saw", "Square", "Triangle", "Sine"});
-  builder.addUnary(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
-  builder.addUnary(kOscVolume, "oscVolume", "OSC Volume", 0.8);
+  builder.addFloat(kOscPitch, "oscPitch", "OSC Pitch", 0.5);
+  builder.addFloat(kOscVolume, "oscVolume", "OSC Volume", 0.8);
 }
 
 void Project1Synthesizer::setParameter(uint64_t address, double value) {

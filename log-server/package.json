@@ -3,10 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx index.ts"
+    "dev": "tsx index.ts",
+    "build": "tsup index.ts --format esm --clean --out-dir dist"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   }

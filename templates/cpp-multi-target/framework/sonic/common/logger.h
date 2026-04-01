@@ -1,7 +1,14 @@
 #pragma once
 #include <memory>
+#include <string>
 
 namespace sonic {
+
+class LogEmitter {
+public:
+  virtual ~LogEmitter() = default;
+  virtual void emit(std::string &jsonStr) = 0;
+};
 
 class Logger {
 public:
@@ -9,6 +16,8 @@ public:
   ~Logger();
   Logger(const Logger &) = delete;
   Logger &operator=(const Logger &) = delete;
+
+  void setExtraEmitter(LogEmitter *emitter);
   void start();
   void stop();
   void trace(const char *fmt, ...);

@@ -10,6 +10,7 @@
 #include <memory>
 #import <sonic/api/synthesizer-base.h>
 #import <sonic/common/logger.h>
+#include <sonic/common/udp-log-emitter.h>
 #include <sonic/core/editor-factory-registry.h>
 #import <sonic/core/editor-interfaces.h>
 
@@ -323,10 +324,8 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
   _editorInstance = setupEditorInstance(url, *controllerFacade);
   _editorInstance->attachToParent((__bridge void *)root);
 
-  uint32_t width = 0;
-  uint32_t height = 0;
-  synth->getDesiredEditorSize(width, height);
-  if (width && height) {
+  auto [width, height] = synth->getDesiredEditorSize();
+  if (width > 0 && height > 0) {
     viewController.preferredContentSize = NSMakeSize(width, height);
   }
 
@@ -356,6 +355,9 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
 //------------------------------------------------------------
 
 @implementation LoggerWrapper
++ (void)enableUdpLogEmitter {
+  sonic::logger.setExtraEmitter(new sonic::UdpLogEmitter());
+}
 + (void)start {
   sonic::logger.start();
 }

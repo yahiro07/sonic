@@ -13,22 +13,35 @@ if(APPLE)
   enable_language(OBJC)
 endif()
 
-if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  add_definitions(-DDEVELOPMENT=1)
-else()
-  add_definitions(-DRELEASE=1)
+if(NOT XCODE)
+  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    add_definitions(-DDEVELOPMENT=1)
+  else()
+    add_definitions(-DRELEASE=1)
+  endif()
 endif()
 
 include(cmake/setup-sdks.cmake)
 
+option(SONIC_DEBUG_LOGS "Enable logging" OFF)
+option(SONIC_DEBUG_USE_UDP_LOGGER "Enable UDP logging" OFF)
+if(SONIC_DEBUG_LOGS)
+  add_compile_definitions($<$<CONFIG:Debug>:SONIC_DEBUG_LOGS>)
+endif()
+if(SONIC_DEBUG_USE_UDP_LOGGER)
+  add_compile_definitions($<$<CONFIG:Debug>:SONIC_DEBUG_USE_UDP_LOGGER>)
+endif()
+
 add_subdirectory("${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
                  "${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")
 
-add_subdirectory(${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
-                 ${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)
-add_subdirectory(${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
-                 ${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)
-
 add_subdirectory(source)
-add_subdirectory(wrapper/vst3)
-add_subdirectory(wrapper/clap)
+
+if(NOT XCODE)
+  add_subdirectory(${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
+                   ${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)
+  add_subdirectory(${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
+                   ${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)
+  add_subdirectory(wrapper/vst3)
+  add_subdirectory(wrapper/clap)
+endif()

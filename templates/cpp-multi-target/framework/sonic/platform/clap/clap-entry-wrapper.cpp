@@ -1,11 +1,226 @@
 #include "./clap-entry-wrapper.h"
-#include "./clap-rootage.h"
-#include "./entry-controller.h"
+#include "entry-controller.h"
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <sonic/common/logger.h>
+#include <sonic/common/udp-log-emitter.h>
+#include <string.h>
 
 namespace sonic {
 
-static void overwriteDescriptor(clap_plugin_descriptor_t &desc,
-                                const PluginMeta &meta) {
+using PlugBasis = EntryController;
+
+static PlugBasis *getPluginData(const clap_plugin_t *plugin) {
+  return (PlugBasis *)plugin->plugin_data;
+}
+
+static const clap_plugin_params_t extensionParams = {
+
+    .count = [](const clap_plugin_t *plugin) -> uint32_t {
+      auto plug = getPluginData(plugin);
+      return plug->getParameterCount();
+    },
+
+    .get_info = [](const clap_plugin_t *plugin, uint32_t index,
+                   clap_param_info_t *info) -> bool {
+      auto plug = getPluginData(plugin);
+      if (index >= plug->getParameterCount())
+        return false;
+
+      plug->getParameterInfo(index, info);
+      return true;
+    },
+
+    .get_value = [](const clap_plugin_t *plugin, clap_id id,
+                    double *value) -> bool {
+      auto plug = getPluginData(plugin);
+      *value = plug->getParameterValue(id);
+      return true;
+    },
+
+    .value_to_text = [](const clap_plugin_t *plugin, clap_id id, double value,
+                        char *display, uint32_t size) -> bool {
+      snprintf(display, size, "%.3f", value);
+      return true;
+    },
+
+    .text_to_value = [](const clap_plugin_t *plugin, clap_id id,
+                        const char *display, double *value) -> bool {
+      *value = atof(display);
+      return true;
+    },
+
+    .flush =
+        [](const clap_plugin_t *plugin, const clap_input_events_t *in,
+           const clap_output_events_t *out) {
+          auto plug = getPluginData(plugin);
+          plug->flush(in, out);
+        }};
+
+#define GUI_API CLAP_WINDOW_API_COCOA
+
+static const clap_plugin_gui_t extensionGUI = {
+    .is_api_supported = [](const clap_plugin_t *plugin, const char *api,
+                           bool isFloating) -> bool {
+      return 0 == strcmp(api, GUI_API) && !isFloating;
+    },
+
+    .get_preferred_api = [](const clap_plugin_t *plugin, const char **api,
+                            bool *isFloating) -> bool {
+      *api = GUI_API;
+      *isFloating = false;
+      return true;
+    },
+
+    .create = [](const clap_plugin_t *_plugin, const char *api,
+                 bool isFloating) -> bool {
+      if (!extensionGUI.is_api_supported(_plugin, api, isFloating))
+        return false;
+      auto plug = getPluginData(_plugin);
+      return plug->guiCreate();
+    },
+
+    .destroy =
+        [](const clap_plugin_t *_plugin) {
+          auto plug = getPluginData(_plugin);
+          plug->guiDestroy();
+        },
+
+    .set_scale = [](const clap_plugin_t *plugin, double scale) -> bool {
+      return false;
+    },
+
+    .get_size = [](const clap_plugin_t *plugin, uint32_t *width,
+                   uint32_t *height) -> bool {
+      *width = 800;
+      *height = 600;
+      return true;
+    },
+
+    .can_resize = [](const clap_plugin_t *plugin) -> bool { return false; },
+
+    .get_resize_hints = [](const clap_plugin_t *plugin,
+                           clap_gui_resize_hints_t *hints) -> bool {
+      return false;
+    },
+
+    .adjust_size = [](const clap_plugin_t *plugin, uint32_t *width,
+                      uint32_t *height) -> bool {
+      return extensionGUI.get_size(plugin, width, height);
+    },
+
+    .set_size = [](const clap_plugin_t *plugin, uint32_t width,
+                   uint32_t height) -> bool {
+      auto plug = getPluginData(plugin);
+      return plug->guiSetSize(width, height);
+    },
+
+    .set_parent = [](const clap_plugin_t *_plugin,
+                     const clap_window_t *window) -> bool {
+      assert(0 == strcmp(window->api, GUI_API));
+      auto plug = getPluginData(_plugin);
+      return plug->guiSetParent(window);
+    },
+
+    .set_transient = [](const clap_plugin_t *plugin,
+                        const clap_window_t *window) -> bool { return false; },
+
+    .suggest_title = [](const clap_plugin_t *plugin, const char *title) {},
+
+    .show = [](const clap_plugin_t *_plugin) -> bool {
+      auto plug = getPluginData(_plugin);
+      return plug->guiShow();
+    },
+
+    .hide = [](const clap_plugin_t *_plugin) -> bool {
+      auto plug = getPluginData(_plugin);
+      return plug->guiHide();
+    },
+};
+
+static const clap_plugin_note_ports_t extensionNotePorts = {
+    .count = [](const clap_plugin_t *plugin, bool isInput) -> uint32_t {
+      return isInput ? 1 : 0;
+    },
+
+    .get = [](const clap_plugin_t *plugin, uint32_t index, bool isInput,
+              clap_note_port_info_t *info) -> bool {
+      if (!isInput || index)
+        return false;
+      info->id = 0;
+      info->supported_dialects = CLAP_NOTE_DIALECT_CLAP;
+      info->preferred_dialect = CLAP_NOTE_DIALECT_CLAP;
+      snprintf(info->name, sizeof(info->name), "%s", "Note Port");
+      return true;
+    },
+};
+
+static const clap_plugin_audio_ports_t extensionAudioPorts = {
+    .count = [](const clap_plugin_t *plugin, bool isInput) -> uint32_t {
+      return isInput ? 0 : 1;
+    },
+
+    .get = [](const clap_plugin_t *plugin, uint32_t index, bool isInput,
+              clap_audio_port_info_t *info) -> bool {
+      if (isInput || index)
+        return false;
+      info->id = 0;
+      info->channel_count = 2;
+      info->flags = CLAP_AUDIO_PORT_IS_MAIN;
+      info->port_type = CLAP_PORT_STEREO;
+      info->in_place_pair = CLAP_INVALID_ID;
+      snprintf(info->name, sizeof(info->name), "%s", "Audio Output");
+      return true;
+    },
+};
+
+static const clap_plugin_timer_support_t extensionTimerSupport = {
+    .on_timer =
+        [](const clap_plugin_t *plugin, clap_id timerId) {
+          auto plug = getPluginData(plugin);
+          if (plug) {
+            plug->onTimer(timerId);
+          }
+        },
+};
+
+static const clap_plugin_state_t extensionState = {
+    .save = [](const clap_plugin_t *plugin,
+               const clap_ostream_t *stream) -> bool {
+      auto plug = getPluginData(plugin);
+      return plug->saveState(stream);
+    },
+
+    .load = [](const clap_plugin_t *plugin,
+               const clap_istream_t *stream) -> bool {
+      auto plug = getPluginData(plugin);
+      return plug->loadState(stream);
+    },
+};
+
+static const char *const pluginFeatures[] = {
+    CLAP_PLUGIN_FEATURE_INSTRUMENT,
+    CLAP_PLUGIN_FEATURE_SYNTHESIZER,
+    CLAP_PLUGIN_FEATURE_STEREO,
+    nullptr,
+};
+
+static clap_plugin_descriptor_t pluginDescriptor = {
+    .clap_version = CLAP_VERSION_INIT,
+    .id = "com.my-company.my-plugin",
+    .name = "MyPlugin",
+    .vendor = "MyCompany",
+    .url = "https://my-company.com",
+    .manual_url = "https://my-company.com/manual",
+    .support_url = "https://my-company.com/support",
+    .version = "1.0.0",
+    .description = "Example CLAP plugin.",
+    .features = pluginFeatures,
+};
+
+static void overwriteDescriptor(const PluginMeta &meta) {
+  auto &desc = pluginDescriptor;
   desc.id = meta.id;
   desc.name = meta.name;
   desc.vendor = meta.vendor;
@@ -16,23 +231,157 @@ static void overwriteDescriptor(clap_plugin_descriptor_t &desc,
   desc.description = meta.description;
 }
 
-const clap_plugin_entry_t &
-createClapPluginEntry(SynthesizerInitializerFn synthInitializer,
-                      const PluginMeta &meta) {
-  static const clap_plugin_entry_t clapPlugin = [synthInitializer, meta]() {
-    auto &desc = clapRootage_getPluginDescriptor();
-    overwriteDescriptor(desc, meta);
-    clapRootage_setEntryControllerInstantiateFn(
-        [synthInitializer]() -> EntryController * {
-          auto synth = synthInitializer();
-          if (!synth) {
-            return nullptr;
+static const clap_plugin_t pluginClass = {
+    .desc = &pluginDescriptor,
+    .plugin_data = nullptr,
+
+    .init = [](const clap_plugin *_plugin) -> bool {
+      auto plug = getPluginData(_plugin);
+      plug->hostParams = (const clap_host_params_t *)plug->host->get_extension(
+          plug->host, CLAP_EXT_PARAMS);
+      plug->hostTimerSupport =
+          (const clap_host_timer_support_t *)plug->host->get_extension(
+              plug->host, CLAP_EXT_TIMER_SUPPORT);
+      plug->initialize();
+      return true;
+    },
+
+    .destroy =
+        [](const clap_plugin *_plugin) {
+          auto plug = getPluginData(_plugin);
+          delete plug;
+        },
+
+    .activate = [](const clap_plugin *_plugin, double sampleRate,
+                   uint32_t minimumFramesCount,
+                   uint32_t maximumFramesCount) -> bool {
+      auto plug = getPluginData(_plugin);
+      plug->prepareProcessing(sampleRate, maximumFramesCount);
+      return true;
+    },
+
+    .deactivate = [](const clap_plugin *_plugin) {},
+
+    .start_processing = [](const clap_plugin *_plugin) -> bool { return true; },
+
+    .stop_processing = [](const clap_plugin *_plugin) {},
+
+    .reset =
+        [](const clap_plugin *_plugin) { auto plug = getPluginData(_plugin); },
+
+    .process = [](const clap_plugin *_plugin,
+                  const clap_process_t *processData) -> clap_process_status {
+      auto plug = getPluginData(_plugin);
+      return plug->process(processData);
+    },
+
+    .get_extension = [](const clap_plugin *plugin,
+                        const char *id) -> const void * {
+      if (0 == strcmp(id, CLAP_EXT_NOTE_PORTS))
+        return &extensionNotePorts;
+      if (0 == strcmp(id, CLAP_EXT_AUDIO_PORTS))
+        return &extensionAudioPorts;
+      if (!strcmp(id, CLAP_EXT_PARAMS))
+        return &extensionParams;
+      if (!strcmp(id, CLAP_EXT_GUI))
+        return &extensionGUI;
+      if (0 == strcmp(id, CLAP_EXT_TIMER_SUPPORT))
+        return &extensionTimerSupport;
+      if (0 == strcmp(id, CLAP_EXT_STATE))
+        return &extensionState;
+      return nullptr;
+    },
+
+    .on_main_thread =
+        [](const clap_plugin *_plugin) {
+          auto plug = getPluginData(_plugin);
+          if (plug) {
+            plug->onMainThread();
           }
-          return EntryController::create(synth);
-        });
-    return clapRootage_getClapPluginEntry();
-  }();
-  return clapPlugin;
+        },
+
+};
+
+struct ClapFactoryGlobals {
+private:
+  ClapFactoryGlobals(const ClapFactoryGlobals &) = delete;
+  ClapFactoryGlobals &operator=(const ClapFactoryGlobals &) = delete;
+
+public:
+  ClapFactoryGlobals() {}
+  ~ClapFactoryGlobals() = default;
+  SynthesizerInitializerFn fnCreateSynthesizerInstance;
+};
+static ClapFactoryGlobals &getClapFactoryGlobals() {
+  static ClapFactoryGlobals globals;
+  return globals;
+}
+
+static const clap_plugin_factory_t pluginFactory = {
+    .get_plugin_count = [](const clap_plugin_factory *factory) -> uint32_t {
+      return 1;
+    },
+
+    .get_plugin_descriptor =
+        [](const clap_plugin_factory *factory,
+           uint32_t index) -> const clap_plugin_descriptor_t * {
+      return index == 0 ? &pluginDescriptor : nullptr;
+    },
+
+    .create_plugin = [](const clap_plugin_factory *factory,
+                        const clap_host_t *host,
+                        const char *pluginID) -> const clap_plugin_t * {
+      if (!clap_version_is_compatible(host->clap_version) ||
+          strcmp(pluginID, pluginDescriptor.id)) {
+        return nullptr;
+      }
+
+      auto &globals = getClapFactoryGlobals();
+      if (!globals.fnCreateSynthesizerInstance) {
+        return nullptr;
+      }
+
+      auto synthInstance = globals.fnCreateSynthesizerInstance();
+      if (!synthInstance) {
+        return nullptr;
+      }
+      auto entryController = EntryController::create(synthInstance);
+      PlugBasis *plugBasis = entryController;
+      if (!plugBasis) {
+        return nullptr;
+      }
+      plugBasis->plugin = pluginClass;
+      plugBasis->host = host;
+      plugBasis->plugin.plugin_data = plugBasis;
+      return &plugBasis->plugin;
+    },
+};
+
+static const clap_plugin_entry_t clapEntry = {
+    .clap_version = CLAP_VERSION_INIT,
+    .init = [](const char *path) -> bool {
+      auto &globals = getClapFactoryGlobals();
+
+#ifdef SONIC_DEBUG_USE_UDP_LOGGER
+      logger.setExtraEmitter(new sonic::UdpLogEmitter());
+#endif
+      logger.start();
+      return true;
+    },
+    .deinit = []() { logger.stop(); },
+    .get_factory = [](const char *factoryID) -> const void * {
+      return strcmp(factoryID, CLAP_PLUGIN_FACTORY_ID) ? nullptr
+                                                       : &pluginFactory;
+    },
+};
+
+const clap_plugin_entry_t &
+setupClapPluginEntry(SynthesizerInitializerFn synthInitializer,
+                     const PluginMeta &meta) {
+  overwriteDescriptor(meta);
+  auto &globals = getClapFactoryGlobals();
+  globals.fnCreateSynthesizerInstance = synthInitializer;
+  return clapEntry;
 }
 
 } // namespace sonic

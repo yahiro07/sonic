@@ -12,8 +12,8 @@ void MySynthesizer::setupParameters(ParameterBuilder &builder) {
   builder.addBool(kOscEnabled, "oscEnabled", "Enabled", true);
   builder.addEnum(kOscWave, "oscWave", "Waveform", "saw",
                   {"saw", "square", "triangle", "sine"});
-  builder.addUnary(kOscPitch, "oscPitch", "Pitch", 0.5);
-  builder.addUnary(kOscVolume, "oscVolume", "Volume", 0.5);
+  builder.addFloat(kOscPitch, "oscPitch", "Pitch", 0.5);
+  builder.addFloat(kOscVolume, "oscVolume", "Volume", 0.5);
 }
 
 void MySynthesizer::prepareProcessing(double sampleRate,

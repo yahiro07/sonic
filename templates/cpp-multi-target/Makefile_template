@@ -8,7 +8,6 @@ build:
 
 export_xcode_libs:
 	cmake --preset xcode
-	cmake --build --preset xcode
 
 run: build
 	sh ./run.sh

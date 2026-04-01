@@ -1,4 +1,5 @@
 #import "./AudioUnitViewController.h"
+#include "wrapper-auv3-root.h"
 #include <Foundation/Foundation.h>
 
 #if !__has_feature(objc_arc)
@@ -17,6 +18,7 @@
         (AudioComponentDescription)componentDescription
                                       error:(NSError *_Nullable *_Nullable)
                                                 outError {
+
   [LoggerWrapper start];
   [LoggerWrapper trace:@"----------------------------------------"];
   [LoggerWrapper

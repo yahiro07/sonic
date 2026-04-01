@@ -17,7 +17,6 @@ public:
   void warn(const char *fmt, ...);
   void error(const char *fmt, ...);
   void directLogNonRT(const char *message);
-  void forwardUiLog(const char *logKind, double timestamp, const char *message);
 
 private:
   class LoggerImpl;

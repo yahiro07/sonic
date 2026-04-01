@@ -18,10 +18,9 @@ template source project (`sonic/templates/<template-name>`) is itself a working 
 
 ```bash
   cd sonic/templates/cpp-multi-target
-  mkdir build
-  cmake -B build -S .
-  cmake --build build
-  ./build/ninja/bin/Debug/VstDevHost ./build/ninja/lib/Debug/project1-vst3.vst3
+	cmake --preset ninja-debug
+	cmake --build --preset ninja-debug
+  ./build/ninja-debug/bin/Debug/VstDevHost ./build/ninja-debug/lib/Debug/project1-vst3.vst3
 ```
 
 ## Write or adjust worker script
@@ -37,10 +36,9 @@ It reads prompts and copy or patch required files according to the configuration
   cd sonic/cli
   CLI_DEBUG_TEMPLATE_WORKERS=1 npx tsx src/index.ts
   cd CppMultiTarget1
-  mkdir build
-  cmake -B build -S .
-  cmake --build build
-  ./build/ninja/bin/Debug/VstDevHost ./build/ninja/lib/Debug/project1-vst3.vst3
+  cmake --preset ninja-debug
+	cmake --build --preset ninja-debug
+  ./build/ninja-debug/bin/Debug/VstDevHost ./build/ninja-debug/lib/Debug/project1-vst3.vst3
 ```
 
 Using tsx, CLI can be executed directly from source without build.

@@ -13,14 +13,16 @@ if(APPLE)
   enable_language(OBJC)
 endif()
 
-if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  add_definitions(-DDEVELOPMENT=1)
-else()
-  add_definitions(-DRELEASE=1)
+if(NOT XCODE)
+  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    add_definitions(-DDEVELOPMENT=1)
+  else()
+    add_definitions(-DRELEASE=1)
+  endif()
 endif()
 
-execute_process(COMMAND cp -r "../_common/pages" "${CMAKE_CURRENT_SOURCE_DIR}")
-
+execute_process(COMMAND cp -r "${CMAKE_CURRENT_SOURCE_DIR}/../_common/pages"
+                        "${CMAKE_CURRENT_SOURCE_DIR}")
 # build frontend
 set(FRONTEND_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pages/www-bundles")
 execute_process(
@@ -34,6 +36,15 @@ if(NOT NODE_BUILD_RESULT EQUAL 0)
       "frontend project build failed with exit code ${NODE_BUILD_RESULT}")
 endif()
 
+option(SONIC_DEBUG_LOGS "Enable logging" OFF)
+option(SONIC_DEBUG_USE_UDP_LOGGER "Enable UDP logging" OFF)
+if(SONIC_DEBUG_LOGS)
+  add_compile_definitions($<$<CONFIG:Debug>:SONIC_DEBUG_LOGS>)
+endif()
+if(SONIC_DEBUG_USE_UDP_LOGGER)
+  add_compile_definitions($<$<CONFIG:Debug>:SONIC_DEBUG_USE_UDP_LOGGER>)
+endif()
+
 option(SONIC_USE_LOCAL_SDK "Use vendored SDKs under dependencies/" ON)
 if(SONIC_USE_LOCAL_SDK)
   include(cmake/setup-sdks-dev.cmake)
@@ -45,12 +56,13 @@ else()
     "${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")
 endif()
 
-add_subdirectory(${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
-                 ${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)
-add_subdirectory(${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
-                 ${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)
-
 add_subdirectory(source)
 
-add_subdirectory(wrapper/vst3)
-add_subdirectory(wrapper/clap)
+if(NOT XCODE)
+  add_subdirectory(${SONIC_ROOT_DIR}/hosts/vst-dev-host/vst_dev_host
+                   ${CMAKE_CURRENT_BINARY_DIR}/vst_dev_host)
+  add_subdirectory(${SONIC_ROOT_DIR}/hosts/clap-dev-host/clap_dev_host
+                   ${CMAKE_CURRENT_BINARY_DIR}/clap_dev_host)
+  add_subdirectory(wrapper/vst3)
+  add_subdirectory(wrapper/clap)
+endif()

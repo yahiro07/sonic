@@ -1,5 +1,7 @@
 #pragma once
+
 #include <clap/clap.h>
+#include <sonic/common/logger.h>
 #include <sonic/core/types.h>
 
 namespace sonic {
@@ -18,7 +20,7 @@ struct PluginMeta {
 typedef sonic::IPluginSynthesizer *(*SynthesizerInitializerFn)();
 
 const clap_plugin_entry_t &
-createClapPluginEntry(SynthesizerInitializerFn synthInitializer,
-                      const PluginMeta &meta);
+setupClapPluginEntry(SynthesizerInitializerFn synthInitializer,
+                     const PluginMeta &meta);
 
 } // namespace sonic
