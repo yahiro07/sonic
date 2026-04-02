@@ -127,15 +127,14 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
     }
   }
 
-  private func configureSwiftUIView(audioUnit: AUAudioUnit) {
+  private func configureSwiftUIView(audioUnit: AudioUnit) {
     logger.info("configureSwiftUIView")
 
     if let host = hostingController {
       host.removeFromParent()
       host.view.removeFromSuperview()
     }
-    guard let audioUnit = self.audioUnit,
-      let parameterTree = audioUnit.parameterTree
+    guard let parameterTree = audioUnit.parameterTree
     else {
       return
     }
