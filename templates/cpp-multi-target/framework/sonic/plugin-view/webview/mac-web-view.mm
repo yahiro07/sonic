@@ -1,6 +1,10 @@
 #import "./mac-web-view.h"
-#include <AppKit/AppKit.h>
+#if TARGET_OS_IPHONE
+#import <UIKit/UIKit.h>
+#else
+#import <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
+#endif
 #include <Foundation/Foundation.h>
 #import <WebKit/WebKit.h>
 #include <dlfcn.h>
@@ -93,7 +97,7 @@ using namespace sonic;
 @end
 
 @implementation PluginWKWebView
-
+#if !TARGET_OS_IPHONE
 // Send the first click directly to the WebView's internal component
 - (BOOL)acceptsFirstMouse:(NSEvent *)event {
   return YES;
@@ -107,6 +111,7 @@ using namespace sonic;
     [self.window makeFirstResponder:self];
   }
 }
+#endif
 
 @end
 
@@ -173,8 +178,9 @@ MacWebView::MacWebView() : impl(new Impl()) {
                                             name:@"pluginEditor"];
   config.userContentController = userContentController;
 
-  PluginWKWebView *webView = [[PluginWKWebView alloc] initWithFrame:CGRectZero
-                                                      configuration:config];
+  PluginWKWebView *webView =
+      [[PluginWKWebView alloc] initWithFrame:CGRectMake(0, 0, 0, 0)
+                               configuration:config];
   impl->webView = webView;
 
   if (@available(macOS 13.3, *)) {
@@ -198,13 +204,22 @@ MacWebView::~MacWebView() {
 
 void MacWebView::attachToParent(void *parent) {
   // printf("MacWebView::attachToParent\n");
+#if TARGET_OS_IPHONE
+  UIView *parentView = (__bridge UIView *)parent;
+#else
   NSView *parentView = (__bridge NSView *)parent;
+#endif
   if (!parentView || !impl->webView) {
     return;
   }
   [parentView addSubview:impl->webView];
   [impl->webView setFrame:parentView.bounds];
+#if TARGET_OS_IPHONE
+  impl->webView.autoresizingMask =
+      UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+#else
   impl->webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+#endif
 }
 
 void MacWebView::removeFromParent() {
@@ -219,7 +234,11 @@ void MacWebView::setFrame(int x, int y, int width, int height) {
   if (!impl->webView) {
     return;
   }
+#if TARGET_OS_IPHONE
+  CGRect frame = CGRectMake(x, y, width, height);
+#else
   NSRect frame = NSMakeRect(x, y, width, height);
+#endif
   [impl->webView setFrame:frame];
 }
 
