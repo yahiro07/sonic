@@ -4,6 +4,16 @@ project(${NAME} LANGUAGES CXX OBJCXX)
 
 add_library(${NAME} STATIC)
 
+if(XCODE)
+  set_target_properties(
+    ${NAME}
+    PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR
+               "${CMAKE_BINARY_DIR}/lib/$(CONFIGURATION)-$(PLATFORM_NAME)"
+               XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS
+               "macosx iphonesimulator iphoneos"
+               XCODE_ATTRIBUTE_SDKROOT auto)
+endif()
+
 target_sources(
   ${NAME}
   PRIVATE ../../common/logger.cpp ../../common/udp-log-emitter.cpp
