@@ -8,9 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		3C0E94882F74F9DB0052B2D9 /* pages in Resources */ = {isa = PBXBuildFile; fileRef = 3C0E94872F74F9DB0052B2D9 /* pages */; };
-		3C4FBECD2F7B0E0E00AA6FC0 /* libplugin-view-webview.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C4FBECA2F7B0DEF00AA6FC0 /* libplugin-view-webview.a */; platformFilters = (macos, ); };
-		3C6586E42F75114C00543C29 /* libplatform-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C6586E12F75112C00543C29 /* libplatform-auv3.a */; platformFilters = (macos, ); };
-		3C6586F02F75117D00543C29 /* libplugin-source.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C6586ED2F75116900543C29 /* libplugin-source.a */; platformFilters = (macos, ); };
+		3C4FBECD2F7B0E0E00AA6FC0 /* libplugin-view-webview.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C4FBECA2F7B0DEF00AA6FC0 /* libplugin-view-webview.a */; };
+		3C6586E42F75114C00543C29 /* libplatform-auv3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C6586E12F75112C00543C29 /* libplatform-auv3.a */; };
+		3C6586F02F75117D00543C29 /* libplugin-source.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C6586ED2F75116900543C29 /* libplugin-source.a */; };
 		3CAA19122F5D89B800363E1C /* Project1Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3CAA19112F5D89B800363E1C /* Project1Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -26,7 +26,7 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 3C4FBEBC2F7B0DEF00AA6FC0 /* plugin-view-webview.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = CC0D95BF574AA0D960C9F965;
+			remoteGlobalIDString = 0EAF578198F6FA7F8020ED6A;
 			remoteInfo = "plugin-view-webview";
 		};
 		3C6586E02F75112C00543C29 /* PBXContainerItemProxy */ = {
@@ -419,8 +419,6 @@
 					"$(inherited)",
 					"-lc++",
 					"-framework",
-					Cocoa,
-					"-framework",
 					CoreAudioKit,
 					"-framework",
 					AudioToolbox,
@@ -430,7 +428,22 @@
 					WebKit,
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1b.Project1Extension;
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"-framework",
+					UIKit,
+				);
+				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
+					"$(inherited)",
+					"-framework",
+					UIKit,
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"$(inherited)",
+					"-framework",
+					Cocoa,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1.Project1Extension1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
@@ -483,8 +496,6 @@
 					"$(inherited)",
 					"-lc++",
 					"-framework",
-					Cocoa,
-					"-framework",
 					CoreAudioKit,
 					"-framework",
 					AudioToolbox,
@@ -494,7 +505,22 @@
 					WebKit,
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1b.Project1Extension;
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"-framework",
+					UIKit,
+				);
+				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
+					"$(inherited)",
+					"-framework",
+					UIKit,
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"$(inherited)",
+					"-framework",
+					Cocoa,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1.Project1Extension1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
