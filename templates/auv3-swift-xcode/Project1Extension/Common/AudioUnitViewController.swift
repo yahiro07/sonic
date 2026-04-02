@@ -17,6 +17,23 @@ func osTypeString(_ value: Int) -> String {
   return s
 }
 
+func showEntryInfo(_ componentDescription: AudioComponentDescription) {
+  let bundlePath = Bundle.main.bundlePath
+  let bundleID = Bundle.main.bundleIdentifier ?? "unknown"
+  let type = osTypeString(Int(componentDescription.componentType))
+  let subType = osTypeString(Int(componentDescription.componentSubType))
+  let manufacturer = osTypeString(Int(componentDescription.componentManufacturer))
+  logger.trace("createAudioUnit 1415")
+  logger.log("Loaded From: \(bundlePath)")
+  logger.log("Bundle ID: \(bundleID)")
+  logger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
+
+  systemLogger.log("createAudioUnit")
+  systemLogger.log("Loaded From: \(bundlePath)")
+  systemLogger.log("Bundle ID: \(bundleID)")
+  systemLogger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
+}
+
 @MainActor
 public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   var audioUnit: AudioUnit?
@@ -69,22 +86,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   nonisolated public func createAudioUnit(with componentDescription: AudioComponentDescription)
     throws -> AUAudioUnit
   {
-
-    let bundlePath = Bundle.main.bundlePath
-    let bundleID = Bundle.main.bundleIdentifier ?? "unknown"
-    let type = osTypeString(Int(componentDescription.componentType))
-    let subType = osTypeString(Int(componentDescription.componentSubType))
-    let manufacturer = osTypeString(Int(componentDescription.componentManufacturer))
-    logger.trace("createAudioUnit")
-    logger.log("Loaded From: \(bundlePath)")
-    logger.log("Bundle ID: \(bundleID)")
-    logger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
-
-    systemLogger.log("createAudioUnit")
-    systemLogger.log("Loaded From: \(bundlePath)")
-    systemLogger.log("Bundle ID: \(bundleID)")
-    systemLogger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
-
+    showEntryInfo(componentDescription)
     return try DispatchQueue.main.sync {
 
       try storageFileIO.debugLogDataLocation()
