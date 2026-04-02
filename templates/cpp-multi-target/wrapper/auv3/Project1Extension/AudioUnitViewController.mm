@@ -43,9 +43,16 @@
 
 - (void)loadView {
   // printf("AudioUnitViewController loadView\n");
+#if TARGET_OS_IPHONE
+  self.view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 480, 240)];
+  self.view.backgroundColor = [UIColor blueColor];
+  self.view.autoresizingMask =
+      UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+#else
   self.view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 480, 240)];
   self.view.wantsLayer = YES;
   self.view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+#endif
 }
 
 - (void)viewDidLoad {
