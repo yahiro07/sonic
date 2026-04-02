@@ -128,6 +128,31 @@ static NSString *ThisModuleDirPath() {
   return [modulePath stringByDeletingLastPathComponent];
 }
 
+static NSString *PagesRootPath() {
+  NSBundle *bundle = [NSBundle mainBundle];
+  NSString *resourcePath = bundle.resourcePath;
+  if (resourcePath.length > 0) {
+    NSString *pagesPath =
+        [resourcePath stringByAppendingPathComponent:@"pages"];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:pagesPath]) {
+      return pagesPath;
+    }
+  }
+
+  NSString *baseDir = ThisModuleDirPath();
+  if (!baseDir) {
+    return nil;
+  }
+
+  NSString *fallbackPath =
+      [baseDir stringByAppendingPathComponent:@"../Resources/pages"];
+  if ([[NSFileManager defaultManager] fileExistsAtPath:fallbackPath]) {
+    return fallbackPath;
+  }
+
+  return nil;
+}
+
 class MacWebView::Impl {
 public:
   WKWebView *webView = nil;
@@ -140,10 +165,7 @@ MacWebView::MacWebView() : impl(new Impl()) {
   WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
 
   AppSchemeHandler *schemeHandler = [[AppSchemeHandler alloc] init];
-  NSString *baseDir = ThisModuleDirPath();
-  NSString *root =
-      [baseDir stringByAppendingPathComponent:@"../Resources/pages"];
-  schemeHandler.rootPath = root;
+  schemeHandler.rootPath = PagesRootPath();
   [config setURLSchemeHandler:schemeHandler forURLScheme:@"app"];
 
   WKUserContentController *userContentController =
