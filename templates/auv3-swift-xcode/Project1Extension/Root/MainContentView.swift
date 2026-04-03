@@ -13,6 +13,8 @@ struct MainContentView: View {
         webViewIo.loadURL("app://www-bundles/index.html")
         webViewHub.bindWebViewIo(webViewIo)
       }
-    }.border(.green, width: 2).ignoresSafeArea()
+    }
+    //.border(.green, width: 2)
+    .ignoresSafeArea()
   }
 }

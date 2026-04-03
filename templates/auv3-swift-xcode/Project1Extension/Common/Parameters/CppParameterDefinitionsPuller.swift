@@ -50,7 +50,7 @@ func pullParameterDefinitionsFromCppSide(_ synthInstanceHandle: SynthInstanceHan
         )
       })
   }
-  print(parameterSpecs)
+  // print(parameterSpecs)
   return parameterSpecs
 }
 
