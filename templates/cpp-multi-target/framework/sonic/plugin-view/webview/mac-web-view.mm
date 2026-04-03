@@ -155,10 +155,44 @@ static NSString *PagesRootPath() {
   return nil;
 }
 
+@interface PluginNavigationDelegate : NSObject <WKNavigationDelegate>
+@end
+
+@implementation PluginNavigationDelegate
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+  NSString *failingURL = error.userInfo[NSURLErrorFailingURLErrorKey] ?: webView.URL.absoluteString;
+  NSString *html = [NSString stringWithFormat:@"<html><body style=\"font-family: sans-serif; padding: 20px;\"><h2>Failed to load page</h2><p><strong>URL:</strong> %@</p><p>%@</p></body></html>", failingURL ?: @"Unknown URL", error.localizedDescription];
+  [webView loadHTMLString:html baseURL:nil];
+}
+
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+  NSString *failingURL = error.userInfo[NSURLErrorFailingURLErrorKey] ?: webView.URL.absoluteString;
+  NSString *html = [NSString stringWithFormat:@"<html><body style=\"font-family: sans-serif; padding: 20px;\"><h2>Navigation failed</h2><p><strong>URL:</strong> %@</p><p>%@</p></body></html>", failingURL ?: @"Unknown URL", error.localizedDescription];
+  [webView loadHTMLString:html baseURL:nil];
+}
+
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler {
+  if ([navigationResponse.response isKindOfClass:[NSHTTPURLResponse class]]) {
+    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)navigationResponse.response;
+    if (httpResponse.statusCode >= 400) {
+      NSString *failingURL = httpResponse.URL.absoluteString;
+      NSString *html = [NSString stringWithFormat:@"<html><body style=\"font-family: sans-serif; padding: 20px;\"><h2>HTTP Error %ld</h2><p><strong>URL:</strong> %@</p><p>Could not load the requested URL.</p></body></html>", (long)httpResponse.statusCode, failingURL ?: @"Unknown URL"];
+      [webView loadHTMLString:html baseURL:nil];
+      decisionHandler(WKNavigationResponsePolicyCancel);
+      return;
+    }
+  }
+  decisionHandler(WKNavigationResponsePolicyAllow);
+}
+
+@end
+
 class MacWebView::Impl {
 public:
   WKWebView *webView = nil;
   id scriptHandler = nil;
+  id navigationDelegate = nil;
   std::function<void(const std::string &)> messageReceiver;
 };
 
@@ -205,6 +239,8 @@ MacWebView::MacWebView() : impl(new Impl()) {
   PluginWKWebView *webView =
       [[PluginWKWebView alloc] initWithFrame:CGRectMake(0, 0, 0, 0)
                                configuration:config];  
+  impl->navigationDelegate = [[PluginNavigationDelegate alloc] init];
+  webView.navigationDelegate = impl->navigationDelegate;
   impl->webView = webView;
 
   if (@available(macOS 13.3, *)) {
@@ -219,10 +255,14 @@ MacWebView::~MacWebView() {
     WKUserContentController *uc =
         impl->webView.configuration.userContentController;
     [uc removeScriptMessageHandlerForName:@"pluginEditor"];
+    impl->webView.navigationDelegate = nil;
   }
   if (impl->scriptHandler) {
     ((ScriptMessageHandler *)impl->scriptHandler).onMessage = nil;
     impl->scriptHandler = nil;
+  }
+  if (impl->navigationDelegate) {
+    impl->navigationDelegate = nil;
   }
 }
 
