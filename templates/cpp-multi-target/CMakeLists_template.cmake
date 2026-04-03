@@ -21,8 +21,6 @@ if(NOT XCODE)
   endif()
 endif()
 
-include(cmake/setup-sdks.cmake)
-
 option(SONIC_DEBUG_LOGS "Enable logging" OFF)
 option(SONIC_DEBUG_USE_UDP_LOGGER "Enable UDP logging" OFF)
 if(SONIC_DEBUG_LOGS)
@@ -31,6 +29,9 @@ endif()
 if(SONIC_DEBUG_USE_UDP_LOGGER)
   add_compile_definitions($<$<CONFIG:Debug>:SONIC_DEBUG_USE_UDP_LOGGER>)
 endif()
+
+include(cmake/setup-sonic-sdks.cmake)
+include(cmake/setup-sonic.cmake)
 
 add_subdirectory("${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
                  "${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")
