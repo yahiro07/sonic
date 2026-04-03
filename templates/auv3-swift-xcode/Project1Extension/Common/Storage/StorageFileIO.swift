@@ -7,9 +7,19 @@ protocol StorageFileIO {
 }
 
 class SharedContainer {
-  static let appGroupId = "group.net.miqsel.synth2511.MySynth1"
+  static private var appGroupId = ""
+
+  static func setAppGroupId(_ appGroupId: String) {
+    self.appGroupId = appGroupId
+  }
 
   static func baseURL() throws -> URL {
+    guard !appGroupId.isEmpty else {
+      throw NSError(
+        domain: "SharedContainer",
+        code: 0,
+        userInfo: [NSLocalizedDescriptionKey: "appGroupId is empty"])
+    }
     guard
       let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupId)
     else {
@@ -60,8 +70,12 @@ class SharedContainer {
 class StorageFileIOImpl: StorageFileIO {
 
   func debugLogDataLocation() throws {
-    let baseURL = try SharedContainer.baseURL()
-    logger.log("data location: \(baseURL.path)")
+    do {
+      let baseURL = try SharedContainer.baseURL()
+      logger.log("data location: \(baseURL.path)")
+    } catch {
+      logger.error("debugLogDataLocation failed: \(error)")
+    }
   }
 
   func readFile(path: String, skipIfNotExist: Bool? = false) throws -> String {

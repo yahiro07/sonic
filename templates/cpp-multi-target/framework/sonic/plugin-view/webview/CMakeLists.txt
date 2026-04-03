@@ -22,6 +22,11 @@ target_sources(${NAME} PRIVATE mac-web-view.mm webview-bridge.cpp
 set_source_files_properties(mac-web-view.mm PROPERTIES COMPILE_FLAGS
                                                        "-fobjc-arc")
 
-target_link_libraries(${NAME} PUBLIC "-framework WebKit")
+if(XCODE)
+  # Cocoa prevents build with iOS, so it added later in xcodeproj
+  target_link_libraries(${NAME} PUBLIC "-framework WebKit")
+else()
+  target_link_libraries(${NAME} PUBLIC "-framework WebKit -framework Cocoa")
+endif()
 
 target_link_libraries(${NAME} PRIVATE glaze::glaze sonic-headers)

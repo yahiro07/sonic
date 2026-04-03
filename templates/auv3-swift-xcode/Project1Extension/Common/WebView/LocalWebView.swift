@@ -134,7 +134,7 @@ class MySchemeHandler: NSObject, WKURLSchemeHandler {
     _ webView: WKWebView,
     start urlSchemeTask: WKURLSchemeTask
   ) {
-    logger.log("urlSchemeTask: \(urlSchemeTask.request.url?.absoluteString ?? "unknown")")
+    // logger.log("urlSchemeTask: \(urlSchemeTask.request.url?.absoluteString ?? "unknown")")
 
     guard let url = urlSchemeTask.request.url else { return }
 
@@ -163,7 +163,6 @@ class MySchemeHandler: NSObject, WKURLSchemeHandler {
         "Content-Length": "\(data.count)",
       ]
     )!
-    logger.log("response: \(response)")
 
     urlSchemeTask.didReceive(response)
     urlSchemeTask.didReceive(data)

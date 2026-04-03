@@ -364,10 +364,10 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
 //------------------------------------------------------------
 
 @implementation LoggerWrapper
-+ (void)enableUdpLogEmitter {
-  sonic::logger.setExtraEmitter(new sonic::UdpLogEmitter());
-}
 + (void)start {
+#if SONIC_DEBUG_USE_UDP_LOGGER
+  sonic::logger.setExtraEmitter(new sonic::UdpLogEmitter());
+#endif
   sonic::logger.start();
 }
 + (void)stop {

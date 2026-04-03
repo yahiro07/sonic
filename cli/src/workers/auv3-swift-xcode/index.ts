@@ -13,12 +13,15 @@ import * as clackPrompts from "@clack/prompts";
 
 type TemplateOptions = {
   frontendVariant: "react" | "vanilla_minimum";
+  auOrganizationIdentifier: string;
   auManufacturer: string;
   auSubtype: string;
   buildFrontend: boolean;
 };
 
-async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
+async function readTemplateOptions(
+  projectName: string,
+): Promise<TemplateOptions | "cancelled"> {
   const _frontendVariant = await clackPrompts.select({
     message: "Select frontend variation",
     options: [
@@ -33,8 +36,21 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   const frontendVariant =
     _frontendVariant as TemplateOptions["frontendVariant"];
 
+  let auOrganizationIdentifier: string | symbol = "";
   let auManufacturer: string | symbol = "";
   let auSubtype: string | symbol = "";
+  const auOrganizationIdentifierDefault = `com.example.sonic`;
+  auOrganizationIdentifier = await clackPrompts.text({
+    message: `Organization Identifier`,
+    placeholder: auOrganizationIdentifierDefault,
+  });
+  if (clackPrompts.isCancel(auOrganizationIdentifier)) {
+    return "cancelled";
+  }
+  if (auOrganizationIdentifier == "") {
+    console.log("   " + auOrganizationIdentifierDefault);
+    auOrganizationIdentifier = auOrganizationIdentifierDefault;
+  }
   const auManufacturerDefault = "Myco";
   auManufacturer = await clackPrompts.text({
     message: `AUv3 Manufacturer Code`,
@@ -44,6 +60,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     return "cancelled";
   }
   if (auManufacturer == "") {
+    console.log("   " + auManufacturerDefault);
     auManufacturer = auManufacturerDefault;
   }
   const auSubtypeDefault = generateRandomString("alphaNumeric", 4);
@@ -55,6 +72,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
     return "cancelled";
   }
   if (auSubtype == "") {
+    console.log("   " + auSubtypeDefault);
     auSubtype = auSubtypeDefault;
   }
 
@@ -71,6 +89,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
   }
   return {
     frontendVariant,
+    auOrganizationIdentifier,
     auManufacturer,
     auSubtype,
     buildFrontend,
@@ -94,10 +113,12 @@ function instantiateProject({
     "Project1",
     "Project1.xcodeproj/project.pbxproj",
     "Project1.xcodeproj/xcshareddata",
+    "Project1Extension/Api",
     "Project1Extension/Common",
     "Project1Extension/DSP",
     "Project1Extension/Root",
     "Project1Extension/Info.plist",
+    "Project1Extension/Project1Extension.entitlements",
     "README.md",
   ]);
   workerHelper_copyProjectContentFiles_withRenaming(projectName, templateName, [
@@ -156,16 +177,55 @@ function instantiateProject({
     ],
   });
 
+  const mainBundleIdentifier = `${options.auOrganizationIdentifier}.${projectNameCapital}`;
+  const extensionBundleIdentifier = `${mainBundleIdentifier}.${extensionNameCapital}`;
+  const appGroupIdentifier = `group.${mainBundleIdentifier}`;
+
   workerHelper_replaceStrings(projectFolderPath, {
-    filePaths: [
-      "Project1.xcodeproj/project.pbxproj",
-      "Project1.xcodeproj/xcshareddata/xcschemes/Project1.xcscheme",
-      "Project1.xcodeproj/xcshareddata/xcschemes/Project1Extension.xcscheme",
-    ],
+    filePaths: ["Project1.xcodeproj/project.pbxproj"],
     replacements: [
       {
         from: "Project1",
         to: projectNameCapital,
+      },
+      {
+        from: "com.example.sonic.auv3-swift-xcode.extension",
+        to: extensionBundleIdentifier,
+      },
+      {
+        from: "com.example.sonic.auv3-swift-xcode",
+        to: mainBundleIdentifier,
+      },
+    ],
+  });
+
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: [
+      "Project1.xcodeproj/xcshareddata/xcschemes/Project1.xcscheme",
+      "Project1.xcodeproj/xcshareddata/xcschemes/Project1Extension.xcscheme",
+    ],
+    replacements: [{ from: "Project1", to: projectNameCapital }],
+  });
+
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: [
+      "Project1/Project1.entitlements",
+      "Project1Extension/Project1Extension.entitlements",
+    ],
+    replacements: [
+      {
+        from: `<string>group.com.example.sonic.auv3-swift-xcode</string>`,
+        to: `<string>${appGroupIdentifier}</string>`,
+      },
+    ],
+  });
+
+  workerHelper_replaceStrings(projectFolderPath, {
+    filePaths: ["Project1Extension/Common/AudioUnitViewController.swift"],
+    replacements: [
+      {
+        from: `SharedContainer.setAppGroupId("group.com.example.sonic.auv3-swift-xcode")`,
+        to: `SharedContainer.setAppGroupId("${appGroupIdentifier}")`,
       },
     ],
   });
@@ -179,6 +239,7 @@ function instantiateProject({
       "Project1.xcodeproj/xcshareddata/xcschemes/Project1Extension.xcscheme",
       "Project1.xcodeproj",
       "Project1Extension/Common/Project1Extension-Bridging-Header.h",
+      "Project1Extension/Project1Extension.entitlements",
       "Project1Extension",
     ],
     originalPrefix: "Project1",
@@ -200,7 +261,7 @@ function instantiateProject({
 function createTemplateWorker(): TemplateWorker {
   return {
     async createProject(projectName, templateName) {
-      const templateOptions = await readTemplateOptions();
+      const templateOptions = await readTemplateOptions(projectName);
       if (templateOptions === "cancelled") {
         return "cancelled";
       }

@@ -29,10 +29,11 @@ if(APPLE)
                MACOSX_BUNDLE_INFO_PLIST
                ${CMAKE_SOURCE_DIR}/cmake/base-info.plist.in)
 
-  add_custom_command(
-    TARGET ${NAME}
-    POST_BUILD
+  add_custom_target(
+    vst3_update_pages ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/pages"
             "$<TARGET_FILE_DIR:${NAME}>/../Resources/pages"
     VERBATIM)
+  add_dependencies(${NAME} vst3_update_pages)
+
 endif()

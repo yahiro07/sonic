@@ -20,7 +20,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
   @objc override init(
     componentDescription: AudioComponentDescription, options: AudioComponentInstantiationOptions
   ) throws {
-    logger.log("GenericExtensionAudioUnit init")
+    logger.log("AudioUnit init")
     self.format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 2)!
     try super.init(componentDescription: componentDescription, options: options)
     outputBus = try AUAudioUnitBus(format: self.format)
@@ -171,7 +171,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
 
   public override var fullState: [String: Any]? {
     get {
-      logger.info("fllState saving")
+      logger.log("fullState saving")
       let baseState = super.fullState
       var state: [String: Any] = [
         "type": componentDescription.componentType,
@@ -187,7 +187,7 @@ public class AudioUnit: AUAudioUnit, @unchecked Sendable {
     }
 
     set(newValue) {
-      logger.info("fullState restoration")
+      logger.log("fullState restoration")
       guard let state = newValue else { return }
       if let flag = state["MySynth1.hostedInStandaloneApp"] as? Bool {
         self.isHostedInStandaloneApp = flag

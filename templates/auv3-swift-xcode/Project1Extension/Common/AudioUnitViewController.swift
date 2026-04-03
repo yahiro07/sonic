@@ -3,9 +3,6 @@ import CoreAudioKit
 import SwiftUI
 import os
 
-private let systemLogger = Logger(
-  subsystem: "net.miqsel.synth2511.Project1Extension", category: "AudioUnitViewController")
-
 func osTypeString(_ value: Int) -> String {
   let n = Int(value)
   var s = ""
@@ -23,15 +20,9 @@ func showEntryInfo(_ componentDescription: AudioComponentDescription) {
   let type = osTypeString(Int(componentDescription.componentType))
   let subType = osTypeString(Int(componentDescription.componentSubType))
   let manufacturer = osTypeString(Int(componentDescription.componentManufacturer))
-  logger.trace("createAudioUnit 1415")
   logger.log("Loaded From: \(bundlePath)")
   logger.log("Bundle ID: \(bundleID)")
   logger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
-
-  systemLogger.log("createAudioUnit")
-  systemLogger.log("Loaded From: \(bundlePath)")
-  systemLogger.log("Bundle ID: \(bundleID)")
-  systemLogger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
 }
 
 @MainActor
@@ -86,16 +77,18 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   nonisolated public func createAudioUnit(with componentDescription: AudioComponentDescription)
     throws -> AUAudioUnit
   {
+    logger.trace("createAudioUnit")
     showEntryInfo(componentDescription)
-    return try DispatchQueue.main.sync {
+    SharedContainer.setAppGroupId("group.com.example.sonic.auv3-swift-xcode")
 
-      // try storageFileIO.debugLogDataLocation()
+    return try DispatchQueue.main.sync {
+      try storageFileIO.debugLogDataLocation()
 
       audioUnit = try AudioUnit(
         componentDescription: componentDescription, options: [])
 
       guard let audioUnit = self.audioUnit else {
-        systemLogger.error("Unable to create AudioUnit")
+        logger.error("Unable to create AudioUnit")
         return audioUnit!
       }
 
@@ -128,7 +121,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   }
 
   private func configureSwiftUIView(audioUnit: AudioUnit) {
-    logger.info("configureSwiftUIView")
+    logger.log("configureSwiftUIView")
 
     if let host = hostingController {
       host.removeFromParent()
