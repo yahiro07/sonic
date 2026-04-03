@@ -9,8 +9,8 @@ void serializePersistState(const PersistStateData &data,
   auto res = glz::write<glz::opts{.prettify = true}>(data);
   if (res) {
     const auto &str = res.value();
-    printf("Serializing persist state, json: %.*s\n", (int)str.size(),
-           str.data());
+    // printf("Serializing persist state, json: %.*s\n", (int)str.size(),
+    //        str.data());
     buffer.assign(reinterpret_cast<const uint8_t *>(str.data()),
                   reinterpret_cast<const uint8_t *>(str.data() + str.size()));
   } else {
@@ -21,8 +21,8 @@ bool deserializePersistState(const std::vector<uint8_t> &buffer,
                              PersistStateData &data) {
   std::string_view sv(reinterpret_cast<const char *>(buffer.data()),
                       buffer.size());
-  printf("Deserializing persist state, json: %.*s\n", (int)sv.size(),
-         sv.data());
+  // printf("Deserializing persist state, json: %.*s\n", (int)sv.size(),
+  //        sv.data());
   auto _data = glz::read_json<PersistStateData>(sv);
   if (_data) {
     data = _data.value();
