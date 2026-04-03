@@ -11,6 +11,7 @@
 #include <functional>
 #include <mach-o/dyld.h>
 #include <string>
+#include <sonic/common/logger.h>
 
 #if !__has_feature(objc_arc)
 #error                                                                         \
@@ -55,6 +56,7 @@ using namespace sonic;
 
   NSData *data = [NSData dataWithContentsOfFile:fullPath];
   if (!data) {
+    logger.warn("file not found in resources, for url: %s", url.absoluteString.UTF8String);
     [urlSchemeTask didFailWithError:[NSError errorWithDomain:@"AppScheme"
                                                         code:404
                                                     userInfo:nil]];
@@ -267,7 +269,7 @@ void MacWebView::setFrame(int x, int y, int width, int height) {
 }
 
 void MacWebView::loadUrl(const std::string &urlCppStr) {
-  // printf("MacWebView::loadUrl: %s\n", urlCppStr.c_str());
+  logger.log("loading: %s", urlCppStr.c_str());
   if (!impl->webView) {
     return;
   }
