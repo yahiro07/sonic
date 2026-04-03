@@ -60,8 +60,12 @@ class SharedContainer {
 class StorageFileIOImpl: StorageFileIO {
 
   func debugLogDataLocation() throws {
-    let baseURL = try SharedContainer.baseURL()
-    logger.log("data location: \(baseURL.path)")
+    do {
+      let baseURL = try SharedContainer.baseURL()
+      logger.log("data location: \(baseURL.path)")
+    } catch {
+      logger.error("debugLogDataLocation failed: \(error)")
+    }
   }
 
   func readFile(path: String, skipIfNotExist: Bool? = false) throws -> String {

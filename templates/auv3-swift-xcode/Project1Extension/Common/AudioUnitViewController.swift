@@ -80,8 +80,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   {
     showEntryInfo(componentDescription)
     return try DispatchQueue.main.sync {
-
-      // try storageFileIO.debugLogDataLocation()
+      try storageFileIO.debugLogDataLocation()
 
       audioUnit = try AudioUnit(
         componentDescription: componentDescription, options: [])
