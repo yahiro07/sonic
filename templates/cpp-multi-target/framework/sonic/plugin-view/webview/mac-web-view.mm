@@ -202,7 +202,7 @@ MacWebView::MacWebView() : impl(new Impl()) {
 
   PluginWKWebView *webView =
       [[PluginWKWebView alloc] initWithFrame:CGRectMake(0, 0, 0, 0)
-                               configuration:config];
+                               configuration:config];  
   impl->webView = webView;
 
   if (@available(macOS 13.3, *)) {
@@ -239,6 +239,8 @@ void MacWebView::attachToParent(void *parent) {
 #if TARGET_OS_IPHONE
   impl->webView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  //remove top and bottom insets
+  impl->webView.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
 #else
   impl->webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 #endif
