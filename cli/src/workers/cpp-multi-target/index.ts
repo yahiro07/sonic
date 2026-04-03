@@ -121,6 +121,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
       return "cancelled";
     }
     if (auManufacturer === "") {
+      console.log("   " + auManufacturerDefault);
       auManufacturer = auManufacturerDefault;
     }
     const auSubtypeDefault = generateRandomString("alphaNumeric", 4);
@@ -132,6 +133,7 @@ async function readTemplateOptions(): Promise<TemplateOptions | "cancelled"> {
       return "cancelled";
     }
     if (auSubtype === "") {
+      console.log("   " + auSubtypeDefault);
       auSubtype = auSubtypeDefault;
     }
   }
