@@ -244,7 +244,10 @@ func commonWebViewSetup(
     func makeCoordinator() -> WebViewCoordinator { WebViewCoordinator() }
 
     func makeUIView(context: Context) -> WKWebView {
-      return commonWebViewSetup(coordinator: context.coordinator, onBind: onBind)
+      let webView = commonWebViewSetup(coordinator: context.coordinator, onBind: onBind)
+      //remove top and bottom insets
+      webView.scrollView.contentInsetAdjustmentBehavior = .never
+      return webView
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {
