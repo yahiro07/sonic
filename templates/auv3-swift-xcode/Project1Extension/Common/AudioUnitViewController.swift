@@ -20,7 +20,6 @@ func showEntryInfo(_ componentDescription: AudioComponentDescription) {
   let type = osTypeString(Int(componentDescription.componentType))
   let subType = osTypeString(Int(componentDescription.componentSubType))
   let manufacturer = osTypeString(Int(componentDescription.componentManufacturer))
-  logger.trace("createAudioUnit 1415")
   logger.log("Loaded From: \(bundlePath)")
   logger.log("Bundle ID: \(bundleID)")
   logger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
@@ -78,6 +77,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   nonisolated public func createAudioUnit(with componentDescription: AudioComponentDescription)
     throws -> AUAudioUnit
   {
+    logger.trace("createAudioUnit")
     showEntryInfo(componentDescription)
     return try DispatchQueue.main.sync {
       try storageFileIO.debugLogDataLocation()
@@ -119,7 +119,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   }
 
   private func configureSwiftUIView(audioUnit: AudioUnit) {
-    logger.info("configureSwiftUIView")
+    logger.log("configureSwiftUIView")
 
     if let host = hostingController {
       host.removeFromParent()

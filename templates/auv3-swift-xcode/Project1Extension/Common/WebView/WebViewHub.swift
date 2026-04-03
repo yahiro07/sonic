@@ -20,7 +20,7 @@ class WebViewHub {
   init(
     _ viewAccessibleResources: ViewAccessibleResources
   ) {
-    logger.info("BasicWebViewHub init")
+    // logger.info("BasicWebViewHub init")
     self.flatParameterTree = FlatObservableParameters(
       parameterTree: ObservableAUParameterGroup(viewAccessibleResources.parameterTree))
     self.audioUnitPresenter = viewAccessibleResources.audioUnitPresenter
@@ -61,7 +61,7 @@ class WebViewHub {
       loggerCore.pushLogItem(
         LogItem(timestamp: timestamp, subsystem: "ui", logKind: logKind, message: message))
     case .uiLoaded:
-      logger.info("received UI loaded")
+      // logger.info("received UI loaded")
       uiReady = true
       if audioUnitPresenter.isHostedInStandaloneApp {
         sendMessageToUI(.standaloneAppFlag)
@@ -84,7 +84,7 @@ class WebViewHub {
         // logger.log("end parameter edit: \(paramKey)")
       }
     case .setParameter(let paramKey, let value):
-      logger.log("received parameter changed from UI: \(paramKey) = \(value)")
+      // logger.log("received parameter changed from UI: \(paramKey) = \(value)")
       if let paramEntry = flatParameterTree.entries[paramKey] {
         valueTracker.reserveEchoSuppression(paramKey: paramKey, value: value)
         paramEntry.value = value
@@ -170,7 +170,7 @@ class WebViewHub {
   }
 
   func bindWebViewIo(_ webViewIo: WebViewIoProtocol) {
-    logger.info("bindWebViewIo")
+    // logger.info("bindWebViewIo")
     self.webViewIo = webViewIo
 
     webViewIoSubscription?.cancel()
