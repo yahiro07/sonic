@@ -1,6 +1,6 @@
 {
   "name": "sonic-shell",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Template scaffolding tool for sonic framework.",
   "author": "yahiro",
   "license": "MIT",
