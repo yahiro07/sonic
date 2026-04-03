@@ -443,7 +443,7 @@
 					"-framework",
 					Cocoa,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1.Project1Extension1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.sonic.cpp-multi-target.extension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
@@ -520,7 +520,7 @@
 					"-framework",
 					Cocoa,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1.Project1Extension1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.sonic.cpp-multi-target.extension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
@@ -682,7 +682,7 @@
 					"-framework",
 					AVFoundation,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.sonic.cpp-multi-target";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -735,7 +735,7 @@
 					"-framework",
 					AVFoundation,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = net.sonic.dev.Project1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.sonic.cpp-multi-target";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
