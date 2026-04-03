@@ -79,6 +79,8 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
   {
     logger.trace("createAudioUnit")
     showEntryInfo(componentDescription)
+    SharedContainer.setAppGroupId("group.com.example.sonic.auv3-swift-xcode")
+
     return try DispatchQueue.main.sync {
       try storageFileIO.debugLogDataLocation()
 

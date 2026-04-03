@@ -7,9 +7,19 @@ protocol StorageFileIO {
 }
 
 class SharedContainer {
-  static let appGroupId = "group.com.example.sonic.auv3-swift-xcode"
+  static private var appGroupId = ""
+
+  static func setAppGroupId(_ appGroupId: String) {
+    self.appGroupId = appGroupId
+  }
 
   static func baseURL() throws -> URL {
+    guard !appGroupId.isEmpty else {
+      throw NSError(
+        domain: "SharedContainer",
+        code: 0,
+        userInfo: [NSLocalizedDescriptionKey: "appGroupId is empty"])
+    }
     guard
       let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupId)
     else {
