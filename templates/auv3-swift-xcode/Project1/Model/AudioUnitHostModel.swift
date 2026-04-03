@@ -34,6 +34,9 @@ class AudioUnitHostModel {
   var currentValidationData: String?
 
   init(type: String = "aumu", subType: String = "prj2", manufacturer: String = "Myco") {
+    logger.trace("------------------------------------------------")
+    logger.trace("AudioUnitHostModel init")
+
     self.type = type
     self.subType = subType
     self.manufacturer = manufacturer
@@ -67,11 +70,14 @@ class AudioUnitHostModel {
       self.restoreState()
 
       if false {
+        //do validation
         if let audioUnit = playEngine.avAudioUnit {
           Task { @MainActor in
+            logger.log("--Start validation--")
             let (validationResult, validationData) = await validateAU(audioUnit: audioUnit)
             self.validationResult = validationResult
             self.currentValidationData = validationData
+            logger.log("--End validation--")
           }
         }
       }
@@ -119,7 +125,7 @@ class AudioUnitHostModel {
           formattedOutput = "Validation probably crashed"
         }
 
-        print(formattedOutput)
+        logger.log(formattedOutput)
 
         continuation.resume(returning: (result, formattedOutput))
       }
@@ -143,15 +149,15 @@ class AudioUnitHostModel {
     guard let au = playEngine.avAudioUnit?.auAudioUnit else { return }
     let state = au.fullState
     UserDefaults.standard.set(state, forKey: "SavedAUState")
-    // let byteSize = calculateStateByteSize(of: state ?? [:])
-    // logger.log("saved state: \(byteSize)bytes")
+    let byteSize = calculateStateByteSize(of: state ?? [:])
+    logger.log("saved state: \(byteSize)bytes")
   }
 
   func restoreState() {
     guard let au = playEngine.avAudioUnit?.auAudioUnit else { return }
     var state = UserDefaults.standard.dictionary(forKey: "SavedAUState") ?? au.fullState ?? [:]
-    // let byteSize = calculateStateByteSize(of: state)
-    // logger.log("restore state: \(byteSize)bytes")
+    let byteSize = calculateStateByteSize(of: state)
+    logger.log("restore state: \(byteSize)bytes")
     //set a flag to let the AU know it's being hosted in a standalone app
     state["MySynth1.hostedInStandaloneApp"] = true
     au.fullState = state
@@ -167,7 +173,7 @@ private func calculateStateByteSize(of dict: [String: Any]) -> Int {
     )
     return data.count
   } catch {
-    // logger.error("Failed to calculate state size: \(error)")
+    logger.error("Failed to calculate state size: \(error)")
     return 0
   }
 }
