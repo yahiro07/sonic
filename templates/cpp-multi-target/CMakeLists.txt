@@ -45,17 +45,12 @@ if(SONIC_DEBUG_USE_UDP_LOGGER)
   add_compile_definitions($<$<CONFIG:Debug>:SONIC_DEBUG_USE_UDP_LOGGER>)
 endif()
 
-option(SONIC_USE_LOCAL_SDK "Use vendored SDKs under dependencies/" ON)
-if(SONIC_USE_LOCAL_SDK)
-  include(cmake/setup-sdks-dev.cmake)
-  add_subdirectory(framework/sonic)
-else()
-  include(cmake/setup-sdks.cmake)
-  add_subdirectory(
-    "${SONIC_ROOT_DIR}/templates/cpp-multi-target/framework/sonic"
-    "${CMAKE_CURRENT_BINARY_DIR}/framework/sonic")
-endif()
+get_filename_component(SONIC_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.."
+                       ABSOLUTE)
 
+include(../_common/cmake/setup-sonic-sdks.cmake)
+
+add_subdirectory(framework/sonic)
 add_subdirectory(source)
 
 if(NOT XCODE)
