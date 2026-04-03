@@ -211,3 +211,11 @@ export function workerHelper_buildFrontend(
   console.log("npm run build");
   execSync("npm run build", { cwd: folderPath, stdio: "inherit" });
 }
+
+export function workerHelper_createFolder(
+  projectFolderPath: string,
+  relativeFolderPath: string,
+) {
+  const folderPath = path.join(projectFolderPath, relativeFolderPath);
+  fs.mkdirSync(folderPath, { recursive: true });
+}

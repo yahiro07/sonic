@@ -8,6 +8,7 @@ import {
   workerHelper_buildFrontend,
   workerHelper_copyProjectContentFiles,
   workerHelper_copyProjectContentFiles_withRenaming,
+  workerHelper_createFolder,
   workerHelper_getNewProjectFolderPath,
   workerHelper_removeStringLines,
   workerHelper_replaceStrings,
@@ -569,6 +570,8 @@ function setupFrontend({
 
     if (options.buildFrontend) {
       workerHelper_buildFrontend(projectFolderPath, "frontend");
+    } else {
+      workerHelper_createFolder(projectFolderPath, "pages");
     }
   } else {
     workerHelper_copyProjectContentFiles(projectName, "_common", ["pages"]);
