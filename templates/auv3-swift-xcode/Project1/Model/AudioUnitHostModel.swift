@@ -64,11 +64,15 @@ class AudioUnitHostModel {
       let viewController = await playEngine.initComponent(
         type: type, subType: subType, manufacturer: manufacturer)
 
-      if let audioUnit = playEngine.avAudioUnit {
-        Task { @MainActor in
-          let (validationResult, validationData) = await validateAU(audioUnit: audioUnit)
-          self.validationResult = validationResult
-          self.currentValidationData = validationData
+      self.restoreState()
+
+      if false {
+        if let audioUnit = playEngine.avAudioUnit {
+          Task { @MainActor in
+            let (validationResult, validationData) = await validateAU(audioUnit: audioUnit)
+            self.validationResult = validationResult
+            self.currentValidationData = validationData
+          }
         }
       }
       self.viewModel = AudioUnitViewModel(
@@ -133,5 +137,37 @@ class AudioUnitHostModel {
 
   func stopPlaying() {
     playEngine.stopPlaying()
+  }
+
+  func saveState() {
+    guard let au = playEngine.avAudioUnit?.auAudioUnit else { return }
+    let state = au.fullState
+    UserDefaults.standard.set(state, forKey: "SavedAUState")
+    // let byteSize = calculateStateByteSize(of: state ?? [:])
+    // logger.log("saved state: \(byteSize)bytes")
+  }
+
+  func restoreState() {
+    guard let au = playEngine.avAudioUnit?.auAudioUnit else { return }
+    var state = UserDefaults.standard.dictionary(forKey: "SavedAUState") ?? au.fullState ?? [:]
+    // let byteSize = calculateStateByteSize(of: state)
+    // logger.log("restore state: \(byteSize)bytes")
+    //set a flag to let the AU know it's being hosted in a standalone app
+    state["MySynth1.hostedInStandaloneApp"] = true
+    au.fullState = state
+  }
+}
+
+private func calculateStateByteSize(of dict: [String: Any]) -> Int {
+  do {
+    let data = try PropertyListSerialization.data(
+      fromPropertyList: dict,
+      format: .binary,
+      options: 0
+    )
+    return data.count
+  } catch {
+    // logger.error("Failed to calculate state size: \(error)")
+    return 0
   }
 }
