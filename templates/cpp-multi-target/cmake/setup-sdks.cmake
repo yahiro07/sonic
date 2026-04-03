@@ -1,7 +1,7 @@
 # Download sonic repository in ~/.sonic/repos/<tag> and share it across
 # projects.
 
-set(SONIC_REPO_GIT_TAG "v0.1.5")
+set(SONIC_REPO_GIT_TAG "v0.1.6")
 
 if(NOT SONIC_REPOSITORY_DIR)
   set(SONIC_REPOSITORY_DIR
