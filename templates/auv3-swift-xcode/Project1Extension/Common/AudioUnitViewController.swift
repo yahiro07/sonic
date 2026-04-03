@@ -3,9 +3,6 @@ import CoreAudioKit
 import SwiftUI
 import os
 
-private let systemLogger = Logger(
-  subsystem: "net.miqsel.synth2511.Project1Extension", category: "AudioUnitViewController")
-
 func osTypeString(_ value: Int) -> String {
   let n = Int(value)
   var s = ""
@@ -27,11 +24,6 @@ func showEntryInfo(_ componentDescription: AudioComponentDescription) {
   logger.log("Loaded From: \(bundlePath)")
   logger.log("Bundle ID: \(bundleID)")
   logger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
-
-  systemLogger.log("createAudioUnit")
-  systemLogger.log("Loaded From: \(bundlePath)")
-  systemLogger.log("Bundle ID: \(bundleID)")
-  systemLogger.log("Type: \(type), SubType: \(subType), Manufacturer: \(manufacturer)")
 }
 
 @MainActor
@@ -95,7 +87,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
         componentDescription: componentDescription, options: [])
 
       guard let audioUnit = self.audioUnit else {
-        systemLogger.error("Unable to create AudioUnit")
+        logger.error("Unable to create AudioUnit")
         return audioUnit!
       }
 
