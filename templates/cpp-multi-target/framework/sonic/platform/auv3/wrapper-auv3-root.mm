@@ -309,13 +309,18 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
   // logger.log("WrapperAuv3ViewFrame connectViewToAudioUnit");
 
   _audioUnit = audioUnit;
-
+#if TARGET_OS_IPHONE
+  UIView *root = viewController.view;
+  root.autoresizingMask =
+      UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+#else
   NSView *root = viewController.view;
   root.wantsLayer = YES;
   root.layer.backgroundColor = [[NSColor colorWithCalibratedWhite:0.1
                                                             alpha:1.0] CGColor];
   root.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   root.autoresizesSubviews = YES;
+#endif
 
   auto synth = [audioUnit getSynthesizerInstance];
   auto controllerFacade = [audioUnit getControllerFacade];
@@ -326,7 +331,11 @@ setupEditorInstance(std::string url, IControllerFacade &controllerFacade) {
 
   auto [width, height] = synth->getDesiredEditorSize();
   if (width > 0 && height > 0) {
+#if TARGET_OS_IPHONE
+    viewController.preferredContentSize = CGSizeMake(width, height);
+#else
     viewController.preferredContentSize = NSMakeSize(width, height);
+#endif
   }
 
   [audioUnit viewAdded];
