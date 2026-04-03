@@ -7,7 +7,7 @@ protocol StorageFileIO {
 }
 
 class SharedContainer {
-  static let appGroupId = "group.net.miqsel.synth2511.MySynth1"
+  static let appGroupId = "group.com.example.sonic.auv3-swift-xcode"
 
   static func baseURL() throws -> URL {
     guard
