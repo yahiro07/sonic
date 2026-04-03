@@ -173,10 +173,14 @@ type TaskContext = {
 function copyTemplateBaseFiles({ projectName, templateName }: TaskContext) {
   workerHelper_copyProjectContentFiles(projectName, templateName, [
     "cmake/base-info.plist.in",
-    "cmake/setup-sdks.cmake",
     "source",
     ".clangd",
     "CMakePresets.json",
+  ]);
+
+  workerHelper_copyProjectContentFiles(projectName, "_common", [
+    "cmake/setup-sonic-sdks.cmake",
+    "cmake/setup-sonic.cmake",
   ]);
 
   workerHelper_copyProjectContentFiles_withRenaming(projectName, templateName, [

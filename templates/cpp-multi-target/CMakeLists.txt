@@ -48,7 +48,7 @@ endif()
 get_filename_component(SONIC_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.."
                        ABSOLUTE)
 
-include(cmake/setup-sonic-sdks.cmake)
+include(../_common/cmake/setup-sonic-sdks.cmake)
 
 add_subdirectory(framework/sonic)
 add_subdirectory(source)
